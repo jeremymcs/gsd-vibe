@@ -9,8 +9,8 @@
 
 - [x] **VERS-01**: App detects whether a project uses `.gsd/` (gsd2), `.planning/` (gsd1), or neither (none) on project load
 - [x] **VERS-02**: Version detection result is returned as a typed enum (`"gsd2" | "gsd1" | "none"`) from a new `gsd2_detect_version` Rust command
-- [ ] **VERS-03**: Existing GSD-1 Rust commands return an explicit error when called with a gsd2 project ID (no more silent empty results)
-- [ ] **VERS-04**: File watcher (`watcher.rs`) watches `.gsd/` directory in addition to existing `.planning/` watch, emitting `gsd2:file-changed` events
+- [x] **VERS-03**: Existing GSD-1 Rust commands return an explicit error when called with a gsd2 project ID (no more silent empty results)
+- [x] **VERS-04**: File watcher (`watcher.rs`) watches `.gsd/` directory in addition to existing `.planning/` watch, emitting `gsd2:file-changed` events
 
 ### File Parsing
 
@@ -89,8 +89,8 @@
 |-------------|-------|--------|
 | VERS-01 | Phase 1 | Complete |
 | VERS-02 | Phase 1 | Complete |
-| VERS-03 | Phase 1 | Pending |
-| VERS-04 | Phase 1 | Pending |
+| VERS-03 | Phase 1 | Complete |
+| VERS-04 | Phase 1 | Complete |
 | PARS-01 | Phase 1 | Pending |
 | PARS-02 | Phase 1 | Pending |
 | PARS-03 | Phase 1 | Pending |

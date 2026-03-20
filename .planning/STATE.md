@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 01-01-PLAN.md
-last_updated: "2026-03-20T21:48:54.489Z"
+stopped_at: Completed 01-02-PLAN.md
+last_updated: "2026-03-20T22:01:58.936Z"
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 3
-  completed_plans: 1
+  completed_plans: 2
 ---
 
 # Project State
@@ -47,6 +47,7 @@ Plan: 1 of 3
 
 *Updated after each plan completion*
 | Phase 01 P01 | 7 | 2 tasks | 5 files |
+| Phase 01 P02 | 20 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -62,6 +63,8 @@ Recent decisions affecting current work:
 - [Phase 01]: Used db.write().await for gsd2_detect_version path lookup — consistent with gsd.rs pattern, avoids type mismatch between &Database and &Connection
 - [Phase 01]: gsd2.rs module is fully independent from gsd.rs — helpers copied verbatim, never imported across module boundary
 - [Phase 01]: resolve_dir_by_id and resolve_file_by_id use three-tier exact > prefix/legacy > bare resolution for GSD-2 file layout
+- [Phase 01]: Guard uses db.read() (not write) for GSD-2 version check — SELECT only, no writer lock contention
+- [Phase 01]: .gsd/worktrees/ excluded from watcher events to prevent event storm during cargo/npm builds in worktrees
 
 ### Pending Todos
 
@@ -74,6 +77,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-20T21:48:54.486Z
-Stopped at: Completed 01-01-PLAN.md
+Last session: 2026-03-20T22:01:58.933Z
+Stopped at: Completed 01-02-PLAN.md
 Resume file: None
