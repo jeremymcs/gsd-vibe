@@ -19,8 +19,8 @@ Per-project version detection drives everything — the app must correctly ident
 
 ### Active
 
-- [ ] GSD version detection per project (.gsd/ vs .planning/ → "gsd2" | "gsd1" | "none")
-- [ ] GSD-2 .gsd/ file structure parsing in Rust (milestones dir, M001-ROADMAP.md, slices, tasks)
+- [x] GSD version detection per project (.gsd/ vs .planning/ → "gsd2" | "gsd1" | "none") — Validated in Phase 01: gsd-2-backend-foundation
+- [x] GSD-2 .gsd/ file structure parsing in Rust (milestones dir, M001-ROADMAP.md, slices, tasks) — Validated in Phase 01: gsd-2-backend-foundation
 - [ ] Adaptive terminology in UI (Milestone/Slice/Task for gsd2, Phase/Plan/Task for gsd1)
 - [ ] Health widget: budget spent/ceiling, env check counts, active milestone/slice/task, progress M/S/T, ETA, blockers
 - [ ] Worktree panel: list active worktrees per project, branch name, path, merge/remove actions
@@ -58,8 +58,8 @@ Per-project version detection drives everything — the app must correctly ident
 |----------|-----------|---------|
 | Detect version per project via directory presence | Supports both gsd1 and gsd2 users without forcing migration | — Pending |
 | Headless mode = start/stop/monitor (full control) | User wants full session control, not just read-only | — Pending |
-| New Rust command module for gsd2 parsing | Keeps gsd1 commands untouched, clean separation | — Pending |
+| New Rust command module for gsd2 parsing | Keeps gsd1 commands untouched, clean separation | Implemented in Phase 01 — `gsd2.rs` module with 6 commands |
 | Adaptive UI terminology (detect and render per project) | Most honest representation of actual structure | — Pending |
 
 ---
-*Last updated: 2026-03-20 after initialization*
+*Last updated: 2026-03-20
