@@ -29,7 +29,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. The `gsd2_list_milestones` command returns milestone directories with correct ID, title, done status, and dependencies by reading .gsd/milestones/
   4. The `gsd2_derive_state` command returns active milestone/slice/task IDs and M/S/T progress counters
   5. File changes inside .gsd/ emit `gsd2:file-changed` events that the frontend can subscribe to
-**Plans:** 3 plans
+**Plans:** 1/3 plans executed
 
 Plans:
 - [ ] 01-01-PLAN.md — DB migration, gsd2.rs module creation, version detection command, project import hooks
@@ -76,7 +76,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. GSD-2 Backend Foundation | 0/3 | Planning complete | - |
+| 1. GSD-2 Backend Foundation | 1/3 | In Progress|  |
 | 2. Health Widget, Adaptive UI, and Reactive Updates | 0/TBD | Not started | - |
 | 3. Worktrees Panel | 0/TBD | Not started | - |
 | 4. Headless Mode and Visualizer | 0/TBD | Not started | - |
