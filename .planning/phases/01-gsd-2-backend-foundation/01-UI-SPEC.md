@@ -66,9 +66,9 @@ Project applies a user-selectable font-scale. The default is `font-scale-md` (14
 | Role | Size | Weight | Line Height | CSS Class |
 |------|------|--------|-------------|-----------|
 | Body | 14px | 400 (regular) | 1.5 | `font-scale-md` (default) |
-| Label | 12px | 500 (medium) | 1.4 | Tailwind `text-xs font-medium` |
+| Label | 12px | 400 (regular) | 1.4 | Tailwind `text-xs font-normal` |
 | Heading | 20px | 600 (semibold) | 1.2 | Tailwind `text-xl font-semibold` |
-| Display | 28px | 700 (bold) | 1.15 | Tailwind `text-2xl font-bold` |
+| Display | 28px | 600 (semibold) | 1.15 | Tailwind `text-2xl font-semibold` |
 
 Weight constraint: Use only 400 and 600 for Phase 1 error messages. Do not introduce new weight values.
 
