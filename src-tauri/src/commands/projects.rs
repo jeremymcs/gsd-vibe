@@ -141,6 +141,20 @@ pub async fn import_project(
             params![activity_id, id, format!("Project '{}' imported from {}", name, path)],
         )
         .map_err(|e| e.to_string())?;
+
+        // Detect and store GSD version at import time (VERS-01)
+        let gsd_version = if std::path::Path::new(&path).join(".gsd").is_dir() {
+            "gsd2"
+        } else if std::path::Path::new(&path).join(".planning").is_dir() {
+            "gsd1"
+        } else {
+            "none"
+        };
+        conn.execute(
+            "UPDATE projects SET gsd_version = ?1 WHERE id = ?2",
+            params![gsd_version, &id],
+        )
+        .map_err(|e| format!("Failed to store gsd_version: {}", e))?;
     }
 
     // Return the created project by calling get_project with the State
@@ -305,6 +319,20 @@ pub async fn import_project_enhanced(
             params![activity_id, id, format!("Project '{}' imported as {} from {}", name, import_type, path)],
         )
         .map_err(|e| e.to_string())?;
+
+        // Detect and store GSD version at import time (VERS-01)
+        let gsd_version = if std::path::Path::new(&path).join(".gsd").is_dir() {
+            "gsd2"
+        } else if std::path::Path::new(&path).join(".planning").is_dir() {
+            "gsd1"
+        } else {
+            "none"
+        };
+        conn.execute(
+            "UPDATE projects SET gsd_version = ?1 WHERE id = ?2",
+            params![gsd_version, &id],
+        )
+        .map_err(|e| format!("Failed to store gsd_version: {}", e))?;
     }
 
     // Get the created project
