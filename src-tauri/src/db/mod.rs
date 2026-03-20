@@ -744,6 +744,22 @@ impl Database {
             self.record_migration("gsd_table_column_fixes")?;
         }
 
+        // Migration: Add gsd_version column to projects table (GSD-2 version detection)
+        if !self.migration_applied("add_gsd_version_to_projects") {
+            let has_col: bool = self
+                .conn
+                .prepare("SELECT gsd_version FROM projects LIMIT 1")
+                .is_ok();
+            if !has_col {
+                tracing::info!("Running migration: Adding gsd_version column to projects");
+                self.conn.execute(
+                    "ALTER TABLE projects ADD COLUMN gsd_version TEXT",
+                    [],
+                )?;
+            }
+            self.record_migration("add_gsd_version_to_projects")?;
+        }
+
         tracing::info!("Database migrations complete");
         Ok(())
     }

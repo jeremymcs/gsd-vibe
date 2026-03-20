@@ -7,6 +7,7 @@ pub mod dependencies;
 pub mod filesystem;
 pub mod git;
 pub mod gsd;
+pub mod gsd2;
 pub mod knowledge;
 pub mod logs;
 pub mod notifications;
