@@ -14,11 +14,11 @@
 
 ### File Parsing
 
-- [ ] **PARS-01**: `gsd2_list_milestones` lists milestone directories from `.gsd/milestones/` using three-tier path resolution (exact ID match → ID-prefix match → legacy bare suffix)
-- [ ] **PARS-02**: `gsd2_get_milestone` reads a milestone's `M001-ROADMAP.md` and returns slices with ID, title, done status, and dependencies
-- [ ] **PARS-03**: `gsd2_get_slice` reads a slice's `S01-PLAN.md` and returns tasks with ID, title, done status, and estimate
-- [ ] **PARS-04**: `gsd2_derive_state` returns the active milestone ID, active slice ID, active task ID, overall progress (M/S/T done/total), and current phase
-- [ ] **PARS-05**: `gsd2_get_roadmap_progress` returns milestone/slice/task completion counts suitable for a progress bar
+- [x] **PARS-01**: `gsd2_list_milestones` lists milestone directories from `.gsd/milestones/` using three-tier path resolution (exact ID match → ID-prefix match → legacy bare suffix)
+- [x] **PARS-02**: `gsd2_get_milestone` reads a milestone's `M001-ROADMAP.md` and returns slices with ID, title, done status, and dependencies
+- [x] **PARS-03**: `gsd2_get_slice` reads a slice's `S01-PLAN.md` and returns tasks with ID, title, done status, and estimate
+- [x] **PARS-04**: `gsd2_derive_state` returns the active milestone ID, active slice ID, active task ID, overall progress (M/S/T done/total), and current phase
+- [x] **PARS-05**: `gsd2_get_roadmap_progress` returns milestone/slice/task completion counts suitable for a progress bar
 
 ### Health Widget
 
@@ -91,11 +91,11 @@
 | VERS-02 | Phase 1 | Complete |
 | VERS-03 | Phase 1 | Complete |
 | VERS-04 | Phase 1 | Complete |
-| PARS-01 | Phase 1 | Pending |
-| PARS-02 | Phase 1 | Pending |
-| PARS-03 | Phase 1 | Pending |
-| PARS-04 | Phase 1 | Pending |
-| PARS-05 | Phase 1 | Pending |
+| PARS-01 | Phase 1 | Complete |
+| PARS-02 | Phase 1 | Complete |
+| PARS-03 | Phase 1 | Complete |
+| PARS-04 | Phase 1 | Complete |
+| PARS-05 | Phase 1 | Complete |
 | HLTH-01 | Phase 2 | Pending |
 | HLTH-02 | Phase 2 | Pending |
 | HLTH-03 | Phase 2 | Pending |
