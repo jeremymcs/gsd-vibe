@@ -59,9 +59,9 @@ Exceptions:
 | Body | 14px (`text-sm`) | 400 (regular) | 1.5 | Health data values, row labels, badge text | Existing app default (`font-scale-md = 14px`) |
 | Label | 12px (`text-xs`) | 400 (regular) | 1.4 | Widget row labels ("Budget", "Milestones"), counter sub-labels, metadata | Codebase pattern — git-status-widget uses `text-xs` for all secondary labels |
 | Caption | 10px (`text-[10px]`) | 400 (regular) | 1.3 | Badge text at `size="sm"`, timestamp micro-text | Confirmed in badge.tsx `size: sm` and git-status-widget |
-| Heading | 14px (`text-sm`) | 500 (medium, `font-medium`) | 1.2 | `CardTitle` in health widget header (matches git-status-widget pattern) | `git-status-widget.tsx` line 224: `text-sm font-medium` |
+| Heading | 14px (`text-sm`) | 600 (semibold, `font-semibold`) | 1.2 | `CardTitle` in health widget header, progress counter numerals | Consolidated to single emphasis weight — 2-weight maximum |
 
-**Two weights only:** 400 (regular) for all body/label content; 600 (semibold, `font-semibold`) for progress counter numerals (`{health.milestones_done}/{health.milestones_total}`). The heading role uses `font-medium` (500) per the established CardTitle pattern in the project.
+**Two weights only:** 400 (regular, `font-normal`) for all body/label/caption content; 600 (semibold, `font-semibold`) for CardTitle headings and progress counter numerals (`{health.milestones_done}/{health.milestones_total}`).
 
 ---
 
@@ -119,7 +119,7 @@ Structure: `Card > CardHeader + CardContent`
 ```
 Card
 └─ CardHeader (pb-3)
-   └─ CardTitle (text-sm font-medium, flex items-center gap-2)
+   └─ CardTitle (text-sm font-semibold, flex items-center gap-2)
       ├─ Activity icon (h-4 w-4)
       └─ "GSD Health"
 └─ CardContent (space-y-3)
@@ -133,7 +133,7 @@ Card
    │     ├─ AlertCircle (h-4 w-4 text-status-error flex-shrink-0)
    │     └─ span (text-sm text-status-error) {health.blocker}
    ├─ Active unit row (div — shown when active_milestone_id is non-null)
-   │  └─ text-xs space-y-0.5
+   │  └─ text-xs space-y-1
    │     ├─ Milestone: "{active_milestone_id} — {active_milestone_title}"
    │     ├─ Slice: "{active_slice_id} — {active_slice_title}" | "None"
    │     └─ Phase: "{phase}"
@@ -185,7 +185,7 @@ Show `Skeleton` rows while `isLoading` is true (matches git-status-widget loadin
 ```tsx
 <Card>
   <CardHeader className="pb-3">
-    <CardTitle className="text-sm font-medium flex items-center gap-2">
+    <CardTitle className="text-sm font-semibold flex items-center gap-2">
       <Activity className="h-4 w-4" /> GSD Health
     </CardTitle>
   </CardHeader>
@@ -309,8 +309,11 @@ No new registry components are being installed for Phase 2. All required UI prim
 | Badge variants (exact class strings) | badge.tsx source inspection |
 | Progress variants (brand, warning) | progress.tsx source inspection |
 | Compact density default | globals.css `--spacing-scale: 0.8` |
+| Typography consolidated to 2 weights (400 + 600) | Checker revision — dropped font-medium (500) from Heading role |
+| Active unit row spacing changed to space-y-1 (4px) | Checker revision — replaced non-multiple-of-4 space-y-0.5 (2px) |
 
 ---
 
 *Phase: 02-health-widget-adaptive-ui-and-reactive-updates*
 *UI-SPEC created: 2026-03-20*
+*UI-SPEC revised: 2026-03-20 — checker fixes applied (typography weight consolidation, spacing correction)*
