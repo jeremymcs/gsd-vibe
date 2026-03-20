@@ -66,6 +66,38 @@ pub async fn watch_project_files(
                                     }),
                                 );
                             }
+                            // Emit GSD-2 events for .gsd/ file changes
+                            if changed_path.contains("/.gsd/")
+                                || changed_path.contains("\\.gsd\\")
+                            {
+                                // Skip .gsd/worktrees/ to prevent event storm during builds in worktrees
+                                if !changed_path.contains("/.gsd/worktrees/")
+                                    && !changed_path.contains("\\.gsd\\worktrees\\")
+                                {
+                                    let change_type =
+                                        if changed_path.contains("/STATE.md")
+                                            || changed_path.contains("\\STATE.md")
+                                        {
+                                            "gsd2_state"
+                                        } else if changed_path.contains("/milestones/")
+                                            || changed_path.contains("\\milestones\\")
+                                        {
+                                            "gsd2_milestone"
+                                        } else if changed_path.contains("metrics.json") {
+                                            "gsd2_metrics"
+                                        } else {
+                                            "gsd2_other"
+                                        };
+                                    let _ = app_handle.emit(
+                                        "gsd2:file-changed",
+                                        serde_json::json!({
+                                            "project_path": project_path_clone,
+                                            "file_path": changed_path,
+                                            "change_type": change_type,
+                                        }),
+                                    );
+                                }
+                            }
                             // Emit GSD-specific events for .planning/ file changes
                             if changed_path.contains("/.planning/")
                                 || changed_path.contains("\\.planning\\")
@@ -144,6 +176,14 @@ pub async fn watch_project_files(
         watcher
             .watch(&planning_dir, notify::RecursiveMode::Recursive)
             .map_err(|e| format!("Failed to watch .planning: {}", e))?;
+    }
+
+    // Watch the .gsd directory (GSD-2 projects)
+    let gsd_dir = path.join(".gsd");
+    if gsd_dir.exists() {
+        watcher
+            .watch(&gsd_dir, notify::RecursiveMode::Recursive)
+            .map_err(|e| format!("Failed to watch .gsd: {}", e))?;
     }
 
     // Watch dependency files at project root (NonRecursive to avoid deep scanning)
