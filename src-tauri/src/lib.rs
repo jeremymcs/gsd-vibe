@@ -280,6 +280,9 @@ pub fn run() {
             commands::gsd::gsd_get_uat_by_phase,
             // GSD-2 commands
             commands::gsd2::gsd2_detect_version,
+            commands::gsd2::gsd2_list_milestones,
+            commands::gsd2::gsd2_get_milestone,
+            commands::gsd2::gsd2_get_slice,
             // Secrets / OS keychain commands
             commands::secrets::set_secret,
             commands::secrets::get_secret,
