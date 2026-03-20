@@ -283,6 +283,8 @@ pub fn run() {
             commands::gsd2::gsd2_list_milestones,
             commands::gsd2::gsd2_get_milestone,
             commands::gsd2::gsd2_get_slice,
+            commands::gsd2::gsd2_derive_state,
+            commands::gsd2::gsd2_get_roadmap_progress,
             // Secrets / OS keychain commands
             commands::secrets::set_secret,
             commands::secrets::get_secret,

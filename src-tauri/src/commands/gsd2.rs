@@ -534,6 +534,144 @@ pub fn list_milestones_from_dir(milestones_dir: &Path) -> Vec<Gsd2Milestone> {
 // Commands
 // ============================================================
 
+/// Walk milestones dir and populate tasks for each slice (by reading PLAN.md per slice).
+/// This is the shared data-gathering helper for derive_state and get_roadmap_progress.
+pub fn walk_milestones_with_tasks(milestones_dir: &Path) -> Vec<Gsd2Milestone> {
+    let mut milestones = list_milestones_from_dir(milestones_dir);
+
+    for milestone in milestones.iter_mut() {
+        let milestone_dir = milestones_dir.join(&milestone.dir_name);
+        for slice in milestone.slices.iter_mut() {
+            // Try nested layout first, then flat
+            let plan_content = resolve_slice_plan_content(&milestone_dir, &milestone.id, &slice.id);
+            if let Some(content) = plan_content {
+                slice.tasks = parse_plan_tasks(&content);
+            }
+        }
+        // Recalculate milestone done based on slice done status (task completion drives slice done)
+        // A slice is done if either ROADMAP says done OR all its tasks are done (non-empty task list)
+        for slice in milestone.slices.iter_mut() {
+            if !slice.done && !slice.tasks.is_empty() {
+                slice.done = slice.tasks.iter().all(|t| t.done);
+            }
+        }
+        milestone.done = !milestone.slices.is_empty() && milestone.slices.iter().all(|s| s.done);
+    }
+
+    milestones
+}
+
+/// Resolve the content of a slice's PLAN.md (nested or flat layout).
+fn resolve_slice_plan_content(
+    milestone_dir: &Path,
+    _milestone_id: &str,
+    slice_id: &str,
+) -> Option<String> {
+    // Try nested: milestone_dir/S01[-DESCRIPTOR]/S01-PLAN.md
+    if let Some(slice_sub) = resolve_dir_by_id(milestone_dir, slice_id) {
+        let nested = milestone_dir.join(&slice_sub);
+        if let Some(plan_file) = resolve_file_by_id(&nested, slice_id, "PLAN") {
+            if let Ok(content) = std::fs::read_to_string(nested.join(&plan_file)) {
+                return Some(content);
+            }
+        }
+    }
+    // Try flat: milestone_dir/S01-PLAN.md
+    if let Some(plan_file) = resolve_file_by_id(milestone_dir, slice_id, "PLAN") {
+        if let Ok(content) = std::fs::read_to_string(milestone_dir.join(&plan_file)) {
+            return Some(content);
+        }
+    }
+    None
+}
+
+/// Derive GSD-2 state from a project path (testable helper without DB).
+pub fn derive_state_from_dir(project_path: &str) -> Gsd2State {
+    let milestones_dir = Path::new(project_path).join(".gsd").join("milestones");
+    let milestones = walk_milestones_with_tasks(&milestones_dir);
+
+    let mut milestones_done: u32 = 0;
+    let mut milestones_total: u32 = 0;
+    let mut slices_done: u32 = 0;
+    let mut slices_total: u32 = 0;
+    let mut tasks_done: u32 = 0;
+    let mut tasks_total: u32 = 0;
+
+    let mut active_milestone_id: Option<String> = None;
+    let mut active_slice_id: Option<String> = None;
+    let mut active_task_id: Option<String> = None;
+
+    for milestone in &milestones {
+        milestones_total += 1;
+        if milestone.done {
+            milestones_done += 1;
+        } else if active_milestone_id.is_none() {
+            active_milestone_id = Some(milestone.id.clone());
+        }
+
+        for slice in &milestone.slices {
+            slices_total += 1;
+            if slice.done {
+                slices_done += 1;
+            } else if active_milestone_id.as_deref() == Some(&milestone.id)
+                && active_slice_id.is_none()
+            {
+                active_slice_id = Some(slice.id.clone());
+            }
+
+            for task in &slice.tasks {
+                tasks_total += 1;
+                if task.done {
+                    tasks_done += 1;
+                } else if active_slice_id.as_deref() == Some(&slice.id)
+                    && active_task_id.is_none()
+                {
+                    active_task_id = Some(task.id.clone());
+                }
+            }
+        }
+    }
+
+    // Read .gsd/STATE.md for phase value
+    let state_path = Path::new(project_path).join(".gsd").join("STATE.md");
+    let phase = if state_path.exists() {
+        std::fs::read_to_string(&state_path)
+            .ok()
+            .and_then(|content| {
+                let (fm, _) = parse_frontmatter(&content);
+                fm.get("phase").cloned()
+            })
+    } else {
+        None
+    };
+
+    Gsd2State {
+        active_milestone_id,
+        active_slice_id,
+        active_task_id,
+        phase,
+        milestones_done,
+        milestones_total,
+        slices_done,
+        slices_total,
+        tasks_done,
+        tasks_total,
+    }
+}
+
+/// Get roadmap progress counts from a project path (testable helper without DB).
+pub fn get_roadmap_progress_from_dir(project_path: &str) -> Gsd2RoadmapProgress {
+    let state = derive_state_from_dir(project_path);
+    Gsd2RoadmapProgress {
+        milestones_done: state.milestones_done,
+        milestones_total: state.milestones_total,
+        slices_done: state.slices_done,
+        slices_total: state.slices_total,
+        tasks_done: state.tasks_done,
+        tasks_total: state.tasks_total,
+    }
+}
+
 /// List all milestones for a GSD-2 project by reading `.gsd/milestones/`.
 #[tauri::command]
 pub async fn gsd2_list_milestones(
@@ -674,6 +812,28 @@ pub async fn gsd2_get_slice(
         dependencies,
         tasks,
     })
+}
+
+/// Derive GSD-2 project state: active milestone/slice/task IDs and M/S/T progress counters.
+#[tauri::command]
+pub async fn gsd2_derive_state(
+    db: tauri::State<'_, DbState>,
+    project_id: String,
+) -> Result<Gsd2State, String> {
+    let db_guard = db.write().await;
+    let project_path = get_project_path(&db_guard, &project_id)?;
+    Ok(derive_state_from_dir(&project_path))
+}
+
+/// Return milestone/slice/task completion counts for a GSD-2 project.
+#[tauri::command]
+pub async fn gsd2_get_roadmap_progress(
+    db: tauri::State<'_, DbState>,
+    project_id: String,
+) -> Result<Gsd2RoadmapProgress, String> {
+    let db_guard = db.write().await;
+    let project_path = get_project_path(&db_guard, &project_id)?;
+    Ok(get_roadmap_progress_from_dir(&project_path))
 }
 
 /// Detect the GSD version for a project by inspecting its directory structure.
@@ -988,6 +1148,214 @@ mod tests {
         fs::write(dir.join("OTHER.md"), "content").unwrap();
         let result = resolve_file_by_id(&dir, "S01", "PLAN");
         assert_eq!(result, None);
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    // ---- walk_milestones / derive_state_from_dir / get_roadmap_progress_from_dir ----
+
+    /// Helper to build a fixture .gsd project with milestones, slices, and tasks.
+    fn make_fixture_project(
+        base_name: &str,
+        milestones: &[(&str, &[(&str, bool, &[(&str, bool)])])],
+    ) -> std::path::PathBuf {
+        let dir = make_temp_dir(base_name);
+        let milestones_dir = dir.join(".gsd").join("milestones");
+        fs::create_dir_all(&milestones_dir).unwrap();
+
+        for (m_id, slices) in milestones {
+            let m_dir = milestones_dir.join(m_id);
+            fs::create_dir_all(&m_dir).unwrap();
+
+            let slice_lines: Vec<String> = slices
+                .iter()
+                .map(|(s_id, s_done, _)| {
+                    let check = if *s_done { "x" } else { " " };
+                    format!("- [{}] **{}: Slice Title**", check, s_id)
+                })
+                .collect();
+
+            let roadmap = format!("## Slices\n{}\n", slice_lines.join("\n"));
+            fs::write(m_dir.join(format!("{}-ROADMAP.md", m_id)), roadmap).unwrap();
+
+            for (s_id, _, tasks) in slices.iter() {
+                let task_lines: Vec<String> = tasks
+                    .iter()
+                    .map(|(t_id, t_done)| {
+                        let check = if *t_done { "x" } else { " " };
+                        format!("- [{}] **{}: Task Title**", check, t_id)
+                    })
+                    .collect();
+                let plan = format!("## Tasks\n{}\n", task_lines.join("\n"));
+                fs::write(m_dir.join(format!("{}-PLAN.md", s_id)), plan).unwrap();
+            }
+        }
+
+        dir
+    }
+
+    #[test]
+    fn walk_milestones_returns_empty_when_no_milestones_dir() {
+        let dir = make_temp_dir("wm_empty");
+        let milestones_dir = dir.join(".gsd").join("milestones");
+        // Don't create the directory
+        let result = walk_milestones_with_tasks(&milestones_dir);
+        assert!(result.is_empty());
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn walk_milestones_returns_milestones_with_populated_tasks() {
+        let dir = make_fixture_project(
+            "wm_tasks",
+            &[("M001", &[("S01", false, &[("T01", false), ("T02", true)])])],
+        );
+        let milestones_dir = dir.join(".gsd").join("milestones");
+        let result = walk_milestones_with_tasks(&milestones_dir);
+        assert_eq!(result.len(), 1);
+        let m = &result[0];
+        assert_eq!(m.slices.len(), 1);
+        let s = &m.slices[0];
+        assert_eq!(s.tasks.len(), 2);
+        assert!(!s.tasks[0].done);
+        assert!(s.tasks[1].done);
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn derive_state_returns_none_active_when_no_milestones() {
+        let dir = make_temp_dir("ds_empty");
+        fs::create_dir_all(dir.join(".gsd").join("milestones")).unwrap();
+        let state = derive_state_from_dir(dir.to_str().unwrap());
+        assert!(state.active_milestone_id.is_none());
+        assert!(state.active_slice_id.is_none());
+        assert!(state.active_task_id.is_none());
+        assert_eq!(state.milestones_total, 0);
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn derive_state_returns_first_non_complete_milestone_as_active() {
+        // M001: S01 done → M001 is complete
+        // M002: S01 not done → M002 is the first non-complete milestone
+        let dir = make_fixture_project(
+            "ds_active_m",
+            &[
+                ("M001", &[("S01", true, &[("T01", true)])]),   // complete
+                ("M002", &[("S01", false, &[("T01", false)])]), // not complete
+            ],
+        );
+        let state = derive_state_from_dir(dir.to_str().unwrap());
+        assert_eq!(state.active_milestone_id, Some("M002".to_string()));
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn derive_state_returns_first_nondone_slice_as_active_slice() {
+        let dir = make_fixture_project(
+            "ds_active_s",
+            &[(
+                "M001",
+                &[
+                    ("S01", true, &[("T01", true)]),   // done
+                    ("S02", false, &[("T01", false)]), // not done
+                ],
+            )],
+        );
+        let state = derive_state_from_dir(dir.to_str().unwrap());
+        assert_eq!(state.active_milestone_id, Some("M001".to_string()));
+        assert_eq!(state.active_slice_id, Some("S02".to_string()));
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn derive_state_returns_first_nondone_task_as_active_task() {
+        let dir = make_fixture_project(
+            "ds_active_t",
+            &[(
+                "M001",
+                &[("S01", false, &[("T01", true), ("T02", false)])],
+            )],
+        );
+        let state = derive_state_from_dir(dir.to_str().unwrap());
+        assert_eq!(state.active_task_id, Some("T02".to_string()));
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn derive_state_returns_none_active_when_all_milestones_complete() {
+        let dir = make_fixture_project(
+            "ds_all_done",
+            &[
+                ("M001", &[("S01", true, &[("T01", true)])]),
+                ("M002", &[("S01", true, &[("T01", true)])]),
+            ],
+        );
+        let state = derive_state_from_dir(dir.to_str().unwrap());
+        assert!(state.active_milestone_id.is_none());
+        assert_eq!(state.milestones_done, 2);
+        assert_eq!(state.milestones_total, 2);
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn derive_state_counts_done_and_total_correctly() {
+        let dir = make_fixture_project(
+            "ds_counts",
+            &[
+                ("M001", &[("S01", true, &[("T01", true), ("T02", true)])]),
+                (
+                    "M002",
+                    &[
+                        ("S01", true, &[("T01", true)]),
+                        ("S02", false, &[("T01", false), ("T02", false)]),
+                    ],
+                ),
+            ],
+        );
+        let state = derive_state_from_dir(dir.to_str().unwrap());
+        // M001: S01 done → M001 complete
+        // M002: S01 done, S02 not done → M002 not complete
+        assert_eq!(state.milestones_done, 1); // only M001 all-slices-done
+        assert_eq!(state.milestones_total, 2);
+        // slices: M001-S01 (done), M002-S01 (done), M002-S02 (not done) → 2 done, 3 total
+        assert_eq!(state.slices_done, 2);
+        assert_eq!(state.slices_total, 3);
+        // tasks: M001-S01: T01 done, T02 done = 2; M002-S01: T01 done = 1; M002-S02: T01+T02 not done = 0
+        assert_eq!(state.tasks_done, 3);
+        assert_eq!(state.tasks_total, 5);
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn get_roadmap_progress_returns_correct_counts() {
+        let dir = make_fixture_project(
+            "rp_counts",
+            &[
+                ("M001", &[("S01", true, &[("T01", true)])]),
+                ("M002", &[("S01", false, &[("T01", false)])]),
+            ],
+        );
+        let progress = get_roadmap_progress_from_dir(dir.to_str().unwrap());
+        assert_eq!(progress.milestones_done, 1);
+        assert_eq!(progress.milestones_total, 2);
+        assert_eq!(progress.slices_done, 1);
+        assert_eq!(progress.slices_total, 2);
+        assert_eq!(progress.tasks_done, 1);
+        assert_eq!(progress.tasks_total, 2);
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn get_roadmap_progress_returns_zeros_when_no_milestones() {
+        let dir = make_temp_dir("rp_empty");
+        fs::create_dir_all(dir.join(".gsd").join("milestones")).unwrap();
+        let progress = get_roadmap_progress_from_dir(dir.to_str().unwrap());
+        assert_eq!(progress.milestones_done, 0);
+        assert_eq!(progress.milestones_total, 0);
+        assert_eq!(progress.slices_done, 0);
+        assert_eq!(progress.slices_total, 0);
+        assert_eq!(progress.tasks_done, 0);
+        assert_eq!(progress.tasks_total, 0);
         let _ = fs::remove_dir_all(&dir);
     }
 }
