@@ -91,33 +91,33 @@
 | VERS-02 | Phase 1 | Pending |
 | VERS-03 | Phase 1 | Pending |
 | VERS-04 | Phase 1 | Pending |
-| PARS-01 | Phase 2 | Pending |
-| PARS-02 | Phase 2 | Pending |
-| PARS-03 | Phase 2 | Pending |
-| PARS-04 | Phase 2 | Pending |
-| PARS-05 | Phase 2 | Pending |
-| HLTH-01 | Phase 3 | Pending |
-| HLTH-02 | Phase 3 | Pending |
-| HLTH-03 | Phase 3 | Pending |
-| HLTH-04 | Phase 3 | Pending |
-| TERM-01 | Phase 3 | Pending |
-| TERM-02 | Phase 3 | Pending |
-| TERM-03 | Phase 3 | Pending |
-| WORK-01 | Phase 4 | Pending |
-| WORK-02 | Phase 4 | Pending |
-| WORK-03 | Phase 4 | Pending |
-| WORK-04 | Phase 4 | Pending |
-| WORK-05 | Phase 4 | Pending |
-| HDLS-01 | Phase 5 | Pending |
-| HDLS-02 | Phase 5 | Pending |
-| HDLS-03 | Phase 5 | Pending |
-| HDLS-04 | Phase 5 | Pending |
-| HDLS-05 | Phase 5 | Pending |
-| HDLS-06 | Phase 5 | Pending |
-| VIZ-01 | Phase 6 | Pending |
-| VIZ-02 | Phase 6 | Pending |
-| VIZ-03 | Phase 6 | Pending |
-| VIZ-04 | Phase 6 | Pending |
+| PARS-01 | Phase 1 | Pending |
+| PARS-02 | Phase 1 | Pending |
+| PARS-03 | Phase 1 | Pending |
+| PARS-04 | Phase 1 | Pending |
+| PARS-05 | Phase 1 | Pending |
+| HLTH-01 | Phase 2 | Pending |
+| HLTH-02 | Phase 2 | Pending |
+| HLTH-03 | Phase 2 | Pending |
+| HLTH-04 | Phase 2 | Pending |
+| TERM-01 | Phase 2 | Pending |
+| TERM-02 | Phase 2 | Pending |
+| TERM-03 | Phase 2 | Pending |
+| WORK-01 | Phase 3 | Pending |
+| WORK-02 | Phase 3 | Pending |
+| WORK-03 | Phase 3 | Pending |
+| WORK-04 | Phase 3 | Pending |
+| WORK-05 | Phase 3 | Pending |
+| HDLS-01 | Phase 4 | Pending |
+| HDLS-02 | Phase 4 | Pending |
+| HDLS-03 | Phase 4 | Pending |
+| HDLS-04 | Phase 4 | Pending |
+| HDLS-05 | Phase 4 | Pending |
+| HDLS-06 | Phase 4 | Pending |
+| VIZ-01 | Phase 4 | Pending |
+| VIZ-02 | Phase 4 | Pending |
+| VIZ-03 | Phase 4 | Pending |
+| VIZ-04 | Phase 4 | Pending |
 
 **Coverage:**
 - v1 requirements: 31 total
@@ -126,4 +126,4 @@
 
 ---
 *Requirements defined: 2026-03-20*
-*Last updated: 2026-03-20 after initial definition*
+*Last updated: 2026-03-20 — traceability updated after roadmap creation (coarse compression: 6 research phases → 4 delivery phases)*
