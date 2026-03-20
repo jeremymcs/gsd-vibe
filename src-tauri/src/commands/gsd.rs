@@ -145,6 +145,20 @@ pub async fn gsd_get_project_info(
     db: tauri::State<'_, DbState>,
     project_id: String,
 ) -> Result<GsdProjectInfo, String> {
+    // GSD-2 guard: reject gsd2 projects with explicit error
+    {
+        let reader = db.read().await;
+        let version: Option<String> = reader
+            .query_row(
+                "SELECT gsd_version FROM projects WHERE id = ?1",
+                params![&project_id],
+                |row| row.get(0),
+            )
+            .ok();
+        if version.as_deref() == Some("gsd2") {
+            return Err("This project uses GSD-2. Use gsd2_* commands instead.".to_string());
+        }
+    }
     let db = db.write().await;
     let project_path = get_project_path(&db, &project_id)?;
     let path = Path::new(&project_path)
@@ -182,6 +196,20 @@ pub async fn gsd_get_state(
     db: tauri::State<'_, DbState>,
     project_id: String,
 ) -> Result<GsdState, String> {
+    // GSD-2 guard: reject gsd2 projects with explicit error
+    {
+        let reader = db.read().await;
+        let version: Option<String> = reader
+            .query_row(
+                "SELECT gsd_version FROM projects WHERE id = ?1",
+                params![&project_id],
+                |row| row.get(0),
+            )
+            .ok();
+        if version.as_deref() == Some("gsd2") {
+            return Err("This project uses GSD-2. Use gsd2_* commands instead.".to_string());
+        }
+    }
     let db = db.write().await;
     let project_path = get_project_path(&db, &project_id)?;
     let path = Path::new(&project_path).join(".planning").join("STATE.md");
@@ -292,6 +320,20 @@ pub async fn gsd_get_config(
     db: tauri::State<'_, DbState>,
     project_id: String,
 ) -> Result<GsdConfig, String> {
+    // GSD-2 guard: reject gsd2 projects with explicit error
+    {
+        let reader = db.read().await;
+        let version: Option<String> = reader
+            .query_row(
+                "SELECT gsd_version FROM projects WHERE id = ?1",
+                params![&project_id],
+                |row| row.get(0),
+            )
+            .ok();
+        if version.as_deref() == Some("gsd2") {
+            return Err("This project uses GSD-2. Use gsd2_* commands instead.".to_string());
+        }
+    }
     let db = db.write().await;
     let project_path = get_project_path(&db, &project_id)?;
     let path = Path::new(&project_path)
@@ -356,6 +398,20 @@ pub async fn gsd_list_requirements(
     db: tauri::State<'_, DbState>,
     project_id: String,
 ) -> Result<Vec<GsdRequirement>, String> {
+    // GSD-2 guard: reject gsd2 projects with explicit error
+    {
+        let reader = db.read().await;
+        let version: Option<String> = reader
+            .query_row(
+                "SELECT gsd_version FROM projects WHERE id = ?1",
+                params![&project_id],
+                |row| row.get(0),
+            )
+            .ok();
+        if version.as_deref() == Some("gsd2") {
+            return Err("This project uses GSD-2. Use gsd2_* commands instead.".to_string());
+        }
+    }
     let db = db.write().await;
     let project_path = get_project_path(&db, &project_id)?;
     let path = Path::new(&project_path)
@@ -449,6 +505,20 @@ pub async fn gsd_list_milestones(
     db: tauri::State<'_, DbState>,
     project_id: String,
 ) -> Result<Vec<GsdMilestone>, String> {
+    // GSD-2 guard: reject gsd2 projects with explicit error
+    {
+        let reader = db.read().await;
+        let version: Option<String> = reader
+            .query_row(
+                "SELECT gsd_version FROM projects WHERE id = ?1",
+                params![&project_id],
+                |row| row.get(0),
+            )
+            .ok();
+        if version.as_deref() == Some("gsd2") {
+            return Err("This project uses GSD-2. Use gsd2_* commands instead.".to_string());
+        }
+    }
     let db = db.write().await;
     let project_path = get_project_path(&db, &project_id)?;
     let path = Path::new(&project_path)
@@ -736,6 +806,20 @@ pub async fn gsd_list_todos(
     project_id: String,
     status_filter: Option<String>,
 ) -> Result<Vec<GsdTodo>, String> {
+    // GSD-2 guard: reject gsd2 projects with explicit error
+    {
+        let reader = db.read().await;
+        let version: Option<String> = reader
+            .query_row(
+                "SELECT gsd_version FROM projects WHERE id = ?1",
+                params![&project_id],
+                |row| row.get(0),
+            )
+            .ok();
+        if version.as_deref() == Some("gsd2") {
+            return Err("This project uses GSD-2. Use gsd2_* commands instead.".to_string());
+        }
+    }
     let db = db.write().await;
     let project_path = get_project_path(&db, &project_id)?;
     let planning = Path::new(&project_path).join(".planning").join("todos");
@@ -839,6 +923,20 @@ pub async fn gsd_create_todo(
     project_id: String,
     input: GsdTodoInput,
 ) -> Result<GsdTodo, String> {
+    // GSD-2 guard: reject gsd2 projects with explicit error
+    {
+        let reader = db.read().await;
+        let version: Option<String> = reader
+            .query_row(
+                "SELECT gsd_version FROM projects WHERE id = ?1",
+                params![&project_id],
+                |row| row.get(0),
+            )
+            .ok();
+        if version.as_deref() == Some("gsd2") {
+            return Err("This project uses GSD-2. Use gsd2_* commands instead.".to_string());
+        }
+    }
     let db = db.write().await;
     let project_path = get_project_path(&db, &project_id)?;
     let pending_dir = Path::new(&project_path)
@@ -925,6 +1023,20 @@ pub async fn gsd_update_todo(
     todo_id: String,
     input: GsdTodoInput,
 ) -> Result<GsdTodo, String> {
+    // GSD-2 guard: reject gsd2 projects with explicit error
+    {
+        let reader = db.read().await;
+        let version: Option<String> = reader
+            .query_row(
+                "SELECT gsd_version FROM projects WHERE id = ?1",
+                params![&project_id],
+                |row| row.get(0),
+            )
+            .ok();
+        if version.as_deref() == Some("gsd2") {
+            return Err("This project uses GSD-2. Use gsd2_* commands instead.".to_string());
+        }
+    }
     let db = db.write().await;
     let project_path = get_project_path(&db, &project_id)?;
     let planning = Path::new(&project_path).join(".planning").join("todos");
@@ -1001,6 +1113,20 @@ pub async fn gsd_complete_todo(
     project_id: String,
     todo_id: String,
 ) -> Result<GsdTodo, String> {
+    // GSD-2 guard: reject gsd2 projects with explicit error
+    {
+        let reader = db.read().await;
+        let version: Option<String> = reader
+            .query_row(
+                "SELECT gsd_version FROM projects WHERE id = ?1",
+                params![&project_id],
+                |row| row.get(0),
+            )
+            .ok();
+        if version.as_deref() == Some("gsd2") {
+            return Err("This project uses GSD-2. Use gsd2_* commands instead.".to_string());
+        }
+    }
     let db = db.write().await;
     let project_path = get_project_path(&db, &project_id)?;
     let planning = Path::new(&project_path).join(".planning").join("todos");
@@ -1051,6 +1177,20 @@ pub async fn gsd_delete_todo(
     project_id: String,
     todo_id: String,
 ) -> Result<(), String> {
+    // GSD-2 guard: reject gsd2 projects with explicit error
+    {
+        let reader = db.read().await;
+        let version: Option<String> = reader
+            .query_row(
+                "SELECT gsd_version FROM projects WHERE id = ?1",
+                params![&project_id],
+                |row| row.get(0),
+            )
+            .ok();
+        if version.as_deref() == Some("gsd2") {
+            return Err("This project uses GSD-2. Use gsd2_* commands instead.".to_string());
+        }
+    }
     let db = db.write().await;
     let project_path = get_project_path(&db, &project_id)?;
     let planning = Path::new(&project_path).join(".planning").join("todos");
@@ -1080,6 +1220,20 @@ pub async fn gsd_list_debug_sessions(
     project_id: String,
     include_resolved: Option<bool>,
 ) -> Result<Vec<GsdDebugSession>, String> {
+    // GSD-2 guard: reject gsd2 projects with explicit error
+    {
+        let reader = db.read().await;
+        let version: Option<String> = reader
+            .query_row(
+                "SELECT gsd_version FROM projects WHERE id = ?1",
+                params![&project_id],
+                |row| row.get(0),
+            )
+            .ok();
+        if version.as_deref() == Some("gsd2") {
+            return Err("This project uses GSD-2. Use gsd2_* commands instead.".to_string());
+        }
+    }
     let db = db.write().await;
     let project_path = get_project_path(&db, &project_id)?;
     let debug_dir = Path::new(&project_path).join(".planning").join("debug");
@@ -1116,6 +1270,20 @@ pub async fn gsd_get_debug_session(
     project_id: String,
     session_id: String,
 ) -> Result<GsdDebugSession, String> {
+    // GSD-2 guard: reject gsd2 projects with explicit error
+    {
+        let reader = db.read().await;
+        let version: Option<String> = reader
+            .query_row(
+                "SELECT gsd_version FROM projects WHERE id = ?1",
+                params![&project_id],
+                |row| row.get(0),
+            )
+            .ok();
+        if version.as_deref() == Some("gsd2") {
+            return Err("This project uses GSD-2. Use gsd2_* commands instead.".to_string());
+        }
+    }
     let db = db.write().await;
     let project_path = get_project_path(&db, &project_id)?;
     let debug_dir = Path::new(&project_path).join(".planning").join("debug");
@@ -1181,6 +1349,20 @@ pub async fn gsd_list_research(
     db: tauri::State<'_, DbState>,
     project_id: String,
 ) -> Result<Vec<GsdResearchDoc>, String> {
+    // GSD-2 guard: reject gsd2 projects with explicit error
+    {
+        let reader = db.read().await;
+        let version: Option<String> = reader
+            .query_row(
+                "SELECT gsd_version FROM projects WHERE id = ?1",
+                params![&project_id],
+                |row| row.get(0),
+            )
+            .ok();
+        if version.as_deref() == Some("gsd2") {
+            return Err("This project uses GSD-2. Use gsd2_* commands instead.".to_string());
+        }
+    }
     let db = db.write().await;
     let project_path = get_project_path(&db, &project_id)?;
     let research_dir = Path::new(&project_path).join(".planning").join("research");
@@ -1233,6 +1415,20 @@ pub async fn gsd_get_verification(
     project_id: String,
     phase_number: i32,
 ) -> Result<GsdVerification, String> {
+    // GSD-2 guard: reject gsd2 projects with explicit error
+    {
+        let reader = db.read().await;
+        let version: Option<String> = reader
+            .query_row(
+                "SELECT gsd_version FROM projects WHERE id = ?1",
+                params![&project_id],
+                |row| row.get(0),
+            )
+            .ok();
+        if version.as_deref() == Some("gsd2") {
+            return Err("This project uses GSD-2. Use gsd2_* commands instead.".to_string());
+        }
+    }
     let db = db.write().await;
     let project_path = get_project_path(&db, &project_id)?;
     let phases_dir = Path::new(&project_path).join(".planning").join("phases");
@@ -1346,6 +1542,20 @@ pub async fn gsd_get_phase_context(
     project_id: String,
     phase_number: i32,
 ) -> Result<GsdPhaseContext, String> {
+    // GSD-2 guard: reject gsd2 projects with explicit error
+    {
+        let reader = db.read().await;
+        let version: Option<String> = reader
+            .query_row(
+                "SELECT gsd_version FROM projects WHERE id = ?1",
+                params![&project_id],
+                |row| row.get(0),
+            )
+            .ok();
+        if version.as_deref() == Some("gsd2") {
+            return Err("This project uses GSD-2. Use gsd2_* commands instead.".to_string());
+        }
+    }
     let db = db.write().await;
     let project_path = get_project_path(&db, &project_id)?;
     let phases_dir = Path::new(&project_path).join(".planning").join("phases");
@@ -1846,6 +2056,20 @@ pub async fn gsd_list_plans(
     db: tauri::State<'_, DbState>,
     project_id: String,
 ) -> Result<Vec<GsdPlan>, String> {
+    // GSD-2 guard: reject gsd2 projects with explicit error
+    {
+        let reader = db.read().await;
+        let version: Option<String> = reader
+            .query_row(
+                "SELECT gsd_version FROM projects WHERE id = ?1",
+                params![&project_id],
+                |row| row.get(0),
+            )
+            .ok();
+        if version.as_deref() == Some("gsd2") {
+            return Err("This project uses GSD-2. Use gsd2_* commands instead.".to_string());
+        }
+    }
     let db = db.write().await;
     let project_path = get_project_path(&db, &project_id)?;
     let phases_dir = Path::new(&project_path).join(".planning").join("phases");
@@ -1902,6 +2126,20 @@ pub async fn gsd_get_phase_plans(
     project_id: String,
     phase_number: i32,
 ) -> Result<Vec<GsdPlan>, String> {
+    // GSD-2 guard: reject gsd2 projects with explicit error
+    {
+        let reader = db.read().await;
+        let version: Option<String> = reader
+            .query_row(
+                "SELECT gsd_version FROM projects WHERE id = ?1",
+                params![&project_id],
+                |row| row.get(0),
+            )
+            .ok();
+        if version.as_deref() == Some("gsd2") {
+            return Err("This project uses GSD-2. Use gsd2_* commands instead.".to_string());
+        }
+    }
     let db = db.write().await;
     let project_path = get_project_path(&db, &project_id)?;
     let phases_dir = Path::new(&project_path).join(".planning").join("phases");
@@ -1960,6 +2198,20 @@ pub async fn gsd_list_summaries(
     db: tauri::State<'_, DbState>,
     project_id: String,
 ) -> Result<Vec<GsdSummary>, String> {
+    // GSD-2 guard: reject gsd2 projects with explicit error
+    {
+        let reader = db.read().await;
+        let version: Option<String> = reader
+            .query_row(
+                "SELECT gsd_version FROM projects WHERE id = ?1",
+                params![&project_id],
+                |row| row.get(0),
+            )
+            .ok();
+        if version.as_deref() == Some("gsd2") {
+            return Err("This project uses GSD-2. Use gsd2_* commands instead.".to_string());
+        }
+    }
     let db = db.write().await;
     let project_path = get_project_path(&db, &project_id)?;
     let phases_dir = Path::new(&project_path).join(".planning").join("phases");
@@ -2017,6 +2269,20 @@ pub async fn gsd_get_phase_summaries(
     project_id: String,
     phase_number: i32,
 ) -> Result<Vec<GsdSummary>, String> {
+    // GSD-2 guard: reject gsd2 projects with explicit error
+    {
+        let reader = db.read().await;
+        let version: Option<String> = reader
+            .query_row(
+                "SELECT gsd_version FROM projects WHERE id = ?1",
+                params![&project_id],
+                |row| row.get(0),
+            )
+            .ok();
+        if version.as_deref() == Some("gsd2") {
+            return Err("This project uses GSD-2. Use gsd2_* commands instead.".to_string());
+        }
+    }
     let db = db.write().await;
     let project_path = get_project_path(&db, &project_id)?;
     let phases_dir = Path::new(&project_path).join(".planning").join("phases");
@@ -2058,6 +2324,20 @@ pub async fn gsd_list_phase_research(
     db: tauri::State<'_, DbState>,
     project_id: String,
 ) -> Result<Vec<GsdPhaseResearch>, String> {
+    // GSD-2 guard: reject gsd2 projects with explicit error
+    {
+        let reader = db.read().await;
+        let version: Option<String> = reader
+            .query_row(
+                "SELECT gsd_version FROM projects WHERE id = ?1",
+                params![&project_id],
+                |row| row.get(0),
+            )
+            .ok();
+        if version.as_deref() == Some("gsd2") {
+            return Err("This project uses GSD-2. Use gsd2_* commands instead.".to_string());
+        }
+    }
     let db = db.write().await;
     let project_path = get_project_path(&db, &project_id)?;
     let phases_dir = Path::new(&project_path).join(".planning").join("phases");
@@ -2111,6 +2391,20 @@ pub async fn gsd_get_phase_research(
     project_id: String,
     phase_number: i32,
 ) -> Result<GsdPhaseResearch, String> {
+    // GSD-2 guard: reject gsd2 projects with explicit error
+    {
+        let reader = db.read().await;
+        let version: Option<String> = reader
+            .query_row(
+                "SELECT gsd_version FROM projects WHERE id = ?1",
+                params![&project_id],
+                |row| row.get(0),
+            )
+            .ok();
+        if version.as_deref() == Some("gsd2") {
+            return Err("This project uses GSD-2. Use gsd2_* commands instead.".to_string());
+        }
+    }
     let db = db.write().await;
     let project_path = get_project_path(&db, &project_id)?;
     let phases_dir = Path::new(&project_path).join(".planning").join("phases");
@@ -2144,6 +2438,20 @@ pub async fn gsd_list_milestone_audits(
     db: tauri::State<'_, DbState>,
     project_id: String,
 ) -> Result<Vec<GsdMilestoneAudit>, String> {
+    // GSD-2 guard: reject gsd2 projects with explicit error
+    {
+        let reader = db.read().await;
+        let version: Option<String> = reader
+            .query_row(
+                "SELECT gsd_version FROM projects WHERE id = ?1",
+                params![&project_id],
+                |row| row.get(0),
+            )
+            .ok();
+        if version.as_deref() == Some("gsd2") {
+            return Err("This project uses GSD-2. Use gsd2_* commands instead.".to_string());
+        }
+    }
     let db = db.write().await;
     let project_path = get_project_path(&db, &project_id)?;
     let milestones_dir = Path::new(&project_path)
@@ -2775,6 +3083,20 @@ pub async fn gsd_sync_project(
     db: tauri::State<'_, DbState>,
     project_id: String,
 ) -> Result<GsdSyncResult, String> {
+    // GSD-2 guard: reject gsd2 projects with explicit error
+    {
+        let reader = db.read().await;
+        let version: Option<String> = reader
+            .query_row(
+                "SELECT gsd_version FROM projects WHERE id = ?1",
+                params![&project_id],
+                |row| row.get(0),
+            )
+            .ok();
+        if version.as_deref() == Some("gsd2") {
+            return Err("This project uses GSD-2. Use gsd2_* commands instead.".to_string());
+        }
+    }
     let db = db.write().await;
     gsd_sync_project_internal(&db, &project_id)
 }
@@ -3014,6 +3336,20 @@ pub async fn gsd_list_uat_results(
     db: tauri::State<'_, DbState>,
     project_id: String,
 ) -> Result<Vec<GsdUatResult>, String> {
+    // GSD-2 guard: reject gsd2 projects with explicit error
+    {
+        let reader = db.read().await;
+        let version: Option<String> = reader
+            .query_row(
+                "SELECT gsd_version FROM projects WHERE id = ?1",
+                params![&project_id],
+                |row| row.get(0),
+            )
+            .ok();
+        if version.as_deref() == Some("gsd2") {
+            return Err("This project uses GSD-2. Use gsd2_* commands instead.".to_string());
+        }
+    }
     let conn = db.read().await;
     let mut stmt = conn
         .prepare(
@@ -3040,6 +3376,20 @@ pub async fn gsd_get_uat_by_phase(
     project_id: String,
     phase_number: String,
 ) -> Result<Option<GsdUatResult>, String> {
+    // GSD-2 guard: reject gsd2 projects with explicit error
+    {
+        let reader = db.read().await;
+        let version: Option<String> = reader
+            .query_row(
+                "SELECT gsd_version FROM projects WHERE id = ?1",
+                params![&project_id],
+                |row| row.get(0),
+            )
+            .ok();
+        if version.as_deref() == Some("gsd2") {
+            return Err("This project uses GSD-2. Use gsd2_* commands instead.".to_string());
+        }
+    }
     let conn = db.read().await;
     let result = conn
         .query_row(
@@ -3319,6 +3669,20 @@ pub async fn gsd_list_validations(
     db: tauri::State<'_, DbState>,
     project_id: String,
 ) -> Result<Vec<GsdValidation>, String> {
+    // GSD-2 guard: reject gsd2 projects with explicit error
+    {
+        let reader = db.read().await;
+        let version: Option<String> = reader
+            .query_row(
+                "SELECT gsd_version FROM projects WHERE id = ?1",
+                params![&project_id],
+                |row| row.get(0),
+            )
+            .ok();
+        if version.as_deref() == Some("gsd2") {
+            return Err("This project uses GSD-2. Use gsd2_* commands instead.".to_string());
+        }
+    }
     let conn = db.read().await;
     let mut stmt = conn
         .prepare(
@@ -3348,6 +3712,20 @@ pub async fn gsd_get_validation_by_phase(
     project_id: String,
     phase_number: String,
 ) -> Result<Option<GsdValidation>, String> {
+    // GSD-2 guard: reject gsd2 projects with explicit error
+    {
+        let reader = db.read().await;
+        let version: Option<String> = reader
+            .query_row(
+                "SELECT gsd_version FROM projects WHERE id = ?1",
+                params![&project_id],
+                |row| row.get(0),
+            )
+            .ok();
+        if version.as_deref() == Some("gsd2") {
+            return Err("This project uses GSD-2. Use gsd2_* commands instead.".to_string());
+        }
+    }
     let conn = db.read().await;
     let result = conn
         .prepare(
@@ -3693,6 +4071,20 @@ pub async fn gsd_get_roadmap_progress(
     db: tauri::State<'_, DbState>,
     project_id: String,
 ) -> Result<Option<RoadmapProgress>, String> {
+    // GSD-2 guard: reject gsd2 projects with explicit error
+    {
+        let reader = db.read().await;
+        let version: Option<String> = reader
+            .query_row(
+                "SELECT gsd_version FROM projects WHERE id = ?1",
+                params![&project_id],
+                |row| row.get(0),
+            )
+            .ok();
+        if version.as_deref() == Some("gsd2") {
+            return Err("This project uses GSD-2. Use gsd2_* commands instead.".to_string());
+        }
+    }
     let db = db.write().await;
     let project_path = get_project_path(&db, &project_id)?;
     let roadmap_path = Path::new(&project_path)
@@ -3825,6 +4217,20 @@ pub async fn gsd_update_config(
     project_id: String,
     update: GsdConfigUpdate,
 ) -> Result<(), String> {
+    // GSD-2 guard: reject gsd2 projects with explicit error
+    {
+        let reader = db.read().await;
+        let version: Option<String> = reader
+            .query_row(
+                "SELECT gsd_version FROM projects WHERE id = ?1",
+                params![&project_id],
+                |row| row.get(0),
+            )
+            .ok();
+        if version.as_deref() == Some("gsd2") {
+            return Err("This project uses GSD-2. Use gsd2_* commands instead.".to_string());
+        }
+    }
     let db = db.write().await;
     let project_path = get_project_path(&db, &project_id)?;
     let config_path = Path::new(&project_path)
@@ -3918,6 +4324,9 @@ pub struct GsdTodoWithProject {
 pub async fn gsd_list_all_todos(
     db: tauri::State<'_, DbState>,
 ) -> Result<Vec<GsdTodoWithProject>, String> {
+    // TODO: GSD-2 guard not possible without DB state — no project_id parameter
+    // This command iterates all projects; GSD-2 projects will not have .planning/todos/ so their
+    // todos will naturally be absent (the .planning check at the top of the loop handles this).
     let db = db.write().await;
 
     // Fetch all projects that have a .planning directory
