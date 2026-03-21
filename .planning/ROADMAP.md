@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 1: GSD-2 Backend Foundation** - Rust version detection, .gsd/ file parsing commands, GSD-1 guard rails, and file watcher extension
 - [x] **Phase 2: Health Widget, Adaptive UI, and Reactive Updates** - Health data command, budget/blocker display, adaptive terminology, GSD version badges, and polling infrastructure (completed 2026-03-21)
 - [x] **Phase 3: Worktrees Panel** - Worktree listing, diff preview, and remove action with macOS symlink safety (completed 2026-03-21)
-- [ ] **Phase 4: Headless Mode and Visualizer** - Full headless session lifecycle control and milestone-to-task progress visualizer with cost metrics
+- [x] **Phase 4: Headless Mode and Visualizer** - Full headless session lifecycle control and milestone-to-task progress visualizer with cost metrics (completed 2026-03-21)
 
 ## Phase Details
 
@@ -75,7 +75,7 @@ Plans:
   3. The Visualizer tab renders a milestone → slice → task progress tree where each node shows done/active/pending status
   4. The Visualizer tab shows cost and token metrics aggregated by phase (milestone) and by model, plus a chronological execution timeline of completed slices/tasks
   5. The "query snapshot" panel in the Headless tab shows the last { state, next, cost } result from a one-shot gsd headless query
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 
 Plans:
 - [ ] 04-01-PLAN.md — Rust backend: HeadlessSessionRegistry, headless commands (query/start/stop), visualizer data command, can_safely_close/force_close_all, lib.rs registration
@@ -92,4 +92,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | 1. GSD-2 Backend Foundation | 2/3 | In Progress|  |
 | 2. Health Widget, Adaptive UI, and Reactive Updates | 2/2 | Complete   | 2026-03-21 |
 | 3. Worktrees Panel | 2/2 | Complete   | 2026-03-21 |
-| 4. Headless Mode and Visualizer | 2/3 | In Progress|  |
+| 4. Headless Mode and Visualizer | 3/3 | Complete   | 2026-03-21 |

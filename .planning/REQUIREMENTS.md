@@ -48,14 +48,14 @@
 - [x] **HDLS-03**: `gsd2_headless_stop` sends interrupt to a running headless PTY session and waits for it to exit
 - [x] **HDLS-04**: Headless session output (JSON lines) streams to the frontend via existing `pty:output:{id}` events
 - [x] **HDLS-05**: A HeadlessSessionRegistry tracks active sessions and ensures all sessions are cleaned up on app close
-- [ ] **HDLS-06**: A new Headless tab in the project detail view shows session status (idle/running/complete), start/stop controls, streamed output, and the last query snapshot (state/next/cost)
+- [x] **HDLS-06**: A new Headless tab in the project detail view shows session status (idle/running/complete), start/stop controls, streamed output, and the last query snapshot (state/next/cost)
 
 ### Visualizer
 
 - [x] **VIZ-01**: `gsd2_get_visualizer_data` returns the full milestone → slice → task progress tree with done/active/pending status per node
 - [x] **VIZ-02**: Visualizer data includes cost/token metrics aggregated by phase (milestone) and by model
 - [x] **VIZ-03**: Visualizer data includes a chronological timeline of execution history (completed slices/tasks with timestamps)
-- [ ] **VIZ-04**: A new Visualizer tab in the project detail view renders the progress tree, cost/token bar charts by phase and model, and the execution timeline
+- [x] **VIZ-04**: A new Visualizer tab in the project detail view renders the progress tree, cost/token bar charts by phase and model, and the execution timeline
 
 ## v2 Requirements
 
@@ -113,11 +113,11 @@
 | HDLS-03 | Phase 4 | Complete |
 | HDLS-04 | Phase 4 | Complete |
 | HDLS-05 | Phase 4 | Complete |
-| HDLS-06 | Phase 4 | Pending |
+| HDLS-06 | Phase 4 | Complete |
 | VIZ-01 | Phase 4 | Complete |
 | VIZ-02 | Phase 4 | Complete |
 | VIZ-03 | Phase 4 | Complete |
-| VIZ-04 | Phase 4 | Pending |
+| VIZ-04 | Phase 4 | Complete |
 
 **Coverage:**
 - v1 requirements: 31 total
