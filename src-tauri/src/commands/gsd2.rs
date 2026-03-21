@@ -1463,6 +1463,48 @@ pub async fn gsd2_headless_query(
     })
 }
 
+/// Get the active headless session ID for a project, if one is alive.
+/// Verifies the session still exists in TerminalManager; auto-removes stale registry entries.
+#[tauri::command]
+pub async fn gsd2_headless_get_session(
+    project_id: String,
+    registry: tauri::State<'_, HeadlessRegistryState>,
+    terminal_manager: tauri::State<'_, crate::pty::TerminalManagerState>,
+) -> Result<Option<String>, String> {
+    let session_id = {
+        let reg = registry.lock().await;
+        reg.session_for_project(&project_id)
+    };
+
+    if let Some(sid) = session_id {
+        // Verify the PTY session is still alive
+        let alive = {
+            let mut manager = terminal_manager.lock().await;
+            manager.is_active(&sid)
+        };
+        if alive {
+            return Ok(Some(sid));
+        }
+        // Stale — remove from registry
+        let mut reg = registry.lock().await;
+        reg.unregister(&sid);
+    }
+
+    Ok(None)
+}
+
+/// Unregister a headless session from the registry without killing the process.
+/// Used when the PTY process exits naturally so the registry stays consistent.
+#[tauri::command]
+pub async fn gsd2_headless_unregister(
+    session_id: String,
+    registry: tauri::State<'_, HeadlessRegistryState>,
+) -> Result<(), String> {
+    let mut reg = registry.lock().await;
+    reg.unregister(&session_id);
+    Ok(())
+}
+
 /// Start a headless GSD session for a project via PTY (creates a real terminal session).
 /// Enforces one headless session per project.
 #[tauri::command]
@@ -1473,14 +1515,10 @@ pub async fn gsd2_headless_start(
     terminal_manager: tauri::State<'_, crate::pty::TerminalManagerState>,
     registry: tauri::State<'_, HeadlessRegistryState>,
 ) -> Result<String, String> {
-    let project_id_i64: i64 = project_id
-        .parse()
-        .map_err(|_| format!("Invalid project_id: {}", project_id))?;
-
     // Check for existing session for this project
     {
         let reg = registry.lock().await;
-        if reg.session_for_project(project_id_i64).is_some() {
+        if reg.session_for_project(&project_id).is_some() {
             return Err("A headless session is already running for this project".to_string());
         }
     }
@@ -1509,7 +1547,7 @@ pub async fn gsd2_headless_start(
     // Register in headless registry
     {
         let mut reg = registry.lock().await;
-        reg.register(session_id.clone(), project_id_i64);
+        reg.register(session_id.clone(), project_id.clone());
     }
 
     Ok(session_id)

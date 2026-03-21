@@ -1344,6 +1344,12 @@ export interface VisualizerData {
 export const gsd2HeadlessQuery = (projectId: string) =>
   invoke<HeadlessSnapshot>('gsd2_headless_query', { projectId });
 
+export const gsd2HeadlessGetSession = (projectId: string) =>
+  invoke<string | null>('gsd2_headless_get_session', { projectId });
+
+export const gsd2HeadlessUnregister = (sessionId: string) =>
+  invoke<void>('gsd2_headless_unregister', { sessionId });
+
 export const gsd2HeadlessStart = (projectId: string) =>
   invoke<string>('gsd2_headless_start', { projectId });
 

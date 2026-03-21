@@ -2,7 +2,7 @@
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { onPtyOutput, onPtyExit } from '@/lib/tauri';
+import { onPtyOutput, onPtyExit, gsd2HeadlessUnregister } from '@/lib/tauri';
 import type { HeadlessSnapshot, PtyOutputEvent, PtyExitEvent } from '@/lib/tauri';
 import type { UnlistenFn } from '@tauri-apps/api/event';
 
@@ -12,6 +12,7 @@ export interface HeadlessLogRow {
   timestamp: string;
   state: string;
   cost_delta: number;
+  raw?: boolean;
 }
 
 export interface UseHeadlessSessionReturn {
@@ -41,12 +42,43 @@ export function useHeadlessSession(): UseHeadlessSessionReturn {
     bufferRef.current = '';
   }, []);
 
+  // Strip ANSI/VT escape sequences from a string.
+  // Covers: CSI (ESC[...), OSC (ESC]...), character set (ESC( ESC)), keypad mode (ESC= ESC>),
+  // and all other Fe/Fs two-char sequences.
+  const stripAnsi = (str: string): string =>
+    str
+      // CSI sequences: ESC [ ... final
+      .replace(/\x1b\[[0-9;?<>=!]*[A-Za-z@`]/g, '')
+      // OSC sequences: ESC ] ... BEL
+      .replace(/\x1b\][^\x07]*\x07/g, '')
+      // Character set designations: ESC ( ) * + followed by a char
+      .replace(/\x1b[()#*+][A-Za-z0-9=<>]/g, '')
+      // Two-char nF sequences: ESC 0x20-0x2F then 0x30-0x7E
+      .replace(/\x1b[\x20-\x2f][\x30-\x7e]/g, '')
+      // Single-char Fe sequences: ESC 0x40-0x5F (includes @,A-Z,[\]^_)
+      .replace(/\x1b[\x40-\x5f]/g, '')
+      // Keypad / other short sequences: ESC = ESC > ESC ~ etc.
+      .replace(/\x1b[=>~]/g, '')
+      // Stray ESC followed by anything remaining
+      .replace(/\x1b./g, '');
+
   // Process a complete JSON line from PTY output
   const processLine = useCallback((line: string) => {
-    const trimmed = line.trim();
+    const trimmed = stripAnsi(line).trim();
     if (!trimmed) return;
+    // Skip terminal status bar / shell prompt artifacts (box-drawing lines, DA responses).
+    // All meaningful gsd headless output starts with '[' (e.g. [headless], [gsd], [status]).
+    // Non-JSON lines that don't start with '[' are terminal noise.
+    const looksLikeTagged = trimmed.startsWith('[');
+    let isJson = false;
+    try { JSON.parse(trimmed); isJson = true; } catch { /* not json */ }
+    if (!looksLikeTagged && !isJson) return;
     try {
       const parsed = JSON.parse(trimmed);
+      // Only treat as a headless snapshot if it has the expected shape
+      if (typeof parsed !== 'object' || parsed === null || typeof parsed.state !== 'string') {
+        throw new Error('not a headless snapshot');
+      }
       const now = new Date();
       const timestamp = [
         now.getHours().toString().padStart(2, '0'),
@@ -54,7 +86,7 @@ export function useHeadlessSession(): UseHeadlessSessionReturn {
         now.getSeconds().toString().padStart(2, '0'),
       ].join(':');
 
-      const state = parsed.state ?? 'unknown';
+      const state = parsed.state;
       const cost = parsed.cost ?? 0;
       const next = parsed.next ?? null;
 
@@ -70,7 +102,14 @@ export function useHeadlessSession(): UseHeadlessSessionReturn {
         return [...prev, { timestamp, state, cost_delta: delta }];
       });
     } catch {
-      // Non-JSON line (startup messages, etc.) — skip
+      // Non-JSON line — show as raw text row
+      const now = new Date();
+      const timestamp = [
+        now.getHours().toString().padStart(2, '0'),
+        now.getMinutes().toString().padStart(2, '0'),
+        now.getSeconds().toString().padStart(2, '0'),
+      ].join(':');
+      setLogs(prev => [...prev, { timestamp, state: trimmed, cost_delta: 0, raw: true }]);
     }
   }, []);
 
@@ -103,6 +142,9 @@ export function useHeadlessSession(): UseHeadlessSessionReturn {
         const exitStatus = event.exit_code === 0 ? 'complete' : 'failed';
         setStatus(exitStatus as HeadlessStatus);
         setCompletedAt(new Date().toISOString());
+        // Unregister from the Rust registry so a new session can start
+        void gsd2HeadlessUnregister(sessionId);
+        setSessionId(null);
       });
     };
 

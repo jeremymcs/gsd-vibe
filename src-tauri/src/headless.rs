@@ -15,7 +15,7 @@ use tokio::sync::Mutex;
 /// from interactive terminal sessions.
 pub struct HeadlessSessionRegistry {
     /// session_id -> project_id mapping
-    pub sessions: HashMap<String, i64>,
+    pub sessions: HashMap<String, String>,
 }
 
 impl HeadlessSessionRegistry {
@@ -26,7 +26,7 @@ impl HeadlessSessionRegistry {
     }
 
     /// Register a headless session for a project.
-    pub fn register(&mut self, session_id: String, project_id: i64) {
+    pub fn register(&mut self, session_id: String, project_id: String) {
         self.sessions.insert(session_id, project_id);
     }
 
@@ -37,15 +37,15 @@ impl HeadlessSessionRegistry {
 
     /// Get the project_id associated with a session_id.
     #[allow(dead_code)]
-    pub fn get_project_id(&self, session_id: &str) -> Option<i64> {
-        self.sessions.get(session_id).copied()
+    pub fn get_project_id(&self, session_id: &str) -> Option<&str> {
+        self.sessions.get(session_id).map(|s| s.as_str())
     }
 
     /// Find the session_id for a given project_id (for one-per-project enforcement).
-    pub fn session_for_project(&self, project_id: i64) -> Option<String> {
+    pub fn session_for_project(&self, project_id: &str) -> Option<String> {
         self.sessions
             .iter()
-            .find(|(_, &pid)| pid == project_id)
+            .find(|(_, pid)| pid.as_str() == project_id)
             .map(|(sid, _)| sid.clone())
     }
 

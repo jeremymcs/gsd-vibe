@@ -10,6 +10,7 @@ import { Play, Square } from 'lucide-react';
 import { useHeadlessSession } from '@/hooks/use-headless-session';
 import type { HeadlessLogRow } from '@/hooks/use-headless-session';
 import { useGsd2HeadlessQuery, useGsd2HeadlessStart, useGsd2HeadlessStop } from '@/lib/queries';
+import { gsd2HeadlessGetSession } from '@/lib/tauri';
 import { formatCost, formatRelativeTime } from '@/lib/utils';
 
 interface Gsd2HeadlessTabProps {
@@ -34,6 +35,17 @@ export function Gsd2HeadlessTab({ projectId }: Gsd2HeadlessTabProps) {
   const stopMutation = useGsd2HeadlessStop();
 
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // On mount: recover any session already running in the registry
+  useEffect(() => {
+    void gsd2HeadlessGetSession(projectId).then(sid => {
+      if (sid && !sessionId) {
+        setSessionId(sid);
+        setStatus('running');
+      }
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectId]);
 
   // Auto-scroll to bottom when new log entries arrive
   useEffect(() => {
@@ -174,7 +186,9 @@ function LogRow({ row }: { row: HeadlessLogRow }) {
     <div className="flex items-center text-xs font-mono py-1 hover:bg-muted/30">
       <span className="w-20 text-muted-foreground shrink-0">[{row.timestamp}]</span>
       <span className="flex-1 truncate px-2">{row.state}</span>
-      <span className="w-20 text-right text-status-success shrink-0">+{formatCost(row.cost_delta)}</span>
+      {!row.raw && (
+        <span className="w-20 text-right text-status-success shrink-0">+{formatCost(row.cost_delta)}</span>
+      )}
     </div>
   );
 }

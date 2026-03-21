@@ -294,6 +294,8 @@ pub fn run() {
             commands::gsd2::gsd2_remove_worktree,
             commands::gsd2::gsd2_get_worktree_diff,
             commands::gsd2::gsd2_headless_query,
+            commands::gsd2::gsd2_headless_get_session,
+            commands::gsd2::gsd2_headless_unregister,
             commands::gsd2::gsd2_headless_start,
             commands::gsd2::gsd2_headless_stop,
             commands::gsd2::gsd2_get_visualizer_data,
