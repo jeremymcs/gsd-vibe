@@ -13,6 +13,7 @@ import {
 } from '@/lib/design-tokens';
 import type { ProjectWithStats, GitInfo } from '@/lib/tauri';
 import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import {
   Tooltip,
   TooltipContent,
@@ -110,6 +111,16 @@ export const ProjectCard = React.memo(function ProjectCard({
           {/* GSD live stats row — only for GSD projects */}
           {hasGsd && (
             <div className="flex items-center gap-2 flex-wrap">
+              {/* GSD version badge */}
+              {(project.gsd_version === 'gsd2' || project.gsd_version === 'gsd1') && (
+                <Badge
+                  variant={project.gsd_version === 'gsd2' ? 'subtle-cyan' : 'secondary'}
+                  size="sm"
+                >
+                  {project.gsd_version === 'gsd2' ? 'GSD-2' : 'GSD-1'}
+                </Badge>
+              )}
+
               {/* Phase count badge */}
               {project.tech_stack?.gsd_phase_count != null && (
                 <span className="inline-flex items-center gap-1 text-[10px] font-medium text-brand-purple bg-brand-purple/10 border border-brand-purple/20 rounded px-1.5 py-0.5">

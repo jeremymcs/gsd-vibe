@@ -19,6 +19,7 @@ import {
   Lightbulb,
   FlaskConical,
   ClipboardCheck,
+  Activity,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -48,6 +49,7 @@ import {
   KnowledgeTab,
   TabGroup,
   EnvVarsTab,
+  Gsd2HealthTab,
 } from "@/components/project";
 import { TerminalTabs } from "@/components/terminal";
 import { watchProjectFiles } from "@/lib/tauri";
@@ -71,6 +73,9 @@ export function ProjectPage() {
   const deleteProject = useDeleteProject();
 
   const hasPlanning = project?.tech_stack?.has_planning ?? false;
+  const isGsd2 = project?.gsd_version === 'gsd2';
+  const isGsd1 = hasPlanning && !isGsd2;
+  const showGsdTab = isGsd2 || isGsd1;
 
   // Stable ref to avoid listener leaks in useGsdFileWatcher
   const syncProjectRef = useRef(syncProject);
@@ -83,14 +88,14 @@ export function ProjectPage() {
   }, [id]);
 
   // Real-time GSD file watcher
-  useGsdFileWatcher(id!, project?.path ?? '', hasPlanning, handleGsdSync);
+  useGsdFileWatcher(id!, project?.path ?? '', showGsdTab, handleGsdSync);
 
   // Start file watcher for GSD projects on mount
   useEffect(() => {
-    if (project?.path && hasPlanning) {
+    if (project?.path && showGsdTab) {
       void watchProjectFiles(project.path);
     }
-  }, [project?.path, hasPlanning]);
+  }, [project?.path, showGsdTab]);
 
   // Auto-sync GSD data on project load
   const syncAttemptedRef = useRef<string | null>(null);
@@ -172,7 +177,7 @@ export function ProjectPage() {
             <Key className="h-4 w-4" />
             Env Vars
           </TabsTrigger>
-          {hasPlanning && (
+          {showGsdTab && (
             <TabsTrigger value="gsd" className="gap-2">
               <CheckSquare className="h-4 w-4" />
               GSD
@@ -228,62 +233,94 @@ export function ProjectPage() {
           <EnvVarsTab projectId={project.id} projectPath={project.path} />
         </TabsContent>
 
-        {/* GSD — workflow order: Plans → Context → Todos → Validation → UAT → Verification → Milestones → Debug */}
-        {hasPlanning && (
+        {/* GSD — adaptive tab set based on gsd_version */}
+        {showGsdTab && (
           <TabsContent value="gsd" className="flex-1 min-h-0">
-            <TabGroup
-              defaultTab="gsd-plans"
-              tabs={[
-                {
-                  id: "gsd-plans",
-                  label: "Plans",
-                  icon: FileText,
-                  content: <GsdPlansTab projectId={project.id} />,
-                },
-                {
-                  id: "gsd-context",
-                  label: "Context",
-                  icon: Lightbulb,
-                  content: <GsdContextTab projectId={project.id} />,
-                },
-                {
-                  id: "gsd-todos",
-                  label: "Todos",
-                  icon: CheckSquare,
-                  content: <GsdTodosTab projectId={project.id} />,
-                },
-                {
-                  id: "gsd-validation",
-                  label: "Validation",
-                  icon: FlaskConical,
-                  content: <GsdValidationPlanTab projectId={project.id} />,
-                },
-                {
-                  id: "gsd-uat",
-                  label: "UAT",
-                  icon: ClipboardCheck,
-                  content: <GsdUatTab projectId={project.id} />,
-                },
-                {
-                  id: "gsd-verification",
-                  label: "Verification",
-                  icon: ShieldCheck,
-                  content: <GsdVerificationTab projectId={project.id} />,
-                },
-                {
-                  id: "gsd-milestones",
-                  label: "Milestones",
-                  icon: Flag,
-                  content: <GsdMilestonesTab projectId={project.id} />,
-                },
-                {
-                  id: "gsd-debug",
-                  label: "Debug",
-                  icon: Bug,
-                  content: <GsdDebugTab projectId={project.id} />,
-                },
-              ]}
-            />
+            {isGsd2 ? (
+              <TabGroup
+                defaultTab="gsd2-health"
+                tabs={[
+                  {
+                    id: "gsd2-health",
+                    label: "Health",
+                    icon: Activity,
+                    content: <Gsd2HealthTab projectId={project.id} projectPath={project.path} />,
+                  },
+                  {
+                    id: "gsd2-milestones",
+                    label: "Milestones",
+                    icon: Flag,
+                    content: <div className="p-4 text-sm text-muted-foreground">Milestones view coming soon</div>,
+                  },
+                  {
+                    id: "gsd2-slices",
+                    label: "Slices",
+                    icon: Flag,
+                    content: <div className="p-4 text-sm text-muted-foreground">Slices view coming soon</div>,
+                  },
+                  {
+                    id: "gsd2-tasks",
+                    label: "Tasks",
+                    icon: Flag,
+                    content: <div className="p-4 text-sm text-muted-foreground">Tasks view coming soon</div>,
+                  },
+                ]}
+              />
+            ) : (
+              <TabGroup
+                defaultTab="gsd-plans"
+                tabs={[
+                  {
+                    id: "gsd-plans",
+                    label: "Plans",
+                    icon: FileText,
+                    content: <GsdPlansTab projectId={project.id} />,
+                  },
+                  {
+                    id: "gsd-context",
+                    label: "Context",
+                    icon: Lightbulb,
+                    content: <GsdContextTab projectId={project.id} />,
+                  },
+                  {
+                    id: "gsd-todos",
+                    label: "Todos",
+                    icon: CheckSquare,
+                    content: <GsdTodosTab projectId={project.id} />,
+                  },
+                  {
+                    id: "gsd-validation",
+                    label: "Validation",
+                    icon: FlaskConical,
+                    content: <GsdValidationPlanTab projectId={project.id} />,
+                  },
+                  {
+                    id: "gsd-uat",
+                    label: "UAT",
+                    icon: ClipboardCheck,
+                    content: <GsdUatTab projectId={project.id} />,
+                  },
+                  {
+                    id: "gsd-verification",
+                    label: "Verification",
+                    icon: ShieldCheck,
+                    content: <GsdVerificationTab projectId={project.id} />,
+                  },
+                  {
+                    id: "gsd-milestones",
+                    label: "Milestones",
+                    icon: Flag,
+                    content: <GsdMilestonesTab projectId={project.id} />,
+                  },
+                  {
+                    id: "gsd-debug",
+                    label: "Debug",
+                    icon: Bug,
+                    content: <GsdDebugTab projectId={project.id} />,
+                  },
+                ]}
+              />
+            )}
           </TabsContent>
         )}
       </Tabs>

@@ -25,7 +25,7 @@ pub async fn list_projects(db: tauri::State<'_, DbState>) -> Result<Vec<Project>
 
     let mut stmt = conn
         .prepare(
-            "SELECT id, name, path, description, tech_stack, config, status, created_at, updated_at, COALESCE(is_favorite, 0)
+            "SELECT id, name, path, description, tech_stack, config, status, created_at, updated_at, COALESCE(is_favorite, 0), gsd_version
              FROM projects
              WHERE status = 'active'
              ORDER BY COALESCE(is_favorite, 0) DESC, updated_at DESC",
@@ -55,6 +55,7 @@ pub async fn list_projects(db: tauri::State<'_, DbState>) -> Result<Vec<Project>
                 is_favorite: is_fav != 0,
                 created_at: row.get(7)?,
                 updated_at: row.get(8)?,
+                gsd_version: row.get(10)?,
             })
         })
         .map_err(|e| e.to_string())?
@@ -70,7 +71,7 @@ pub async fn get_project(db: tauri::State<'_, DbState>, id: String) -> Result<Pr
 
     let mut stmt = conn
         .prepare(
-            "SELECT id, name, path, description, tech_stack, config, status, created_at, updated_at, COALESCE(is_favorite, 0)
+            "SELECT id, name, path, description, tech_stack, config, status, created_at, updated_at, COALESCE(is_favorite, 0), gsd_version
              FROM projects
              WHERE id = ?1",
         )
@@ -99,6 +100,7 @@ pub async fn get_project(db: tauri::State<'_, DbState>, id: String) -> Result<Pr
                 is_favorite: is_fav != 0,
                 created_at: row.get(7)?,
                 updated_at: row.get(8)?,
+                gsd_version: row.get(10)?,
             })
         })
         .map_err(|e| e.to_string())?;

@@ -16,6 +16,7 @@ export interface Project {
   is_favorite: boolean;
   created_at: string;
   updated_at: string;
+  gsd_version: string | null;
 }
 
 export interface RoadmapProgress {

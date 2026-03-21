@@ -229,6 +229,14 @@ export function ProjectCard({ project, showDescription, selected, onToggleSelect
             </TooltipContent>
           </Tooltip>
         )}
+        {(project.gsd_version === 'gsd2' || project.gsd_version === 'gsd1') && (
+          <Badge
+            variant={project.gsd_version === 'gsd2' ? 'subtle-cyan' : 'secondary'}
+            size="sm"
+          >
+            {project.gsd_version === 'gsd2' ? 'GSD-2' : 'GSD-1'}
+          </Badge>
+        )}
       </div>
 
       {/* Row 5: Progress bar + Cost + Last activity */}

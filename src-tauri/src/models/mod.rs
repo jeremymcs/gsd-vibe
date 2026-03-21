@@ -16,6 +16,9 @@ pub struct Project {
     pub is_favorite: bool,
     pub created_at: String,
     pub updated_at: String,
+    /// GSD version: "gsd2" | "gsd1" | "none" | null
+    #[serde(default)]
+    pub gsd_version: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
