@@ -1183,3 +1183,45 @@ export const useGsd2RemoveWorktree = () => {
   });
 };
 
+// GSD-2 Headless
+export const useGsd2HeadlessQuery = (projectId: string, enabled = true) =>
+  useQuery({
+    queryKey: queryKeys.gsd2HeadlessQuery(projectId),
+    queryFn: () => api.gsd2HeadlessQuery(projectId),
+    enabled: !!projectId && enabled,
+    staleTime: 5_000,
+    refetchInterval: 10_000,
+  });
+
+export const useGsd2HeadlessStart = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (projectId: string) => api.gsd2HeadlessStart(projectId),
+    onError: (error) => {
+      toast.error('Failed to start headless session', { description: getErrorMessage(error) });
+    },
+    onSuccess: (_data, projectId) => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.gsd2HeadlessQuery(projectId) });
+    },
+  });
+};
+
+export const useGsd2HeadlessStop = () => {
+  return useMutation({
+    mutationFn: (sessionId: string) => api.gsd2HeadlessStop(sessionId),
+    onError: (error) => {
+      toast.error('Failed to stop headless session', { description: getErrorMessage(error) });
+    },
+  });
+};
+
+// GSD-2 Visualizer
+export const useGsd2VisualizerData = (projectId: string, enabled = true) =>
+  useQuery({
+    queryKey: queryKeys.gsd2VisualizerData(projectId),
+    queryFn: () => api.gsd2GetVisualizerData(projectId),
+    enabled: !!projectId && enabled,
+    staleTime: 15_000,
+    refetchInterval: 30_000,
+  });
+
