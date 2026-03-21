@@ -34,15 +34,15 @@
 
 ### Dead Code
 
-- [ ] **DEAD-01**: Unused Rust commands identified and removed from gsd2.rs / gsd.rs / lib.rs
-- [ ] **DEAD-02**: Unused React components identified and removed from src/components/
-- [ ] **DEAD-03**: Unused hooks and TypeScript types/interfaces identified and removed
-- [ ] **DEAD-04**: Orphaned files (no imports, no references) identified and removed
+- [x] **DEAD-01**: Unused Rust commands identified and removed from gsd2.rs / gsd.rs / lib.rs
+- [x] **DEAD-02**: Unused React components identified and removed from src/components/
+- [x] **DEAD-03**: Unused hooks and TypeScript types/interfaces identified and removed
+- [x] **DEAD-04**: Orphaned files (no imports, no references) identified and removed
 
 ### Quality
 
-- [ ] **QLTY-01**: Pre-existing 4 test failures in projects.test.tsx and main-layout.test.tsx fixed
-- [ ] **QLTY-02**: Build passes with no TypeScript errors after all changes
+- [x] **QLTY-01**: Pre-existing 4 test failures in projects.test.tsx and main-layout.test.tsx fixed
+- [x] **QLTY-02**: Build passes with no TypeScript errors after all changes
 
 ## Future Requirements
 
@@ -75,12 +75,12 @@
 | VISL-02 | Phase 9 | Complete |
 | VISL-03 | Phase 9 | Complete |
 | VISL-04 | Phase 9 | Complete |
-| DEAD-01 | Phase 10 | Pending |
-| DEAD-02 | Phase 10 | Pending |
-| DEAD-03 | Phase 10 | Pending |
-| DEAD-04 | Phase 10 | Pending |
-| QLTY-01 | Phase 10 | Pending |
-| QLTY-02 | Phase 10 | Pending |
+| DEAD-01 | Phase 10 | Complete |
+| DEAD-02 | Phase 10 | Complete |
+| DEAD-03 | Phase 10 | Complete |
+| DEAD-04 | Phase 10 | Complete |
+| QLTY-01 | Phase 10 | Complete |
+| QLTY-02 | Phase 10 | Complete |
 
 **Coverage:**
 - v1.1 requirements: 20 total
