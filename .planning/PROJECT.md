@@ -23,7 +23,7 @@ Per-project version detection drives everything — the app correctly identifies
 
 v1.0 shipped 2026-03-21. All 7 phases complete, 14 plans executed. GSD-2 integration is fully functional: version detection, file parsing, health widget, worktrees, headless sessions, visualizer, and reactive tab invalidation all wired end-to-end.
 
-v1.1 in progress. Phase 8 complete 2026-03-21 — full rebrand to "GSD VibeFlow" / `io.gsd.vibeflow`. All config, UI strings, file headers updated; zero legacy "Track Your Shit" references remain in source.
+v1.1 in progress. Phase 9 complete 2026-03-21 — gsd.build visual identity applied: black/white/cyan palette, light theme removed, design tokens renamed (gsd-cyan), all 33 component files updated, GSD-branded app icon in all platform formats.
 
 **Remaining tech debt (to address in v1.1):**
 - `gsd2_detect_version` registered as Tauri command but not called post-import (version set at import time only)
@@ -51,7 +51,7 @@ v1.1 in progress. Phase 8 complete 2026-03-21 — full rebrand to "GSD VibeFlow"
 
 - [ ] Rename app from "Track Your Shit" to "GSD VibeFlow" in all metadata (tauri.conf.json, package.json, Cargo.toml)
 - [ ] Replace all "Track Your Shit" UI strings with "GSD VibeFlow"
-- [ ] Update visual identity: color palette to gsd.build (black/white/cyan), new app icon
+- [x] Update visual identity: color palette to gsd.build (black/white/cyan), new app icon — Validated in Phase 9: visual-identity
 - [ ] Update all file headers: `Track Your Shit - [purpose]` → `GSD VibeFlow - [purpose]`
 - [ ] Audit and remove dead code: unused Rust commands, React components, hooks, and TypeScript types
 - [ ] Fix pre-existing test failures in projects.test.tsx and main-layout.test.tsx (4 tests)
@@ -93,4 +93,4 @@ v1.1 in progress. Phase 8 complete 2026-03-21 — full rebrand to "GSD VibeFlow"
 | Prefix-array invalidation for per-item queries | gsd2Milestone/gsd2Slice keys take extra args beyond projectId | ✓ Implemented in Phase 07 — `['gsd2', 'milestone', projectId]` catches all accordion-expanded queries |
 
 ---
-*Last updated: 2026-03-21 after Phase 8 complete — rebrand to GSD VibeFlow fully applied*
+*Last updated: 2026-03-21 after Phase 9 complete — gsd.build visual identity fully applied*
