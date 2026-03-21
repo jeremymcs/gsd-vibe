@@ -1110,6 +1110,295 @@ pub async fn gsd2_detect_version(
 }
 
 // ============================================================
+// Worktree structs and commands
+// ============================================================
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WorktreeInfo {
+    pub name: String,
+    pub branch: String,
+    pub path: String,
+    pub exists: bool,
+    pub added_count: u32,
+    pub modified_count: u32,
+    pub removed_count: u32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WorktreeDiff {
+    pub added: Vec<String>,
+    pub modified: Vec<String>,
+    pub removed: Vec<String>,
+    pub added_count: u32,
+    pub modified_count: u32,
+    pub removed_count: u32,
+}
+
+fn canonicalize_path(p: &str) -> String {
+    std::fs::canonicalize(std::path::Path::new(p))
+        .map(|c| c.to_string_lossy().to_string())
+        .unwrap_or_else(|_| p.to_string())
+}
+
+/// Parse `git worktree list --porcelain` output into a vec of (name, branch, path, exists).
+/// The first block is always the main worktree — skip it.
+fn parse_worktree_porcelain(output: &str) -> Vec<(String, String, String, bool)> {
+    let mut result = Vec::new();
+
+    // Split on blank lines (double newline separates worktree blocks)
+    let blocks: Vec<&str> = output.split("\n\n").collect();
+
+    // Skip the first block (main worktree)
+    for block in blocks.iter().skip(1) {
+        let block = block.trim();
+        if block.is_empty() {
+            continue;
+        }
+
+        let mut worktree_path = String::new();
+        let mut branch = String::new();
+
+        for line in block.lines() {
+            if let Some(p) = line.strip_prefix("worktree ") {
+                worktree_path = p.trim().to_string();
+            } else if let Some(b) = line.strip_prefix("branch refs/heads/") {
+                branch = b.trim().to_string();
+            }
+        }
+
+        if worktree_path.is_empty() {
+            continue;
+        }
+
+        // Derive name: strip "worktree/" prefix from branch if present, else use branch as-is
+        let name = if branch.starts_with("worktree/") {
+            branch["worktree/".len()..].to_string()
+        } else if !branch.is_empty() {
+            branch.clone()
+        } else {
+            // Fallback: last path component
+            worktree_path
+                .split('/')
+                .last()
+                .unwrap_or(&worktree_path)
+                .to_string()
+        };
+
+        let exists = std::path::Path::new(&worktree_path).is_dir();
+        let canonical = canonicalize_path(&worktree_path);
+
+        result.push((name, branch, canonical, exists));
+    }
+
+    result
+}
+
+/// Parse `git diff --name-status` output into a WorktreeDiff.
+/// Status chars: A/C → added, M/R → modified, D → removed.
+fn parse_diff_name_status(output: &str) -> WorktreeDiff {
+    let mut added = Vec::new();
+    let mut modified = Vec::new();
+    let mut removed = Vec::new();
+
+    for line in output.lines() {
+        let line = line.trim();
+        if line.is_empty() {
+            continue;
+        }
+        // Lines are: <status_char>\t<filepath> (possibly with rename: R100\told\tnew)
+        let parts: Vec<&str> = line.splitn(2, '\t').collect();
+        if parts.len() < 2 {
+            continue;
+        }
+        let status = parts[0].trim();
+        let filepath = parts[1].trim().to_string();
+
+        // For renames (R100\told\tnew), take the new path
+        let filepath = if status.starts_with('R') {
+            filepath.split('\t').last().unwrap_or(&filepath).to_string()
+        } else {
+            filepath
+        };
+
+        let status_char = status.chars().next().unwrap_or(' ');
+        match status_char {
+            'A' | 'C' => added.push(filepath),
+            'M' | 'R' => modified.push(filepath),
+            'D' => removed.push(filepath),
+            _ => {}
+        }
+    }
+
+    let added_count = added.len() as u32;
+    let modified_count = modified.len() as u32;
+    let removed_count = removed.len() as u32;
+
+    WorktreeDiff {
+        added,
+        modified,
+        removed,
+        added_count,
+        modified_count,
+        removed_count,
+    }
+}
+
+/// Run `git diff --name-status main...HEAD` in the given worktree directory.
+/// Returns only counts. If the command fails (e.g., `main` doesn't exist), returns zeros.
+fn get_diff_counts(worktree_path: &str) -> (u32, u32, u32) {
+    let output = std::process::Command::new("git")
+        .args(["diff", "--name-status", "main...HEAD"])
+        .current_dir(worktree_path)
+        .output();
+
+    match output {
+        Ok(out) if out.status.success() => {
+            let text = String::from_utf8_lossy(&out.stdout);
+            let diff = parse_diff_name_status(&text);
+            (diff.added_count, diff.modified_count, diff.removed_count)
+        }
+        _ => (0, 0, 0),
+    }
+}
+
+/// List all linked worktrees for a GSD-2 project.
+/// Returns name, branch, canonicalized path, existence flag, and diff counts vs main.
+#[tauri::command]
+pub async fn gsd2_list_worktrees(
+    db: tauri::State<'_, DbState>,
+    project_id: String,
+) -> Result<Vec<WorktreeInfo>, String> {
+    let project_path = {
+        let db_guard = db.write().await;
+        get_project_path(&db_guard, &project_id)?
+    };
+
+    let canonical_project = canonicalize_path(&project_path);
+
+    let output = std::process::Command::new("git")
+        .args(["worktree", "list", "--porcelain"])
+        .current_dir(&canonical_project)
+        .output()
+        .map_err(|e| format!("Failed to run git worktree list: {}", e))?;
+
+    let text = String::from_utf8_lossy(&output.stdout);
+    let entries = parse_worktree_porcelain(&text);
+
+    let worktrees: Vec<WorktreeInfo> = entries
+        .into_iter()
+        .map(|(name, branch, path, exists)| {
+            let (added_count, modified_count, removed_count) = if exists {
+                get_diff_counts(&path)
+            } else {
+                (0, 0, 0)
+            };
+            WorktreeInfo {
+                name,
+                branch,
+                path,
+                exists,
+                added_count,
+                modified_count,
+                removed_count,
+            }
+        })
+        .collect();
+
+    Ok(worktrees)
+}
+
+/// Remove a linked worktree and delete its branch.
+/// Step 1: `git worktree remove .gsd/worktrees/{name} --force` — if this fails, return Err.
+/// Step 2: `git branch -D worktree/{name}` — if this fails, log a warning but return Ok.
+#[tauri::command]
+pub async fn gsd2_remove_worktree(
+    db: tauri::State<'_, DbState>,
+    project_id: String,
+    worktree_name: String,
+) -> Result<(), String> {
+    let project_path = {
+        let db_guard = db.write().await;
+        get_project_path(&db_guard, &project_id)?
+    };
+
+    let canonical_project = canonicalize_path(&project_path);
+    let worktree_rel = format!(".gsd/worktrees/{}", worktree_name);
+
+    // Step 1: Remove the worktree directory
+    let remove_out = std::process::Command::new("git")
+        .args(["worktree", "remove", &worktree_rel, "--force"])
+        .current_dir(&canonical_project)
+        .output()
+        .map_err(|e| format!("Failed to run git worktree remove: {}", e))?;
+
+    if !remove_out.status.success() {
+        let stderr = String::from_utf8_lossy(&remove_out.stderr);
+        return Err(format!("git worktree remove failed: {}", stderr));
+    }
+
+    // Step 2: Delete the branch — failure is non-fatal
+    let branch_name = format!("worktree/{}", worktree_name);
+    let branch_out = std::process::Command::new("git")
+        .args(["branch", "-D", &branch_name])
+        .current_dir(&canonical_project)
+        .output();
+
+    match branch_out {
+        Ok(out) if !out.status.success() => {
+            let stderr = String::from_utf8_lossy(&out.stderr);
+            tracing::warn!(
+                "git branch -D {} failed (non-fatal): {}",
+                branch_name,
+                stderr
+            );
+        }
+        Err(e) => {
+            tracing::warn!("Failed to run git branch -D {} (non-fatal): {}", branch_name, e);
+        }
+        _ => {}
+    }
+
+    Ok(())
+}
+
+/// Get the full diff for a worktree vs main (file lists + counts).
+#[tauri::command]
+pub async fn gsd2_get_worktree_diff(
+    db: tauri::State<'_, DbState>,
+    project_id: String,
+    worktree_name: String,
+) -> Result<WorktreeDiff, String> {
+    let project_path = {
+        let db_guard = db.write().await;
+        get_project_path(&db_guard, &project_id)?
+    };
+
+    let canonical_project = canonicalize_path(&project_path);
+    let worktree_path = format!("{}/.gsd/worktrees/{}", canonical_project, worktree_name);
+    let canonical_worktree = canonicalize_path(&worktree_path);
+
+    let output = std::process::Command::new("git")
+        .args(["diff", "--name-status", "main...HEAD"])
+        .current_dir(&canonical_worktree)
+        .output();
+
+    match output {
+        Ok(out) if out.status.success() => {
+            let text = String::from_utf8_lossy(&out.stdout);
+            Ok(parse_diff_name_status(&text))
+        }
+        _ => Ok(WorktreeDiff {
+            added: Vec::new(),
+            modified: Vec::new(),
+            removed: Vec::new(),
+            added_count: 0,
+            modified_count: 0,
+            removed_count: 0,
+        }),
+    }
+}
+
+// ============================================================
 // Tests
 // ============================================================
 
