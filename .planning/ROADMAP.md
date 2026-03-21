@@ -37,9 +37,9 @@ Full details: `.planning/milestones/v1.0-ROADMAP.md`
 ### Phase 8: Identity, Strings, and Headers
 **Goal**: The app is fully renamed — every metadata file, UI string, and source file header reads "GSD VibeFlow"
 **Depends on**: Phase 7 (v1.0 complete)
-**Requirements**: IDNT-01, IDNT-02, IDNT-03, IDNT-04, STRN-01, STRN-02, STRN-03, STRN-04, HDRS-01, HDRS-02
+**Requirements**: IDNT-01, IDNT-02, IDNT-04, STRN-01, STRN-02, STRN-03, STRN-04, HDRS-01, HDRS-02
 **Success Criteria** (what must be TRUE):
-  1. App window title and About dialog display "GSD VibeFlow" with no "Track Your Shit" text visible anywhere in the running UI
+  1. App window title displays "GSD VibeFlow" with no "Track Your Shit" text visible anywhere in the running UI (About dialog deferred -- IDNT-03 moved to future phase)
   2. tauri.conf.json, package.json, and Cargo.toml all declare "GSD VibeFlow" as the app name with the updated bundle identifier
   3. Every .rs and .ts/.tsx source file header reads "GSD VibeFlow - [purpose]" — zero legacy headers remain
   4. README.md and CLAUDE.md describe the app as "GSD VibeFlow" with no legacy name references
@@ -48,7 +48,7 @@ Full details: `.planning/milestones/v1.0-ROADMAP.md`
 
 Plans:
 - [ ] 08-01-PLAN.md — Update metadata files (tauri.conf.json, package.json, Cargo.toml, bundle identifier, keychain service)
-- [ ] 08-02-PLAN.md — Replace all UI strings, page titles, doc comments; update README.md and CLAUDE.md
+- [ ] 08-02-PLAN.md — Replace all UI strings, page titles, doc comments; update README.md, CLAUDE.md, and website
 - [ ] 08-03-PLAN.md — Bulk-update all .rs and .ts/.tsx source file headers; final verification
 
 ### Phase 9: Visual Identity
