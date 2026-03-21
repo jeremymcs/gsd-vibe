@@ -20,6 +20,7 @@ import {
   FlaskConical,
   ClipboardCheck,
   Activity,
+  GitBranch,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -50,6 +51,7 @@ import {
   TabGroup,
   EnvVarsTab,
   Gsd2HealthTab,
+  Gsd2WorktreesTab,
 } from "@/components/project";
 import { TerminalTabs } from "@/components/terminal";
 import { watchProjectFiles } from "@/lib/tauri";
@@ -245,6 +247,12 @@ export function ProjectPage() {
                     label: "Health",
                     icon: Activity,
                     content: <Gsd2HealthTab projectId={project.id} projectPath={project.path} />,
+                  },
+                  {
+                    id: "gsd2-worktrees",
+                    label: "Worktrees",
+                    icon: GitBranch,
+                    content: <Gsd2WorktreesTab projectId={project.id} projectPath={project.path} />,
                   },
                   {
                     id: "gsd2-milestones",

@@ -28,3 +28,4 @@ export { RoadmapProgressCard } from './roadmap-progress-card';
 export { GsdValidationPlanTab } from './gsd-validation-plan-tab';
 export { GsdUatTab } from './gsd-uat-tab';
 export { Gsd2HealthTab } from './gsd2-health-tab';
+export { Gsd2WorktreesTab } from './gsd2-worktrees-tab';
