@@ -5,6 +5,9 @@
   "author": "Jeremy McSpadden <jeremy@fluxlabs.net>",
   "license": "MIT",
   "type": "module",
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
