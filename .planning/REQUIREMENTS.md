@@ -43,18 +43,18 @@
 
 ### Headless Mode
 
-- [ ] **HDLS-01**: `gsd2_headless_query` runs `gsd headless --json next` as a child process (not PTY), parses the JSON snapshot, and returns `{ state, next, cost }`
-- [ ] **HDLS-02**: `gsd2_headless_start` starts a full `gsd headless` session via PTY (reuses existing `TerminalManager`), returning a session ID
-- [ ] **HDLS-03**: `gsd2_headless_stop` sends interrupt to a running headless PTY session and waits for it to exit
+- [x] **HDLS-01**: `gsd2_headless_query` runs `gsd headless --json next` as a child process (not PTY), parses the JSON snapshot, and returns `{ state, next, cost }`
+- [x] **HDLS-02**: `gsd2_headless_start` starts a full `gsd headless` session via PTY (reuses existing `TerminalManager`), returning a session ID
+- [x] **HDLS-03**: `gsd2_headless_stop` sends interrupt to a running headless PTY session and waits for it to exit
 - [ ] **HDLS-04**: Headless session output (JSON lines) streams to the frontend via existing `pty:output:{id}` events
-- [ ] **HDLS-05**: A HeadlessSessionRegistry tracks active sessions and ensures all sessions are cleaned up on app close
+- [x] **HDLS-05**: A HeadlessSessionRegistry tracks active sessions and ensures all sessions are cleaned up on app close
 - [ ] **HDLS-06**: A new Headless tab in the project detail view shows session status (idle/running/complete), start/stop controls, streamed output, and the last query snapshot (state/next/cost)
 
 ### Visualizer
 
-- [ ] **VIZ-01**: `gsd2_get_visualizer_data` returns the full milestone → slice → task progress tree with done/active/pending status per node
-- [ ] **VIZ-02**: Visualizer data includes cost/token metrics aggregated by phase (milestone) and by model
-- [ ] **VIZ-03**: Visualizer data includes a chronological timeline of execution history (completed slices/tasks with timestamps)
+- [x] **VIZ-01**: `gsd2_get_visualizer_data` returns the full milestone → slice → task progress tree with done/active/pending status per node
+- [x] **VIZ-02**: Visualizer data includes cost/token metrics aggregated by phase (milestone) and by model
+- [x] **VIZ-03**: Visualizer data includes a chronological timeline of execution history (completed slices/tasks with timestamps)
 - [ ] **VIZ-04**: A new Visualizer tab in the project detail view renders the progress tree, cost/token bar charts by phase and model, and the execution timeline
 
 ## v2 Requirements
@@ -108,15 +108,15 @@
 | WORK-03 | Phase 3 | Complete |
 | WORK-04 | Phase 3 | Complete |
 | WORK-05 | Phase 3 | Complete |
-| HDLS-01 | Phase 4 | Pending |
-| HDLS-02 | Phase 4 | Pending |
-| HDLS-03 | Phase 4 | Pending |
+| HDLS-01 | Phase 4 | Complete |
+| HDLS-02 | Phase 4 | Complete |
+| HDLS-03 | Phase 4 | Complete |
 | HDLS-04 | Phase 4 | Pending |
-| HDLS-05 | Phase 4 | Pending |
+| HDLS-05 | Phase 4 | Complete |
 | HDLS-06 | Phase 4 | Pending |
-| VIZ-01 | Phase 4 | Pending |
-| VIZ-02 | Phase 4 | Pending |
-| VIZ-03 | Phase 4 | Pending |
+| VIZ-01 | Phase 4 | Complete |
+| VIZ-02 | Phase 4 | Complete |
+| VIZ-03 | Phase 4 | Complete |
 | VIZ-04 | Phase 4 | Pending |
 
 **Coverage:**

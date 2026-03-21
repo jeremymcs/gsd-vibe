@@ -75,7 +75,7 @@ Plans:
   3. The Visualizer tab renders a milestone → slice → task progress tree where each node shows done/active/pending status
   4. The Visualizer tab shows cost and token metrics aggregated by phase (milestone) and by model, plus a chronological execution timeline of completed slices/tasks
   5. The "query snapshot" panel in the Headless tab shows the last { state, next, cost } result from a one-shot gsd headless query
-**Plans:** 3 plans
+**Plans:** 1/3 plans executed
 
 Plans:
 - [ ] 04-01-PLAN.md — Rust backend: HeadlessSessionRegistry, headless commands (query/start/stop), visualizer data command, can_safely_close/force_close_all, lib.rs registration
@@ -92,4 +92,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | 1. GSD-2 Backend Foundation | 2/3 | In Progress|  |
 | 2. Health Widget, Adaptive UI, and Reactive Updates | 2/2 | Complete   | 2026-03-21 |
 | 3. Worktrees Panel | 2/2 | Complete   | 2026-03-21 |
-| 4. Headless Mode and Visualizer | 0/3 | Not started | - |
+| 4. Headless Mode and Visualizer | 1/3 | In Progress|  |
