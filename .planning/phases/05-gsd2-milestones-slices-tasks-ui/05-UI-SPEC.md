@@ -34,7 +34,7 @@ Declared values (multiples of 4):
 | Token | Value | Usage |
 |-------|-------|-------|
 | xs | 4px | Icon gaps (`gap-1`), inline padding, icon-to-label spacing |
-| sm | 8px | Compact element spacing (`gap-2`, `p-2`), row internal padding |
+| sm | 8px | Compact element spacing (`gap-2`, `p-2`), row internal padding, accordion expand/collapse rows (`py-2`) |
 | md | 16px | Default element spacing (`p-4`, `gap-4`), card content padding |
 | lg | 24px | Section padding (`p-6`), card header padding |
 | xl | 32px | Layout gaps between major sections |
@@ -42,7 +42,6 @@ Declared values (multiples of 4):
 | 3xl | 64px | Page-level spacing (not used in tab content) |
 
 Exceptions:
-- Accordion expand/collapse rows use `py-3` (12px) for compact scan density — matches Worktrees tab row height
 - Skeleton rows use `h-4` (16px) height, `h-8` (32px) for wider diff-style skeleton rows
 
 Source: Derived from `gsd2-worktrees-tab.tsx` and `gsd2-health-tab.tsx` patterns
@@ -54,13 +53,15 @@ Source: Derived from `gsd2-worktrees-tab.tsx` and `gsd2-health-tab.tsx` patterns
 | Role | Size | Weight | Line Height |
 |------|------|--------|-------------|
 | Body | 14px (`text-sm`) | 400 (regular) | 1.5 |
-| Label / badge text | 12px (`text-xs`) | 500 (medium) | 1.4 |
+| Label / badge text | 12px (`text-xs`) | 400 (regular) | 1.4 |
 | Card heading | 14px (`text-sm`) | 600 (semibold) | 1.2 |
 | Section subheading | 12px (`text-xs`) | 600 (semibold) | 1.2 |
 
 Font: Inter var. Monospace (task IDs, slice IDs, milestone IDs): JetBrains Mono Variable at 12px (`text-xs font-mono`).
 
-Source: Derived from `gsd2-health-tab.tsx` `text-sm font-semibold`, `gsd2-worktrees-tab.tsx` `text-xs font-medium`, established project pattern.
+Label/badge text is distinguished from body text by size contrast (12px vs 14px), not by weight. Both body and label/badge text use weight 400.
+
+Source: Derived from `gsd2-health-tab.tsx` `text-sm font-semibold`, established project pattern.
 
 ---
 
@@ -116,6 +117,7 @@ Pattern source: `gsd2-worktrees-tab.tsx` `expandedRows: Set<string>` — replica
 - Clicking a slice row (inside an expanded milestone) toggles its ID in the slice `expandedRows` Set
 - Expanded state is ephemeral (not persisted — resets on tab re-mount)
 - ChevronRight icon: `transition-transform duration-150` — `rotate-90` class applied when expanded
+- Accordion rows use `py-2` (8px) for compact scan density
 - Expanded slice content: `transition-all duration-150 overflow-hidden` — animate height from 0 to auto via max-height pattern or conditional render
 
 Task loading strategy: **lazy** — slice tasks fetched via `useGsd2Slice` only when that slice row is first expanded (enabled: `expandedRows.has(sliceId)`). This avoids N+1 fetches on initial milestone expand.
@@ -125,6 +127,7 @@ Task loading strategy: **lazy** — slice tasks fetched via `useGsd2Slice` only 
 - Milestone section headers are collapsible (ChevronRight toggle, same pattern)
 - Slice rows within a milestone section expand inline to show tasks (same lazy load strategy)
 - All milestone sections start collapsed on mount
+- Accordion rows use `py-2` (8px) for compact scan density
 
 ### Tasks Tab
 
