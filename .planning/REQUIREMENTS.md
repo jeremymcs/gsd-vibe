@@ -59,36 +59,34 @@
 
 ## Traceability
 
-*(Populated during roadmap creation)*
-
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| IDNT-01 | — | Pending |
-| IDNT-02 | — | Pending |
-| IDNT-03 | — | Pending |
-| IDNT-04 | — | Pending |
-| STRN-01 | — | Pending |
-| STRN-02 | — | Pending |
-| STRN-03 | — | Pending |
-| STRN-04 | — | Pending |
-| VISL-01 | — | Pending |
-| VISL-02 | — | Pending |
-| VISL-03 | — | Pending |
-| VISL-04 | — | Pending |
-| HDRS-01 | — | Pending |
-| HDRS-02 | — | Pending |
-| DEAD-01 | — | Pending |
-| DEAD-02 | — | Pending |
-| DEAD-03 | — | Pending |
-| DEAD-04 | — | Pending |
-| QLTY-01 | — | Pending |
-| QLTY-02 | — | Pending |
+| IDNT-01 | Phase 8 | Pending |
+| IDNT-02 | Phase 8 | Pending |
+| IDNT-03 | Phase 8 | Pending |
+| IDNT-04 | Phase 8 | Pending |
+| STRN-01 | Phase 8 | Pending |
+| STRN-02 | Phase 8 | Pending |
+| STRN-03 | Phase 8 | Pending |
+| STRN-04 | Phase 8 | Pending |
+| HDRS-01 | Phase 8 | Pending |
+| HDRS-02 | Phase 8 | Pending |
+| VISL-01 | Phase 9 | Pending |
+| VISL-02 | Phase 9 | Pending |
+| VISL-03 | Phase 9 | Pending |
+| VISL-04 | Phase 9 | Pending |
+| DEAD-01 | Phase 10 | Pending |
+| DEAD-02 | Phase 10 | Pending |
+| DEAD-03 | Phase 10 | Pending |
+| DEAD-04 | Phase 10 | Pending |
+| QLTY-01 | Phase 10 | Pending |
+| QLTY-02 | Phase 10 | Pending |
 
 **Coverage:**
 - v1.1 requirements: 20 total
-- Mapped to phases: 0 (pending roadmap)
-- Unmapped: 20 ⚠️
+- Mapped to phases: 20 (Phase 8: 10, Phase 9: 4, Phase 10: 6)
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-03-21*
-*Last updated: 2026-03-21 after initial definition*
+*Last updated: 2026-03-21 — traceability populated after roadmap creation*
