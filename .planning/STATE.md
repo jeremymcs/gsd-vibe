@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Phase 6 context gathered
-last_updated: "2026-03-21T14:58:18.011Z"
+stopped_at: Completed 06-01-PLAN.md
+last_updated: "2026-03-21T15:42:11.509Z"
 progress:
   total_phases: 6
-  completed_phases: 5
-  total_plans: 12
-  completed_plans: 12
+  completed_phases: 6
+  total_plans: 13
+  completed_plans: 13
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-20)
 
 **Core value:** Per-project version detection drives everything — correctly identify .gsd/ vs .planning/ and render the right data and terminology for each project.
-**Current focus:** Phase 05 — gsd2-milestones-slices-tasks-ui
+**Current focus:** Phase 06 — Reactive Updates and Headless Session Polish
 
 ## Current Position
 
-Phase: 05 (gsd2-milestones-slices-tasks-ui) — EXECUTING
-Plan: 2 of 2
+Phase: 06 (Reactive Updates and Headless Session Polish) — EXECUTING
+Plan: 1 of 1
 
 ## Performance Metrics
 
@@ -58,6 +58,7 @@ Plan: 2 of 2
 | Phase 04 P03 | 5 | 3 tasks | 4 files |
 | Phase 05 P01 | 7 | 3 tasks | 5 files |
 | Phase 05 P02 | 6 | 2 tasks | 5 files |
+| Phase 06 P01 | 10 | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -100,6 +101,9 @@ Recent decisions affecting current work:
 - [Phase 05]: useGsd2Milestone/useGsd2Slice accept enabled flag for lazy accordion loading in Plan 02 components
 - [Phase 05]: SliceTaskGroup sub-component in Tasks tab renders per-slice to avoid dynamic hook count — hooks cannot be called in loops
 - [Phase 05]: Tasks tab fetches active milestone first via useGsd2Milestone then renders SliceTaskGroup per non-done slice — avoids 25+ eager queries
+- [Phase 06]: gsd2:file-changed invalidates all three reactive queries (health/worktrees/visualizer) without debounce — multi-query invalidation from single event handler
+- [Phase 06]: useHeadlessSession lifted to ProjectPage scope — hook lifecycle matches page, logs persist across tab navigation
+- [Phase 06]: Log buffer capped at 500 rows via slice(-499) in both setLogs paths — bounded memory for long-running headless sessions
 
 ### Pending Todos
 
@@ -112,6 +116,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-21T14:58:17.996Z
-Stopped at: Phase 6 context gathered
-Resume file: .planning/phases/06-reactive-updates-and-headless-polish/06-CONTEXT.md
+Last session: 2026-03-21T15:42:11.505Z
+Stopped at: Completed 06-01-PLAN.md
+Resume file: None

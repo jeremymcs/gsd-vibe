@@ -17,7 +17,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 3: Worktrees Panel** - Worktree listing, diff preview, and remove action with macOS symlink safety (completed 2026-03-21)
 - [x] **Phase 4: Headless Mode and Visualizer** - Full headless session lifecycle control and milestone-to-task progress visualizer with cost metrics (completed 2026-03-21)
 - [x] **Phase 5: GSD-2 Milestones, Slices, and Tasks UI** - TS invoke wrappers and React Query hooks for all 5 parsing commands; wire Milestones, Slices, and Tasks GSD-2 tabs with real data (gap closure) (completed 2026-03-21)
-- [ ] **Phase 6: Reactive Updates and Headless Session Polish** - gsd2:file-changed invalidation for Worktrees and Visualizer; persist headless log buffer across tab navigation; documentation fixes (gap closure)
+- [x] **Phase 6: Reactive Updates and Headless Session Polish** - gsd2:file-changed invalidation for Worktrees and Visualizer; persist headless log buffer across tab navigation; documentation fixes (gap closure) (completed 2026-03-21)
 
 ## Phase Details
 
@@ -96,7 +96,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 3. Worktrees Panel | 2/2 | Complete | 2026-03-21 |
 | 4. Headless Mode and Visualizer | 3/3 | Complete | 2026-03-21 |
 | 5. GSD-2 Milestones, Slices, and Tasks UI | 2/2 | Complete   | 2026-03-21 |
-| 6. Reactive Updates and Headless Session Polish | 0/1 | Pending | |
+| 6. Reactive Updates and Headless Session Polish | 1/1 | Complete   | 2026-03-21 |
 
 ### Phase 5: GSD-2 Milestones, Slices, and Tasks UI
 **Goal**: The GSD-2 Milestones, Slices, and Tasks tabs display real data by connecting the existing Rust parsing commands to the frontend via TS invoke wrappers and React Query hooks
@@ -121,7 +121,7 @@ Plans:
 **Depends on**: Phase 4
 **Requirements**: N/A — no new v1 requirements; closes integration and flow gaps from v1.0 audit
 **Gap Closure**: Closes HDLS-04 flow gap, WORK-05/VIZ-04 reactive invalidation gaps, and documentation gaps
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 
 Plans:
 - [ ] 06-01-PLAN.md — Reactive invalidation for Worktrees/Visualizer, headless session log persistence via prop lift, documentation gap fixes
