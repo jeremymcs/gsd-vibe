@@ -62,4 +62,4 @@ Per-project version detection drives everything — the app must correctly ident
 | Adaptive UI terminology (detect and render per project) | Most honest representation of actual structure | — Pending |
 
 ---
-*Last updated: 2026-03-20
+*Last updated: 2026-03-21
