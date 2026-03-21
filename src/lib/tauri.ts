@@ -1304,3 +1304,52 @@ export const gsd2RemoveWorktree = (projectId: string, worktreeName: string) =>
 
 export const gsd2GetWorktreeDiff = (projectId: string, worktreeName: string) =>
   invoke<WorktreeDiff>('gsd2_get_worktree_diff', { projectId, worktreeName });
+
+// Headless session types (Phase 4)
+export interface HeadlessSnapshot {
+  state: string;
+  next: string | null;
+  cost: number;
+}
+
+// Visualizer types (Phase 4)
+export interface VisualizerNode {
+  id: string;
+  title: string;
+  status: 'done' | 'active' | 'pending';
+  children: VisualizerNode[];
+}
+
+export interface CostByKey {
+  key: string;
+  cost: number;
+}
+
+export interface TimelineEntry {
+  id: string;
+  title: string;
+  entry_type: string;
+  completed_at: string | null;
+  cost: number;
+}
+
+export interface VisualizerData {
+  tree: VisualizerNode[];
+  cost_by_milestone: CostByKey[];
+  cost_by_model: CostByKey[];
+  timeline: TimelineEntry[];
+}
+
+// GSD-2 Headless
+export const gsd2HeadlessQuery = (projectId: string) =>
+  invoke<HeadlessSnapshot>('gsd2_headless_query', { projectId });
+
+export const gsd2HeadlessStart = (projectId: string) =>
+  invoke<string>('gsd2_headless_start', { projectId });
+
+export const gsd2HeadlessStop = (sessionId: string) =>
+  invoke<void>('gsd2_headless_stop', { sessionId });
+
+// GSD-2 Visualizer
+export const gsd2GetVisualizerData = (projectId: string) =>
+  invoke<VisualizerData>('gsd2_get_visualizer_data', { projectId });

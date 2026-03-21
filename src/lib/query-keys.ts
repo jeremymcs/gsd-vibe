@@ -103,4 +103,6 @@ export const queryKeys = {
   gsd2Health: (projectId: string) => ['gsd2', 'health', projectId] as const,
   gsd2Worktrees: (projectId: string) => ['gsd2', 'worktrees', projectId] as const,
   gsd2WorktreeDiff: (projectId: string, name: string) => ['gsd2', 'worktree-diff', projectId, name] as const,
+  gsd2HeadlessQuery: (projectId: string) => ['gsd2', 'headless', 'query', projectId] as const,
+  gsd2VisualizerData: (projectId: string) => ['gsd2', 'visualizer', projectId] as const,
 };
