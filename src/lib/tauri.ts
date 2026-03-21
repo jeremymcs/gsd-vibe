@@ -1401,15 +1401,6 @@ export interface Gsd2DerivedState {
   tasks_total: number;
 }
 
-export interface Gsd2RoadmapProgressData {
-  milestones_done: number;
-  milestones_total: number;
-  slices_done: number;
-  slices_total: number;
-  tasks_done: number;
-  tasks_total: number;
-}
-
 export const gsd2ListMilestones = (projectId: string) =>
   invoke<Gsd2MilestoneListItem[]>('gsd2_list_milestones', { projectId });
 
@@ -1421,6 +1412,3 @@ export const gsd2GetSlice = (projectId: string, milestoneId: string, sliceId: st
 
 export const gsd2DeriveState = (projectId: string) =>
   invoke<Gsd2DerivedState>('gsd2_derive_state', { projectId });
-
-export const gsd2GetRoadmapProgress = (projectId: string) =>
-  invoke<Gsd2RoadmapProgressData>('gsd2_get_roadmap_progress', { projectId });

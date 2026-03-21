@@ -13,7 +13,6 @@ import {
   gsd2GetMilestone,
   gsd2GetSlice,
   gsd2DeriveState,
-  gsd2GetRoadmapProgress,
 } from '../tauri';
 
 describe('GSD-2 invoke wrappers', () => {
@@ -39,10 +38,5 @@ describe('GSD-2 invoke wrappers', () => {
   it('gsd2DeriveState calls invoke with projectId', async () => {
     await gsd2DeriveState('proj-1');
     expect(invoke).toHaveBeenCalledWith('gsd2_derive_state', { projectId: 'proj-1' });
-  });
-
-  it('gsd2GetRoadmapProgress calls invoke with projectId', async () => {
-    await gsd2GetRoadmapProgress('proj-1');
-    expect(invoke).toHaveBeenCalledWith('gsd2_get_roadmap_progress', { projectId: 'proj-1' });
   });
 });
