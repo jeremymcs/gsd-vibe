@@ -6,73 +6,30 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 217 91% 60%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 217 91% 60%;
-    --radius: 0.5rem;
-
-    /* Brand Colors - GSD VibeFlow Identity */
-    --brand-blue: 217 91% 60%;
-    --brand-purple: 262 83% 58%;
-    --brand-cyan: 189 94% 43%;
-    --brand-yellow: 45 93% 47%;
-
-    /* Status Colors - Semantic */
-    --status-success: 142 71% 45%;
-    --status-warning: 38 92% 50%;
-    --status-error: 0 84% 60%;
-    --status-info: 217 91% 60%;
-    --status-pending: 220 9% 46%;
-    --status-blocked: 30 95% 50%;   /* Orange - distinct from warning */
-    --status-paused: 45 100% 50%;   /* Yellow - distinct from blocked */
-
-    /* Terminal Theme */
-    --terminal-bg: 240 10% 4%;
-  }
-
   .dark {
-    --background: 222 20% 4.5%;
+    --background: 0 0% 0%;
     --foreground: 0 0% 98%;
-    --card: 222 18% 7%;
+    --card: 0 0% 5%;
     --card-foreground: 0 0% 98%;
-    --popover: 222 18% 7%;
+    --popover: 0 0% 5%;
     --popover-foreground: 0 0% 98%;
-    --primary: 217 91% 60%;
+    --primary: 189 94% 43%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 222 16% 14%;
+    --secondary: 0 0% 8%;
     --secondary-foreground: 0 0% 98%;
-    --muted: 222 16% 14%;
-    --muted-foreground: 220 8% 65%;
-    --accent: 222 16% 14%;
+    --muted: 0 0% 8%;
+    --muted-foreground: 0 0% 65%;
+    --accent: 0 0% 12%;
     --accent-foreground: 0 0% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 222 14% 18%;
-    --input: 222 16% 14%;
-    --ring: 217 91% 60%;
+    --border: 0 0% 15%;
+    --input: 0 0% 8%;
+    --ring: 189 94% 43%;
+    --radius: 0.5rem;
 
-    /* Brand Colors - GSD VibeFlow Identity (Dark) */
-    --brand-blue: 217 91% 65%;
-    --brand-purple: 262 83% 65%;
-    --brand-cyan: 189 94% 50%;
-    --brand-yellow: 45 93% 55%;
+    /* GSD VibeFlow Brand Color */
+    --gsd-cyan: 189 94% 50%;
 
     /* Status Colors - Semantic (Dark - higher contrast) */
     --status-success: 142 76% 52%;
@@ -80,8 +37,8 @@
     --status-error: 0 88% 68%;
     --status-info: 217 91% 68%;
     --status-pending: 220 12% 58%;
-    --status-blocked: 30 95% 58%;   /* Orange - distinct from warning */
-    --status-paused: 45 100% 58%;   /* Yellow - distinct from blocked */
+    --status-blocked: 30 95% 58%;
+    --status-paused: 45 100% 58%;
   }
 }
 
@@ -169,7 +126,7 @@
 
 /* Gradient text utility */
 .text-gradient {
-  background: linear-gradient(to right, hsl(var(--brand-blue)), hsl(var(--brand-purple)));
+  background: linear-gradient(to right, hsl(var(--gsd-cyan)), hsl(var(--foreground)));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -182,58 +139,10 @@
   -webkit-backdrop-filter: blur(12px);
 }
 
-/* Theme Accent Presets */
-.theme-ocean {
-  --accent-hue: 200;
-  --accent: 200 80% 50%;
-  --ring: 200 80% 50%;
-  --primary: 200 80% 50%;
-}
-.theme-forest {
-  --accent-hue: 140;
-  --accent: 140 60% 40%;
-  --ring: 140 60% 40%;
-  --primary: 140 60% 40%;
-}
-.theme-sunset {
-  --accent-hue: 20;
-  --accent: 20 90% 55%;
-  --ring: 20 90% 55%;
-  --primary: 20 90% 55%;
-}
-.theme-purple {
-  --accent-hue: 270;
-  --accent: 270 70% 55%;
-  --ring: 270 70% 55%;
-  --primary: 270 70% 55%;
-}
-
-/* Dark mode overrides for accent themes */
-.dark.theme-ocean {
-  --accent: 200 80% 55%;
-  --ring: 200 80% 55%;
-  --primary: 200 80% 55%;
-}
-.dark.theme-forest {
-  --accent: 140 60% 50%;
-  --ring: 140 60% 50%;
-  --primary: 140 60% 50%;
-}
-.dark.theme-sunset {
-  --accent: 20 90% 60%;
-  --ring: 20 90% 60%;
-  --primary: 20 90% 60%;
-}
-.dark.theme-purple {
-  --accent: 270 70% 60%;
-  --ring: 270 70% 60%;
-  --primary: 270 70% 60%;
-}
-
 /* Active nav glow in dark mode */
 .dark .nav-item-active {
-  box-shadow: 0 0 12px -2px hsl(var(--brand-blue) / 0.35),
-    inset 0 0 0 1px hsl(var(--brand-blue) / 0.1);
+  box-shadow: 0 0 12px -2px hsl(var(--gsd-cyan) / 0.35),
+    inset 0 0 0 1px hsl(var(--gsd-cyan) / 0.1);
 }
 
 /* Status badge high-contrast styles */

@@ -21,10 +21,6 @@ const FONT_FAMILY_KEY = "track-your-shit-font-family";
 
 const ACCENT_CLASSES: Record<AccentColor, string> = {
   default: "",
-  ocean: "theme-ocean",
-  forest: "theme-forest",
-  sunset: "theme-sunset",
-  purple: "theme-purple",
 };
 
 const DENSITY_CLASSES: Record<UiDensity, string> = {
@@ -54,20 +50,15 @@ function getSystemTheme(): "light" | "dark" {
 }
 
 function getInitialTheme(): Theme {
-  if (typeof window === "undefined") return "system";
+  if (typeof window === "undefined") return "dark";
   const stored = localStorage.getItem(THEME_KEY);
-  if (stored === "light" || stored === "dark" || stored === "system") {
+  if (stored === "dark" || stored === "system") {
     return stored;
   }
-  return "system";
+  return "dark";
 }
 
 function getInitialAccent(): AccentColor {
-  if (typeof window === "undefined") return "default";
-  const stored = localStorage.getItem(ACCENT_KEY);
-  if (stored === "default" || stored === "ocean" || stored === "forest" || stored === "sunset" || stored === "purple") {
-    return stored;
-  }
   return "default";
 }
 
@@ -200,7 +191,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
       .then((settings) => {
         if (settings.theme && settings.theme !== theme) {
           const validTheme = settings.theme as Theme;
-          if (validTheme === "light" || validTheme === "dark" || validTheme === "system") {
+          if (validTheme === "dark" || validTheme === "system") {
             setThemeState(validTheme);
           }
         }

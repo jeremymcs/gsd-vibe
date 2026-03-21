@@ -1,4 +1,4 @@
-// Track Your Shit - Tailwind Configuration
+// GSD VibeFlow - Tailwind Configuration
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 /** @type {import('tailwindcss').Config} */
@@ -51,12 +51,9 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        // Brand Colors
-        brand: {
-          blue: "hsl(var(--brand-blue))",
-          purple: "hsl(var(--brand-purple))",
-          cyan: "hsl(var(--brand-cyan))",
-          yellow: "hsl(var(--brand-yellow))",
+        // GSD Brand Colors
+        gsd: {
+          cyan: "hsl(var(--gsd-cyan))",
         },
         // Status Colors
         status: {
@@ -84,10 +81,9 @@ export default {
         sm: "calc(var(--radius) - 4px)",
       },
       boxShadow: {
-        'glow-sm': '0 0 10px hsl(var(--brand-blue) / 0.2)',
-        'glow': '0 0 20px hsl(var(--brand-blue) / 0.3)',
-        'glow-lg': '0 0 30px hsl(var(--brand-blue) / 0.4)',
-        'glow-purple': '0 0 20px hsl(var(--brand-purple) / 0.3)',
+        'glow-sm': '0 0 10px hsl(var(--gsd-cyan) / 0.2)',
+        'glow': '0 0 20px hsl(var(--gsd-cyan) / 0.3)',
+        'glow-lg': '0 0 30px hsl(var(--gsd-cyan) / 0.4)',
       },
       keyframes: {
         "fade-in": {
