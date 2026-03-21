@@ -22,7 +22,7 @@ Per-project version detection drives everything — the app must correctly ident
 - [x] GSD version detection per project (.gsd/ vs .planning/ → "gsd2" | "gsd1" | "none") — Validated in Phase 01: gsd-2-backend-foundation
 - [x] GSD-2 .gsd/ file structure parsing in Rust (milestones dir, M001-ROADMAP.md, slices, tasks) — Validated in Phase 01: gsd-2-backend-foundation
 - [ ] Adaptive terminology in UI (Milestone/Slice/Task for gsd2, Phase/Plan/Task for gsd1)
-- [ ] Health widget: budget spent/ceiling, env check counts, active milestone/slice/task, progress M/S/T, ETA, blockers
+- [x] Health widget: budget spent/ceiling, env check counts, active milestone/slice/task, progress M/S/T, ETA, blockers — Validated in Phase 02: health-widget-adaptive-ui-and-reactive-updates
 - [ ] Worktree panel: list active worktrees per project, branch name, path, merge/remove actions
 - [ ] Visualizer data tab: progress tree (milestones → slices → tasks), cost/token metrics by phase/model
 - [ ] Headless mode: start/stop `gsd headless` sessions, stream JSON output, detect completion, show next action
@@ -62,4 +62,4 @@ Per-project version detection drives everything — the app must correctly ident
 | Adaptive UI terminology (detect and render per project) | Most honest representation of actual structure | — Pending |
 
 ---
-*Last updated: 2026-03-20
+*Last updated: 2026-03-21
