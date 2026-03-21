@@ -50,8 +50,8 @@ Plans:
 **Plans:** 2/2 plans complete
 
 Plans:
-- [ ] 02-01-PLAN.md — Rust gsd2_get_health command, gsd_version data pipeline, frontend TypeScript types and React Query hooks
-- [ ] 02-02-PLAN.md — Health widget component, adaptive GSD tab set, version badges on project cards, file watcher extension
+- [x] 02-01-PLAN.md — Rust gsd2_get_health command, gsd_version data pipeline, frontend TypeScript types and React Query hooks
+- [x] 02-02-PLAN.md — Health widget component, adaptive GSD tab set, version badges on project cards, file watcher extension
 
 ### Phase 3: Worktrees Panel
 **Goal**: Users with GSD-2 worktrees can see all active worktrees per project, preview what changed in each, and remove them safely
@@ -64,8 +64,8 @@ Plans:
 **Plans:** 2/2 plans complete
 
 Plans:
-- [ ] 03-01-PLAN.md — Rust backend commands (list, remove, diff), TypeScript types, invoke wrappers, query keys, React Query hooks
-- [ ] 03-02-PLAN.md — Gsd2WorktreesTab component, barrel export, tab insertion in project detail page
+- [x] 03-01-PLAN.md — Rust backend commands (list, remove, diff), TypeScript types, invoke wrappers, query keys, React Query hooks
+- [x] 03-02-PLAN.md — Gsd2WorktreesTab component, barrel export, tab insertion in project detail page
 
 ### Phase 4: Headless Mode and Visualizer
 **Goal**: Users can start, monitor, and stop GSD-2 headless sessions from the app and view a full progress tree with cost/token metrics across all milestones and slices
@@ -80,9 +80,9 @@ Plans:
 **Plans:** 3/3 plans complete
 
 Plans:
-- [ ] 04-01-PLAN.md — Rust backend: HeadlessSessionRegistry, headless commands (query/start/stop), visualizer data command, can_safely_close/force_close_all, lib.rs registration
-- [ ] 04-02-PLAN.md — Frontend types, invoke wrappers, query keys, React Query hooks, useHeadlessSession hook
-- [ ] 04-03-PLAN.md — Headless tab UI, Visualizer tab UI, project.tsx tab insertion, barrel export, close-warning extension
+- [x] 04-01-PLAN.md — Rust backend: HeadlessSessionRegistry, headless commands (query/start/stop), visualizer data command, can_safely_close/force_close_all, lib.rs registration
+- [x] 04-02-PLAN.md — Frontend types, invoke wrappers, query keys, React Query hooks, useHeadlessSession hook
+- [x] 04-03-PLAN.md — Headless tab UI, Visualizer tab UI, project.tsx tab insertion, barrel export, close-warning extension
 
 ## Progress
 
@@ -96,7 +96,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 3. Worktrees Panel | 2/2 | Complete | 2026-03-21 |
 | 4. Headless Mode and Visualizer | 3/3 | Complete | 2026-03-21 |
 | 5. GSD-2 Milestones, Slices, and Tasks UI | 2/2 | Complete   | 2026-03-21 |
-| 6. Reactive Updates and Headless Session Polish | 0/? | Pending | |
+| 6. Reactive Updates and Headless Session Polish | 0/1 | Pending | |
 
 ### Phase 5: GSD-2 Milestones, Slices, and Tasks UI
 **Goal**: The GSD-2 Milestones, Slices, and Tasks tabs display real data by connecting the existing Rust parsing commands to the frontend via TS invoke wrappers and React Query hooks
@@ -106,8 +106,8 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 **Plans:** 2/2 plans complete
 
 Plans:
-- [ ] 05-01-PLAN.md — TypeScript invoke wrappers, interface types, query key entries, React Query hooks for all 5 parsing commands
-- [ ] 05-02-PLAN.md — Gsd2MilestonesTab, Gsd2SlicesTab, Gsd2TasksTab components, barrel export, project.tsx tab wiring
+- [x] 05-01-PLAN.md — TypeScript invoke wrappers, interface types, query key entries, React Query hooks for all 5 parsing commands
+- [x] 05-02-PLAN.md — Gsd2MilestonesTab, Gsd2SlicesTab, Gsd2TasksTab components, barrel export, project.tsx tab wiring
 
 **Success Criteria** (what must be TRUE):
   1. The Milestones GSD-2 tab shows a list of milestones with ID, title, and done/pending status (from `gsd2_list_milestones`)
@@ -121,6 +121,11 @@ Plans:
 **Depends on**: Phase 4
 **Requirements**: N/A — no new v1 requirements; closes integration and flow gaps from v1.0 audit
 **Gap Closure**: Closes HDLS-04 flow gap, WORK-05/VIZ-04 reactive invalidation gaps, and documentation gaps
+**Plans:** 1 plan
+
+Plans:
+- [ ] 06-01-PLAN.md — Reactive invalidation for Worktrees/Visualizer, headless session log persistence via prop lift, documentation gap fixes
+
 **Success Criteria** (what must be TRUE):
   1. Editing a .gsd/ file while the Worktrees tab is open causes the worktree list to refresh within 2 seconds (not waiting for 30s poll)
   2. Editing a .gsd/ file while the Visualizer tab is open causes the visualizer data to refresh within 2 seconds
