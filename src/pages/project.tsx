@@ -64,6 +64,7 @@ import {
 import { TerminalTabs } from "@/components/terminal";
 import { watchProjectFiles } from "@/lib/tauri";
 import { useGsdFileWatcher } from "@/hooks/use-gsd-file-watcher";
+import { useHeadlessSession } from "@/hooks/use-headless-session";
 import {
   useProject,
   useGsdSync,
@@ -99,6 +100,9 @@ export function ProjectPage() {
 
   // Real-time GSD file watcher
   useGsdFileWatcher(id!, project?.path ?? '', showGsdTab, handleGsdSync);
+
+  // Headless session state — lifted to page level so logs survive tab navigation
+  const headlessSession = useHeadlessSession();
 
   // Start file watcher for GSD projects on mount
   useEffect(() => {
@@ -260,7 +264,7 @@ export function ProjectPage() {
                     id: "gsd2-headless",
                     label: "Headless",
                     icon: Play,
-                    content: <Gsd2HeadlessTab projectId={project.id} projectPath={project.path} />,
+                    content: <Gsd2HeadlessTab projectId={project.id} projectPath={project.path} session={headlessSession} />,
                   },
                   {
                     id: "gsd2-worktrees",

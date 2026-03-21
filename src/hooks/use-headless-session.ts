@@ -99,7 +99,7 @@ export function useHeadlessSession(): UseHeadlessSessionReturn {
           ? prev.reduce((sum, row) => sum + row.cost_delta, 0)
           : 0;
         const delta = Math.max(0, cost - prevCost);
-        return [...prev, { timestamp, state, cost_delta: delta }];
+        return [...prev.slice(-499), { timestamp, state, cost_delta: delta }];
       });
     } catch {
       // Non-JSON line — show as raw text row
@@ -109,7 +109,7 @@ export function useHeadlessSession(): UseHeadlessSessionReturn {
         now.getMinutes().toString().padStart(2, '0'),
         now.getSeconds().toString().padStart(2, '0'),
       ].join(':');
-      setLogs(prev => [...prev, { timestamp, state: trimmed, cost_delta: 0, raw: true }]);
+      setLogs(prev => [...prev.slice(-499), { timestamp, state: trimmed, cost_delta: 0, raw: true }]);
     }
   }, []);
 

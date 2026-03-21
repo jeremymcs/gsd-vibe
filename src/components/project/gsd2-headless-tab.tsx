@@ -7,8 +7,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Play, Square } from 'lucide-react';
-import { useHeadlessSession } from '@/hooks/use-headless-session';
-import type { HeadlessLogRow } from '@/hooks/use-headless-session';
+import type { HeadlessLogRow, UseHeadlessSessionReturn } from '@/hooks/use-headless-session';
 import { useGsd2HeadlessQuery, useGsd2HeadlessStart, useGsd2HeadlessStop } from '@/lib/queries';
 import { gsd2HeadlessGetSession } from '@/lib/tauri';
 import { formatCost, formatRelativeTime } from '@/lib/utils';
@@ -16,9 +15,10 @@ import { formatCost, formatRelativeTime } from '@/lib/utils';
 interface Gsd2HeadlessTabProps {
   projectId: string;
   projectPath: string;
+  session: UseHeadlessSessionReturn;
 }
 
-export function Gsd2HeadlessTab({ projectId }: Gsd2HeadlessTabProps) {
+export function Gsd2HeadlessTab({ projectId, session }: Gsd2HeadlessTabProps) {
   const {
     status,
     sessionId,
@@ -28,7 +28,7 @@ export function Gsd2HeadlessTab({ projectId }: Gsd2HeadlessTabProps) {
     setSessionId,
     setStatus,
     clearLogs,
-  } = useHeadlessSession();
+  } = session;
 
   const headlessQuery = useGsd2HeadlessQuery(projectId, status === 'idle');
   const startMutation = useGsd2HeadlessStart();
