@@ -61,5 +61,9 @@ Per-project version detection drives everything — the app must correctly ident
 | New Rust command module for gsd2 parsing | Keeps gsd1 commands untouched, clean separation | Implemented in Phase 01 — `gsd2.rs` module with 6 commands |
 | Adaptive UI terminology (detect and render per project) | Most honest representation of actual structure | — Pending |
 
+## Current State
+
+Phase 7 complete — reactive `.gsd/` file-change invalidation wired for Milestones, Slices, and Tasks queries (30s poll → ≤2s reactive). All 7 GSD-2 query families now invalidated on `gsd2:file-changed`. Milestone v1.0 complete — all 7 phases shipped.
+
 ---
-*Last updated: 2026-03-21
+*Last updated: 2026-03-21*
