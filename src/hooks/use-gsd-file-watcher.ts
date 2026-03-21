@@ -103,8 +103,10 @@ export function useGsdFileWatcher(
 
     listen<GsdFileChangedPayload>('gsd2:file-changed', (event) => {
       if (event.payload.project_path !== projectPath) return;
-      // Immediately invalidate GSD-2 health query (no debounce — dedicated key)
+      // Immediately invalidate GSD-2 reactive queries (no debounce — dedicated key)
       void queryClient.invalidateQueries({ queryKey: queryKeys.gsd2Health(projectId) });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.gsd2Worktrees(projectId) });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.gsd2VisualizerData(projectId) });
     }).then((fn) => {
       unlisten2 = fn;
     });
