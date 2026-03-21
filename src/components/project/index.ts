@@ -31,3 +31,6 @@ export { Gsd2HealthTab } from './gsd2-health-tab';
 export { Gsd2WorktreesTab } from './gsd2-worktrees-tab';
 export { Gsd2HeadlessTab } from './gsd2-headless-tab';
 export { Gsd2VisualizerTab } from './gsd2-visualizer-tab';
+export { Gsd2MilestonesTab } from './gsd2-milestones-tab';
+export { Gsd2SlicesTab } from './gsd2-slices-tab';
+export { Gsd2TasksTab } from './gsd2-tasks-tab';

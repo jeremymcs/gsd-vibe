@@ -23,6 +23,7 @@ import {
   GitBranch,
   Play,
   BarChart3,
+  Layers,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -56,6 +57,9 @@ import {
   Gsd2WorktreesTab,
   Gsd2HeadlessTab,
   Gsd2VisualizerTab,
+  Gsd2MilestonesTab,
+  Gsd2SlicesTab,
+  Gsd2TasksTab,
 } from "@/components/project";
 import { TerminalTabs } from "@/components/terminal";
 import { watchProjectFiles } from "@/lib/tauri";
@@ -274,19 +278,19 @@ export function ProjectPage() {
                     id: "gsd2-milestones",
                     label: "Milestones",
                     icon: Flag,
-                    content: <div className="p-4 text-sm text-muted-foreground">Milestones view coming soon</div>,
+                    content: <Gsd2MilestonesTab projectId={project.id} projectPath={project.path} />,
                   },
                   {
                     id: "gsd2-slices",
                     label: "Slices",
-                    icon: Flag,
-                    content: <div className="p-4 text-sm text-muted-foreground">Slices view coming soon</div>,
+                    icon: Layers,
+                    content: <Gsd2SlicesTab projectId={project.id} projectPath={project.path} />,
                   },
                   {
                     id: "gsd2-tasks",
                     label: "Tasks",
-                    icon: Flag,
-                    content: <div className="p-4 text-sm text-muted-foreground">Tasks view coming soon</div>,
+                    icon: CheckSquare,
+                    content: <Gsd2TasksTab projectId={project.id} projectPath={project.path} />,
                   },
                 ]}
               />
