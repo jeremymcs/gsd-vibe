@@ -45,7 +45,7 @@ Plans:
   2. The health widget updates within 10 seconds of a .gsd/ file change (either via file watcher event or polling)
   3. A GSD-2 project's detail tabs are labeled "Milestones", "Slices", "Tasks"; a GSD-1 project's tabs remain "Phases", "Plans", "Tasks"
   4. Project list cards and the dashboard show a "GSD-2" or "GSD-1" badge per project
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 
 Plans:
 - [ ] 02-01-PLAN.md — Rust gsd2_get_health command, gsd_version data pipeline, frontend TypeScript types and React Query hooks
@@ -81,6 +81,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. GSD-2 Backend Foundation | 2/3 | In Progress|  |
-| 2. Health Widget, Adaptive UI, and Reactive Updates | 0/2 | Not started | - |
+| 2. Health Widget, Adaptive UI, and Reactive Updates | 1/2 | In Progress|  |
 | 3. Worktrees Panel | 0/TBD | Not started | - |
 | 4. Headless Mode and Visualizer | 0/TBD | Not started | - |

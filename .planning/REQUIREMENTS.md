@@ -22,10 +22,10 @@
 
 ### Health Widget
 
-- [ ] **HLTH-01**: `gsd2_get_health` returns budget spent, budget ceiling (if set), environment error count, environment warning count, active milestone/slice/task, phase, blocker (if any), ETA (if available), and next action
-- [ ] **HLTH-02**: Health data is read directly from `.gsd/STATE.md` frontmatter and `.gsd/metrics.json` (never via subprocess)
+- [x] **HLTH-01**: `gsd2_get_health` returns budget spent, budget ceiling (if set), environment error count, environment warning count, active milestone/slice/task, phase, blocker (if any), ETA (if available), and next action
+- [x] **HLTH-02**: Health data is read directly from `.gsd/STATE.md` frontmatter and `.gsd/metrics.json` (never via subprocess)
 - [ ] **HLTH-03**: A new Health tab (or widget within the project overview) renders health data with budget bar, env status, active unit display, and M/S/T progress counters
-- [ ] **HLTH-04**: Health display auto-refreshes on `.gsd/` file changes (via watcher) and on a 10s polling interval
+- [x] **HLTH-04**: Health display auto-refreshes on `.gsd/` file changes (via watcher) and on a 10s polling interval
 
 ### Adaptive Terminology
 
@@ -96,10 +96,10 @@
 | PARS-03 | Phase 1 | Complete |
 | PARS-04 | Phase 1 | Complete |
 | PARS-05 | Phase 1 | Complete |
-| HLTH-01 | Phase 2 | Pending |
-| HLTH-02 | Phase 2 | Pending |
+| HLTH-01 | Phase 2 | Complete |
+| HLTH-02 | Phase 2 | Complete |
 | HLTH-03 | Phase 2 | Pending |
-| HLTH-04 | Phase 2 | Pending |
+| HLTH-04 | Phase 2 | Complete |
 | TERM-01 | Phase 2 | Pending |
 | TERM-02 | Phase 2 | Pending |
 | TERM-03 | Phase 2 | Pending |
