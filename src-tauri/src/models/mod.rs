@@ -397,6 +397,7 @@ pub struct ProjectWithStats {
     pub total_cost: f64,
     pub roadmap_progress: Option<RoadmapProgress>,
     pub last_activity_at: Option<String>,
+    pub gsd_version: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

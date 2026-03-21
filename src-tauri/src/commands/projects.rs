@@ -797,7 +797,8 @@ pub async fn get_projects_with_stats(
                 p.created_at, p.updated_at, COALESCE(p.is_favorite, 0),
                 COALESCE(cost_agg.total_cost, 0),
                 fp.total_phases, fp.completed_phases, fp.total_tasks, fp.completed_tasks, fp.status,
-                (SELECT MAX(created_at) FROM activity_log WHERE project_id = p.id)
+                (SELECT MAX(created_at) FROM activity_log WHERE project_id = p.id),
+                p.gsd_version
             FROM projects p
             LEFT JOIN (
                 SELECT project_id, SUM(total_cost) as total_cost
@@ -836,6 +837,7 @@ pub async fn get_projects_with_stats(
             let fp_completed_tasks: Option<i32> = row.get(14)?;
             let fp_status: Option<String> = row.get(15)?;
             let last_activity_at: Option<String> = row.get(16)?;
+            let gsd_version: Option<String> = row.get(17)?;
 
             let roadmap_progress = fp_total_phases.map(|tp| RoadmapProgress {
                 total_phases: tp,
@@ -859,6 +861,7 @@ pub async fn get_projects_with_stats(
                 total_cost,
                 roadmap_progress,
                 last_activity_at,
+                gsd_version,
             })
         })
         .map_err(|e| e.to_string())?

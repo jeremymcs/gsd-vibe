@@ -213,9 +213,231 @@ pub struct Gsd2RoadmapProgress {
     pub tasks_total: u32,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Gsd2Health {
+    pub budget_spent: f64,
+    pub budget_ceiling: Option<f64>,
+    pub active_milestone_id: Option<String>,
+    pub active_milestone_title: Option<String>,
+    pub active_slice_id: Option<String>,
+    pub active_slice_title: Option<String>,
+    pub active_task_id: Option<String>,
+    pub active_task_title: Option<String>,
+    pub phase: Option<String>,
+    pub blocker: Option<String>,
+    pub next_action: Option<String>,
+    pub milestones_done: u32,
+    pub milestones_total: u32,
+    pub slices_done: u32,
+    pub slices_total: u32,
+    pub tasks_done: u32,
+    pub tasks_total: u32,
+    pub env_error_count: u32,
+    pub env_warning_count: u32,
+}
+
 // ============================================================
 // Parsing helpers
 // ============================================================
+
+/// Sum all `cost` values from `.gsd/metrics.json` for a project.
+/// Returns 0.0 if the file is missing, empty, or malformed.
+fn sum_costs_from_metrics(project_path: &str) -> f64 {
+    let metrics_path = Path::new(project_path).join(".gsd").join("metrics.json");
+    let content = match std::fs::read_to_string(&metrics_path) {
+        Ok(c) => c,
+        Err(_) => return 0.0,
+    };
+    let json: serde_json::Value = match serde_json::from_str(&content) {
+        Ok(v) => v,
+        Err(_) => return 0.0,
+    };
+    json.get("units")
+        .and_then(|u| u.as_array())
+        .map(|arr| {
+            arr.iter()
+                .filter_map(|unit| unit.get("cost").and_then(|c| c.as_f64()))
+                .sum()
+        })
+        .unwrap_or(0.0)
+}
+
+/// Struct returned by `parse_gsd2_state_md` holding all parsed fields.
+struct Gsd2StateParsed {
+    active_milestone: Option<String>,
+    active_slice: Option<String>,
+    active_task: Option<String>,
+    phase: Option<String>,
+    blocker: Option<String>,
+    next_action: Option<String>,
+    budget_ceiling: Option<f64>,
+}
+
+/// Parse `.gsd/STATE.md` body sections (NOT YAML frontmatter — GSD-2 STATE.md uses
+/// bold markdown key lines and `##` heading sections, not frontmatter).
+///
+/// Extracts:
+/// - `**Active Milestone:**` — ID and title from "M005 — Title" format
+/// - `**Active Slice:**` — same format or "None"
+/// - `**Active Task:**` — same format or "None"
+/// - `**Phase:**` — plain value
+/// - `## Blockers` section — first non-"None" bullet item
+/// - `## Next Action` section — first non-empty non-heading line
+/// - `**Budget Ceiling:**` — f64 if present
+fn parse_gsd2_state_md(content: &str) -> Gsd2StateParsed {
+    let mut active_milestone: Option<String> = None;
+    let mut active_slice: Option<String> = None;
+    let mut active_task: Option<String> = None;
+    let mut phase: Option<String> = None;
+    let mut blocker: Option<String> = None;
+    let mut next_action: Option<String> = None;
+    let mut budget_ceiling: Option<f64> = None;
+    let mut in_blockers_section = false;
+    let mut in_next_action_section = false;
+
+    for line in content.lines() {
+        let trimmed = line.trim();
+
+        // Handle section transitions
+        if trimmed.starts_with("## ") {
+            in_blockers_section = trimmed == "## Blockers";
+            in_next_action_section = trimmed == "## Next Action";
+            continue;
+        }
+
+        // Parse bold key lines
+        if trimmed.starts_with("**Active Milestone:**") {
+            let val = trimmed["**Active Milestone:**".len()..].trim();
+            if val != "None" && !val.is_empty() {
+                active_milestone = Some(val.to_string());
+            }
+        } else if trimmed.starts_with("**Active Slice:**") {
+            let val = trimmed["**Active Slice:**".len()..].trim();
+            if val != "None" && !val.is_empty() {
+                active_slice = Some(val.to_string());
+            }
+        } else if trimmed.starts_with("**Active Task:**") {
+            let val = trimmed["**Active Task:**".len()..].trim();
+            if val != "None" && !val.is_empty() {
+                active_task = Some(val.to_string());
+            }
+        } else if trimmed.starts_with("**Phase:**") {
+            let val = trimmed["**Phase:**".len()..].trim();
+            if !val.is_empty() {
+                phase = Some(val.to_string());
+            }
+        } else if trimmed.starts_with("**Budget Ceiling:**") {
+            let val = trimmed["**Budget Ceiling:**".len()..].trim();
+            // Strip common currency symbols before parsing
+            let clean = val.trim_start_matches('$').trim();
+            if let Ok(v) = clean.parse::<f64>() {
+                budget_ceiling = Some(v);
+            }
+        }
+
+        // Blockers section: collect first non-"None" bullet item
+        if in_blockers_section && trimmed.starts_with("- ") {
+            let val = trimmed[2..].trim();
+            if val != "None" && !val.is_empty() {
+                blocker = Some(val.to_string());
+                in_blockers_section = false;
+            }
+        }
+
+        // Next Action section: first non-empty non-heading line
+        if in_next_action_section && !trimmed.is_empty() && !trimmed.starts_with('#') {
+            next_action = Some(trimmed.to_string());
+            in_next_action_section = false;
+        }
+    }
+
+    Gsd2StateParsed {
+        active_milestone,
+        active_slice,
+        active_task,
+        phase,
+        blocker,
+        next_action,
+        budget_ceiling,
+    }
+}
+
+/// Split a "ID — Title" or "ID - Title" string into (id, title) parts.
+/// Returns (full_string, None) if no separator is found.
+fn split_id_and_title(value: &str) -> (String, Option<String>) {
+    // Try em-dash separator first, then ASCII dash
+    for sep in [" — ", " - "] {
+        if let Some(pos) = value.find(sep) {
+            let id = value[..pos].trim().to_string();
+            let title = value[pos + sep.len()..].trim().to_string();
+            return (id, Some(title));
+        }
+    }
+    (value.trim().to_string(), None)
+}
+
+/// Build a `Gsd2Health` from a project path without touching the DB (testable helper).
+pub fn get_health_from_dir(project_path: &str) -> Gsd2Health {
+    // 1. Sum costs from metrics.json
+    let budget_spent = sum_costs_from_metrics(project_path);
+
+    // 2. Parse STATE.md body sections
+    let state_content = std::fs::read_to_string(
+        Path::new(project_path).join(".gsd").join("STATE.md"),
+    )
+    .unwrap_or_default();
+    let parsed = parse_gsd2_state_md(&state_content);
+
+    // 3. Derive M/S/T progress counters (reuses existing filesystem walker)
+    let progress = derive_state_from_dir(project_path);
+
+    // 4. Split active milestone/slice/task into ID + title
+    let (active_milestone_id, active_milestone_title) = parsed
+        .active_milestone
+        .map(|v| {
+            let (id, title) = split_id_and_title(&v);
+            (Some(id), title)
+        })
+        .unwrap_or((None, None));
+
+    let (active_slice_id, active_slice_title) = parsed
+        .active_slice
+        .map(|v| {
+            let (id, title) = split_id_and_title(&v);
+            (Some(id), title)
+        })
+        .unwrap_or((None, None));
+
+    let (active_task_id, active_task_title) = parsed
+        .active_task
+        .map(|v| {
+            let (id, title) = split_id_and_title(&v);
+            (Some(id), title)
+        })
+        .unwrap_or((None, None));
+
+    Gsd2Health {
+        budget_spent,
+        budget_ceiling: parsed.budget_ceiling,
+        active_milestone_id,
+        active_milestone_title,
+        active_slice_id,
+        active_slice_title,
+        active_task_id,
+        active_task_title,
+        phase: parsed.phase,
+        blocker: parsed.blocker,
+        next_action: parsed.next_action,
+        milestones_done: progress.milestones_done,
+        milestones_total: progress.milestones_total,
+        slices_done: progress.slices_done,
+        slices_total: progress.slices_total,
+        tasks_done: progress.tasks_done,
+        tasks_total: progress.tasks_total,
+        env_error_count: 0,
+        env_warning_count: 0,
+    }
+}
 
 /// Parse the `## Slices` section of a ROADMAP.md file.
 /// Returns a Vec of Gsd2Slice with tasks left empty (populated separately by get_slice).
@@ -834,6 +1056,19 @@ pub async fn gsd2_get_roadmap_progress(
     let db_guard = db.write().await;
     let project_path = get_project_path(&db_guard, &project_id)?;
     Ok(get_roadmap_progress_from_dir(&project_path))
+}
+
+/// Return health data for a GSD-2 project: budget spend, active unit, blockers,
+/// progress counters. Reads `.gsd/STATE.md` and `.gsd/metrics.json` directly —
+/// never via subprocess (per HLTH-02).
+#[tauri::command]
+pub async fn gsd2_get_health(
+    db: tauri::State<'_, DbState>,
+    project_id: String,
+) -> Result<Gsd2Health, String> {
+    let db_guard = db.write().await;
+    let project_path = get_project_path(&db_guard, &project_id)?;
+    Ok(get_health_from_dir(&project_path))
 }
 
 /// Detect the GSD version for a project by inspecting its directory structure.

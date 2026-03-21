@@ -285,6 +285,7 @@ pub fn run() {
             commands::gsd2::gsd2_get_slice,
             commands::gsd2::gsd2_derive_state,
             commands::gsd2::gsd2_get_roadmap_progress,
+            commands::gsd2::gsd2_get_health,
             // Secrets / OS keychain commands
             commands::secrets::set_secret,
             commands::secrets::get_secret,
