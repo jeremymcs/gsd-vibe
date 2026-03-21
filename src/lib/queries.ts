@@ -4,6 +4,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import * as api from "./tauri";
+import type { WorktreeInfo } from "./tauri";
 import { queryKeys } from "./query-keys";
 import { getErrorMessage } from "./utils";
 
@@ -1139,4 +1140,46 @@ export const useGsd2Health = (projectId: string, enabled = true) =>
     refetchInterval: 10_000,
     staleTime: 5_000,
   });
+
+// GSD-2 Worktrees
+export const useGsd2Worktrees = (projectId: string) =>
+  useQuery({
+    queryKey: queryKeys.gsd2Worktrees(projectId),
+    queryFn: () => api.gsd2ListWorktrees(projectId),
+    enabled: !!projectId,
+    staleTime: 15_000,
+    refetchInterval: 30_000,
+  });
+
+export const useGsd2WorktreeDiff = (projectId: string, worktreeName: string, enabled: boolean) =>
+  useQuery({
+    queryKey: queryKeys.gsd2WorktreeDiff(projectId, worktreeName),
+    queryFn: () => api.gsd2GetWorktreeDiff(projectId, worktreeName),
+    enabled: !!projectId && !!worktreeName && enabled,
+    staleTime: 30_000,
+  });
+
+export const useGsd2RemoveWorktree = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ projectId, worktreeName }: { projectId: string; worktreeName: string }) =>
+      api.gsd2RemoveWorktree(projectId, worktreeName),
+    onMutate: async ({ projectId, worktreeName }) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.gsd2Worktrees(projectId) });
+      const previous = queryClient.getQueryData<WorktreeInfo[]>(queryKeys.gsd2Worktrees(projectId));
+      queryClient.setQueryData<WorktreeInfo[]>(
+        queryKeys.gsd2Worktrees(projectId),
+        (old) => old?.filter((w) => w.name !== worktreeName) ?? []
+      );
+      return { previous };
+    },
+    onError: (_err, { projectId }, context) => {
+      queryClient.setQueryData(queryKeys.gsd2Worktrees(projectId), context?.previous);
+      toast.error(`Failed to remove worktree — ${_err}`);
+    },
+    onSettled: (_data, _err, { projectId }) => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.gsd2Worktrees(projectId) });
+    },
+  });
+};
 

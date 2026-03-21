@@ -1276,3 +1276,31 @@ export const gsdGetUatByPhase = (projectId: string, phaseNumber: string) =>
 // GSD-2
 export const gsd2GetHealth = (projectId: string) =>
   invoke<Gsd2Health>('gsd2_get_health', { projectId });
+
+export interface WorktreeInfo {
+  name: string;
+  branch: string;
+  path: string;
+  exists: boolean;
+  added_count: number;
+  modified_count: number;
+  removed_count: number;
+}
+
+export interface WorktreeDiff {
+  added: string[];
+  modified: string[];
+  removed: string[];
+  added_count: number;
+  modified_count: number;
+  removed_count: number;
+}
+
+export const gsd2ListWorktrees = (projectId: string) =>
+  invoke<WorktreeInfo[]>('gsd2_list_worktrees', { projectId });
+
+export const gsd2RemoveWorktree = (projectId: string, worktreeName: string) =>
+  invoke<void>('gsd2_remove_worktree', { projectId, worktreeName });
+
+export const gsd2GetWorktreeDiff = (projectId: string, worktreeName: string) =>
+  invoke<WorktreeDiff>('gsd2_get_worktree_diff', { projectId, worktreeName });
