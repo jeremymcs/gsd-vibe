@@ -40,6 +40,29 @@ export interface ProjectWithStats {
   total_cost: number;
   roadmap_progress: RoadmapProgress | null;
   last_activity_at: string | null;
+  gsd_version: string | null;
+}
+
+export interface Gsd2Health {
+  budget_spent: number;
+  budget_ceiling: number | null;
+  active_milestone_id: string | null;
+  active_milestone_title: string | null;
+  active_slice_id: string | null;
+  active_slice_title: string | null;
+  active_task_id: string | null;
+  active_task_title: string | null;
+  phase: string | null;
+  blocker: string | null;
+  next_action: string | null;
+  milestones_done: number;
+  milestones_total: number;
+  slices_done: number;
+  slices_total: number;
+  tasks_done: number;
+  tasks_total: number;
+  env_error_count: number;
+  env_warning_count: number;
 }
 
 export interface GitInfo {
@@ -1248,3 +1271,7 @@ export const gsdListUatResults = (projectId: string) =>
 
 export const gsdGetUatByPhase = (projectId: string, phaseNumber: string) =>
   invoke<GsdUatResult | null>('gsd_get_uat_by_phase', { projectId, phaseNumber });
+
+// GSD-2
+export const gsd2GetHealth = (projectId: string) =>
+  invoke<Gsd2Health>('gsd2_get_health', { projectId });

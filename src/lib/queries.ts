@@ -1130,3 +1130,13 @@ export const useCodebaseDoc = (projectPath: string, filename: string) =>
     retry: false,
   });
 
+// GSD-2 Health
+export const useGsd2Health = (projectId: string, enabled = true) =>
+  useQuery({
+    queryKey: queryKeys.gsd2Health(projectId),
+    queryFn: () => api.gsd2GetHealth(projectId),
+    enabled: !!projectId && enabled,
+    refetchInterval: 10_000,
+    staleTime: 5_000,
+  });
+

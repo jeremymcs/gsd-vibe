@@ -98,4 +98,7 @@ export const queryKeys = {
   gsdValidationByPhase: (projectId: string, phase: string) => ['gsd', projectId, 'validation', phase] as const,
   gsdUatResults: (projectId: string) => ['gsd', projectId, 'uat-results'] as const,
   gsdUatByPhase: (projectId: string, phase: string) => ['gsd', projectId, 'uat-results', phase] as const,
+
+  // GSD-2
+  gsd2Health: (projectId: string) => ['gsd2', 'health', projectId] as const,
 };
