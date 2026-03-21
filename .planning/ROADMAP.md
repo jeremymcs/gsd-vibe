@@ -13,7 +13,7 @@ This milestone adds GSD-2 support to a mature Tauri desktop app that already has
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [ ] **Phase 1: GSD-2 Backend Foundation** - Rust version detection, .gsd/ file parsing commands, GSD-1 guard rails, and file watcher extension
-- [ ] **Phase 2: Health Widget, Adaptive UI, and Reactive Updates** - Health data command, budget/blocker display, adaptive terminology, GSD version badges, and polling infrastructure
+- [x] **Phase 2: Health Widget, Adaptive UI, and Reactive Updates** - Health data command, budget/blocker display, adaptive terminology, GSD version badges, and polling infrastructure (completed 2026-03-21)
 - [ ] **Phase 3: Worktrees Panel** - Worktree listing, diff preview, and remove action with macOS symlink safety
 - [ ] **Phase 4: Headless Mode and Visualizer** - Full headless session lifecycle control and milestone-to-task progress visualizer with cost metrics
 
@@ -45,7 +45,7 @@ Plans:
   2. The health widget updates within 10 seconds of a .gsd/ file change (either via file watcher event or polling)
   3. A GSD-2 project's detail tabs are labeled "Milestones", "Slices", "Tasks"; a GSD-1 project's tabs remain "Phases", "Plans", "Tasks"
   4. Project list cards and the dashboard show a "GSD-2" or "GSD-1" badge per project
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 
 Plans:
 - [ ] 02-01-PLAN.md — Rust gsd2_get_health command, gsd_version data pipeline, frontend TypeScript types and React Query hooks
@@ -81,6 +81,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. GSD-2 Backend Foundation | 2/3 | In Progress|  |
-| 2. Health Widget, Adaptive UI, and Reactive Updates | 1/2 | In Progress|  |
+| 2. Health Widget, Adaptive UI, and Reactive Updates | 2/2 | Complete   | 2026-03-21 |
 | 3. Worktrees Panel | 0/TBD | Not started | - |
 | 4. Headless Mode and Visualizer | 0/TBD | Not started | - |

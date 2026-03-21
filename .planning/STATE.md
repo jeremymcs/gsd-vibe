@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 02-01-PLAN.md — GSD-2 data pipeline
-last_updated: "2026-03-21T00:33:23.589Z"
+stopped_at: Completed 02-02-PLAN.md — health widget adaptive UI
+last_updated: "2026-03-21T00:44:04.079Z"
 progress:
   total_phases: 4
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 5
-  completed_plans: 4
+  completed_plans: 5
 ---
 
 # Project State
@@ -50,6 +50,7 @@ Plan: 1 of 2
 | Phase 01 P02 | 20 | 2 tasks | 2 files |
 | Phase 01 P03 | 9 | 2 tasks | 2 files |
 | Phase 02 P01 | 30 | 2 tasks | 7 files |
+| Phase 02 P02 | 8 | 2 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -73,6 +74,8 @@ Recent decisions affecting current work:
 - [Phase 02]: parse_gsd2_state_md uses markdown body sections not YAML frontmatter — GSD-2 STATE.md has no frontmatter
 - [Phase 02]: env_error_count/env_warning_count default to 0 — no confirmed GSD-2 file storage location found
 - [Phase 02]: get_health_from_dir reuses derive_state_from_dir for M/S/T counts — single filesystem walk, no duplication
+- [Phase 02]: Added gsd_version to Project type (not just ProjectWithStats) — project detail page uses useProject which returns Project, required for adaptive tab logic
+- [Phase 02]: Dual event listener pattern in useGsdFileWatcher: gsd1 events debounced, gsd2:file-changed fires immediately to invalidate gsd2Health
 
 ### Pending Todos
 
@@ -85,6 +88,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-21T00:33:23.584Z
-Stopped at: Completed 02-01-PLAN.md — GSD-2 data pipeline
+Last session: 2026-03-21T00:44:04.075Z
+Stopped at: Completed 02-02-PLAN.md — health widget adaptive UI
 Resume file: None

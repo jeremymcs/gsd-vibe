@@ -24,14 +24,14 @@
 
 - [x] **HLTH-01**: `gsd2_get_health` returns budget spent, budget ceiling (if set), environment error count, environment warning count, active milestone/slice/task, phase, blocker (if any), ETA (if available), and next action
 - [x] **HLTH-02**: Health data is read directly from `.gsd/STATE.md` frontmatter and `.gsd/metrics.json` (never via subprocess)
-- [ ] **HLTH-03**: A new Health tab (or widget within the project overview) renders health data with budget bar, env status, active unit display, and M/S/T progress counters
+- [x] **HLTH-03**: A new Health tab (or widget within the project overview) renders health data with budget bar, env status, active unit display, and M/S/T progress counters
 - [x] **HLTH-04**: Health display auto-refreshes on `.gsd/` file changes (via watcher) and on a 10s polling interval
 
 ### Adaptive Terminology
 
-- [ ] **TERM-01**: Project detail tabs show "Milestones", "Slices", "Tasks" terminology for gsd2 projects
-- [ ] **TERM-02**: Project detail tabs show existing "Phases", "Plans", "Tasks" terminology for gsd1 projects (unchanged behavior)
-- [ ] **TERM-03**: Project list / dashboard cards show a "GSD-2" badge for gsd2 projects and "GSD-1" badge for gsd1 projects
+- [x] **TERM-01**: Project detail tabs show "Milestones", "Slices", "Tasks" terminology for gsd2 projects
+- [x] **TERM-02**: Project detail tabs show existing "Phases", "Plans", "Tasks" terminology for gsd1 projects (unchanged behavior)
+- [x] **TERM-03**: Project list / dashboard cards show a "GSD-2" badge for gsd2 projects and "GSD-1" badge for gsd1 projects
 
 ### Worktrees Panel
 
@@ -98,11 +98,11 @@
 | PARS-05 | Phase 1 | Complete |
 | HLTH-01 | Phase 2 | Complete |
 | HLTH-02 | Phase 2 | Complete |
-| HLTH-03 | Phase 2 | Pending |
+| HLTH-03 | Phase 2 | Complete |
 | HLTH-04 | Phase 2 | Complete |
-| TERM-01 | Phase 2 | Pending |
-| TERM-02 | Phase 2 | Pending |
-| TERM-03 | Phase 2 | Pending |
+| TERM-01 | Phase 2 | Complete |
+| TERM-02 | Phase 2 | Complete |
+| TERM-03 | Phase 2 | Complete |
 | WORK-01 | Phase 3 | Pending |
 | WORK-02 | Phase 3 | Pending |
 | WORK-03 | Phase 3 | Pending |
