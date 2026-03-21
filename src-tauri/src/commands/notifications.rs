@@ -1,4 +1,4 @@
-// Track Your Shit - Notification Commands
+// GSD VibeFlow - Notification Commands
 // Bell icon + dropdown notification center
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

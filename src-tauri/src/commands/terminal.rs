@@ -1,4 +1,4 @@
-// Track Your Shit - Terminal Commands
+// GSD VibeFlow - Terminal Commands
 // Command history and script favorites management
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

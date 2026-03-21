@@ -1,4 +1,4 @@
-// Track Your Shit - Git Status Commands
+// GSD VibeFlow - Git Status Commands
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 use crate::models::{

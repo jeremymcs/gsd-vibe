@@ -1,4 +1,4 @@
-// Track Your Shit - Data Models
+// GSD VibeFlow - Data Models
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 use serde::{Deserialize, Serialize};

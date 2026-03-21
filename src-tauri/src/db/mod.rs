@@ -1,4 +1,4 @@
-// Track Your Shit - Database Module (SQLite connection pool, schema, migrations, PRAGMA tuning)
+// GSD VibeFlow - Database Module (SQLite connection pool, schema, migrations, PRAGMA tuning)
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 //
 // Architecture: Read/Write connection separation for concurrent access.

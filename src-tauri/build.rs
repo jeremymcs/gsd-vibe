@@ -1,4 +1,4 @@
-// Track Your Shit - Build Script
+// GSD VibeFlow - Build Script
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 fn main() {

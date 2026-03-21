@@ -1,4 +1,4 @@
-// Track Your Shit - Snippets & Auto-commands
+// GSD VibeFlow - Snippets & Auto-commands
 // Saved command snippets and pre/post execution hooks
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

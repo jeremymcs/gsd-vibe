@@ -1,4 +1,4 @@
-// Track Your Shit - GSD-2 Commands
+// GSD VibeFlow - GSD-2 Commands
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 //
 // GSD-2 backend: version detection, file resolvers, struct definitions, and helpers.

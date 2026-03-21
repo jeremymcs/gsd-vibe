@@ -1,4 +1,4 @@
-// Track Your Shit - OS Keychain Secret Management Commands
+// GSD VibeFlow - OS Keychain Secret Management Commands
 // Provides secure API key storage via the native OS keychain (macOS Keychain, Windows Credential Manager, Linux Secret Service)
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

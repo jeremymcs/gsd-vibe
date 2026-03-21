@@ -1,4 +1,4 @@
-// Track Your Shit - Data Management Commands
+// GSD VibeFlow - Data Management Commands
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 use serde::{Deserialize, Serialize};

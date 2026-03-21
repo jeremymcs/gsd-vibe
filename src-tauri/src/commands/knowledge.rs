@@ -1,4 +1,4 @@
-// Track Your Shit - Knowledge Commands
+// GSD VibeFlow - Knowledge Commands
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 //
 // Implements knowledge/memory system for persistent context (PRD FR-9)

@@ -1,4 +1,4 @@
-// Track Your Shit - PTY Commands
+// GSD VibeFlow - PTY Commands
 // Tauri command handlers for PTY operations
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

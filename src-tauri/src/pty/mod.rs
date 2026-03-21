@@ -1,4 +1,4 @@
-// Track Your Shit - Terminal Manager Module
+// GSD VibeFlow - Terminal Manager Module
 // Manages pseudo-terminal sessions with optional tmux persistence
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

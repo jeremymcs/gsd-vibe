@@ -1,4 +1,4 @@
-// Track Your Shit - Security Utilities
+// GSD VibeFlow - Security Utilities
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 use std::path::{Component, Path, PathBuf};

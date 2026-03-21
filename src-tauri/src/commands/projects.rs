@@ -1,4 +1,4 @@
-// Track Your Shit - Project Commands
+// GSD VibeFlow - Project Commands
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 use crate::db::Database;

@@ -1,4 +1,4 @@
-// Track Your Shit - Headless Session Registry
+// GSD VibeFlow - Headless Session Registry
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 //
 // Tracks active headless GSD sessions (session_id -> project_id mapping).

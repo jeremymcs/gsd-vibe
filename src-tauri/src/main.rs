@@ -1,4 +1,4 @@
-// Track Your Shit - Main Entry Point
+// GSD VibeFlow - Main Entry Point
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 // Prevents additional console window on Windows in release

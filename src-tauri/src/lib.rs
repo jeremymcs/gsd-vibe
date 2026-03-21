@@ -1,4 +1,4 @@
-// Track Your Shit - Library Root (Tauri app setup, command registration, event listeners)
+// GSD VibeFlow - Library Root (Tauri app setup, command registration, event listeners)
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 mod commands;
