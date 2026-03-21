@@ -75,11 +75,11 @@ Plans:
   2. `pnpm build` completes with zero TypeScript errors and zero warnings after all changes
   3. No unused Rust commands remain registered in lib.rs without an active frontend caller
   4. No unused React components, hooks, or TypeScript types/interfaces remain in the source tree
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 10-01: Audit and remove unused Rust commands (gsd2_detect_version post-import, gsd2_get_roadmap_progress) and orphaned files
-- [ ] 10-02: Audit and remove unused React components, hooks, and TypeScript types; fix 4 pre-existing test failures; verify clean build
+- [ ] 10-01-PLAN.md — Remove dead Rust commands (gsd2_detect_version, gsd2_get_roadmap_progress) full-stack; audit all lib.rs registrations
+- [ ] 10-02-PLAN.md — Fix 4 pre-existing test failures; audit and remove unused React components, hooks, and TypeScript types; verify clean build
 
 ## Progress
 
