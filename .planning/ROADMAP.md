@@ -59,7 +59,7 @@ Plans:
   1. The Worktrees tab in a GSD-2 project lists all active worktrees with name, branch, and path (canonicalized to handle macOS /var → /private/var symlinks)
   2. Selecting a worktree shows a summary of files added, modified, and removed vs main before any remove action
   3. Clicking Remove on a worktree removes it from the filesystem and deletes the associated branch; the list refreshes to reflect the change
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 
 Plans:
 - [ ] 03-01-PLAN.md — Rust backend commands (list, remove, diff), TypeScript types, invoke wrappers, query keys, React Query hooks
@@ -86,5 +86,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 |-------|----------------|--------|-----------|
 | 1. GSD-2 Backend Foundation | 2/3 | In Progress|  |
 | 2. Health Widget, Adaptive UI, and Reactive Updates | 2/2 | Complete   | 2026-03-21 |
-| 3. Worktrees Panel | 0/2 | Not started | - |
+| 3. Worktrees Panel | 1/2 | In Progress|  |
 | 4. Headless Mode and Visualizer | 0/TBD | Not started | - |
