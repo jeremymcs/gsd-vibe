@@ -1049,17 +1049,6 @@ pub async fn gsd2_derive_state(
     Ok(derive_state_from_dir(&project_path))
 }
 
-/// Return milestone/slice/task completion counts for a GSD-2 project.
-#[tauri::command]
-pub async fn gsd2_get_roadmap_progress(
-    db: tauri::State<'_, DbState>,
-    project_id: String,
-) -> Result<Gsd2RoadmapProgress, String> {
-    let db_guard = db.write().await;
-    let project_path = get_project_path(&db_guard, &project_id)?;
-    Ok(get_roadmap_progress_from_dir(&project_path))
-}
-
 /// Return health data for a GSD-2 project: budget spend, active unit, blockers,
 /// progress counters. Reads `.gsd/STATE.md` and `.gsd/metrics.json` directly —
 /// never via subprocess (per HLTH-02).
@@ -1071,44 +1060,6 @@ pub async fn gsd2_get_health(
     let db_guard = db.write().await;
     let project_path = get_project_path(&db_guard, &project_id)?;
     Ok(get_health_from_dir(&project_path))
-}
-
-/// Detect the GSD version for a project by inspecting its directory structure.
-///
-/// Returns:
-/// - `"gsd2"` if `.gsd/` directory exists
-/// - `"gsd1"` if `.planning/` directory exists (and no `.gsd/`)
-/// - `"none"` if neither directory is present
-///
-/// The detected version is persisted in the `gsd_version` column of the projects table.
-#[tauri::command]
-pub async fn gsd2_detect_version(
-    db: tauri::State<'_, DbState>,
-    project_id: String,
-) -> Result<String, String> {
-    let db_guard = db.write().await;
-
-    let project_path = get_project_path(&db_guard, &project_id)?;
-
-    let path = Path::new(&project_path);
-    let version = if path.join(".gsd").is_dir() {
-        "gsd2"
-    } else if path.join(".planning").is_dir() {
-        "gsd1"
-    } else {
-        "none"
-    };
-
-    // Store in DB for persistent access
-    db_guard
-        .conn()
-        .execute(
-            "UPDATE projects SET gsd_version = ?1 WHERE id = ?2",
-            params![version, &project_id],
-        )
-        .map_err(|e| format!("Failed to store version: {}", e))?;
-
-    Ok(version.to_string())
 }
 
 // ============================================================

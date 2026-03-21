@@ -283,12 +283,10 @@ pub fn run() {
             commands::gsd::gsd_list_uat_results,
             commands::gsd::gsd_get_uat_by_phase,
             // GSD-2 commands
-            commands::gsd2::gsd2_detect_version,
             commands::gsd2::gsd2_list_milestones,
             commands::gsd2::gsd2_get_milestone,
             commands::gsd2::gsd2_get_slice,
             commands::gsd2::gsd2_derive_state,
-            commands::gsd2::gsd2_get_roadmap_progress,
             commands::gsd2::gsd2_get_health,
             commands::gsd2::gsd2_list_worktrees,
             commands::gsd2::gsd2_remove_worktree,
