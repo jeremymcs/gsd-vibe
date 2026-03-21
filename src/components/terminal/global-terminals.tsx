@@ -118,7 +118,7 @@ export function GlobalTerminals({
                     className="h-full"
                   />
                 </Panel>
-                <Separator className="w-1 bg-border hover:bg-brand-blue/50 transition-colors cursor-col-resize" />
+                <Separator className="w-1 bg-border hover:bg-gsd-cyan/50 transition-colors cursor-col-resize" />
                 <Panel defaultSize="50%" minSize="20%">
                   <InteractiveTerminal
                     ref={(ref) => setTerminalRef(projectId, tabId, ref, true)}

@@ -13,7 +13,7 @@ const progressVariants = cva(
     variants: {
       variant: {
         default: "bg-primary/20",
-        brand: "bg-brand-blue/20",
+        brand: "bg-gsd-cyan/20",
         success: "bg-status-success/20",
         warning: "bg-status-warning/20",
         error: "bg-status-error/20",
@@ -38,7 +38,7 @@ const indicatorVariants = cva(
     variants: {
       variant: {
         default: "bg-primary",
-        brand: "bg-gradient-to-r from-brand-blue via-brand-purple to-brand-blue bg-size-200 shadow-lg shadow-brand-blue/50",
+        brand: "bg-gsd-cyan bg-size-200 shadow-lg shadow-gsd-cyan/50",
         success: "bg-status-success",
         warning: "bg-status-warning",
         error: "bg-status-error",

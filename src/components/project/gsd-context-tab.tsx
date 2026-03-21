@@ -139,7 +139,7 @@ function PhaseContextPanel({
         <Card>
           <CardHeader className="pb-2 pt-4 px-4">
             <CardTitle className="flex items-center gap-2 text-sm">
-              <Lock className="h-4 w-4 text-brand-purple" />
+              <Lock className="h-4 w-4 text-gsd-cyan" />
               Decisions
               <Badge variant="secondary" className="text-xs ml-auto">
                 {context.decisions.length}
@@ -155,7 +155,7 @@ function PhaseContextPanel({
                 <Lock
                   className={cn(
                     'h-3.5 w-3.5 mt-0.5 shrink-0',
-                    'text-brand-purple opacity-70',
+                    'text-gsd-cyan opacity-70',
                   )}
                 />
                 <span className="text-foreground">{decision}</span>

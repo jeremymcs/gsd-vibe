@@ -26,7 +26,7 @@ const buttonVariants = cva(
           "text-primary underline-offset-4 hover:underline",
         // Premium gradient variant for primary CTAs
         premium:
-          "bg-gradient-to-r from-brand-blue via-brand-purple to-brand-blue bg-size-200 bg-pos-0 hover:bg-pos-100 text-white shadow-lg shadow-brand-blue/30 hover:shadow-brand-purple/40 transition-all duration-500 active:scale-[0.98]",
+          "bg-gsd-cyan bg-pos-0 hover:bg-pos-100 text-black shadow-lg shadow-gsd-cyan/30 hover:shadow-gsd-cyan/40 transition-all duration-500 active:scale-[0.98]",
         // Success variant
         success:
           "bg-status-success text-white shadow-md hover:shadow-lg hover:bg-status-success/90 active:scale-[0.98]",

@@ -299,7 +299,7 @@ export function DependencyAlertsCard({ projectId, projectPath }: DependencyAlert
                           href={getRegistryUrl(status.package_manager, name)}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="font-medium truncate flex-1 text-brand-blue hover:underline inline-flex items-center gap-1"
+                          className="font-medium truncate flex-1 text-gsd-cyan hover:underline inline-flex items-center gap-1"
                           title={name}
                         >
                           {name}

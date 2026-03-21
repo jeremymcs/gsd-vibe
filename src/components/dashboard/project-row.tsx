@@ -61,8 +61,8 @@ export const ProjectRow = React.memo(function ProjectRow({
         className={cn(
           'p-0.5 rounded shrink-0',
           project.is_favorite
-            ? 'text-brand-yellow'
-            : 'text-muted-foreground/30 hover:text-brand-yellow'
+            ? 'text-gsd-cyan'
+            : 'text-muted-foreground/30 hover:text-gsd-cyan'
         )}
         aria-label={
           project.is_favorite ? 'Remove from favorites' : 'Add to favorites'
@@ -124,7 +124,7 @@ export const ProjectRow = React.memo(function ProjectRow({
           <>
             <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
               <div
-                className="h-full bg-brand-blue rounded-full transition-all"
+                className="h-full bg-gsd-cyan rounded-full transition-all"
                 style={{ width: `${Math.min(progressPct, 100)}%` }}
               />
             </div>

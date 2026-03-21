@@ -42,13 +42,13 @@ const eventTypeIcons: Record<string, typeof Activity> = {
 };
 
 const eventTypeColors: Record<string, string> = {
-  phase_started: 'text-brand-purple',
+  phase_started: 'text-gsd-cyan',
   phase_completed: 'text-status-success',
   task_started: 'text-muted-foreground',
   task_completed: 'text-status-success',
   context_warning: 'text-status-warning',
   cost_warning: 'text-status-warning',
-  decision_made: 'text-brand-blue',
+  decision_made: 'text-gsd-cyan',
   debug_started: 'text-status-warning',
   debug_resolved: 'text-status-success',
   error: 'text-status-error',

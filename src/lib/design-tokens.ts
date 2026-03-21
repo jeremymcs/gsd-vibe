@@ -121,7 +121,7 @@ export const projectTypeConfig: Record<
   gsd: {
     label: "GSD",
     classes:
-      "bg-brand-purple/10 text-brand-purple border-brand-purple/20",
+      "bg-gsd-cyan/10 text-gsd-cyan border-gsd-cyan/20",
     tooltip: "GSD project (.planning/)",
   },
   bare: {
@@ -153,7 +153,7 @@ export const systemGroupConfig: Record<
 > = {
   gsd: {
     label: "GSD",
-    color: "text-brand-purple",
-    bgTint: "bg-brand-purple/20",
+    color: "text-gsd-cyan",
+    bgTint: "bg-gsd-cyan/20",
   },
 };

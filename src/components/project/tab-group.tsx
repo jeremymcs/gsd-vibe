@@ -44,7 +44,7 @@ export function TabGroup({ tabs, defaultTab }: TabGroupProps) {
               {Icon && <Icon className="h-3.5 w-3.5" />}
               {tab.label}
               {isActive && (
-                <span className="absolute bottom-0 left-2 right-2 h-0.5 bg-brand-blue rounded-full" />
+                <span className="absolute bottom-0 left-2 right-2 h-0.5 bg-gsd-cyan rounded-full" />
               )}
             </button>
           );

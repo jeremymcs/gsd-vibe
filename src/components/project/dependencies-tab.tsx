@@ -202,7 +202,7 @@ function OutdatedTable({
                 href={getRegistryUrl(packageManager, name)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-medium text-brand-blue hover:underline inline-flex items-center gap-1"
+                className="font-medium text-gsd-cyan hover:underline inline-flex items-center gap-1"
               >
                 {name}
                 <ExternalLink className="h-3 w-3 shrink-0" />
@@ -290,7 +290,7 @@ function VulnerabilityTable({
                 href={info.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-xs text-brand-blue hover:underline"
+                className="inline-flex items-center gap-1 text-xs text-gsd-cyan hover:underline"
               >
                 View
                 <ExternalLink className="h-3 w-3" />

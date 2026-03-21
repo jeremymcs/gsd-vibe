@@ -97,8 +97,8 @@ export function MainLayout({ children }: MainLayoutProps) {
             )}
           >
             <div className="flex items-center gap-2.5">
-              <div className="p-1.5 rounded-md bg-brand-blue/15 flex-shrink-0">
-                <ClipboardCheck className="h-[18px] w-[18px] text-brand-blue" />
+              <div className="p-1.5 rounded-md bg-gsd-cyan/15 flex-shrink-0">
+                <ClipboardCheck className="h-[18px] w-[18px] text-gsd-cyan" />
               </div>
               {!sidebarCollapsed && (
                 <span className="text-sm font-semibold text-foreground tracking-tight">
@@ -178,10 +178,10 @@ export function MainLayout({ children }: MainLayoutProps) {
                 >
                   {/* Active indicator: left bar (expanded) or bottom dot (collapsed) */}
                   {isActive && !sidebarCollapsed && (
-                    <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-4 rounded-full bg-brand-blue" />
+                    <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-4 rounded-full bg-gsd-cyan" />
                   )}
                   {isActive && sidebarCollapsed && (
-                    <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-brand-blue" />
+                    <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-gsd-cyan" />
                   )}
 
                   <item.icon className="h-[18px] w-[18px] flex-shrink-0" />
@@ -286,7 +286,7 @@ export function MainLayout({ children }: MainLayoutProps) {
               className={cn(
                 "relative flex items-center gap-2 px-4 py-2 border-t cursor-pointer select-none flex-shrink-0 w-full transition-all duration-200 group",
                 shellPanelCollapsed
-                  ? "border-brand-blue/30 bg-gradient-to-r from-brand-blue/5 via-brand-purple/5 to-transparent hover:from-brand-blue/10 hover:via-brand-purple/10"
+                  ? "border-gsd-cyan/30 bg-gradient-to-r from-gsd-cyan/5 to-transparent hover:from-gsd-cyan/10"
                   : "border-border/50 bg-muted/30 hover:bg-muted/50"
               )}
               onClick={() => setShellPanelCollapsed(!shellPanelCollapsed)}
@@ -295,12 +295,12 @@ export function MainLayout({ children }: MainLayoutProps) {
             >
               {/* Accent line on top when collapsed */}
               {shellPanelCollapsed && (
-                <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-brand-blue via-brand-purple to-brand-blue/0" />
+                <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-gsd-cyan to-gsd-cyan/0" />
               )}
               <SquareTerminal className={cn(
                 "h-4 w-4 transition-colors duration-200",
                 shellPanelCollapsed
-                  ? "text-brand-blue group-hover:text-brand-purple"
+                  ? "text-gsd-cyan group-hover:text-gsd-cyan"
                   : "text-muted-foreground"
               )} />
               <span className={cn(

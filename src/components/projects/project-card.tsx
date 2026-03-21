@@ -82,7 +82,7 @@ export function ProjectCard({ project, showDescription, selected, onToggleSelect
   return (
     <Link
       to={`/projects/${project.id}`}
-      className="block p-4 rounded-lg border bg-gradient-to-r from-card to-card/80 hover:from-card hover:to-accent/20 hover:border-brand-blue/30 hover:shadow-md transition-all duration-200 group"
+      className="block p-4 rounded-lg border bg-gradient-to-r from-card to-card/80 hover:from-card hover:to-accent/20 hover:border-gsd-cyan/30 hover:shadow-md transition-all duration-200 group"
     >
       {/* Row 1: Name + Running indicator */}
       <div className="flex items-start justify-between gap-4">
@@ -101,8 +101,8 @@ export function ProjectCard({ project, showDescription, selected, onToggleSelect
             className={cn(
               'h-6 w-6 shrink-0',
               project.is_favorite
-                ? 'text-brand-yellow hover:text-brand-yellow/80'
-                : 'text-muted-foreground/40 hover:text-brand-yellow opacity-0 group-hover:opacity-100'
+                ? 'text-gsd-cyan hover:text-gsd-cyan/80'
+                : 'text-muted-foreground/40 hover:text-gsd-cyan opacity-0 group-hover:opacity-100'
             )}
             onClick={handleToggleFavorite}
             aria-label={
@@ -114,7 +114,7 @@ export function ProjectCard({ project, showDescription, selected, onToggleSelect
             />
           </Button>
 
-          <h3 className="font-semibold truncate group-hover:text-brand-blue transition-colors">
+          <h3 className="font-semibold truncate group-hover:text-gsd-cyan transition-colors">
             {project.name}
           </h3>
 
@@ -152,7 +152,7 @@ export function ProjectCard({ project, showDescription, selected, onToggleSelect
             <Button
               variant="ghost"
               size="icon-xs"
-              className="h-7 w-7 rounded-md hover:bg-brand-blue/10 hover:text-brand-blue"
+              className="h-7 w-7 rounded-md hover:bg-gsd-cyan/10 hover:text-gsd-cyan"
               onClick={(e) => handleQuickAction(e, 'shell')}
               title="Open Shell"
               aria-label="Open Shell"
@@ -162,7 +162,7 @@ export function ProjectCard({ project, showDescription, selected, onToggleSelect
             <Button
               variant="ghost"
               size="icon-xs"
-              className="h-7 w-7 rounded-md hover:bg-brand-purple/10 hover:text-brand-purple"
+              className="h-7 w-7 rounded-md hover:bg-gsd-cyan/10 hover:text-gsd-cyan"
               onClick={(e) => handleQuickAction(e, 'plan')}
               title="View Plan"
               aria-label="View Plan"

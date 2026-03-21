@@ -22,7 +22,7 @@ export function RoadmapProgressCard({ projectId }: RoadmapProgressCardProps) {
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-sm">
-            <Map className="h-4 w-4 text-brand-purple" />
+            <Map className="h-4 w-4 text-gsd-cyan" />
             Roadmap Progress
           </CardTitle>
         </CardHeader>
@@ -38,7 +38,7 @@ export function RoadmapProgressCard({ projectId }: RoadmapProgressCardProps) {
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-sm">
-            <Map className="h-4 w-4 text-brand-purple" />
+            <Map className="h-4 w-4 text-gsd-cyan" />
             Roadmap Progress
           </CardTitle>
         </CardHeader>
@@ -53,7 +53,7 @@ export function RoadmapProgressCard({ projectId }: RoadmapProgressCardProps) {
     <Card>
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center gap-2 text-sm">
-          <Map className="h-4 w-4 text-brand-purple" />
+          <Map className="h-4 w-4 text-gsd-cyan" />
           Roadmap Progress
         </CardTitle>
       </CardHeader>
@@ -103,13 +103,13 @@ function PhaseRow({
 }) {
   const statusColor = {
     complete: 'text-status-success',
-    in_progress: 'text-brand-purple',
+    in_progress: 'text-gsd-cyan',
     pending: 'text-muted-foreground',
   }[phase.status];
 
   const barColor = {
     complete: 'bg-status-success',
-    in_progress: 'bg-brand-purple',
+    in_progress: 'bg-gsd-cyan',
     pending: 'bg-muted',
   }[phase.status];
 
@@ -120,7 +120,7 @@ function PhaseRow({
     <div
       className={cn(
         'space-y-1 rounded-md px-2 py-1.5 transition-colors',
-        isCurrent && 'bg-brand-purple/8 ring-1 ring-brand-purple/20',
+        isCurrent && 'bg-gsd-cyan/8 ring-1 ring-gsd-cyan/20',
       )}
     >
       <div className="flex items-center gap-2">

@@ -152,8 +152,8 @@ export function KnowledgeViewer({ project }: KnowledgeViewerProps) {
   if (!fileTree || fileTree.total_files === 0) {
     return (
       <div className="h-full flex flex-col items-center justify-center text-muted-foreground">
-        <div className="p-4 rounded-full bg-gradient-to-br from-brand-blue/10 to-brand-purple/10 mb-4">
-          <FileQuestion className="h-12 w-12 text-brand-blue" />
+        <div className="p-4 rounded-full bg-gsd-cyan/10 mb-4">
+          <FileQuestion className="h-12 w-12 text-gsd-cyan" />
         </div>
         <h3 className="text-lg font-medium mb-2">No Knowledge Files Found</h3>
         <p className="text-sm text-center max-w-md">

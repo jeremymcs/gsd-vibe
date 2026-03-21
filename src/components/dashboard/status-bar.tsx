@@ -31,14 +31,14 @@ export function StatusBar() {
       />
       <Sep />
       <StatItem
-        icon={<ListTodo className="h-3.5 w-3.5 text-brand-purple" />}
+        icon={<ListTodo className="h-3.5 w-3.5 text-gsd-cyan" />}
         value={totalTodos}
         label="pending todos"
         accent="purple"
       />
       <Sep />
       <StatItem
-        icon={<AlertTriangle className="h-3.5 w-3.5 text-brand-purple/60" />}
+        icon={<AlertTriangle className="h-3.5 w-3.5 text-gsd-cyan/60" />}
         value={gsdCount}
         label={gsdCount === 1 ? 'GSD project' : 'GSD projects'}
       />
@@ -59,7 +59,7 @@ function StatItem({
 }) {
   const accentClass =
     accent === 'purple'
-      ? 'text-brand-purple font-semibold'
+      ? 'text-gsd-cyan font-semibold'
       : accent === 'red'
         ? 'text-status-error font-semibold'
         : 'font-semibold';

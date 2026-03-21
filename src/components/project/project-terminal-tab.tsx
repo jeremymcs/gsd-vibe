@@ -223,7 +223,7 @@ export function ProjectTerminalTab({
                 variant={activeScriptId === script.id ? 'default' : 'outline'}
                 className={cn(
                   'w-full justify-start gap-2 border-yellow-500/30',
-                  activeScriptId === script.id && 'bg-brand-blue text-white border-brand-blue/60'
+                  activeScriptId === script.id && 'bg-gsd-cyan text-black border-gsd-cyan/60'
                 )}
                 onClick={() => {
                   setActiveScriptId(script.id);
@@ -327,7 +327,7 @@ export function ProjectTerminalTab({
                        variant={activeScriptId === script.id ? 'default' : script.variant}
                        className={cn(
                          'flex-1 justify-start gap-2',
-                         activeScriptId === script.id && 'bg-brand-blue text-white border-brand-blue/60'
+                         activeScriptId === script.id && 'bg-gsd-cyan text-black border-gsd-cyan/60'
                        )}
                        onClick={() => {
                          setActiveScriptId(script.id);

@@ -206,8 +206,8 @@ export function ProjectsPage() {
             </div>
           ) : filteredProjects.length === 0 ? (
             <div className="text-center py-12">
-              <div className="p-4 rounded-full bg-gradient-to-br from-brand-blue/10 to-brand-purple/10 w-fit mx-auto mb-4">
-                <FolderOpen className="h-12 w-12 text-brand-blue" />
+              <div className="p-4 rounded-full bg-gsd-cyan/10 w-fit mx-auto mb-4">
+                <FolderOpen className="h-12 w-12 text-gsd-cyan" />
               </div>
               <h3 className="text-lg font-medium mb-2">
                 {searchQuery || statusFilter !== "all" || typeFilter !== "all"

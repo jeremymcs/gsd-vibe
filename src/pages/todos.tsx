@@ -112,7 +112,7 @@ function TodoRow({ todo, onComplete, completing, showProject = false }: TodoRowP
         <button
           type="button"
           onClick={() => void navigate(`/projects/${todo.project_id}?tab=gsd`)}
-          className="flex-shrink-0 text-[10px] px-2 py-0.5 rounded-full bg-brand-blue/10 text-brand-blue border border-brand-blue/20 hover:bg-brand-blue/20 transition-colors font-medium"
+          className="flex-shrink-0 text-[10px] px-2 py-0.5 rounded-full bg-gsd-cyan/10 text-gsd-cyan border border-gsd-cyan/20 hover:bg-gsd-cyan/20 transition-colors font-medium"
           title={`Go to ${todo.project_name}`}
         >
           {todo.project_name}
@@ -160,7 +160,7 @@ function ProjectGroup({ projectId, projectName, todos, onComplete, completingKey
             e.stopPropagation();
             void navigate(`/projects/${projectId}?tab=gsd`);
           }}
-          className="text-sm font-semibold text-foreground hover:text-brand-blue transition-colors"
+          className="text-sm font-semibold text-foreground hover:text-gsd-cyan transition-colors"
         >
           {projectName}
         </button>
@@ -293,8 +293,8 @@ export function TodosPage() {
       {/* Page header */}
       <div className="flex-shrink-0 px-6 py-4 border-b border-border/40">
         <div className="flex items-center gap-3">
-          <div className="p-1.5 rounded-md bg-brand-blue/15">
-            <ListTodo className="h-5 w-5 text-brand-blue" />
+          <div className="p-1.5 rounded-md bg-gsd-cyan/15">
+            <ListTodo className="h-5 w-5 text-gsd-cyan" />
           </div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-semibold text-foreground">Todos</h1>
@@ -323,7 +323,7 @@ export function TodosPage() {
               onClick={() => setFilterMode(mode)}
               className={`px-2.5 py-1 text-xs rounded font-medium transition-colors capitalize ${
                 filterMode === mode
-                  ? 'bg-brand-blue text-white'
+                  ? 'bg-gsd-cyan text-black'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >

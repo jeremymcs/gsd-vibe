@@ -254,8 +254,8 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
   return (
     <div className="flex-1 flex items-center justify-center min-h-[400px]">
       <div className="text-center py-16">
-        <div className="p-4 rounded-full bg-gradient-to-br from-brand-blue/10 to-brand-purple/10 w-fit mx-auto mb-4">
-          <FolderOpen className="h-12 w-12 text-brand-blue" />
+        <div className="p-4 rounded-full bg-gsd-cyan/10 w-fit mx-auto mb-4">
+          <FolderOpen className="h-12 w-12 text-gsd-cyan" />
         </div>
         <h3 className="text-lg font-medium mb-2">No projects yet</h3>
         <p className="text-sm text-muted-foreground mb-5">

@@ -129,7 +129,7 @@ function GsdStateCard({ projectId }: { projectId: string }) {
     <Card>
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center gap-2 text-sm">
-          <Crosshair className="h-4 w-4 text-brand-purple" />
+          <Crosshair className="h-4 w-4 text-gsd-cyan" />
           GSD State
         </CardTitle>
       </CardHeader>
@@ -173,7 +173,7 @@ function GsdStateCard({ projectId }: { projectId: string }) {
         {state?.velocity && (
           <div className="border-t pt-2 space-y-1.5">
             <div className="flex items-center gap-1.5 text-xs font-medium">
-              <Gauge className="h-3 w-3 text-brand-purple" />
+              <Gauge className="h-3 w-3 text-gsd-cyan" />
               Velocity
             </div>
             <div className="flex items-center gap-3">
@@ -210,7 +210,7 @@ function GsdStateCard({ projectId }: { projectId: string }) {
         {(state?.decisions?.length ?? 0) > 0 && (
           <div className="border-t pt-2">
             <div className="flex items-center gap-1.5 text-xs font-medium mb-1">
-              <GitBranch className="h-3 w-3 text-brand-purple" />
+              <GitBranch className="h-3 w-3 text-gsd-cyan" />
               Decisions
             </div>
             <div className="space-y-0.5">

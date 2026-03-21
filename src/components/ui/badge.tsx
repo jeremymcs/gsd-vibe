@@ -21,7 +21,7 @@ const badgeVariants = cva(
           "text-foreground border-border",
         // Brand variants
         brand:
-          "border-transparent bg-gradient-to-r from-brand-blue to-brand-purple text-white shadow-md shadow-brand-blue/30",
+          "border-transparent bg-gsd-cyan text-black shadow-md shadow-gsd-cyan/30",
         // Status variants (using design tokens)
         success:
           "border-status-success/30 bg-status-success/10 text-status-success",
@@ -35,11 +35,11 @@ const badgeVariants = cva(
           "border-status-pending/30 bg-status-pending/10 text-status-pending",
         // Subtle variants (muted backgrounds)
         "subtle-blue":
-          "border-brand-blue/20 bg-brand-blue/10 text-brand-blue",
+          "border-gsd-cyan/20 bg-gsd-cyan/10 text-gsd-cyan",
         "subtle-purple":
-          "border-brand-purple/20 bg-brand-purple/10 text-brand-purple",
+          "border-gsd-cyan/20 bg-gsd-cyan/10 text-gsd-cyan",
         "subtle-cyan":
-          "border-brand-cyan/20 bg-brand-cyan/10 text-brand-cyan",
+          "border-gsd-cyan/20 bg-gsd-cyan/10 text-gsd-cyan",
       },
       size: {
         default: "px-2.5 py-0.5 text-xs",

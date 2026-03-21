@@ -66,8 +66,8 @@ export const ProjectCard = React.memo(function ProjectCard({
             className={cn(
               'p-0.5 rounded shrink-0',
               project.is_favorite
-                ? 'text-brand-yellow'
-                : 'text-muted-foreground/30 hover:text-brand-yellow'
+                ? 'text-gsd-cyan'
+                : 'text-muted-foreground/30 hover:text-gsd-cyan'
             )}
             aria-label={
               project.is_favorite
@@ -123,7 +123,7 @@ export const ProjectCard = React.memo(function ProjectCard({
 
               {/* Phase count badge */}
               {project.tech_stack?.gsd_phase_count != null && (
-                <span className="inline-flex items-center gap-1 text-[10px] font-medium text-brand-purple bg-brand-purple/10 border border-brand-purple/20 rounded px-1.5 py-0.5">
+                <span className="inline-flex items-center gap-1 text-[10px] font-medium text-gsd-cyan bg-gsd-cyan/10 border border-gsd-cyan/20 rounded px-1.5 py-0.5">
                   {project.tech_stack.gsd_phase_count}{' '}
                   {project.tech_stack.gsd_phase_count === 1 ? 'phase' : 'phases'}
                 </span>
@@ -167,7 +167,7 @@ export const ProjectCard = React.memo(function ProjectCard({
               <div className="flex-1 flex items-center gap-2">
                 <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-brand-blue rounded-full transition-all"
+                    className="h-full bg-gsd-cyan rounded-full transition-all"
                     style={{ width: `${Math.min(progressPct, 100)}%` }}
                   />
                 </div>
