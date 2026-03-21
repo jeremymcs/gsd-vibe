@@ -21,6 +21,8 @@ import {
   ClipboardCheck,
   Activity,
   GitBranch,
+  Play,
+  BarChart3,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -52,6 +54,8 @@ import {
   EnvVarsTab,
   Gsd2HealthTab,
   Gsd2WorktreesTab,
+  Gsd2HeadlessTab,
+  Gsd2VisualizerTab,
 } from "@/components/project";
 import { TerminalTabs } from "@/components/terminal";
 import { watchProjectFiles } from "@/lib/tauri";
@@ -249,10 +253,22 @@ export function ProjectPage() {
                     content: <Gsd2HealthTab projectId={project.id} projectPath={project.path} />,
                   },
                   {
+                    id: "gsd2-headless",
+                    label: "Headless",
+                    icon: Play,
+                    content: <Gsd2HeadlessTab projectId={project.id} projectPath={project.path} />,
+                  },
+                  {
                     id: "gsd2-worktrees",
                     label: "Worktrees",
                     icon: GitBranch,
                     content: <Gsd2WorktreesTab projectId={project.id} projectPath={project.path} />,
+                  },
+                  {
+                    id: "gsd2-visualizer",
+                    label: "Visualizer",
+                    icon: BarChart3,
+                    content: <Gsd2VisualizerTab projectId={project.id} projectPath={project.path} />,
                   },
                   {
                     id: "gsd2-milestones",

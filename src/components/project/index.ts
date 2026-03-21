@@ -29,3 +29,5 @@ export { GsdValidationPlanTab } from './gsd-validation-plan-tab';
 export { GsdUatTab } from './gsd-uat-tab';
 export { Gsd2HealthTab } from './gsd2-health-tab';
 export { Gsd2WorktreesTab } from './gsd2-worktrees-tab';
+export { Gsd2HeadlessTab } from './gsd2-headless-tab';
+export { Gsd2VisualizerTab } from './gsd2-visualizer-tab';
