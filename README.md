@@ -82,7 +82,7 @@ pnpm format:check
 ## Project Structure
 
 ```
-track-your-shit/
+gsd-vibe/
 ├── src/                          # React frontend
 │   ├── main.tsx                  # Entry point
 │   ├── App.tsx                   # Root component with routing
@@ -163,7 +163,7 @@ track-your-shit/
 
 ## Database
 
-SQLite database stored at the OS app data directory as `track-your-shit.db`. WAL mode enabled for concurrent reads. Uses a read/write connection pool (`DbPool`) — 1 writer + 4 readers with round-robin distribution.
+SQLite database stored at the OS app data directory as `gsd-vibe.db`. WAL mode enabled for concurrent reads. Uses a read/write connection pool (`DbPool`) — 1 writer + 4 readers with round-robin distribution.
 
 ## License
 
