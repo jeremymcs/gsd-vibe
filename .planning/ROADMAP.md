@@ -60,11 +60,11 @@ Plans:
   2. App icon appears correctly at all required sizes on macOS, Windows, and Linux (no placeholder or legacy icon)
   3. CSS design token names contain no references to the old brand; all palette tokens express the new black/white/cyan identity
   4. Splash/loading screen (if present) displays "GSD VibeFlow" branding using the new palette
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 09-01: Migrate CSS design tokens to gsd.build palette (black/white/cyan); rename any old-brand token names
-- [ ] 09-02: Create and apply new app icon for all target sizes; update splash/loading screen branding
+- [ ] 09-01-PLAN.md — Migrate CSS tokens to gsd.build palette, clean up Tailwind config, simplify theme system, sweep 33 files for brand class renames
+- [ ] 09-02-PLAN.md — Create new GSD logomark icon SVG and generate all platform icon formats (PNG, ICNS, ICO)
 
 ### Phase 10: Dead Code Removal and Quality
 **Goal**: The codebase ships clean — no dead code remains, the full test suite passes, and the build is error-free
