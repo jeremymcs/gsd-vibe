@@ -44,12 +44,12 @@ Full details: `.planning/milestones/v1.0-ROADMAP.md`
   3. Every .rs and .ts/.tsx source file header reads "GSD VibeFlow - [purpose]" — zero legacy headers remain
   4. README.md and CLAUDE.md describe the app as "GSD VibeFlow" with no legacy name references
   5. A codebase-wide search for "Track Your Shit" returns zero results across all user-facing strings, page titles, and document.title calls
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 08-01: Update metadata files (tauri.conf.json, package.json, Cargo.toml, bundle identifier)
-- [ ] 08-02: Replace all UI strings, page titles, and document.title references; update README.md and CLAUDE.md
-- [ ] 08-03: Bulk-update all .rs and .ts/.tsx source file headers
+- [ ] 08-01-PLAN.md — Update metadata files (tauri.conf.json, package.json, Cargo.toml, bundle identifier, keychain service)
+- [ ] 08-02-PLAN.md — Replace all UI strings, page titles, doc comments; update README.md and CLAUDE.md
+- [ ] 08-03-PLAN.md — Bulk-update all .rs and .ts/.tsx source file headers; final verification
 
 ### Phase 9: Visual Identity
 **Goal**: The app looks and feels like gsd.build — black/white/cyan palette, new icon at all sizes, updated CSS design tokens
@@ -94,6 +94,6 @@ Plans:
 | 5. GSD-2 Milestones, Slices, and Tasks UI | v1.0 | 2/2 | Complete | 2026-03-21 |
 | 6. Reactive Updates and Headless Session Polish | v1.0 | 1/1 | Complete | 2026-03-21 |
 | 7. Reactive Milestones/Slices/Tasks Invalidation | v1.0 | 1/1 | Complete | 2026-03-21 |
-| 8. Identity, Strings, and Headers | v1.1 | 0/3 | Not started | - |
+| 8. Identity, Strings, and Headers | v1.1 | 0/3 | Planning | - |
 | 9. Visual Identity | v1.1 | 0/2 | Not started | - |
 | 10. Dead Code Removal and Quality | v1.1 | 0/2 | Not started | - |
