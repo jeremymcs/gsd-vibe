@@ -95,7 +95,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 2. Health Widget, Adaptive UI, and Reactive Updates | 2/2 | Complete | 2026-03-21 |
 | 3. Worktrees Panel | 2/2 | Complete | 2026-03-21 |
 | 4. Headless Mode and Visualizer | 3/3 | Complete | 2026-03-21 |
-| 5. GSD-2 Milestones, Slices, and Tasks UI | 0/2 | Pending | |
+| 5. GSD-2 Milestones, Slices, and Tasks UI | 1/2 | In Progress|  |
 | 6. Reactive Updates and Headless Session Polish | 0/? | Pending | |
 
 ### Phase 5: GSD-2 Milestones, Slices, and Tasks UI
@@ -103,7 +103,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 **Depends on**: Phase 1 (all 5 parsing commands exist in Rust)
 **Requirements**: PARS-01, PARS-02, PARS-03, PARS-04, PARS-05 (frontend wiring — commands already verified at Rust level)
 **Gap Closure**: Closes integration gaps identified in v1.0 audit — parsing commands unreachable from UI
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 
 Plans:
 - [ ] 05-01-PLAN.md — TypeScript invoke wrappers, interface types, query key entries, React Query hooks for all 5 parsing commands
