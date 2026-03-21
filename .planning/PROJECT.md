@@ -23,11 +23,12 @@ Per-project version detection drives everything — the app correctly identifies
 
 v1.0 shipped 2026-03-21. All 7 phases complete, 14 plans executed. GSD-2 integration is fully functional: version detection, file parsing, health widget, worktrees, headless sessions, visualizer, and reactive tab invalidation all wired end-to-end.
 
-v1.1 in progress. Phase 9 complete 2026-03-21 — gsd.build visual identity applied: black/white/cyan palette, light theme removed, design tokens renamed (gsd-cyan), all 33 component files updated, GSD-branded app icon in all platform formats.
+v1.1 in progress. Phase 10 complete 2026-03-21 — dead code audit complete: 11 orphaned Rust commands removed (968 lines), unused React components (ImportDialog, NewProjectDialog) removed, 4 pre-existing test failures fixed. Build clean, 130/130 tests passing.
 
-**Remaining tech debt (to address in v1.1):**
+**Remaining tech debt (to address in future):**
 - `gsd2_detect_version` registered as Tauri command but not called post-import (version set at import time only)
 - `gsd2_get_roadmap_progress` command + hook exist but no dedicated UI consumer (data partially surfaced via health M/S/T counts)
+- `archive_project` and `gsd_update_config` commands have no frontend callers (deferred per phase 10 scope)
 
 ## Requirements
 
@@ -53,8 +54,8 @@ v1.1 in progress. Phase 9 complete 2026-03-21 — gsd.build visual identity appl
 - [ ] Replace all "Track Your Shit" UI strings with "GSD VibeFlow"
 - [x] Update visual identity: color palette to gsd.build (black/white/cyan), new app icon — Validated in Phase 9: visual-identity
 - [ ] Update all file headers: `Track Your Shit - [purpose]` → `GSD VibeFlow - [purpose]`
-- [ ] Audit and remove dead code: unused Rust commands, React components, hooks, and TypeScript types
-- [ ] Fix pre-existing test failures in projects.test.tsx and main-layout.test.tsx (4 tests)
+- [x] Audit and remove dead code: unused Rust commands, React components, hooks, and TypeScript types — Validated in Phase 10: dead-code-removal-and-quality
+- [x] Fix pre-existing test failures in projects.test.tsx and main-layout.test.tsx (4 tests) — Validated in Phase 10: dead-code-removal-and-quality
 
 ### Out of Scope
 
