@@ -1,18 +1,29 @@
-# Track Your Shit — GSD-2 Integration
+# GSD VibeFlow
 
 ## What This Is
 
-Track Your Shit is a native desktop app (Tauri 2.x / Rust + React) for managing Claude Code projects. It supports both GSD-1 (`.planning/` directory) and GSD-2 (`.gsd/` directory) projects, detected per-project at import time. GSD-2 projects surface a health widget, worktrees panel, headless session control, visualizer, and reactive Milestones/Slices/Tasks tabs — all updating within 2 seconds of `.gsd/` file changes.
+GSD VibeFlow is a native desktop app (Tauri 2.x / Rust + React) for managing Claude Code projects powered by GSD. It supports both GSD-1 (`.planning/` directory) and GSD-2 (`.gsd/` directory) projects, detected per-project at import time. GSD-2 projects surface a health widget, worktrees panel, headless session control, visualizer, and reactive Milestones/Slices/Tasks tabs — all updating within 2 seconds of `.gsd/` file changes.
 
 ## Core Value
 
 Per-project version detection drives everything — the app correctly identifies whether a project uses `.gsd/` (GSD-2) or `.planning/` (GSD-1) and renders appropriate data, UI terminology, and features for each.
 
+## Current Milestone: v1.1 GSD VibeFlow Rebrand
+
+**Goal:** Rebrand the app from "Track Your Shit" to "GSD VibeFlow" with a full visual identity refresh matching gsd.build, and audit/remove all dead code.
+
+**Target features:**
+- App identity: name, metadata, window title, About dialog
+- UI string replacement: all "Track Your Shit" references → "GSD VibeFlow"
+- Visual identity: gsd.build-aligned palette (black/white/cyan), new app icon
+- File header copyright updates across all source files
+- Dead code audit and removal (unused commands, components, hooks, types)
+
 ## Current State
 
 v1.0 shipped 2026-03-21. All 7 phases complete, 14 plans executed. GSD-2 integration is fully functional: version detection, file parsing, health widget, worktrees, headless sessions, visualizer, and reactive tab invalidation all wired end-to-end.
 
-**Remaining tech debt (low priority):**
+**Remaining tech debt (to address in v1.1):**
 - `gsd2_detect_version` registered as Tauri command but not called post-import (version set at import time only)
 - `gsd2_get_roadmap_progress` command + hook exist but no dedicated UI consumer (data partially surfaced via health M/S/T counts)
 
@@ -34,10 +45,13 @@ v1.0 shipped 2026-03-21. All 7 phases complete, 14 plans executed. GSD-2 integra
 - ✓ Milestones/Slices/Tasks tabs: real data from Rust parsing commands — v1.0
 - ✓ Reactive file-change invalidation: all 7 GSD-2 query families refresh within 2s — v1.0
 
-### Active (v1.1 candidates)
+### Active — v1.1
 
-- [ ] Post-import version re-detection (if .gsd/ appears/disappears after project added)
-- [ ] Roadmap progress dedicated UI consumer (currently accessible only via health M/S/T counts)
+- [ ] Rename app from "Track Your Shit" to "GSD VibeFlow" in all metadata (tauri.conf.json, package.json, Cargo.toml)
+- [ ] Replace all "Track Your Shit" UI strings with "GSD VibeFlow"
+- [ ] Update visual identity: color palette to gsd.build (black/white/cyan), new app icon
+- [ ] Update all file headers: `Track Your Shit - [purpose]` → `GSD VibeFlow - [purpose]`
+- [ ] Audit and remove dead code: unused Rust commands, React components, hooks, and TypeScript types
 - [ ] Fix pre-existing test failures in projects.test.tsx and main-layout.test.tsx (4 tests)
 
 ### Out of Scope
@@ -62,7 +76,8 @@ v1.0 shipped 2026-03-21. All 7 phases complete, 14 plans executed. GSD-2 integra
 - **Tech Stack**: Tauri 2.x, Rust backend, React 18 + TypeScript frontend — no framework changes
 - **Compatibility**: GSD-1 projects (.planning/) must continue working without modification
 - **IPC Pattern**: New features follow existing invoke<T>() pattern from lib/tauri.ts
-- **No GSD-2 dependency**: TYS reads files directly (Rust fs), does not import gsd-2 npm package
+- **No GSD-2 dependency**: GSD VibeFlow reads files directly (Rust fs), does not import gsd-2 npm package
+- **Brand Alignment**: Visual identity must match gsd.build (black bg, white text, cyan accent)
 
 ## Key Decisions
 
@@ -76,4 +91,4 @@ v1.0 shipped 2026-03-21. All 7 phases complete, 14 plans executed. GSD-2 integra
 | Prefix-array invalidation for per-item queries | gsd2Milestone/gsd2Slice keys take extra args beyond projectId | ✓ Implemented in Phase 07 — `['gsd2', 'milestone', projectId]` catches all accordion-expanded queries |
 
 ---
-*Last updated: 2026-03-21 after v1.0 milestone*
+*Last updated: 2026-03-21 after v1.1 milestone start — rebrand to GSD VibeFlow*

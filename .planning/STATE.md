@@ -1,111 +1,45 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-status: unknown
-stopped_at: Completed 07-01-PLAN.md
-last_updated: "2026-03-21T16:28:19.415Z"
+milestone: v1.1
+milestone_name: GSD VibeFlow Rebrand
+status: defining_requirements
+stopped_at: Milestone v1.1 started
+last_updated: "2026-03-21T00:00:00.000Z"
 progress:
-  total_phases: 7
-  completed_phases: 7
-  total_plans: 14
-  completed_plans: 14
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-20)
+See: .planning/PROJECT.md (updated 2026-03-21)
 
 **Core value:** Per-project version detection drives everything — correctly identify .gsd/ vs .planning/ and render the right data and terminology for each project.
-**Current focus:** Phase 07 — reactive-milestones-slices-tasks-invalidation
+**Current focus:** Milestone v1.1 — GSD VibeFlow Rebrand
 
 ## Current Position
 
-Phase: 07 (reactive-milestones-slices-tasks-invalidation) — EXECUTING
-Plan: 1 of 1
-
-## Performance Metrics
-
-**Velocity:**
-
-- Total plans completed: 0
-- Average duration: -
-- Total execution time: 0 hours
-
-**By Phase:**
-
-| Phase | Plans | Total | Avg/Plan |
-|-------|-------|-------|----------|
-| - | - | - | - |
-
-**Recent Trend:**
-
-- Last 5 plans: -
-- Trend: -
-
-*Updated after each plan completion*
-| Phase 01 P01 | 7 | 2 tasks | 5 files |
-| Phase 01 P02 | 20 | 2 tasks | 2 files |
-| Phase 01 P03 | 9 | 2 tasks | 2 files |
-| Phase 02 P01 | 30 | 2 tasks | 7 files |
-| Phase 02 P02 | 8 | 2 tasks | 9 files |
-| Phase 03 P01 | 5 | 2 tasks | 5 files |
-| Phase 03 P02 | 35 | 2 tasks | 3 files |
-| Phase 04 P01 | 25 | 2 tasks | 3 files |
-| Phase 04 P02 | 9 | 2 tasks | 4 files |
-| Phase 04 P03 | 5 | 3 tasks | 4 files |
-| Phase 05 P01 | 7 | 3 tasks | 5 files |
-| Phase 05 P02 | 6 | 2 tasks | 5 files |
-| Phase 06 P01 | 10 | 3 tasks | 6 files |
-| Phase 07 P01 | 3 | 2 tasks | 2 files |
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-03-21 — Milestone v1.1 started
 
 ## Accumulated Context
 
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
-Recent decisions affecting current work:
+Key decisions carried forward from v1.0:
 
 - [Init]: New gsd2.rs Rust module for all .gsd/ parsing — keeps gsd.rs (3,604 lines) completely untouched
 - [Init]: Version detection stored in DB to prevent race conditions on project open
-- [Init]: Health data read from files directly (never subprocess) to avoid CPU drain per open project
-- [Init]: Headless sessions require HeadlessSessionRegistry with on_window_event cleanup to prevent .gsd/auto.lock orphans
-- [Phase 01]: Used db.write().await for gsd2_detect_version path lookup — consistent with gsd.rs pattern, avoids type mismatch between &Database and &Connection
 - [Phase 01]: gsd2.rs module is fully independent from gsd.rs — helpers copied verbatim, never imported across module boundary
-- [Phase 01]: resolve_dir_by_id and resolve_file_by_id use three-tier exact > prefix/legacy > bare resolution for GSD-2 file layout
-- [Phase 01]: Guard uses db.read() (not write) for GSD-2 version check — SELECT only, no writer lock contention
-- [Phase 01]: .gsd/worktrees/ excluded from watcher events to prevent event storm during cargo/npm builds in worktrees
-- [Phase 01]: parse_checkbox_item shared between slice and task parsing via with_slice_fields bool flag — avoids duplication while keeping type safety
-- [Phase 01]: walk_milestones_with_tasks as shared helper — both derive_state and get_roadmap_progress call it, single filesystem pass
-- [Phase 01]: Nested-first PLAN.md resolution: M001/S01/S01-PLAN.md tried before M001/S01-PLAN.md — matches GSD-2 layout docs
-- [Phase 02]: parse_gsd2_state_md uses markdown body sections not YAML frontmatter — GSD-2 STATE.md has no frontmatter
-- [Phase 02]: env_error_count/env_warning_count default to 0 — no confirmed GSD-2 file storage location found
-- [Phase 02]: get_health_from_dir reuses derive_state_from_dir for M/S/T counts — single filesystem walk, no duplication
-- [Phase 02]: Added gsd_version to Project type (not just ProjectWithStats) — project detail page uses useProject which returns Project, required for adaptive tab logic
-- [Phase 02]: Dual event listener pattern in useGsdFileWatcher: gsd1 events debounced, gsd2:file-changed fires immediately to invalidate gsd2Health
-- [Phase 03]: DB guard dropped before git subprocess calls to avoid lock contention during slow git operations
-- [Phase 03]: parse_worktree_porcelain skips first block (main worktree), derives name from worktree/ branch prefix
-- [Phase 03]: useGsd2RemoveWorktree optimistic update with rollback on error and sonner toast notification
-- [Phase 03]: expandedRows uses Set<string> for O(1) lookup — allows multiple worktree rows open simultaneously
-- [Phase 03]: WorktreeDiffSection inline sub-component: parent controls render, child always enables query — cleaner than enabled prop threading
-- [Phase 04]: force_close_all uses _app prefix: TerminalManager::close_all() takes no AppHandle unlike individual close()
-- [Phase 04]: HeadlessRegistryState type alias follows Arc<Mutex<>> pattern matching TerminalManagerState convention
-- [Phase 04]: VisualizerNode uses children[] array (not slices/tasks) to match Rust struct shape exactly
-- [Phase 04]: TimelineEntry uses entry_type string field to avoid JS reserved word conflicts with Rust serde naming
-- [Phase 04]: useHeadlessSession cleans up event listeners on unmount without closing PTY session — session survives tab navigation
-- [Phase 04]: displaySnapshot = lastSnapshot ?? headlessQuery.data ?? null — idle snapshot falls back to polled query data
-- [Phase 04]: Visualizer uses useEffect + initialized flag to set initial expanded state once data first loads
-- [Phase 05]: gsd2GetSlice takes THREE parameters (projectId, milestoneId, sliceId) — milestone_id required to locate slice directory in Rust
-- [Phase 05]: No useGsd2RoadmapProgress hook — data derivable from milestones list, no UI component needs it
-- [Phase 05]: useGsd2Milestone/useGsd2Slice accept enabled flag for lazy accordion loading in Plan 02 components
-- [Phase 05]: SliceTaskGroup sub-component in Tasks tab renders per-slice to avoid dynamic hook count — hooks cannot be called in loops
-- [Phase 05]: Tasks tab fetches active milestone first via useGsd2Milestone then renders SliceTaskGroup per non-done slice — avoids 25+ eager queries
-- [Phase 06]: gsd2:file-changed invalidates all three reactive queries (health/worktrees/visualizer) without debounce — multi-query invalidation from single event handler
 - [Phase 06]: useHeadlessSession lifted to ProjectPage scope — hook lifecycle matches page, logs persist across tab navigation
-- [Phase 06]: Log buffer capped at 500 rows via slice(-499) in both setLogs paths — bounded memory for long-running headless sessions
-- [Phase 07]: Prefix arrays used for gsd2Milestone/gsd2Slice invalidation — catches all per-item detail queries regardless of milestoneId/sliceId values without enumeration
+- [Phase 07]: Prefix arrays used for gsd2Milestone/gsd2Slice invalidation — catches all per-item detail queries
 
 ### Pending Todos
 
@@ -113,11 +47,10 @@ None yet.
 
 ### Blockers/Concerns
 
-- Phase 4 (Headless): Session lifecycle edge cases (parallel milestone workers, crash recovery, lock file race under concurrent CLI+TYS use) — research pass recommended before planning
-- Phase 4 (Visualizer): metrics.json ledger full schema for multi-worker cost aggregation not fully characterized — address during planning
+None at milestone start.
 
 ## Session Continuity
 
-Last session: 2026-03-21T16:21:27.055Z
-Stopped at: Completed 07-01-PLAN.md
+Last session: 2026-03-21
+Stopped at: Milestone v1.1 started — defining requirements
 Resume file: None
