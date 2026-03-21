@@ -124,7 +124,7 @@ Plans:
 **Plans:** 1/1 plans complete
 
 Plans:
-- [ ] 06-01-PLAN.md — Reactive invalidation for Worktrees/Visualizer, headless session log persistence via prop lift, documentation gap fixes
+- [x] 06-01-PLAN.md — Reactive invalidation for Worktrees/Visualizer, headless session log persistence via prop lift, documentation gap fixes
 
 **Success Criteria** (what must be TRUE):
   1. Editing a .gsd/ file while the Worktrees tab is open causes the worktree list to refresh within 2 seconds (not waiting for 30s poll)
