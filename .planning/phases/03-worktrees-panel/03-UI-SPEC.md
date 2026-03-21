@@ -45,7 +45,8 @@ Declared values (must be multiples of 4):
 Exceptions:
 - CardHeader uses `pb-3` (12px) — matches existing health tab pattern (source: gsd2-health-tab.tsx line 23)
 - Row accordion chevron button: `h-4 w-4` icon at 16px — consistent with health tab icon sizing
-- Compact file list rows: `py-1.5` (6px) vertical — matches git-status-widget FileGroupActions pattern
+- Compact file list rows: `py-2` (8px) vertical — declared value is grid-compliant (multiple of 4). The app's `--spacing-scale: 0.8` reduces the rendered output to 6.4px, achieving target compact density while keeping the declared token on-grid.
+- Diff file row items: `py-1` (4px) vertical — declared value is grid-compliant (multiple of 4). Rendered at 3.2px under the 0.8 scale, matching the tight list density of git-status-widget.
 - Spacing scale multiplier: app has `--spacing-scale: 0.8` (compact density default) — all spacing is rendered at 80% of Tailwind defaults
 
 ---
@@ -97,7 +98,7 @@ All components already installed — no new registry additions required.
 |-----------|--------|----------------|
 | Card, CardHeader, CardContent, CardTitle | src/components/ui/card.tsx | Outer wrapper for the worktrees list, matching health tab structure |
 | Badge | src/components/ui/badge.tsx | Branch name chip per row (variant="secondary" or "outline"), worktree count badge in tab label |
-| Button | src/components/ui/button.tsx | Remove button (variant="destructive", size="sm"), expand toggle (variant="ghost", size="icon") |
+| Button | src/components/ui/button.tsx | Remove button (variant="destructive", size="sm"), expand toggle (variant="ghost", size="icon", aria-label="Expand {worktree-name} diff") |
 | AlertDialog (+ sub-components) | src/components/ui/alert-dialog.tsx | Remove confirmation dialog |
 | Skeleton | src/components/ui/skeleton.tsx | Loading state — 3 skeleton rows at h-12 |
 | Tooltip, TooltipContent, TooltipTrigger, TooltipProvider | src/components/ui/tooltip.tsx | Remove button tooltip ("Remove worktree and branch") |
@@ -146,15 +147,17 @@ Expanded content renders below the row header inside the same card border, separ
 Diff section layout (three groups, each collapsible):
 ```
 [FilePlus icon] Added ({count})          — text-status-success, text-xs font-medium
-  filename.ts                            — text-xs font-mono text-status-success/80, py-0.5 pl-6
+  filename.ts                            — text-xs font-mono text-status-success/80, py-1 pl-6
   ...
 
 [FilePenLine icon] Modified ({count})    — text-status-warning, text-xs font-medium
-  filename.ts                            — text-xs font-mono text-status-warning/80, py-0.5 pl-6
+  filename.ts                            — text-xs font-mono text-status-warning/80, py-1 pl-6
 
 [FileMinus icon] Removed ({count})       — text-status-error, text-xs font-medium
-  filename.ts                            — text-xs font-mono text-status-error/80, py-0.5 pl-6
+  filename.ts                            — text-xs font-mono text-status-error/80, py-1 pl-6
 ```
+
+Note: `py-1` (4px declared) renders at 3.2px under the app's `--spacing-scale: 0.8`, producing the tight list density that matches git-status-widget. The declared token is grid-compliant.
 
 Groups with zero files are omitted entirely.
 File list wrapped in ScrollArea with `max-h-48` when count > 8.
@@ -212,6 +215,7 @@ Matches health tab skeleton pattern (source: gsd2-health-tab.tsx lines 28–30).
 - Click anywhere on the row header area (excluding Remove button) toggles the accordion.
 - Only one row expanded at a time is NOT required — multiple rows may be open simultaneously.
 - Chevron rotates: `ChevronRight` → `ChevronDown` on open, `transition-transform duration-200`.
+- Expand toggle button: `variant="ghost" size="icon"` with `aria-label="Expand {worktree-name} diff"` (substitute actual worktree name at render time, e.g. `aria-label={\`Expand ${worktree.name} diff\`}`). Update `aria-label` to `"Collapse {worktree-name} diff"` when the row is open.
 - Diff data fetches on first expand; subsequent opens use React Query cache (stale time: 30s).
 
 ### Remove Action
