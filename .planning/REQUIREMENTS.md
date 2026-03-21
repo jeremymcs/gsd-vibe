@@ -29,8 +29,8 @@
 
 ### Headers
 
-- [ ] **HDRS-01**: All .rs source file headers updated from "Track Your Shit" to "GSD VibeFlow"
-- [ ] **HDRS-02**: All .ts/.tsx source file headers updated from "Track Your Shit" to "GSD VibeFlow"
+- [x] **HDRS-01**: All .rs source file headers updated from "Track Your Shit" to "GSD VibeFlow"
+- [x] **HDRS-02**: All .ts/.tsx source file headers updated from "Track Your Shit" to "GSD VibeFlow"
 
 ### Dead Code
 
@@ -69,8 +69,8 @@
 | STRN-02 | Phase 8 | Complete |
 | STRN-03 | Phase 8 | Complete |
 | STRN-04 | Phase 8 | Complete |
-| HDRS-01 | Phase 8 | Pending |
-| HDRS-02 | Phase 8 | Pending |
+| HDRS-01 | Phase 8 | Complete |
+| HDRS-02 | Phase 8 | Complete |
 | VISL-01 | Phase 9 | Pending |
 | VISL-02 | Phase 9 | Pending |
 | VISL-03 | Phase 9 | Pending |

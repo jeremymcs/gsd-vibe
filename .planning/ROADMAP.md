@@ -28,7 +28,7 @@ Full details: `.planning/milestones/v1.0-ROADMAP.md`
 
 **Milestone Goal:** Rebrand the app from "Track Your Shit" to "GSD VibeFlow" with a full visual identity refresh matching gsd.build, and audit/remove all dead code.
 
-- [ ] **Phase 8: Identity, Strings, and Headers** - Rename everything: metadata, UI strings, and all source file headers
+- [x] **Phase 8: Identity, Strings, and Headers** - Rename everything: metadata, UI strings, and all source file headers (completed 2026-03-21)
 - [ ] **Phase 9: Visual Identity** - Apply gsd.build palette (black/white/cyan), new app icon, updated design tokens
 - [ ] **Phase 10: Dead Code Removal and Quality** - Remove unused commands/components/hooks/types, fix test failures, verify clean build
 
@@ -94,6 +94,6 @@ Plans:
 | 5. GSD-2 Milestones, Slices, and Tasks UI | v1.0 | 2/2 | Complete | 2026-03-21 |
 | 6. Reactive Updates and Headless Session Polish | v1.0 | 1/1 | Complete | 2026-03-21 |
 | 7. Reactive Milestones/Slices/Tasks Invalidation | v1.0 | 1/1 | Complete | 2026-03-21 |
-| 8. Identity, Strings, and Headers | 2/3 | In Progress|  | - |
+| 8. Identity, Strings, and Headers | 3/3 | Complete   | 2026-03-21 | - |
 | 9. Visual Identity | v1.1 | 0/2 | Not started | - |
 | 10. Dead Code Removal and Quality | v1.1 | 0/2 | Not started | - |
