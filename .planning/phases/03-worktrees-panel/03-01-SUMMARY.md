@@ -29,6 +29,7 @@ metrics:
   tasks_completed: 2
   tasks_total: 2
   files_modified: 5
+requirements-completed: [WORK-01, WORK-02, WORK-03, WORK-04]
 ---
 
 # Phase 03 Plan 01: Worktree Backend Commands Summary

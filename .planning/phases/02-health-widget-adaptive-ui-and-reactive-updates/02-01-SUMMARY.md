@@ -30,6 +30,7 @@ metrics:
   completed_date: "2026-03-21"
   tasks_completed: 2
   files_modified: 7
+requirements-completed: [HLTH-01, HLTH-02]
 ---
 
 # Phase 02 Plan 01: GSD-2 Data Pipeline (Health Command + gsd_version) Summary
