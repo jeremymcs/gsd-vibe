@@ -124,6 +124,10 @@
 - Mapped to phases: 31
 - Unmapped: 0 ✓
 
+**Gap Closure Phases (from v1.0 audit):**
+- Phase 5 adds frontend wiring for PARS-01..05 (Rust commands verified; UI consumers deferred from Phase 2)
+- Phase 6 closes HDLS-04 flow gap and adds reactive invalidation for Worktrees/Visualizer
+
 ---
 *Requirements defined: 2026-03-20*
-*Last updated: 2026-03-20 — traceability updated after roadmap creation (coarse compression: 6 research phases → 4 delivery phases)*
+*Last updated: 2026-03-21 — gap-closure phases 5 and 6 added after v1.0 audit (tech_debt status; no unsatisfied requirements)*
