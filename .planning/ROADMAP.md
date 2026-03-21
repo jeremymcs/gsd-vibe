@@ -80,7 +80,7 @@ Plans:
 Plans:
 - [x] 10-01-PLAN.md — Remove dead Rust commands (gsd2_detect_version, gsd2_get_roadmap_progress) full-stack; audit all lib.rs registrations
 - [x] 10-02-PLAN.md — Fix 4 pre-existing test failures; audit and remove unused React components, hooks, and TypeScript types; verify clean build
-- [ ] 10-03-PLAN.md — Gap closure: remove 11 orphaned Rust commands from lib.rs and delete function bodies (pty_list_sessions, pty_active_count, pty_close_all, detect_docs_available, get_decisions, get_all_decisions, get_decision_categories, check_claude_status, run_dependency_audit, get_outdated_packages, rotate_app_logs)
+- [x] 10-03-PLAN.md — Gap closure: remove 11 orphaned Rust commands from lib.rs and delete function bodies (pty_list_sessions, pty_active_count, pty_close_all, detect_docs_available, get_decisions, get_all_decisions, get_decision_categories, check_claude_status, run_dependency_audit, get_outdated_packages, rotate_app_logs)
 
 ## Progress
 
@@ -97,4 +97,4 @@ Plans:
 | 7. Reactive Milestones/Slices/Tasks Invalidation | v1.0 | 1/1 | Complete | 2026-03-21 |
 | 8. Identity, Strings, and Headers | 3/3 | Complete   | 2026-03-21 | - |
 | 9. Visual Identity | 2/2 | Complete   | 2026-03-21 | - |
-| 10. Dead Code Removal and Quality | 2/3 | In Progress | 2026-03-21 | - |
+| 10. Dead Code Removal and Quality | 3/3 | Complete | 2026-03-21 | - |
