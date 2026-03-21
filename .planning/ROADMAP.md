@@ -98,7 +98,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 4. Headless Mode and Visualizer | 3/3 | Complete | 2026-03-21 |
 | 5. GSD-2 Milestones, Slices, and Tasks UI | 2/2 | Complete   | 2026-03-21 |
 | 6. Reactive Updates and Headless Session Polish | 1/1 | Complete   | 2026-03-21 |
-| 7. Reactive Milestones/Slices/Tasks Invalidation | 0/1 | Pending | — |
+| 7. Reactive Milestones/Slices/Tasks Invalidation | 0/1 | Executing | — |
 
 ### Phase 5: GSD-2 Milestones, Slices, and Tasks UI
 **Goal**: The GSD-2 Milestones, Slices, and Tasks tabs display real data by connecting the existing Rust parsing commands to the frontend via TS invoke wrappers and React Query hooks
