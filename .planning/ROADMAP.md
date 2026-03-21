@@ -95,7 +95,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 2. Health Widget, Adaptive UI, and Reactive Updates | 2/2 | Complete | 2026-03-21 |
 | 3. Worktrees Panel | 2/2 | Complete | 2026-03-21 |
 | 4. Headless Mode and Visualizer | 3/3 | Complete | 2026-03-21 |
-| 5. GSD-2 Milestones, Slices, and Tasks UI | 0/? | Pending | |
+| 5. GSD-2 Milestones, Slices, and Tasks UI | 0/2 | Pending | |
 | 6. Reactive Updates and Headless Session Polish | 0/? | Pending | |
 
 ### Phase 5: GSD-2 Milestones, Slices, and Tasks UI
@@ -103,6 +103,12 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 **Depends on**: Phase 1 (all 5 parsing commands exist in Rust)
 **Requirements**: PARS-01, PARS-02, PARS-03, PARS-04, PARS-05 (frontend wiring — commands already verified at Rust level)
 **Gap Closure**: Closes integration gaps identified in v1.0 audit — parsing commands unreachable from UI
+**Plans:** 2 plans
+
+Plans:
+- [ ] 05-01-PLAN.md — TypeScript invoke wrappers, interface types, query key entries, React Query hooks for all 5 parsing commands
+- [ ] 05-02-PLAN.md — Gsd2MilestonesTab, Gsd2SlicesTab, Gsd2TasksTab components, barrel export, project.tsx tab wiring
+
 **Success Criteria** (what must be TRUE):
   1. The Milestones GSD-2 tab shows a list of milestones with ID, title, and done/pending status (from `gsd2_list_milestones`)
   2. Clicking a milestone expands or navigates to show its slices (from `gsd2_get_milestone`)
