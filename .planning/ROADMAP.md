@@ -18,7 +18,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 4: Headless Mode and Visualizer** - Full headless session lifecycle control and milestone-to-task progress visualizer with cost metrics (completed 2026-03-21)
 - [x] **Phase 5: GSD-2 Milestones, Slices, and Tasks UI** - TS invoke wrappers and React Query hooks for all 5 parsing commands; wire Milestones, Slices, and Tasks GSD-2 tabs with real data (gap closure) (completed 2026-03-21)
 - [x] **Phase 6: Reactive Updates and Headless Session Polish** - gsd2:file-changed invalidation for Worktrees and Visualizer; persist headless log buffer across tab navigation; documentation fixes (gap closure) (completed 2026-03-21)
-- [ ] **Phase 7: Reactive Milestones/Slices/Tasks Invalidation** - Add gsd2:file-changed invalidation for Milestones/Slices/Tasks tabs; fix ROADMAP.md doc checkbox (tech debt closure)
+- [x] **Phase 7: Reactive Milestones/Slices/Tasks Invalidation** - Add gsd2:file-changed invalidation for Milestones/Slices/Tasks tabs; fix ROADMAP.md doc checkbox (tech debt closure) (completed 2026-03-21)
 
 ## Phase Details
 
@@ -98,7 +98,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 4. Headless Mode and Visualizer | 3/3 | Complete | 2026-03-21 |
 | 5. GSD-2 Milestones, Slices, and Tasks UI | 2/2 | Complete   | 2026-03-21 |
 | 6. Reactive Updates and Headless Session Polish | 1/1 | Complete   | 2026-03-21 |
-| 7. Reactive Milestones/Slices/Tasks Invalidation | 0/1 | Executing | — |
+| 7. Reactive Milestones/Slices/Tasks Invalidation | 1/1 | Complete   | 2026-03-21 |
 
 ### Phase 5: GSD-2 Milestones, Slices, and Tasks UI
 **Goal**: The GSD-2 Milestones, Slices, and Tasks tabs display real data by connecting the existing Rust parsing commands to the frontend via TS invoke wrappers and React Query hooks
@@ -139,10 +139,10 @@ Plans:
 **Depends on**: Phase 6
 **Requirements**: N/A — no new v1 requirements; closes tech debt from v1.0 audit
 **Gap Closure**: Closes tech debt items: missing gsd2:file-changed invalidation for Milestones/Slices/Tasks tabs; ROADMAP.md Phase 6 checkbox fix
-**Plans:** 0/1 plans complete
+**Plans:** 1/1 plans complete
 
 Plans:
-- [ ] 07-01-PLAN.md — Add gsd2Milestones, gsd2DerivedState, gsd2Milestone (prefix), gsd2Slice (prefix) invalidations to use-gsd-file-watcher.ts; fix ROADMAP.md checkbox
+- [x] 07-01-PLAN.md — Add gsd2Milestones, gsd2DerivedState, gsd2Milestone (prefix), gsd2Slice (prefix) invalidations to use-gsd-file-watcher.ts; fix ROADMAP.md checkbox
 
 **Success Criteria** (what must be TRUE):
   1. Editing a .gsd/ file while the Milestones tab is open causes the milestones list to refresh within 2 seconds (not waiting for 30s poll)
