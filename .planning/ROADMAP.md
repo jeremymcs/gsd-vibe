@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Health Widget, Adaptive UI, and Reactive Updates** - Health data command, budget/blocker display, adaptive terminology, GSD version badges, and polling infrastructure (completed 2026-03-21)
 - [x] **Phase 3: Worktrees Panel** - Worktree listing, diff preview, and remove action with macOS symlink safety (completed 2026-03-21)
 - [x] **Phase 4: Headless Mode and Visualizer** - Full headless session lifecycle control and milestone-to-task progress visualizer with cost metrics (completed 2026-03-21)
-- [ ] **Phase 5: GSD-2 Milestones, Slices, and Tasks UI** - TS invoke wrappers and React Query hooks for all 5 parsing commands; wire Milestones, Slices, and Tasks GSD-2 tabs with real data (gap closure)
+- [x] **Phase 5: GSD-2 Milestones, Slices, and Tasks UI** - TS invoke wrappers and React Query hooks for all 5 parsing commands; wire Milestones, Slices, and Tasks GSD-2 tabs with real data (gap closure) (completed 2026-03-21)
 - [ ] **Phase 6: Reactive Updates and Headless Session Polish** - gsd2:file-changed invalidation for Worktrees and Visualizer; persist headless log buffer across tab navigation; documentation fixes (gap closure)
 
 ## Phase Details
@@ -95,7 +95,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 2. Health Widget, Adaptive UI, and Reactive Updates | 2/2 | Complete | 2026-03-21 |
 | 3. Worktrees Panel | 2/2 | Complete | 2026-03-21 |
 | 4. Headless Mode and Visualizer | 3/3 | Complete | 2026-03-21 |
-| 5. GSD-2 Milestones, Slices, and Tasks UI | 1/2 | In Progress|  |
+| 5. GSD-2 Milestones, Slices, and Tasks UI | 2/2 | Complete   | 2026-03-21 |
 | 6. Reactive Updates and Headless Session Polish | 0/? | Pending | |
 
 ### Phase 5: GSD-2 Milestones, Slices, and Tasks UI
@@ -103,7 +103,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 **Depends on**: Phase 1 (all 5 parsing commands exist in Rust)
 **Requirements**: PARS-01, PARS-02, PARS-03, PARS-04, PARS-05 (frontend wiring — commands already verified at Rust level)
 **Gap Closure**: Closes integration gaps identified in v1.0 audit — parsing commands unreachable from UI
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 
 Plans:
 - [ ] 05-01-PLAN.md — TypeScript invoke wrappers, interface types, query key entries, React Query hooks for all 5 parsing commands
