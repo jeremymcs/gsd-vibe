@@ -105,4 +105,8 @@ export const queryKeys = {
   gsd2WorktreeDiff: (projectId: string, name: string) => ['gsd2', 'worktree-diff', projectId, name] as const,
   gsd2HeadlessQuery: (projectId: string) => ['gsd2', 'headless', 'query', projectId] as const,
   gsd2VisualizerData: (projectId: string) => ['gsd2', 'visualizer', projectId] as const,
+  gsd2Milestones: (projectId: string) => ['gsd2', 'milestones', projectId] as const,
+  gsd2Milestone: (projectId: string, milestoneId: string) => ['gsd2', 'milestone', projectId, milestoneId] as const,
+  gsd2Slice: (projectId: string, milestoneId: string, sliceId: string) => ['gsd2', 'slice', projectId, milestoneId, sliceId] as const,
+  gsd2DerivedState: (projectId: string) => ['gsd2', 'derived-state', projectId] as const,
 };

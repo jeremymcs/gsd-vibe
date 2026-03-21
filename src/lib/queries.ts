@@ -1225,3 +1225,38 @@ export const useGsd2VisualizerData = (projectId: string, enabled = true) =>
     refetchInterval: 30_000,
   });
 
+// GSD-2 Milestones / Slices / Tasks (Phase 5)
+export const useGsd2Milestones = (projectId: string) =>
+  useQuery({
+    queryKey: queryKeys.gsd2Milestones(projectId),
+    queryFn: () => api.gsd2ListMilestones(projectId),
+    enabled: !!projectId,
+    staleTime: 15_000,
+    refetchInterval: 30_000,
+  });
+
+export const useGsd2Milestone = (projectId: string, milestoneId: string, enabled: boolean) =>
+  useQuery({
+    queryKey: queryKeys.gsd2Milestone(projectId, milestoneId),
+    queryFn: () => api.gsd2GetMilestone(projectId, milestoneId),
+    enabled: !!projectId && !!milestoneId && enabled,
+    staleTime: 15_000,
+  });
+
+export const useGsd2Slice = (projectId: string, milestoneId: string, sliceId: string, enabled: boolean) =>
+  useQuery({
+    queryKey: queryKeys.gsd2Slice(projectId, milestoneId, sliceId),
+    queryFn: () => api.gsd2GetSlice(projectId, milestoneId, sliceId),
+    enabled: !!projectId && !!milestoneId && !!sliceId && enabled,
+    staleTime: 15_000,
+  });
+
+export const useGsd2DerivedState = (projectId: string) =>
+  useQuery({
+    queryKey: queryKeys.gsd2DerivedState(projectId),
+    queryFn: () => api.gsd2DeriveState(projectId),
+    enabled: !!projectId,
+    staleTime: 10_000,
+    refetchInterval: 30_000,
+  });
+
