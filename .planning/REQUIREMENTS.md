@@ -39,7 +39,7 @@
 - [x] **WORK-02**: Worktree paths are canonicalized via `std::fs::canonicalize` before comparison to handle macOS symlinks
 - [x] **WORK-03**: `gsd2_remove_worktree` removes a worktree (git worktree remove + branch cleanup)
 - [x] **WORK-04**: `gsd2_get_worktree_diff` returns a summary of files added/modified/removed in a worktree vs main `.gsd/` (for merge preview)
-- [ ] **WORK-05**: A new Worktrees tab in the project detail view renders the worktree list with name, branch, diff summary, and remove button
+- [x] **WORK-05**: A new Worktrees tab in the project detail view renders the worktree list with name, branch, diff summary, and remove button
 
 ### Headless Mode
 
@@ -107,7 +107,7 @@
 | WORK-02 | Phase 3 | Complete |
 | WORK-03 | Phase 3 | Complete |
 | WORK-04 | Phase 3 | Complete |
-| WORK-05 | Phase 3 | Pending |
+| WORK-05 | Phase 3 | Complete |
 | HDLS-01 | Phase 4 | Pending |
 | HDLS-02 | Phase 4 | Pending |
 | HDLS-03 | Phase 4 | Pending |
