@@ -35,7 +35,7 @@ Declared values (multiples of 4 only):
 
 | Token | Value | Usage |
 |-------|-------|-------|
-| xs | 4px | Icon gaps (`gap-1`), inline padding, log row vertical padding (`py-0.5`) |
+| xs | 4px | Icon gaps (`gap-1`), inline padding, log row vertical padding (`py-1`) |
 | sm | 8px | Compact element spacing (`gap-2`, `space-y-2`), card header bottom padding (`pb-2`) |
 | md | 16px | Default element spacing (`gap-4`, `space-y-4`), card content padding (`p-4`) |
 | lg | 24px | Section padding (`p-6`), card header padding (`pb-3` = 12px exception — see below) |
@@ -45,7 +45,6 @@ Declared values (multiples of 4 only):
 
 Exceptions:
 - Card header `pb-3` (12px) is used in existing GSD-2 tabs (health, worktrees) — maintain for visual consistency.
-- Log rows use `py-0.5` (2px) vertical padding — dense list; not part of standard scale.
 - Monospace timestamp column: `w-20` (80px fixed width); cost delta column: `w-20` (80px fixed width).
 
 Source: gsd2-health-tab.tsx patterns; CONTEXT.md specifics.
@@ -163,7 +162,7 @@ Source: globals.css, tailwind.config.js, CONTEXT.md decisions, gsd2-health-tab.t
 - Cost-so-far shown inline: `text-xs text-muted-foreground ml-auto` when running; last-run time when idle/complete
 - Snapshot card: `Card` variant default; three rows label + value; `text-sm`
 - Log area: `ScrollArea` with `max-h-96` (384px) or `flex-1` in full-height layouts; `space-y-0` (rows are dense)
-- Log row: `flex items-center text-xs font-mono py-0.5 hover:bg-muted/30`
+- Log row: `flex items-center text-xs font-mono py-1 hover:bg-muted/30`
   - Timestamp: `w-20 text-muted-foreground shrink-0`
   - State: `flex-1 truncate px-2`
   - Cost delta: `w-20 text-right text-status-success shrink-0`
@@ -210,7 +209,7 @@ Cost bars:
   - Cost label: `w-16 text-right`
 
 Timeline:
-- Each entry: `flex items-center gap-3 py-1.5 border-b border-border/50 last:border-0 text-xs`
+- Each entry: `flex items-center gap-3 py-2 border-b border-border/50 last:border-0 text-xs`
 - Time: `w-24 text-muted-foreground shrink-0` (relative time via `formatRelativeTime()`)
 - ID + title: `flex-1 truncate`
 - Cost: `text-right text-muted-foreground shrink-0`
