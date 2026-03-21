@@ -18,10 +18,8 @@ vi.mock("@/lib/queries", () => ({
 
 // Mock the dialog and card components to avoid complex rendering
 vi.mock("@/components/projects", () => ({
-  ImportDialog: ({ open }: { open: boolean }) =>
-    open ? <div data-testid="import-dialog">Import Dialog</div> : null,
   ProjectWizardDialog: ({ open }: { open: boolean }) =>
-    open ? <div data-testid="new-project-dialog">New Dialog</div> : null,
+    open ? <div data-testid="import-dialog">Add Project Dialog</div> : null,
   ProjectCard: ({ project }: { project: { id: string; name: string; status: string; tech_stack?: { framework?: string; language?: string } | null } }) => (
     <a href={`/projects/${project.id}`} data-testid={`project-card-${project.id}`}>
       <span data-testid={`project-name-${project.id}`}>{project.name}</span>
@@ -181,7 +179,7 @@ describe("ProjectsPage", () => {
     expect(searchInput).toHaveValue("");
   });
 
-  it("opens import dialog when Import button is clicked", async () => {
+  it("opens add project dialog when Add Project button is clicked", async () => {
     vi.mocked(queries.useProjectsWithStats).mockReturnValue({
       data: [],
       isLoading: false,
@@ -190,28 +188,11 @@ describe("ProjectsPage", () => {
     const user = userEvent.setup();
     render(<ProjectsPage />);
 
-    const importButtons = screen.getAllByText("Import");
-    await user.click(importButtons[0]);
+    const addButtons = screen.getAllByText("Add Project");
+    await user.click(addButtons[0]);
 
     await waitFor(() => {
       expect(screen.getByTestId("import-dialog")).toBeInTheDocument();
-    });
-  });
-
-  it("opens new project dialog when New Project button is clicked", async () => {
-    vi.mocked(queries.useProjectsWithStats).mockReturnValue({
-      data: [],
-      isLoading: false,
-    } as ReturnType<typeof queries.useProjectsWithStats>);
-
-    const user = userEvent.setup();
-    render(<ProjectsPage />);
-
-    const newProjectButtons = screen.getAllByText("New Project");
-    await user.click(newProjectButtons[0]);
-
-    await waitFor(() => {
-      expect(screen.getByTestId("new-project-dialog")).toBeInTheDocument();
     });
   });
 });

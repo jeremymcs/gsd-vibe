@@ -24,8 +24,8 @@ describe("MainLayout - Collapsible Sidebar", () => {
     );
 
     // Check that navigation items are present (matching current navigation.ts)
-    expect(screen.getByText("Dashboard")).toBeInTheDocument();
-    expect(screen.getByText("Projects")).toBeInTheDocument();
+    expect(screen.getByText("Home")).toBeInTheDocument();
+    expect(screen.getByText("Todos")).toBeInTheDocument();
     // Terminal appears multiple times (nav item + shell panel)
     expect(screen.getAllByText("Terminal").length).toBeGreaterThan(0);
     expect(screen.getByText("Settings")).toBeInTheDocument();
@@ -173,7 +173,7 @@ describe("MainLayout - Collapsible Sidebar", () => {
     );
 
     // Initially expanded - text should be visible
-    expect(screen.getByText("Dashboard")).toBeInTheDocument();
+    expect(screen.getByText("Home")).toBeInTheDocument();
 
     // Collapse
     const collapseButton = screen.getByLabelText("Collapse sidebar");
@@ -186,8 +186,8 @@ describe("MainLayout - Collapsible Sidebar", () => {
       expect(aside).toHaveClass("w-16");
     });
 
-    // Dashboard text should be gone when sidebar is collapsed
-    expect(screen.queryByText("Dashboard")).not.toBeInTheDocument();
+    // Home text should be gone when sidebar is collapsed
+    expect(screen.queryByText("Home")).not.toBeInTheDocument();
   });
 
   it("when collapsed, shows PanelLeftOpen icon with tooltip", async () => {
