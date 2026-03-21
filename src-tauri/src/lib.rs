@@ -48,7 +48,7 @@ pub fn run() {
 
             // Set up the tracing layer's DB connection (separate connection to avoid deadlocks)
             let app_data_dir = app.handle().path().app_data_dir().unwrap();
-            let tracing_db_path = app_data_dir.join("track-your-shit.db");
+            let tracing_db_path = app_data_dir.join("gsd-vibe.db");
             sqlite_layer_handle.set_db_path(tracing_db_path);
             sqlite_layer_handle.set_app_handle(app.handle().clone());
 

@@ -54,7 +54,7 @@ impl DbPool {
         let app_data_dir = app.path().app_data_dir()?;
         std::fs::create_dir_all(&app_data_dir)?;
 
-        let db_path = app_data_dir.join("track-your-shit.db");
+        let db_path = app_data_dir.join("gsd-vibe.db");
         tracing::info!("Database path: {:?}", db_path);
 
         Self::open_pool(&db_path)
@@ -119,7 +119,7 @@ impl Database {
         let app_data_dir = app.path().app_data_dir()?;
         std::fs::create_dir_all(&app_data_dir)?;
 
-        let db_path = app_data_dir.join("track-your-shit.db");
+        let db_path = app_data_dir.join("gsd-vibe.db");
         tracing::info!("Database path: {:?}", db_path);
 
         let conn = Connection::open(&db_path)?;
@@ -185,19 +185,19 @@ impl Database {
         #[cfg(target_os = "macos")]
         let base_dir = dirs::data_dir()
             .ok_or("Could not determine data directory")?
-            .join("net.fluxlabs.track-your-shit");
+            .join("io.gsd.vibeflow");
 
         #[cfg(target_os = "linux")]
         let base_dir = dirs::data_dir()
             .ok_or("Could not determine data directory")?
-            .join("net.fluxlabs.track-your-shit");
+            .join("io.gsd.vibeflow");
 
         #[cfg(target_os = "windows")]
         let base_dir = dirs::data_dir()
             .ok_or("Could not determine data directory")?
-            .join("net.fluxlabs.track-your-shit");
+            .join("io.gsd.vibeflow");
 
-        Ok(base_dir.join("track-your-shit.db"))
+        Ok(base_dir.join("gsd-vibe.db"))
     }
 
     pub fn conn(&self) -> &Connection {
