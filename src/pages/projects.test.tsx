@@ -46,7 +46,7 @@ vi.mock("@/lib/design-tokens", () => ({
 const mockProjects: ProjectWithStats[] = [
   {
     id: "1",
-    name: "Track Your Shit",
+    name: "GSD VibeFlow",
     path: "/users/test/track-your-shit",
     description: "Mission control for projects",
     tech_stack: {
@@ -150,7 +150,7 @@ describe("ProjectsPage", () => {
 
     render(<ProjectsPage />);
 
-    expect(screen.getByText("Track Your Shit")).toBeInTheDocument();
+    expect(screen.getByText("GSD VibeFlow")).toBeInTheDocument();
     expect(screen.getByText("Test Project")).toBeInTheDocument();
     expect(screen.getByText("Archived Project")).toBeInTheDocument();
   });

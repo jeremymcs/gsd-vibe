@@ -102,7 +102,7 @@ export function MainLayout({ children }: MainLayoutProps) {
               </div>
               {!sidebarCollapsed && (
                 <span className="text-sm font-semibold text-foreground tracking-tight">
-                  Track Your Shit
+                  GSD VibeFlow
                 </span>
               )}
             </div>

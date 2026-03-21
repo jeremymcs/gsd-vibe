@@ -362,7 +362,7 @@ export function ProjectPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Remove Project?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will remove <span className="font-semibold">{project.name}</span> from Track Your Shit.
+              This will remove <span className="font-semibold">{project.name}</span> from GSD VibeFlow.
               <br /><br />
               <span className="text-foreground">Your project files will NOT be deleted.</span> The project folder at{" "}
               <code className="text-xs bg-muted px-1 py-0.5 rounded">{truncatePath(project.path, 50)}</code>{" "}

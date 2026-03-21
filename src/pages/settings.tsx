@@ -68,7 +68,7 @@ export function SettingsPage() {
       {/* Header */}
       <PageHeader
         title="Settings"
-        description="Configure Track Your Shit preferences"
+        description="Configure GSD VibeFlow preferences"
         icon={<SettingsIcon className="h-6 w-6 text-muted-foreground" />}
         actions={
           hasChanges ? (
@@ -124,7 +124,7 @@ export function SettingsPage() {
                 <div>
                   <Label htmlFor="settings-start-login" className="text-sm font-medium">Start on login</Label>
                   <p className="text-xs text-muted-foreground">
-                    Launch Track Your Shit when you log in
+                    Launch GSD VibeFlow when you log in
                   </p>
                 </div>
                 <Switch

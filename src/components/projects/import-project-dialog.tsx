@@ -183,7 +183,7 @@ export function ImportProjectDialog({
             {step === "select" && "Select a folder containing your existing project."}
             {step === "detecting" && "Detecting project type and structure..."}
             {step === "configure" && "Review detected project details."}
-            {step === "importing" && "Importing project into Track Your Shit..."}
+            {step === "importing" && "Importing project into GSD VibeFlow..."}
             {step === "complete" && "Project imported successfully."}
             {step === "error" && "Failed to import project."}
           </DialogDescription>

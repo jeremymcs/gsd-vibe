@@ -342,7 +342,7 @@ pub async fn git_commit(
 pub async fn git_stash_save(project_path: String) -> Result<GitOperationResult, String> {
     run_git_op(
         &project_path,
-        &["stash", "push", "-m", "Track Your Shit stash"],
+        &["stash", "push", "-m", "GSD VibeFlow stash"],
     )
 }
 

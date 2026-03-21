@@ -31,7 +31,7 @@ pub struct PtyErrorEvent {
     pub error: String,
 }
 
-/// Info about a tmux session managed by Track Your Shit
+/// Info about a tmux session managed by GSD VibeFlow
 #[derive(Clone, serde::Serialize, serde::Deserialize)]
 pub struct TmuxSessionInfo {
     pub name: String,
@@ -206,7 +206,7 @@ impl TerminalManager {
         Ok(String::from_utf8_lossy(&output.stdout).trim().to_string())
     }
 
-    /// List all Track Your Shit tmux sessions (prefixed with `ct-`)
+    /// List all GSD VibeFlow tmux sessions (prefixed with `ct-`)
     pub fn list_ct_sessions() -> Vec<TmuxSessionInfo> {
         let output = std::process::Command::new("tmux")
             .args([

@@ -79,7 +79,7 @@ pub async fn pty_check_tmux() -> Result<Option<String>, String> {
     Ok(crate::pty::TerminalManager::check_tmux())
 }
 
-/// List all Track Your Shit tmux sessions
+/// List all GSD VibeFlow tmux sessions
 #[tauri::command]
 pub async fn pty_list_tmux() -> Result<Vec<TmuxSessionInfo>, String> {
     Ok(crate::pty::TerminalManager::list_ct_sessions())

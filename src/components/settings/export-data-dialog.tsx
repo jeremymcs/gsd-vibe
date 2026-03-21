@@ -81,7 +81,7 @@ export function ExportDataDialog({ open, onOpenChange }: ExportDataDialogProps) 
         <DialogHeader>
           <DialogTitle>Export Data</DialogTitle>
           <DialogDescription>
-            Export Track Your Shit data to a file for backup or migration.
+            Export GSD VibeFlow data to a file for backup or migration.
           </DialogDescription>
         </DialogHeader>
 

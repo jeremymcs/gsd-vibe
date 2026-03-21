@@ -74,7 +74,7 @@ export function ThemeCustomization() {
     <Card>
       <CardHeader>
         <CardTitle>Appearance</CardTitle>
-        <CardDescription>Customize the look and feel of Track Your Shit</CardDescription>
+        <CardDescription>Customize the look and feel of GSD VibeFlow</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Accent Color */}
