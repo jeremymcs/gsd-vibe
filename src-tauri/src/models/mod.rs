@@ -183,15 +183,6 @@ pub struct ScannerSummary {
     pub source: Option<String>,
 }
 
-// Documentation detection structs
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
-pub struct DocsAvailable {
-    pub has_project_md: bool,
-    pub has_roadmap_md: bool,
-    pub has_readme: bool,
-    pub project_md_path: Option<String>,
-}
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProjectDocs {
     pub description: Option<String>,
@@ -219,14 +210,6 @@ pub struct CreateProjectResult {
     pub template: Option<String>,
     pub discovery_mode: String,
     pub creation_mode: String,
-}
-
-// Claude CLI status
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ClaudeStatus {
-    pub installed: bool,
-    pub version: Option<String>,
-    pub path: Option<String>,
 }
 
 // ============================================================

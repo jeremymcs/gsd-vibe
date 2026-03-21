@@ -130,15 +130,6 @@ pub async fn pty_close(
     manager.close(&app, &session_id)
 }
 
-/// List all active PTY session IDs
-#[tauri::command]
-pub async fn pty_list_sessions(
-    state: State<'_, TerminalManagerState>,
-) -> Result<Vec<String>, String> {
-    let manager = state.lock().await;
-    Ok(manager.list_sessions())
-}
-
 /// Check if a PTY session is active
 #[tauri::command]
 pub async fn pty_is_active(
@@ -159,19 +150,3 @@ pub async fn pty_get_session_info(
     Ok(manager.get_session_info(&session_id))
 }
 
-/// Get count of active PTY sessions
-#[tauri::command]
-pub async fn pty_active_count(state: State<'_, TerminalManagerState>) -> Result<usize, String> {
-    let mut manager = state.lock().await;
-    Ok(manager.active_count())
-}
-
-/// Close all PTY sessions (used on app exit)
-/// tmux sessions are detached (survive), native sessions are killed
-#[tauri::command]
-pub async fn pty_close_all(state: State<'_, TerminalManagerState>) -> Result<usize, String> {
-    let mut manager = state.lock().await;
-    let count = manager.active_count();
-    manager.close_all();
-    Ok(count)
-}

@@ -5,7 +5,6 @@ use crate::models::{
     AppLogEntry, AppLogEvent, AppLogFilters, AppLogStats, LevelCount, SourceCount,
 };
 use rusqlite::params;
-use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tauri::Emitter;
 
@@ -193,50 +192,6 @@ pub async fn clear_app_logs(
         .map_err(|e| e.to_string())?;
 
     Ok(deleted as i32)
-}
-
-/// Rotate app logs - delete logs older than retention period
-/// Default retention: 30 days for info, 7 days for debug/trace
-#[tauri::command]
-pub async fn rotate_app_logs(
-    db: tauri::State<'_, DbState>,
-    retention_days: Option<i32>,
-) -> Result<LogRotationResult, String> {
-    let db = db.write().await;
-    let conn = db.conn();
-
-    let retention = retention_days.unwrap_or(30);
-    let debug_retention = (retention / 4).max(7);
-
-    // Delete old info/warn/error logs
-    let deleted_info = conn.execute(
-        "DELETE FROM app_logs WHERE created_at < datetime('now', ?1 || ' days') AND level IN ('info', 'warn', 'error')",
-        params![format!("-{}", retention)],
-    ).map_err(|e| e.to_string())? as i32;
-
-    // Delete older debug/trace logs
-    let deleted_debug = conn.execute(
-        "DELETE FROM app_logs WHERE created_at < datetime('now', ?1 || ' days') AND level IN ('debug', 'trace')",
-        params![format!("-{}", debug_retention)],
-    ).map_err(|e| e.to_string())? as i32;
-
-    // Get current log count
-    let remaining: i32 = conn
-        .query_row("SELECT COUNT(*) FROM app_logs", [], |row| row.get(0))
-        .map_err(|e| e.to_string())?;
-
-    Ok(LogRotationResult {
-        deleted_info,
-        deleted_debug,
-        remaining,
-    })
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct LogRotationResult {
-    pub deleted_info: i32,
-    pub deleted_debug: i32,
-    pub remaining: i32,
 }
 
 /// Log a frontend error (used by ErrorBoundary)

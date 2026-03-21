@@ -134,7 +134,6 @@ pub fn run() {
             commands::projects::toggle_favorite,
             // File system commands
             commands::filesystem::detect_tech_stack,
-            commands::filesystem::detect_docs_available,
             commands::filesystem::get_scanner_summary,
             commands::filesystem::read_project_file,
             commands::filesystem::read_project_docs,
@@ -149,13 +148,9 @@ pub fn run() {
             // Activity commands
             commands::activity::get_activity_log,
             commands::activity::search_activity,
-            commands::activity::get_decisions,
-            commands::activity::get_all_decisions,
-            commands::activity::get_decision_categories,
             // Settings commands
             commands::settings::get_settings,
             commands::settings::update_settings,
-            commands::settings::check_claude_status,
             commands::settings::reset_settings,
             commands::settings::import_settings,
             // Data commands
@@ -168,11 +163,8 @@ pub fn run() {
             commands::pty::pty_resize,
             commands::pty::pty_close,
             commands::pty::pty_detach,
-            commands::pty::pty_list_sessions,
             commands::pty::pty_is_active,
             commands::pty::pty_get_session_info,
-            commands::pty::pty_active_count,
-            commands::pty::pty_close_all,
             commands::pty::pty_attach,
             commands::pty::pty_check_tmux,
             commands::pty::pty_list_tmux,
@@ -195,7 +187,6 @@ pub fn run() {
             commands::logs::get_app_log_stats,
             commands::logs::get_log_levels,
             commands::logs::clear_app_logs,
-            commands::logs::rotate_app_logs,
             commands::logs::log_frontend_error,
             commands::logs::log_frontend_event,
             // Git commands
@@ -246,8 +237,6 @@ pub fn run() {
             // Dependency scanner commands
             commands::dependencies::get_dependency_status,
             commands::dependencies::invalidate_dependency_cache,
-            commands::dependencies::run_dependency_audit,
-            commands::dependencies::get_outdated_packages,
             // File watcher commands
             commands::watcher::watch_project_files,
             commands::watcher::unwatch_project_files,

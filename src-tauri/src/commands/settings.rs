@@ -1,10 +1,9 @@
 // GSD VibeFlow - Settings Commands
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
-use crate::models::{ClaudeStatus, Settings};
+use crate::models::Settings;
 use crate::pty::TerminalManagerState;
 use rusqlite::params;
-use std::process::Command;
 use std::sync::Arc;
 use tauri_plugin_dialog::DialogExt;
 
@@ -155,50 +154,6 @@ pub async fn update_settings(
     upsert("use_tmux", &settings.use_tmux.to_string()).map_err(|e| e.to_string())?;
 
     Ok(settings)
-}
-
-#[tauri::command]
-pub async fn check_claude_status() -> Result<ClaudeStatus, String> {
-    // Check if claude is in PATH
-    let which_cmd = if cfg!(target_os = "windows") {
-        "where"
-    } else {
-        "which"
-    };
-
-    let which_output = Command::new(which_cmd).arg("claude").output();
-
-    let (installed, path) = match which_output {
-        Ok(output) if output.status.success() => {
-            let path = String::from_utf8_lossy(&output.stdout).trim().to_string();
-            (true, Some(path))
-        }
-        _ => (false, None),
-    };
-
-    // Get Claude version if installed
-    let version = if installed {
-        Command::new("claude")
-            .arg("--version")
-            .output()
-            .ok()
-            .and_then(|output| {
-                if output.status.success() {
-                    let version_str = String::from_utf8_lossy(&output.stdout).trim().to_string();
-                    version_str.split_whitespace().last().map(|v| v.to_string())
-                } else {
-                    None
-                }
-            })
-    } else {
-        None
-    };
-
-    Ok(ClaudeStatus {
-        installed,
-        version,
-        path,
-    })
 }
 
 // Reset all settings to defaults

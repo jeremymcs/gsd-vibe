@@ -2,7 +2,7 @@
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 use crate::models::{
-    DocsAvailable, KnowledgeFileEntry, KnowledgeFileTree, KnowledgeFolder, KnowledgeGraph,
+    KnowledgeFileEntry, KnowledgeFileTree, KnowledgeFolder, KnowledgeGraph,
     KnowledgeGraphEdge, KnowledgeGraphNode, KnowledgeInput, KnowledgeSearchMatch,
     MarkdownFolderSummary, MarkdownIndexProgress, MarkdownScanResult, ProjectDocs, ScannerCategory,
     ScannerReport, ScannerSummary, TechStack,
@@ -596,37 +596,6 @@ pub async fn pick_folder(app: tauri::AppHandle) -> Result<Option<String>, String
         Ok(None) => Ok(None),
         Err(_) => Err("Dialog was cancelled".to_string()),
     }
-}
-
-#[tauri::command]
-pub async fn detect_docs_available(path: String) -> Result<DocsAvailable, String> {
-    let base_path = Path::new(&path);
-
-    if !base_path.exists() {
-        return Err(format!("Path does not exist: {}", path));
-    }
-
-    let mut docs = DocsAvailable::default();
-
-    // Check for .planning/PROJECT.md
-    let project_md_path = base_path.join(".planning/PROJECT.md");
-    docs.has_project_md = project_md_path.exists() || docs.has_project_md;
-
-    // Check for .planning/PROJECT.md (GSD format)
-    let project_md_planning = base_path.join(".planning/PROJECT.md");
-    if project_md_planning.exists() {
-        docs.has_project_md = true;
-        docs.project_md_path = Some(project_md_planning.to_string_lossy().to_string());
-    }
-
-    // Check for .planning/ROADMAP.md
-    let roadmap_path = base_path.join(".planning/ROADMAP.md");
-    docs.has_roadmap_md = roadmap_path.exists();
-
-    // Check for README.md in root
-    docs.has_readme = base_path.join("README.md").exists();
-
-    Ok(docs)
 }
 
 fn empty_scanner_summary() -> ScannerSummary {
