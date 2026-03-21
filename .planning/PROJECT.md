@@ -8,27 +8,24 @@ GSD VibeFlow is a native desktop app (Tauri 2.x / Rust + React) for managing Cla
 
 Per-project version detection drives everything — the app correctly identifies whether a project uses `.gsd/` (GSD-2) or `.planning/` (GSD-1) and renders appropriate data, UI terminology, and features for each.
 
-## Current Milestone: v1.1 GSD VibeFlow Rebrand
-
-**Goal:** Rebrand the app from "Track Your Shit" to "GSD VibeFlow" with a full visual identity refresh matching gsd.build, and audit/remove all dead code.
-
-**Target features:**
-- App identity: name, metadata, window title, About dialog
-- UI string replacement: all "Track Your Shit" references → "GSD VibeFlow"
-- Visual identity: gsd.build-aligned palette (black/white/cyan), new app icon
-- File header copyright updates across all source files
-- Dead code audit and removal (unused commands, components, hooks, types)
-
 ## Current State
 
-v1.0 shipped 2026-03-21. All 7 phases complete, 14 plans executed. GSD-2 integration is fully functional: version detection, file parsing, health widget, worktrees, headless sessions, visualizer, and reactive tab invalidation all wired end-to-end.
+**v1.1 shipped 2026-03-21.** GSD VibeFlow rebrand complete across all 3 phases, 8 plans.
 
-v1.1 in progress. Phase 10 complete 2026-03-21 — dead code audit complete: 11 orphaned Rust commands removed (968 lines), unused React components (ImportDialog, NewProjectDialog) removed, 4 pre-existing test failures fixed. Build clean, 130/130 tests passing.
+- Full rename: all metadata, strings, headers, and bundle identifier read "GSD VibeFlow"
+- New visual identity: black/white/cyan (gsd.build), GSD logomark icon in all platform formats
+- Dead code audit complete: 13 unused Rust commands removed, 2 dead React components deleted, 1,810+ lines removed
+- 130/130 tests passing, build clean
 
-**Remaining tech debt (to address in future):**
-- `gsd2_detect_version` registered as Tauri command but not called post-import (version set at import time only)
-- `gsd2_get_roadmap_progress` command + hook exist but no dedicated UI consumer (data partially surfaced via health M/S/T counts)
-- `archive_project` and `gsd_update_config` commands have no frontend callers (deferred per phase 10 scope)
+**Shipped milestones:** v1.0 (GSD-2 Integration) · v1.1 (GSD VibeFlow Rebrand)
+
+**Tech debt carried forward:**
+- IDNT-03 — About dialog not built (deferred)
+- `archive_project` and `gsd_update_config` — registered in lib.rs, no frontend callers
+
+## Next Milestone
+
+Run `/gsd:new-milestone` to define v1.2 goals and requirements.
 
 ## Requirements
 
@@ -48,14 +45,14 @@ v1.1 in progress. Phase 10 complete 2026-03-21 — dead code audit complete: 11 
 - ✓ Milestones/Slices/Tasks tabs: real data from Rust parsing commands — v1.0
 - ✓ Reactive file-change invalidation: all 7 GSD-2 query families refresh within 2s — v1.0
 
-### Active — v1.1
+### Completed — v1.1
 
-- [ ] Rename app from "Track Your Shit" to "GSD VibeFlow" in all metadata (tauri.conf.json, package.json, Cargo.toml)
-- [ ] Replace all "Track Your Shit" UI strings with "GSD VibeFlow"
-- [x] Update visual identity: color palette to gsd.build (black/white/cyan), new app icon — Validated in Phase 9: visual-identity
-- [ ] Update all file headers: `Track Your Shit - [purpose]` → `GSD VibeFlow - [purpose]`
-- [x] Audit and remove dead code: unused Rust commands, React components, hooks, and TypeScript types — Validated in Phase 10: dead-code-removal-and-quality
-- [x] Fix pre-existing test failures in projects.test.tsx and main-layout.test.tsx (4 tests) — Validated in Phase 10: dead-code-removal-and-quality
+- [x] Rename app from "Track Your Shit" to "GSD VibeFlow" in all metadata — Validated Phase 8
+- [x] Replace all "Track Your Shit" UI strings with "GSD VibeFlow" — Validated Phase 8
+- [x] Update visual identity: color palette to gsd.build (black/white/cyan), new app icon — Validated Phase 9
+- [x] Update all file headers to "GSD VibeFlow - [purpose]" — Validated Phase 8 (178+ files)
+- [x] Audit and remove dead code: 13 Rust commands, 2 React components, 1,810+ lines — Validated Phase 10
+- [x] Fix pre-existing test failures (4 tests) — Validated Phase 10
 
 ### Out of Scope
 
