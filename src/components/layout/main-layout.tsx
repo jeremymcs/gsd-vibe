@@ -24,7 +24,6 @@ import {
 } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
 import {
-  ClipboardCheck,
   SquareTerminal,
   ChevronDown,
   ChevronUp,
@@ -92,20 +91,23 @@ export function MainLayout({ children }: MainLayoutProps) {
           {/* Logo */}
           <div
             className={cn(
-              "h-14 flex items-center border-b border-border/40",
+              "h-16 flex items-center border-b border-border/40",
               sidebarCollapsed ? "px-3 justify-center" : "px-5"
             )}
           >
-            <div className="flex items-center gap-2.5">
-              <div className="p-1.5 rounded-md bg-gsd-cyan/15 flex-shrink-0">
-                <ClipboardCheck className="h-[18px] w-[18px] text-gsd-cyan" />
+            {sidebarCollapsed ? (
+              <div className="flex flex-col items-center gap-0.5">
+                <span className="text-[10px] font-bold text-gsd-cyan font-mono leading-none">GSD</span>
+                <span className="text-[8px] font-semibold text-muted-foreground/60 tracking-widest uppercase leading-none">VF</span>
               </div>
-              {!sidebarCollapsed && (
-                <span className="text-sm font-semibold text-foreground tracking-tight">
-                  GSD VibeFlow
+            ) : (
+              <div className="flex flex-col gap-0.5">
+                <img src="/gsd-logo.svg" alt="GSD" className="h-5 w-auto" />
+                <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-muted-foreground/70 pl-0.5">
+                  VibeFlow
                 </span>
-              )}
-            </div>
+              </div>
+            )}
           </div>
 
           {/* Command palette trigger */}

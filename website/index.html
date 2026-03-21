@@ -5,7 +5,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GSD VibeFlow - The Official Desktop App</title>
+  <title>GSD VibeFlow - Desktop App</title>
   <meta name="description" content="A native desktop app for the GSD VibeFlow workflow. Track projects, monitor roadmap progress, integrated terminal, git operations, knowledge base, and more. Built with Tauri.">
   <meta name="theme-color" content="#000000">
 
@@ -15,16 +15,16 @@
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
   <!-- Open Graph -->
-  <meta property="og:title" content="GSD VibeFlow - The Official Desktop App">
+  <meta property="og:title" content="GSD VibeFlow - Desktop App">
   <meta property="og:description" content="A native desktop app for the GSD VibeFlow workflow. Track projects, monitor roadmap progress, integrated terminal, git operations, and more.">
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://trackyourshit.app">
-  <link rel="canonical" href="https://trackyourshit.app">
+  <meta property="og:url" content="https://gsdvibeflow.com">
+  <link rel="canonical" href="https://gsdvibeflow.com">
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -33,26 +33,21 @@
       theme: {
         extend: {
           fontFamily: {
-            sans: ['Inter', 'system-ui', 'sans-serif'],
+            sans: ['DM Sans', 'system-ui', 'sans-serif'],
             mono: ['JetBrains Mono', 'monospace'],
           },
           colors: {
             brand: {
-              50: '#eff6ff',
-              100: '#dbeafe',
-              200: '#bfdbfe',
-              300: '#93c5fd',
-              400: '#60a5fa',
-              500: '#3b82f6',
-              600: '#2563eb',
-              700: '#1d4ed8',
-              800: '#1e40af',
-              900: '#1e3a8a',
-            },
-            violet: {
-              400: '#a78bfa',
-              500: '#8b5cf6',
-              600: '#7c3aed',
+              50: '#e8f9ff',
+              100: '#c7f0ff',
+              200: '#a0e5ff',
+              300: '#7ccfff',
+              400: '#7ccfff',
+              500: '#7ccfff',
+              600: '#4db8f5',
+              700: '#239fe0',
+              800: '#0d80bb',
+              900: '#035f8e',
             },
           },
         },
@@ -63,30 +58,30 @@
   <style>
     /* Custom styles that Tailwind can't do inline */
     .gradient-text {
-      background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 50%, #f472b6 100%);
+      background: linear-gradient(135deg, #7ccfff 0%, #a0e5ff 50%, #ffffff 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
     }
     .gradient-border {
-      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      background: linear-gradient(135deg, #7ccfff, #a0e5ff);
       padding: 1px;
     }
     .gradient-border > * {
       background: #000000;
     }
     .hero-glow {
-      background: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(59,130,246,0.12), transparent);
+      background: radial-gradient(circle at 50% 0%, rgba(124,207,255,0.08), transparent 70%);
     }
     .card-glow:hover {
-      box-shadow: 0 0 40px -12px rgba(59,130,246,0.25);
+      box-shadow: 0 0 40px -12px rgba(124,207,255,0.2);
     }
     .feature-card {
       background: rgba(255,255,255,0.03);
       border: 1px solid rgba(255,255,255,0.08);
     }
     .feature-card:hover {
-      border-color: rgba(96,165,250,0.35);
+      border-color: rgba(124,207,255,0.3);
       background: rgba(255,255,255,0.05);
     }
     .screenshot-mock {
@@ -138,8 +133,8 @@
     }
     .grid-bg {
       background-image:
-        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+        linear-gradient(rgba(124,207,255,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(124,207,255,0.04) 1px, transparent 1px);
       background-size: 64px 64px;
     }
     /* Smooth scrolling for the whole page */
@@ -164,30 +159,16 @@
   <!-- Navigation -->
   <nav class="fixed top-0 left-0 right-0 z-50 nav-blur bg-black/80 border-b border-white/[0.08]">
     <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-      <a href="#" class="flex items-center gap-3 group">
-        <!-- Inline SVG icon -->
-        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-500 to-violet-500 flex items-center justify-center shadow-lg shadow-brand-500/20">
-          <svg class="w-5 h-5" viewBox="0 0 512 512" fill="none">
-            <rect x="140" y="130" width="232" height="290" rx="20" fill="white" opacity="0.95"/>
-            <rect x="196" y="106" width="120" height="48" rx="12" fill="white" opacity="0.6"/>
-            <rect x="176" y="200" width="24" height="24" rx="5" fill="white" opacity="0.8"/>
-            <polyline points="182,213 189,220 200,206" fill="none" stroke="#3b82f6" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-            <rect x="216" y="206" width="120" height="10" rx="5" fill="white" opacity="0.4"/>
-            <rect x="176" y="252" width="24" height="24" rx="5" fill="white" opacity="0.8"/>
-            <polyline points="182,265 189,272 200,258" fill="none" stroke="#3b82f6" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-            <rect x="216" y="258" width="100" height="10" rx="5" fill="white" opacity="0.4"/>
-            <rect x="176" y="304" width="24" height="24" rx="5" fill="none" stroke="white" stroke-width="2.5" opacity="0.5"/>
-            <rect x="216" y="310" width="130" height="10" rx="5" fill="white" opacity="0.2"/>
-          </svg>
-        </div>
-        <span class="text-lg font-bold text-white group-hover:text-brand-400 transition-colors">GSD VibeFlow</span>
+      <a href="#" class="flex flex-col gap-0.5 group">
+        <img src="gsd-logo.svg" alt="GSD" class="h-6 w-auto opacity-90 group-hover:opacity-100 transition-opacity">
+        <span style="font-size:9px;letter-spacing:0.2em;" class="uppercase font-semibold text-slate-500 group-hover:text-slate-400 transition-colors tracking-widest pl-px">VibeFlow</span>
       </a>
       <div class="hidden md:flex items-center gap-8">
         <a href="#features" class="text-sm text-slate-400 hover:text-white transition-colors">Features</a>
         <a href="#workflow" class="text-sm text-slate-400 hover:text-white transition-colors">Workflow</a>
         <a href="#terminal" class="text-sm text-slate-400 hover:text-white transition-colors">Terminal</a>
         <a href="#privacy" class="text-sm text-slate-400 hover:text-white transition-colors">Privacy</a>
-        <a href="#download" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-brand-500 to-violet-500 text-white text-sm font-semibold hover:from-brand-400 hover:to-violet-400 transition-all shadow-lg shadow-brand-500/25">
+        <a href="#download" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white text-black text-sm font-semibold hover:bg-gray-100 hover:-translate-y-px transition-all shadow-lg shadow-white/10">
           Download
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
         </a>
@@ -226,14 +207,14 @@
         </h1>
 
         <p class="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-          The official desktop companion for the
-          <a href="https://gsd.build/" class="text-violet-300 hover:text-violet-200 underline underline-offset-2">GSD VibeFlow</a> workflow.
+          The desktop companion for the
+          <a href="https://gsd.build/" class="text-brand-300 hover:text-brand-200 underline underline-offset-2">GSD VibeFlow</a> workflow.
           Manage projects, track workflow progress, integrated terminal,
           git operations, knowledge base &mdash; all in one place.
         </p>
 
         <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6">
-          <a href="https://github.com/fluxlabs/track-your-shit/releases/download/v0.1.1/Track.Your.Shit_0.1.1_aarch64.dmg" onclick="window.va && window.va('event', {name: 'download', data: {version: '0.1.1', platform: 'macos-aarch64'}})" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl bg-gradient-to-r from-brand-500 to-violet-500 text-white font-semibold text-lg hover:from-brand-400 hover:to-violet-400 transition-all shadow-xl shadow-brand-500/25 hover:shadow-brand-500/40">
+          <a href="https://github.com/fluxlabs/track-your-shit/releases/download/v0.1.1/Track.Your.Shit_0.1.1_aarch64.dmg" onclick="window.va && window.va('event', {name: 'download', data: {version: '0.1.1', platform: 'macos-aarch64'}})" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl bg-white text-black font-semibold text-lg hover:bg-gray-100 hover:-translate-y-px transition-all shadow-xl shadow-white/10">
             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
             Download for macOS
           </a>
@@ -265,7 +246,7 @@
             <img src="screenshots/dashboard.png" alt="GSD VibeFlow - Dashboard showing project cards with progress bars, GSD status, and activity overview" class="w-full h-auto" loading="eager" />
           </div>
           <!-- Glow effect behind screenshot -->
-          <div class="absolute -inset-4 bg-gradient-to-r from-brand-500/10 via-violet-500/10 to-pink-500/10 rounded-2xl blur-3xl -z-10"></div>
+          <div class="absolute -inset-4 bg-gradient-to-r from-brand-400/10 via-brand-300/5 to-transparent rounded-2xl blur-3xl -z-10"></div>
         </div>
       </div>
     </div>
@@ -300,7 +281,7 @@
     <div class="max-w-7xl mx-auto px-6">
       <div class="text-center mb-16">
         <h2 class="text-3xl md:text-5xl font-black text-white mb-4">Everything you need.<br><span class="gradient-text">Nothing you don't.</span></h2>
-        <p class="text-lg text-slate-400 max-w-2xl mx-auto">The official companion app for the <a href="https://gsd.build/" class="text-violet-300 hover:text-violet-200">GSD VibeFlow</a> workflow, built as a fast native desktop app.</p>
+        <p class="text-lg text-slate-400 max-w-2xl mx-auto">The companion app for the <a href="https://gsd.build/" class="text-brand-300 hover:text-brand-200">GSD VibeFlow</a> workflow, built as a fast native desktop app.</p>
       </div>
 
       <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -316,11 +297,11 @@
 
         <!-- Feature 2: GSD Workflow -->
         <div class="feature-card rounded-xl p-6 transition-all duration-300 card-glow">
-          <div class="w-12 h-12 rounded-xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center mb-4">
-            <svg class="w-6 h-6 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+          <div class="w-12 h-12 rounded-xl bg-brand-400/10 border border-brand-400/20 flex items-center justify-center mb-4">
+            <svg class="w-6 h-6 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
           </div>
-          <h3 class="text-lg font-bold text-white mb-2"><a href="https://gsd.build/" class="hover:text-violet-300 transition-colors">GSD VibeFlow</a></h3>
-          <p class="text-sm text-slate-400 leading-relaxed">Native integration with the <a href="https://gsd.build/" class="text-violet-300 hover:text-violet-200 underline underline-offset-2">GSD VibeFlow</a> workflow. Auto-syncs your .planning/ directory &mdash; todos, plans, phases, milestones, research, and verification.</p>
+          <h3 class="text-lg font-bold text-white mb-2"><a href="https://gsd.build/" class="hover:text-brand-300 transition-colors">GSD VibeFlow</a></h3>
+          <p class="text-sm text-slate-400 leading-relaxed">Native integration with the <a href="https://gsd.build/" class="text-brand-300 hover:text-brand-200 underline underline-offset-2">GSD VibeFlow</a> workflow. Auto-syncs your .planning/ directory &mdash; todos, plans, phases, milestones, research, and verification.</p>
         </div>
 
         <!-- Feature 3: Integrated Terminal -->
@@ -395,13 +376,13 @@
     <div class="max-w-7xl mx-auto px-6">
       <div class="grid lg:grid-cols-2 gap-16 items-center">
         <div>
-          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-500/10 border border-violet-500/20 text-sm text-violet-300 mb-6">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-400/10 border border-brand-400/20 text-sm text-brand-300 mb-6">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
             GSD Integration
           </div>
           <h2 class="text-3xl md:text-5xl font-black text-white mb-6">Built for the<br><span class="gradient-text">GSD workflow.</span></h2>
           <p class="text-lg text-slate-400 mb-8 leading-relaxed">
-            GSD VibeFlow natively understands the <a href="https://gsd.build/" class="text-violet-300 hover:text-violet-200 underline underline-offset-2">GSD VibeFlow</a> workflow.
+            GSD VibeFlow natively understands the <a href="https://gsd.build/" class="text-brand-300 hover:text-brand-200 underline underline-offset-2">GSD VibeFlow</a> workflow.
             It watches your <code class="text-sm font-mono bg-white/[0.08] px-2 py-0.5 rounded text-brand-300">.planning/</code> directory
             and syncs everything in real time.
           </p>
@@ -475,7 +456,7 @@
             <div class="p-5 font-mono text-sm space-y-1">
               <div class="text-slate-500">~/projects/saas-dashboard</div>
               <div class="terminal-line text-slate-300">pnpm dev</div>
-              <div class="text-slate-500 mt-2">  <span class="text-violet-400">VITE</span> v5.4.2 ready in <span class="text-emerald-400">342ms</span></div>
+              <div class="text-slate-500 mt-2">  <span class="text-brand-400">VITE</span> v5.4.2 ready in <span class="text-emerald-400">342ms</span></div>
               <div class="text-slate-500 mt-1">  <span class="text-cyan-400">&#10132;</span>  Local:   <span class="text-brand-400">http://localhost:3000/</span></div>
               <div class="text-slate-500">  <span class="text-cyan-400">&#10132;</span>  Network: <span class="text-slate-600">http://192.168.1.42:3000/</span></div>
               <div class="text-slate-600 mt-3">  press <span class="text-white">h + enter</span> to show help</div>
@@ -739,7 +720,7 @@
         </div>
         <div>
           <h4 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
-            <span class="w-1.5 h-1.5 rounded-full bg-violet-400"></span>
+            <span class="w-1.5 h-1.5 rounded-full bg-brand-400"></span>
             GSD Workflow
           </h4>
           <ul class="space-y-2 text-sm text-slate-500">
@@ -902,13 +883,7 @@
     <div class="max-w-7xl mx-auto px-6">
       <div class="flex flex-col md:flex-row items-center justify-between gap-6">
         <div class="flex items-center gap-3">
-          <div class="w-6 h-6 rounded-md bg-gradient-to-br from-brand-500 to-violet-500 flex items-center justify-center">
-            <svg class="w-4 h-4" viewBox="0 0 512 512" fill="none">
-              <rect x="140" y="130" width="232" height="290" rx="20" fill="white" opacity="0.9"/>
-              <rect x="176" y="200" width="24" height="24" rx="5" fill="white" opacity="0.8"/>
-              <polyline points="182,213 189,220 200,206" fill="none" stroke="#3b82f6" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </div>
+          <img src="gsd-logo.svg" alt="GSD VibeFlow" class="h-5 w-auto opacity-50">
           <span class="text-sm text-slate-500">GSD VibeFlow &copy; 2026 Jeremy McSpadden</span>
         </div>
         <div class="flex items-center gap-6 text-sm text-slate-500">
