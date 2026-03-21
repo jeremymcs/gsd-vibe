@@ -51,16 +51,20 @@ Source: 8-point scale default; no spacing changes required by VISL-01 through VI
 
 ## Typography
 
-| Role | Size | Weight | Line Height |
-|------|------|--------|-------------|
-| Body | 14px | 400 | 1.5 |
-| Label | 13px | 500 | 1.4 |
-| Heading | 20px | 600 | 1.2 |
-| Display | 28px | 700 | 1.1 |
+| Role | Size | Weight | Line Height | Differentiation |
+|------|------|--------|-------------|-----------------|
+| Body | 14px | 400 | 1.5 | Default prose, paragraph text |
+| Label | 14px | 600 | 1.4 | Same size as Body; distinguished by weight (600) and `--muted-foreground` color |
+| Heading | 20px | 600 | 1.2 | Section and panel headings |
+| Display | 28px | 400 | 1.1 | Large numeric or hero callouts |
+
+Font weights in use: **400 (regular)** and **600 (semibold)** only. Maps to Tailwind `font-normal` and `font-semibold`. Weights 500 (medium) and 700 (bold) are not part of this contract and must not be introduced in this phase.
 
 Font: `Inter var` / `Inter` as primary sans-serif. `JetBrains Mono Variable` for terminal and code surfaces. Font size presets (`.font-scale-sm` = 13px, `.font-scale-md` = 14px, `.font-scale-lg` = 16px) are retained from globals.css — no changes in this phase.
 
-Source: tailwind.config.js fontFamily declarations + globals.css font-scale presets. Typography is unchanged by this phase.
+Label and Body share 14px size. Labels are distinguished from body text by weight (600 vs 400) and color (`--muted-foreground` for labels vs `--foreground` for body).
+
+Source: tailwind.config.js fontFamily declarations + globals.css font-scale presets + checker revision 2026-03-21 (collapsed to 2 weights; Label size aligned to Body).
 
 ---
 
