@@ -107,6 +107,10 @@ export function useGsdFileWatcher(
       void queryClient.invalidateQueries({ queryKey: queryKeys.gsd2Health(projectId) });
       void queryClient.invalidateQueries({ queryKey: queryKeys.gsd2Worktrees(projectId) });
       void queryClient.invalidateQueries({ queryKey: queryKeys.gsd2VisualizerData(projectId) });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.gsd2Milestones(projectId) });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.gsd2DerivedState(projectId) });
+      void queryClient.invalidateQueries({ queryKey: ['gsd2', 'milestone', projectId] });
+      void queryClient.invalidateQueries({ queryKey: ['gsd2', 'slice', projectId] });
     }).then((fn) => {
       unlisten2 = fn;
     });
