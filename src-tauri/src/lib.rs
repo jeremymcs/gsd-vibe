@@ -114,7 +114,7 @@ pub fn run() {
             let watcher_manager = commands::watcher::WatcherManager::new();
             app.manage(Arc::new(Mutex::new(watcher_manager)));
 
-            tracing::info!("Track Your Shit initialized");
+            tracing::info!("GSD VibeFlow initialized");
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -310,7 +310,7 @@ pub fn run() {
             commands::secrets::has_secret,
         ])
         .run(tauri::generate_context!())
-        .expect("error while running Track Your Shit");
+        .expect("error while running GSD VibeFlow");
 }
 
 #[cfg(test)]

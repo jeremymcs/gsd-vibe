@@ -5,8 +5,8 @@
 use keyring::Entry;
 use serde::{Deserialize, Serialize};
 
-/// Default service name for all Track Your Shit keychain entries
-const DEFAULT_SERVICE: &str = "net.fluxlabs.track-your-shit";
+/// Default service name for all GSD VibeFlow keychain entries
+const DEFAULT_SERVICE: &str = "io.gsd.vibeflow";
 
 /// Known/predefined secret key names that the UI offers as presets
 const PREDEFINED_KEYS: &[&str] = &[
