@@ -22,10 +22,10 @@
 
 ### Visual
 
-- [ ] **VISL-01**: Color palette migrated to gsd.build brand (black background, white text, cyan accent)
+- [x] **VISL-01**: Color palette migrated to gsd.build brand (black background, white text, cyan accent)
 - [ ] **VISL-02**: New app icon created and applied for all target sizes (macOS, Windows, Linux)
-- [ ] **VISL-03**: Splash/loading screen updated with GSD VibeFlow branding (if splash exists)
-- [ ] **VISL-04**: CSS design token names updated to remove old brand references
+- [x] **VISL-03**: Splash/loading screen updated with GSD VibeFlow branding (if splash exists)
+- [x] **VISL-04**: CSS design token names updated to remove old brand references
 
 ### Headers
 
@@ -71,10 +71,10 @@
 | STRN-04 | Phase 8 | Complete |
 | HDRS-01 | Phase 8 | Complete |
 | HDRS-02 | Phase 8 | Complete |
-| VISL-01 | Phase 9 | Pending |
+| VISL-01 | Phase 9 | Complete |
 | VISL-02 | Phase 9 | Pending |
-| VISL-03 | Phase 9 | Pending |
-| VISL-04 | Phase 9 | Pending |
+| VISL-03 | Phase 9 | Complete |
+| VISL-04 | Phase 9 | Complete |
 | DEAD-01 | Phase 10 | Pending |
 | DEAD-02 | Phase 10 | Pending |
 | DEAD-03 | Phase 10 | Pending |
