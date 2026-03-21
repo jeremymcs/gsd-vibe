@@ -1,4 +1,4 @@
-// Track Your Shit - Import Dialog Component
+// GSD VibeFlow - Import Dialog Component
 // Multi-step modal for importing projects from filesystem
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

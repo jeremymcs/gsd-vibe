@@ -1,4 +1,4 @@
-// Track Your Shit - Keyboard Shortcut Definitions
+// GSD VibeFlow - Keyboard Shortcut Definitions
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 export function isMac(): boolean {

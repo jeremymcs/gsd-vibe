@@ -1,4 +1,4 @@
-// Track Your Shit - Project Row (dashboard list item)
+// GSD VibeFlow - Project Row (dashboard list item)
 // Compact single-row layout with live GSD stats
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

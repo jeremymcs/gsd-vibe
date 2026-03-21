@@ -1,4 +1,4 @@
-// Track Your Shit - Breadcrumb Navigation
+// GSD VibeFlow - Breadcrumb Navigation
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { Link, useLocation } from 'react-router-dom';

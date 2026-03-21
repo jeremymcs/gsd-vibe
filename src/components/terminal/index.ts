@@ -1,4 +1,4 @@
-// Track Your Shit - Terminal Components
+// GSD VibeFlow - Terminal Components
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 export { TerminalView, type TerminalViewRef } from "./terminal-view";

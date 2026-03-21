@@ -1,4 +1,4 @@
-// Track Your Shit - Knowledge Graph Layout Utilities
+// GSD VibeFlow - Knowledge Graph Layout Utilities
 // Helpers for positioning nodes in the ReactFlow graph
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

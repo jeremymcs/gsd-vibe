@@ -1,4 +1,4 @@
-// Track Your Shit - Export Data Dialog
+// GSD VibeFlow - Export Data Dialog
 // Supports selective data category export
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

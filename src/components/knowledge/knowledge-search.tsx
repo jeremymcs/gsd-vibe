@@ -1,4 +1,4 @@
-// Track Your Shit - Knowledge Full-Text Search (KN-01)
+// GSD VibeFlow - Knowledge Full-Text Search (KN-01)
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { useState, useMemo } from 'react';

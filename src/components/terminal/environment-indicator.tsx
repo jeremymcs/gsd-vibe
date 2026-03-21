@@ -1,4 +1,4 @@
-// Track Your Shit - Environment Indicator Component
+// GSD VibeFlow - Environment Indicator Component
 // Shows git branch + runtime versions in terminal tab bar
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

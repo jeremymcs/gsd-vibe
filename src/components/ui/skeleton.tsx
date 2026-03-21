@@ -1,4 +1,4 @@
-// Track Your Shit - Skeleton Component
+// GSD VibeFlow - Skeleton Component
 // Loading state placeholders with shimmer animation
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

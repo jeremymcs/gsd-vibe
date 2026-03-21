@@ -1,4 +1,4 @@
-// Track Your Shit - Project Terminal Tab Component
+// GSD VibeFlow - Project Terminal Tab Component
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { useState, useCallback } from 'react';

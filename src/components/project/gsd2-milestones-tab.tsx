@@ -1,4 +1,4 @@
-// Track Your Shit - GSD-2 Milestones Tab Component
+// GSD VibeFlow - GSD-2 Milestones Tab Component
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { useState } from 'react';

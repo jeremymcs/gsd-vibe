@@ -1,4 +1,4 @@
-// Track Your Shit - Snippet Editor Dialog Component
+// GSD VibeFlow - Snippet Editor Dialog Component
 // Create or edit saved command snippets
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

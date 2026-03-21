@@ -1,4 +1,4 @@
-// Track Your Shit - Shared Navigation Configuration
+// GSD VibeFlow - Shared Navigation Configuration
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import {

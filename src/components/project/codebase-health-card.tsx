@@ -1,4 +1,4 @@
-// Track Your Shit - Codebase Health Card for Overview
+// GSD VibeFlow - Codebase Health Card for Overview
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

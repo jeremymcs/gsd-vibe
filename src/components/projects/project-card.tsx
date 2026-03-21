@@ -1,4 +1,4 @@
-// Track Your Shit - Shared Project Card Component
+// GSD VibeFlow - Shared Project Card Component
 // Enriched card with stats, git info, progress, costs, and favorites
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

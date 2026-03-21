@@ -1,4 +1,4 @@
-// Track Your Shit - Theme Customization Settings Component
+// GSD VibeFlow - Theme Customization Settings Component
 // Accent color, UI density, and font size configuration
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

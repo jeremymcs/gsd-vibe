@@ -1,4 +1,4 @@
-// Track Your Shit - New Project Dialog Component
+// GSD VibeFlow - New Project Dialog Component
 // Multi-step modal for creating new projects from scratch
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

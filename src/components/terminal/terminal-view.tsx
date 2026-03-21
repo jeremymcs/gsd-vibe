@@ -1,4 +1,4 @@
-// Track Your Shit - Terminal View Component
+// GSD VibeFlow - Terminal View Component
 // xterm.js terminal emulator wrapper with smart scroll behavior
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

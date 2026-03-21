@@ -1,4 +1,4 @@
-// Track Your Shit - Log Viewer Page
+// GSD VibeFlow - Log Viewer Page
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";

@@ -1,4 +1,4 @@
-// Track Your Shit - Main Layout Component
+// GSD VibeFlow - Main Layout Component
 // Persistent shell panel at bottom with page content above
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

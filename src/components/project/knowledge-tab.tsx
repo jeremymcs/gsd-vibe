@@ -1,4 +1,4 @@
-// Track Your Shit - Knowledge Tab Component
+// GSD VibeFlow - Knowledge Tab Component
 // Knowledge viewer with Research sub-tab for .planning/research/ files
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

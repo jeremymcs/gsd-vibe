@@ -1,4 +1,4 @@
-// Track Your Shit - Badge Component
+// GSD VibeFlow - Badge Component
 // Enhanced with brand colors and status variants
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

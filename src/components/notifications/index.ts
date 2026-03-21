@@ -1,4 +1,4 @@
-// Track Your Shit - Notifications Components
+// GSD VibeFlow - Notifications Components
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 export { NotificationBell } from './notification-bell';

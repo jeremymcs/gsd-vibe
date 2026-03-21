@@ -1,4 +1,4 @@
-// Track Your Shit - Project Header Component
+// GSD VibeFlow - Project Header Component
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { Link } from "react-router-dom";

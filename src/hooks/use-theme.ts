@@ -1,4 +1,4 @@
-// Track Your Shit - Theme Hook
+// GSD VibeFlow - Theme Hook
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { createContext, useContext } from "react";

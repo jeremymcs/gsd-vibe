@@ -1,4 +1,4 @@
-// Track Your Shit - GSD-2 Tasks Tab Component
+// GSD VibeFlow - GSD-2 Tasks Tab Component
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { Card, CardContent } from '@/components/ui/card';

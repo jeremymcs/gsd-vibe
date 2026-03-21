@@ -1,4 +1,4 @@
-// Track Your Shit - Keyboard Shortcuts Provider
+// GSD VibeFlow - Keyboard Shortcuts Provider
 // Registers global hotkeys and exposes search/help open state
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

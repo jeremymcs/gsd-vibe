@@ -1,4 +1,4 @@
-// Track Your Shit - Auto Commands Panel
+// GSD VibeFlow - Auto Commands Panel
 // Panel for managing pre/post execution auto-commands
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

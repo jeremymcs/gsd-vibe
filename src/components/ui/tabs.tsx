@@ -1,4 +1,4 @@
-// Track Your Shit - Tabs Component
+// GSD VibeFlow - Tabs Component
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import * as React from "react";

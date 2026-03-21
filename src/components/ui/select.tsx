@@ -1,4 +1,4 @@
-// Track Your Shit - Select Component
+// GSD VibeFlow - Select Component
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import * as React from "react";

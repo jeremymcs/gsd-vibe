@@ -1,4 +1,4 @@
-// Track Your Shit - Headless Session Hook
+// GSD VibeFlow - Headless Session Hook
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { useState, useRef, useCallback, useEffect } from 'react';

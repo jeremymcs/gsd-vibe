@@ -1,4 +1,4 @@
-// Track Your Shit - Query Key Factory
+// GSD VibeFlow - Query Key Factory
 // Centralized query key management for TanStack Query
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

@@ -1,4 +1,4 @@
-// Track Your Shit - Global GSD Todos Page
+// GSD VibeFlow - Global GSD Todos Page
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { useState, useMemo } from 'react';

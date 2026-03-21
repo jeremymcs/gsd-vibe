@@ -1,4 +1,4 @@
-// Track Your Shit - GSD Debug Sessions Tab
+// GSD VibeFlow - GSD Debug Sessions Tab
 // Viewer for GSD debug sessions
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

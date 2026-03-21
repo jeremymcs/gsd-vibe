@@ -1,4 +1,4 @@
-// Track Your Shit - Project Card (dashboard grid item)
+// GSD VibeFlow - Project Card (dashboard grid item)
 // Enhanced with live GSD todo/blocker/phase data
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

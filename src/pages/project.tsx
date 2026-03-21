@@ -1,4 +1,4 @@
-// Track Your Shit - Project Page
+// GSD VibeFlow - Project Page
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { useEffect, useRef, useState, useCallback } from "react";

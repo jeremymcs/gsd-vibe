@@ -1,4 +1,4 @@
-// Track Your Shit - Projects Page Tests
+// GSD VibeFlow - Projects Page Tests
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { describe, it, expect, vi, beforeEach } from "vitest";

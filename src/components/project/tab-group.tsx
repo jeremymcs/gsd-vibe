@@ -1,4 +1,4 @@
-// Track Your Shit - Tab Group Component
+// GSD VibeFlow - Tab Group Component
 // Reusable nested tab group for project page sub-tabs
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

@@ -1,4 +1,4 @@
-// Track Your Shit - Knowledge Bookmarks Panel (G2-3 KN-06)
+// GSD VibeFlow - Knowledge Bookmarks Panel (G2-3 KN-06)
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { Bookmark, Trash2, FileText } from 'lucide-react';

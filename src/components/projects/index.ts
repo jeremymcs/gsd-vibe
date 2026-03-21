@@ -1,4 +1,4 @@
-// Track Your Shit - Projects Components
+// GSD VibeFlow - Projects Components
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 export { ImportDialog } from "./import-dialog";

@@ -1,4 +1,4 @@
-// Track Your Shit - Settings Page
+// GSD VibeFlow - Settings Page
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { useState, useEffect } from "react";

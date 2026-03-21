@@ -1,4 +1,4 @@
-// Track Your Shit - Theme Provider
+// GSD VibeFlow - Theme Provider
 // Extended with accent color, UI density, and font scale support
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

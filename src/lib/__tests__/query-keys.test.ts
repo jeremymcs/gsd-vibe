@@ -1,4 +1,4 @@
-// Track Your Shit - Query Key Factory Tests
+// GSD VibeFlow - Query Key Factory Tests
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { describe, it, expect } from "vitest";

@@ -1,4 +1,4 @@
-// Track Your Shit - Import Existing Project Dialog
+// GSD VibeFlow - Import Existing Project Dialog
 // Import an existing codebase into GSD
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

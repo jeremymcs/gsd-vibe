@@ -1,4 +1,4 @@
-// Track Your Shit - Card Component
+// GSD VibeFlow - Card Component
 // Enhanced with multiple variants for different contexts
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

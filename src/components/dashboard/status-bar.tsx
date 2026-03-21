@@ -1,4 +1,4 @@
-// Track Your Shit - Dashboard Status Bar
+// GSD VibeFlow - Dashboard Status Bar
 // 3-stat summary: projects, pending todos, blockers
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

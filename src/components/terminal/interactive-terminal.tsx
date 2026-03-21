@@ -1,4 +1,4 @@
-// Track Your Shit - Interactive Terminal Component
+// GSD VibeFlow - Interactive Terminal Component
 // Full PTY-backed terminal with bidirectional I/O
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

@@ -1,4 +1,4 @@
-// Track Your Shit - Settings Components
+// GSD VibeFlow - Settings Components
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 export { ExportDataDialog } from "./export-data-dialog";

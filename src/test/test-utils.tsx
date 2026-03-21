@@ -1,4 +1,4 @@
-// Track Your Shit - Test Utilities
+// GSD VibeFlow - Test Utilities
 // Shared render helper with all required providers
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

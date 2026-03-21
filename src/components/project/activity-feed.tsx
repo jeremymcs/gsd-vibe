@@ -1,4 +1,4 @@
-// Track Your Shit - Activity Feed Component
+// GSD VibeFlow - Activity Feed Component
 // Real-time activity timeline for project and execution events
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

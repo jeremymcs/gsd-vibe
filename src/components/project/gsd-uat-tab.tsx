@@ -1,4 +1,4 @@
-// Track Your Shit - GSD UAT Tab
+// GSD VibeFlow - GSD UAT Tab
 // User Acceptance Testing results per phase (XX-UAT.md)
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

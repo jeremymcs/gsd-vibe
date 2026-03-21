@@ -1,4 +1,4 @@
-// Track Your Shit - Page Header Component
+// GSD VibeFlow - Page Header Component
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import type { ReactNode } from 'react';

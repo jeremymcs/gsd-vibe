@@ -1,4 +1,4 @@
-// Track Your Shit - Dependencies Tab Component
+// GSD VibeFlow - Dependencies Tab Component
 // Package dependency analysis and vulnerability detection for project page tab context
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

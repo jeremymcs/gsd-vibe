@@ -1,4 +1,4 @@
-// Track Your Shit - Command Palette (Cmd+K)
+// GSD VibeFlow - Command Palette (Cmd+K)
 // Global search with cmdk for projects, phases, decisions, knowledge, and pages
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

@@ -1,4 +1,4 @@
-// Track Your Shit - Alert Dialog Component
+// GSD VibeFlow - Alert Dialog Component
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import * as React from "react";

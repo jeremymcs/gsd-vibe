@@ -1,4 +1,4 @@
-// Track Your Shit - Terminal Context Tests
+// GSD VibeFlow - Terminal Context Tests
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { describe, it, expect, beforeEach } from "vitest";

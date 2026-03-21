@@ -1,4 +1,4 @@
-// Track Your Shit - Clear Data Dialog
+// GSD VibeFlow - Clear Data Dialog
 // Supports full clear and selective category-based clearing
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

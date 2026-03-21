@@ -1,4 +1,4 @@
-// Track Your Shit - Main App Component
+// GSD VibeFlow - Main App Component
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { lazy, Suspense } from "react";

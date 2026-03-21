@@ -1,4 +1,4 @@
-// Track Your Shit - Auto Command Dialog
+// GSD VibeFlow - Auto Command Dialog
 // Dialog for creating and editing auto-commands
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

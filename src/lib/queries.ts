@@ -1,4 +1,4 @@
-// Track Your Shit - React Query Hooks
+// GSD VibeFlow - React Query Hooks
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";

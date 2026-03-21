@@ -1,4 +1,4 @@
-// Track Your Shit - Dashboard Components Barrel Export
+// GSD VibeFlow - Dashboard Components Barrel Export
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 export { StatusBar } from './status-bar';

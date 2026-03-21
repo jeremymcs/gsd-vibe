@@ -1,4 +1,4 @@
-// Track Your Shit - Recent Searches Helper
+// GSD VibeFlow - Recent Searches Helper
 // Persists recent search queries in localStorage
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

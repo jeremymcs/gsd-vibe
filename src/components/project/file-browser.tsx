@@ -1,4 +1,4 @@
-// Track Your Shit - File Browser Component
+// GSD VibeFlow - File Browser Component
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import 'highlight.js/styles/github-dark.css';

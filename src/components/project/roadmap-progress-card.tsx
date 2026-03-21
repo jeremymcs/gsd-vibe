@@ -1,4 +1,4 @@
-// Track Your Shit - GSD Roadmap Progress Card
+// GSD VibeFlow - GSD Roadmap Progress Card
 // Displays ROADMAP.md phase completion data for GSD projects
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
