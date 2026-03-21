@@ -23,6 +23,8 @@ Per-project version detection drives everything — the app correctly identifies
 
 v1.0 shipped 2026-03-21. All 7 phases complete, 14 plans executed. GSD-2 integration is fully functional: version detection, file parsing, health widget, worktrees, headless sessions, visualizer, and reactive tab invalidation all wired end-to-end.
 
+v1.1 in progress. Phase 8 complete 2026-03-21 — full rebrand to "GSD VibeFlow" / `io.gsd.vibeflow`. All config, UI strings, file headers updated; zero legacy "Track Your Shit" references remain in source.
+
 **Remaining tech debt (to address in v1.1):**
 - `gsd2_detect_version` registered as Tauri command but not called post-import (version set at import time only)
 - `gsd2_get_roadmap_progress` command + hook exist but no dedicated UI consumer (data partially surfaced via health M/S/T counts)
@@ -91,4 +93,4 @@ v1.0 shipped 2026-03-21. All 7 phases complete, 14 plans executed. GSD-2 integra
 | Prefix-array invalidation for per-item queries | gsd2Milestone/gsd2Slice keys take extra args beyond projectId | ✓ Implemented in Phase 07 — `['gsd2', 'milestone', projectId]` catches all accordion-expanded queries |
 
 ---
-*Last updated: 2026-03-21 after v1.1 milestone start — rebrand to GSD VibeFlow*
+*Last updated: 2026-03-21 after Phase 8 complete — rebrand to GSD VibeFlow fully applied*
