@@ -3,6 +3,7 @@
 
 mod commands;
 pub mod db;
+mod headless;
 mod models;
 mod pty;
 mod security;
@@ -92,6 +93,9 @@ pub fn run() {
                 }
 
                 app.manage(Arc::new(Mutex::new(terminal_manager)));
+                app.manage(Arc::new(Mutex::new(
+                    crate::headless::HeadlessSessionRegistry::new(),
+                )));
             }
 
             // Register the pool as managed state
@@ -289,6 +293,12 @@ pub fn run() {
             commands::gsd2::gsd2_list_worktrees,
             commands::gsd2::gsd2_remove_worktree,
             commands::gsd2::gsd2_get_worktree_diff,
+            commands::gsd2::gsd2_headless_query,
+            commands::gsd2::gsd2_headless_start,
+            commands::gsd2::gsd2_headless_stop,
+            commands::gsd2::gsd2_get_visualizer_data,
+            commands::gsd2::can_safely_close,
+            commands::gsd2::force_close_all,
             // Secrets / OS keychain commands
             commands::secrets::set_secret,
             commands::secrets::get_secret,

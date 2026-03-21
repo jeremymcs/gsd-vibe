@@ -5,11 +5,13 @@
 // All .gsd/ parsing commands live here. gsd.rs (.planning/) is never modified.
 
 use crate::db::Database;
+use crate::headless::HeadlessRegistryState;
 use rusqlite::params;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::Path;
 use std::sync::Arc;
+use std::time::Duration;
 
 type DbState = Arc<crate::db::DbPool>;
 
@@ -1396,6 +1398,440 @@ pub async fn gsd2_get_worktree_diff(
             removed_count: 0,
         }),
     }
+}
+
+// ============================================================
+// Headless session structs and commands
+// ============================================================
+
+/// Snapshot returned by gsd2_headless_query (headless --json next output).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct HeadlessSnapshot {
+    pub state: String,
+    pub next: Option<String>,
+    pub cost: f64,
+}
+
+/// Info about active processes for safe-close checking.
+#[derive(Debug, Clone, Serialize)]
+pub struct ActiveProcessInfo {
+    pub can_close: bool,
+    pub active_terminals: usize,
+}
+
+/// Query the current GSD headless state for a project by running
+/// `gsd headless --json next` as a subprocess (NOT PTY).
+#[tauri::command]
+pub async fn gsd2_headless_query(
+    project_id: String,
+    db: tauri::State<'_, DbState>,
+) -> Result<HeadlessSnapshot, String> {
+    let project_path = {
+        let db_guard = db.write().await;
+        get_project_path(&db_guard, &project_id)?
+    };
+
+    let output = std::process::Command::new("gsd")
+        .args(["headless", "--json", "next"])
+        .current_dir(&project_path)
+        .output()
+        .map_err(|e| format!("Failed to run gsd headless: {}", e))?;
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+
+    // Parse last valid JSON line from stdout (gsd may emit multiple lines)
+    let snapshot: serde_json::Value = stdout
+        .lines()
+        .rev()
+        .find_map(|line| serde_json::from_str(line).ok())
+        .unwrap_or_else(|| serde_json::json!({}));
+
+    Ok(HeadlessSnapshot {
+        state: snapshot
+            .get("state")
+            .and_then(|v| v.as_str())
+            .unwrap_or("unknown")
+            .to_string(),
+        next: snapshot
+            .get("next")
+            .and_then(|v| v.as_str())
+            .map(String::from),
+        cost: snapshot
+            .get("cost")
+            .and_then(|v| v.as_f64())
+            .unwrap_or(0.0),
+    })
+}
+
+/// Start a headless GSD session for a project via PTY (creates a real terminal session).
+/// Enforces one headless session per project.
+#[tauri::command]
+pub async fn gsd2_headless_start(
+    app: tauri::AppHandle,
+    project_id: String,
+    db: tauri::State<'_, DbState>,
+    terminal_manager: tauri::State<'_, crate::pty::TerminalManagerState>,
+    registry: tauri::State<'_, HeadlessRegistryState>,
+) -> Result<String, String> {
+    let project_id_i64: i64 = project_id
+        .parse()
+        .map_err(|_| format!("Invalid project_id: {}", project_id))?;
+
+    // Check for existing session for this project
+    {
+        let reg = registry.lock().await;
+        if reg.session_for_project(project_id_i64).is_some() {
+            return Err("A headless session is already running for this project".to_string());
+        }
+    }
+
+    // Get project path from DB
+    let project_path = {
+        let db_guard = db.write().await;
+        get_project_path(&db_guard, &project_id)?
+    };
+
+    let session_id = uuid::Uuid::new_v4().to_string();
+
+    // Create PTY session
+    {
+        let mut manager = terminal_manager.lock().await;
+        manager.create_session(
+            &app,
+            session_id.clone(),
+            &project_path,
+            Some("gsd headless"),
+            80,
+            24,
+        )?;
+    }
+
+    // Register in headless registry
+    {
+        let mut reg = registry.lock().await;
+        reg.register(session_id.clone(), project_id_i64);
+    }
+
+    Ok(session_id)
+}
+
+/// Stop a headless GSD session: sends SIGINT (ETX), polls for up to 5s,
+/// then force-kills if still running, and unregisters from registry.
+#[tauri::command]
+pub async fn gsd2_headless_stop(
+    app: tauri::AppHandle,
+    session_id: String,
+    terminal_manager: tauri::State<'_, crate::pty::TerminalManagerState>,
+    registry: tauri::State<'_, HeadlessRegistryState>,
+) -> Result<(), String> {
+    // Send ETX (Ctrl-C / SIGINT) to the process
+    {
+        let mut manager = terminal_manager.lock().await;
+        let _ = manager.write(&session_id, &[0x03]);
+    }
+
+    // Poll for up to 5 seconds (25 * 200ms) for graceful exit
+    for _ in 0..25 {
+        tokio::time::sleep(Duration::from_millis(200)).await;
+        let still_active = {
+            let mut manager = terminal_manager.lock().await;
+            manager.is_active(&session_id)
+        };
+        if !still_active {
+            break;
+        }
+    }
+
+    // Force-kill if still active
+    {
+        let mut manager = terminal_manager.lock().await;
+        if manager.is_active(&session_id) {
+            let _ = manager.close(&app, &session_id);
+        }
+    }
+
+    // Unregister from headless registry
+    {
+        let mut reg = registry.lock().await;
+        reg.unregister(&session_id);
+    }
+
+    Ok(())
+}
+
+/// Check if it's safe to close the app (no active terminal or headless sessions).
+#[tauri::command]
+pub async fn can_safely_close(
+    terminal_manager: tauri::State<'_, crate::pty::TerminalManagerState>,
+    registry: tauri::State<'_, HeadlessRegistryState>,
+) -> Result<ActiveProcessInfo, String> {
+    let terminal_active = {
+        let mut manager = terminal_manager.lock().await;
+        manager.active_count()
+    };
+
+    let headless_active = {
+        let reg = registry.lock().await;
+        reg.active_count()
+    };
+
+    let total = terminal_active + headless_active;
+    Ok(ActiveProcessInfo {
+        can_close: total == 0,
+        active_terminals: total,
+    })
+}
+
+/// Force-close all sessions: gracefully stop headless sessions, then close all PTY sessions.
+#[tauri::command]
+pub async fn force_close_all(
+    _app: tauri::AppHandle,
+    terminal_manager: tauri::State<'_, crate::pty::TerminalManagerState>,
+    registry: tauri::State<'_, HeadlessRegistryState>,
+) -> Result<(), String> {
+    // Get all headless session IDs
+    let headless_ids = {
+        let reg = registry.lock().await;
+        reg.all_session_ids()
+    };
+
+    // Send SIGINT to each headless session
+    for session_id in &headless_ids {
+        let mut manager = terminal_manager.lock().await;
+        let _ = manager.write(session_id, &[0x03]);
+    }
+
+    // Give processes a moment for graceful exit
+    tokio::time::sleep(Duration::from_secs(2)).await;
+
+    // Force-close all PTY sessions (includes headless and interactive)
+    {
+        let mut manager = terminal_manager.lock().await;
+        manager.close_all();
+    }
+
+    // Clear headless registry
+    {
+        let mut reg = registry.lock().await;
+        reg.sessions.clear();
+    }
+
+    Ok(())
+}
+
+// ============================================================
+// Visualizer structs and commands
+// ============================================================
+
+/// Tree node for visualizer (milestone -> slice -> task).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct VisualizerNode {
+    pub id: String,
+    pub title: String,
+    pub status: String, // "done" | "active" | "pending"
+    pub children: Vec<VisualizerNode>,
+}
+
+/// Cost aggregated by a string key (milestone_id or model name).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CostByKey {
+    pub key: String,
+    pub cost: f64,
+}
+
+/// A single timeline entry from the metrics ledger.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TimelineEntry {
+    pub id: String,
+    pub title: String,
+    pub entry_type: String, // "slice" | "task"
+    pub completed_at: Option<String>,
+    pub cost: f64,
+}
+
+/// Full visualizer dataset: tree + cost breakdowns + timeline.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct VisualizerData {
+    pub tree: Vec<VisualizerNode>,
+    pub cost_by_milestone: Vec<CostByKey>,
+    pub cost_by_model: Vec<CostByKey>,
+    pub timeline: Vec<TimelineEntry>,
+}
+
+/// Return visualizer data for a GSD-2 project: milestone->slice->task tree with
+/// status tags, cost breakdowns by milestone and model, and a completed timeline.
+#[tauri::command]
+pub async fn gsd2_get_visualizer_data(
+    project_id: String,
+    db: tauri::State<'_, DbState>,
+) -> Result<VisualizerData, String> {
+    let project_path = {
+        let db_guard = db.write().await;
+        get_project_path(&db_guard, &project_id)?
+    };
+
+    let milestones_dir = Path::new(&project_path).join(".gsd").join("milestones");
+
+    // Get all milestones with their slices and tasks
+    let milestones = walk_milestones_with_tasks(&milestones_dir);
+
+    // Get active IDs from health (for status tagging)
+    let health = get_health_from_dir(&project_path);
+    let active_milestone_id = health.active_milestone_id.as_deref().unwrap_or("");
+    let active_slice_id = health.active_slice_id.as_deref().unwrap_or("");
+    let active_task_id = health.active_task_id.as_deref().unwrap_or("");
+
+    // Build tree
+    let tree: Vec<VisualizerNode> = milestones
+        .iter()
+        .map(|milestone| {
+            let m_status = if milestone.done {
+                "done"
+            } else if milestone.id == active_milestone_id {
+                "active"
+            } else {
+                "pending"
+            };
+
+            let slice_nodes: Vec<VisualizerNode> = milestone
+                .slices
+                .iter()
+                .map(|slice| {
+                    let s_status = if slice.done {
+                        "done"
+                    } else if slice.id == active_slice_id {
+                        "active"
+                    } else {
+                        "pending"
+                    };
+
+                    let task_nodes: Vec<VisualizerNode> = slice
+                        .tasks
+                        .iter()
+                        .map(|task| {
+                            let t_status = if task.done {
+                                "done"
+                            } else if task.id == active_task_id {
+                                "active"
+                            } else {
+                                "pending"
+                            };
+                            VisualizerNode {
+                                id: task.id.clone(),
+                                title: task.title.clone(),
+                                status: t_status.to_string(),
+                                children: Vec::new(),
+                            }
+                        })
+                        .collect();
+
+                    VisualizerNode {
+                        id: slice.id.clone(),
+                        title: slice.title.clone(),
+                        status: s_status.to_string(),
+                        children: task_nodes,
+                    }
+                })
+                .collect();
+
+            VisualizerNode {
+                id: milestone.id.clone(),
+                title: milestone.title.clone(),
+                status: m_status.to_string(),
+                children: slice_nodes,
+            }
+        })
+        .collect();
+
+    // Parse metrics.json for cost breakdowns and timeline
+    let metrics_path = Path::new(&project_path).join(".gsd").join("metrics.json");
+    let metrics_content = std::fs::read_to_string(&metrics_path).unwrap_or_default();
+    let metrics_json: serde_json::Value =
+        serde_json::from_str(&metrics_content).unwrap_or_else(|_| serde_json::json!({}));
+
+    let empty_vec = Vec::new();
+    let units = metrics_json
+        .get("units")
+        .and_then(|u| u.as_array())
+        .unwrap_or(&empty_vec);
+
+    let mut cost_by_milestone_map: HashMap<String, f64> = HashMap::new();
+    let mut cost_by_model_map: HashMap<String, f64> = HashMap::new();
+    let mut timeline: Vec<TimelineEntry> = Vec::new();
+
+    for unit in units {
+        let milestone_id = unit
+            .get("milestone_id")
+            .and_then(|v| v.as_str())
+            .unwrap_or("unattributed")
+            .to_string();
+        let model = unit
+            .get("model")
+            .and_then(|v| v.as_str())
+            .unwrap_or("unknown")
+            .to_string();
+        let cost = unit.get("cost").and_then(|v| v.as_f64()).unwrap_or(0.0);
+        let completed_at = unit
+            .get("completed_at")
+            .and_then(|v| v.as_str())
+            .map(String::from);
+        let id = unit
+            .get("id")
+            .and_then(|v| v.as_str())
+            .unwrap_or("")
+            .to_string();
+        let title = unit
+            .get("title")
+            .and_then(|v| v.as_str())
+            .unwrap_or("")
+            .to_string();
+        let entry_type = unit
+            .get("type")
+            .and_then(|v| v.as_str())
+            .unwrap_or("task")
+            .to_string();
+
+        *cost_by_milestone_map.entry(milestone_id).or_insert(0.0) += cost;
+        *cost_by_model_map.entry(model).or_insert(0.0) += cost;
+
+        if completed_at.is_some() {
+            timeline.push(TimelineEntry {
+                id,
+                title,
+                entry_type,
+                completed_at,
+                cost,
+            });
+        }
+    }
+
+    // cost_by_milestone sorted by key
+    let mut cost_by_milestone: Vec<CostByKey> = cost_by_milestone_map
+        .into_iter()
+        .map(|(key, cost)| CostByKey { key, cost })
+        .collect();
+    cost_by_milestone.sort_by(|a, b| a.key.cmp(&b.key));
+
+    // cost_by_model sorted by cost descending
+    let mut cost_by_model: Vec<CostByKey> = cost_by_model_map
+        .into_iter()
+        .map(|(key, cost)| CostByKey { key, cost })
+        .collect();
+    cost_by_model.sort_by(|a, b| b.cost.partial_cmp(&a.cost).unwrap_or(std::cmp::Ordering::Equal));
+
+    // timeline sorted by completed_at descending (most recent first)
+    timeline.sort_by(|a, b| {
+        b.completed_at
+            .as_deref()
+            .cmp(&a.completed_at.as_deref())
+    });
+
+    Ok(VisualizerData {
+        tree,
+        cost_by_milestone,
+        cost_by_model,
+        timeline,
+    })
 }
 
 // ============================================================
