@@ -27,3 +27,4 @@ export { EnvVarsTab } from './env-vars-tab';
 export { RoadmapProgressCard } from './roadmap-progress-card';
 export { GsdValidationPlanTab } from './gsd-validation-plan-tab';
 export { GsdUatTab } from './gsd-uat-tab';
+export { Gsd2HealthTab } from './gsd2-health-tab';

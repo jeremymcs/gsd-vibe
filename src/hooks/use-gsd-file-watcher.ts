@@ -33,6 +33,7 @@ export function useGsdFileWatcher(
     if (!enabled || !projectId || !projectPath) return;
 
     let unlisten: (() => void) | undefined;
+    let unlisten2: (() => void) | undefined;
 
     const invalidateForTypes = (types: Set<string>) => {
       let shouldSyncRoadmap = false;
@@ -100,8 +101,17 @@ export function useGsdFileWatcher(
       unlisten = fn;
     });
 
+    listen<GsdFileChangedPayload>('gsd2:file-changed', (event) => {
+      if (event.payload.project_path !== projectPath) return;
+      // Immediately invalidate GSD-2 health query (no debounce — dedicated key)
+      void queryClient.invalidateQueries({ queryKey: queryKeys.gsd2Health(projectId) });
+    }).then((fn) => {
+      unlisten2 = fn;
+    });
+
     return () => {
       unlisten?.();
+      unlisten2?.();
       if (debounceRef.current) {
         clearTimeout(debounceRef.current);
       }
