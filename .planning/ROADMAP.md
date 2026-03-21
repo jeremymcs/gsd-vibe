@@ -1,150 +1,34 @@
-# Roadmap: Track Your Shit — GSD-2 Integration
+# Roadmap: Track Your Shit
 
-## Overview
+## Milestones
 
-This milestone adds GSD-2 support to a mature Tauri desktop app that already has complete GSD-1 integration. The work proceeds in dependency order: a Rust backend foundation (version detection + file parsing) gates all UI features, which then build outward from the simplest data reads (health widget) through independent feature panels (worktrees) to the most complex process-management and aggregation features (headless mode, visualizer). GSD-1 projects continue working without any modification throughout.
+- ✅ **v1.0 GSD-2 Integration** — Phases 1-7 (shipped 2026-03-21)
 
 ## Phases
 
-**Phase Numbering:**
-- Integer phases (1, 2, 3): Planned milestone work
-- Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
+<details>
+<summary>✅ v1.0 GSD-2 Integration (Phases 1-7) — SHIPPED 2026-03-21</summary>
 
-Decimal phases appear between their surrounding integers in numeric order.
+- [x] Phase 1: GSD-2 Backend Foundation (3/3 plans) — completed 2026-03-20
+- [x] Phase 2: Health Widget, Adaptive UI, and Reactive Updates (2/2 plans) — completed 2026-03-21
+- [x] Phase 3: Worktrees Panel (2/2 plans) — completed 2026-03-21
+- [x] Phase 4: Headless Mode and Visualizer (3/3 plans) — completed 2026-03-21
+- [x] Phase 5: GSD-2 Milestones, Slices, and Tasks UI (2/2 plans) — completed 2026-03-21
+- [x] Phase 6: Reactive Updates and Headless Session Polish (1/1 plans) — completed 2026-03-21
+- [x] Phase 7: Reactive Milestones/Slices/Tasks Invalidation (1/1 plans) — completed 2026-03-21
 
-- [x] **Phase 1: GSD-2 Backend Foundation** - Rust version detection, .gsd/ file parsing commands, GSD-1 guard rails, and file watcher extension (completed 2026-03-20)
-- [x] **Phase 2: Health Widget, Adaptive UI, and Reactive Updates** - Health data command, budget/blocker display, adaptive terminology, GSD version badges, and polling infrastructure (completed 2026-03-21)
-- [x] **Phase 3: Worktrees Panel** - Worktree listing, diff preview, and remove action with macOS symlink safety (completed 2026-03-21)
-- [x] **Phase 4: Headless Mode and Visualizer** - Full headless session lifecycle control and milestone-to-task progress visualizer with cost metrics (completed 2026-03-21)
-- [x] **Phase 5: GSD-2 Milestones, Slices, and Tasks UI** - TS invoke wrappers and React Query hooks for all 5 parsing commands; wire Milestones, Slices, and Tasks GSD-2 tabs with real data (gap closure) (completed 2026-03-21)
-- [x] **Phase 6: Reactive Updates and Headless Session Polish** - gsd2:file-changed invalidation for Worktrees and Visualizer; persist headless log buffer across tab navigation; documentation fixes (gap closure) (completed 2026-03-21)
-- [x] **Phase 7: Reactive Milestones/Slices/Tasks Invalidation** - Add gsd2:file-changed invalidation for Milestones/Slices/Tasks tabs; fix ROADMAP.md doc checkbox (tech debt closure) (completed 2026-03-21)
+Full details: `.planning/milestones/v1.0-ROADMAP.md`
 
-## Phase Details
-
-### Phase 1: GSD-2 Backend Foundation
-**Goal**: The app correctly identifies GSD-2, GSD-1, and unversioned projects and provides Rust command infrastructure for reading all .gsd/ file structures, with GSD-1 commands actively rejecting GSD-2 project IDs
-**Depends on**: Nothing (first phase)
-**Requirements**: VERS-01, VERS-02, VERS-03, VERS-04, PARS-01, PARS-02, PARS-03, PARS-04, PARS-05
-**Success Criteria** (what must be TRUE):
-  1. Opening a GSD-2 project shows a "GSD-2" detection result; opening a GSD-1 project shows "GSD-1"; opening an unversioned project shows "none"
-  2. Calling any GSD-1 Rust command with a GSD-2 project ID returns a typed error rather than empty data
-  3. The `gsd2_list_milestones` command returns milestone directories with correct ID, title, done status, and dependencies by reading .gsd/milestones/
-  4. The `gsd2_derive_state` command returns active milestone/slice/task IDs and M/S/T progress counters
-  5. File changes inside .gsd/ emit `gsd2:file-changed` events that the frontend can subscribe to
-**Plans:** 3/3 plans complete
-
-Plans:
-- [x] 01-01-PLAN.md — DB migration, gsd2.rs module creation, version detection command, project import hooks
-- [x] 01-02-PLAN.md — GSD-1 guard rails on 29 existing commands, .gsd/ file watcher extension
-- [x] 01-03-PLAN.md — File parsing commands (list_milestones, get_milestone, get_slice, derive_state, get_roadmap_progress)
-
-### Phase 2: Health Widget, Adaptive UI, and Reactive Updates
-**Goal**: GSD-2 projects show a live health widget with budget, blockers, and progress counters; the project detail UI uses correct terminology per version; project list cards show GSD version badges
-**Depends on**: Phase 1
-**Requirements**: HLTH-01, HLTH-02, HLTH-03, HLTH-04, TERM-01, TERM-02, TERM-03
-**Success Criteria** (what must be TRUE):
-  1. A GSD-2 project's health widget shows budget spent vs ceiling (from metrics.json), environment error/warning counts, active milestone/slice/task, and any current blocker
-  2. The health widget updates within 10 seconds of a .gsd/ file change (either via file watcher event or polling)
-  3. A GSD-2 project's detail tabs are labeled "Milestones", "Slices", "Tasks"; a GSD-1 project's tabs remain "Phases", "Plans", "Tasks"
-  4. Project list cards and the dashboard show a "GSD-2" or "GSD-1" badge per project
-**Plans:** 2/2 plans complete
-
-Plans:
-- [x] 02-01-PLAN.md — Rust gsd2_get_health command, gsd_version data pipeline, frontend TypeScript types and React Query hooks
-- [x] 02-02-PLAN.md — Health widget component, adaptive GSD tab set, version badges on project cards, file watcher extension
-
-### Phase 3: Worktrees Panel
-**Goal**: Users with GSD-2 worktrees can see all active worktrees per project, preview what changed in each, and remove them safely
-**Depends on**: Phase 2
-**Requirements**: WORK-01, WORK-02, WORK-03, WORK-04, WORK-05
-**Success Criteria** (what must be TRUE):
-  1. The Worktrees tab in a GSD-2 project lists all active worktrees with name, branch, and path (canonicalized to handle macOS /var → /private/var symlinks)
-  2. Selecting a worktree shows a summary of files added, modified, and removed vs main before any remove action
-  3. Clicking Remove on a worktree removes it from the filesystem and deletes the associated branch; the list refreshes to reflect the change
-**Plans:** 2/2 plans complete
-
-Plans:
-- [x] 03-01-PLAN.md — Rust backend commands (list, remove, diff), TypeScript types, invoke wrappers, query keys, React Query hooks
-- [x] 03-02-PLAN.md — Gsd2WorktreesTab component, barrel export, tab insertion in project detail page
-
-### Phase 4: Headless Mode and Visualizer
-**Goal**: Users can start, monitor, and stop GSD-2 headless sessions from the app and view a full progress tree with cost/token metrics across all milestones and slices
-**Depends on**: Phase 3
-**Requirements**: HDLS-01, HDLS-02, HDLS-03, HDLS-04, HDLS-05, HDLS-06, VIZ-01, VIZ-02, VIZ-03, VIZ-04
-**Success Criteria** (what must be TRUE):
-  1. The Headless tab shows session status (idle/running/complete) with Start and Stop controls; tapping Start creates a PTY session and streams JSON output to the panel
-  2. Stopping a headless session or closing the app terminates the process and releases the .gsd/auto.lock file with no orphaned processes
-  3. The Visualizer tab renders a milestone → slice → task progress tree where each node shows done/active/pending status
-  4. The Visualizer tab shows cost and token metrics aggregated by phase (milestone) and by model, plus a chronological execution timeline of completed slices/tasks
-  5. The "query snapshot" panel in the Headless tab shows the last { state, next, cost } result from a one-shot gsd headless query
-**Plans:** 3/3 plans complete
-
-Plans:
-- [x] 04-01-PLAN.md — Rust backend: HeadlessSessionRegistry, headless commands (query/start/stop), visualizer data command, can_safely_close/force_close_all, lib.rs registration
-- [x] 04-02-PLAN.md — Frontend types, invoke wrappers, query keys, React Query hooks, useHeadlessSession hook
-- [x] 04-03-PLAN.md — Headless tab UI, Visualizer tab UI, project.tsx tab insertion, barrel export, close-warning extension
+</details>
 
 ## Progress
 
-**Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
-
-| Phase | Plans Complete | Status | Completed |
-|-------|----------------|--------|-----------|
-| 1. GSD-2 Backend Foundation | 3/3 | Complete | 2026-03-20 |
-| 2. Health Widget, Adaptive UI, and Reactive Updates | 2/2 | Complete | 2026-03-21 |
-| 3. Worktrees Panel | 2/2 | Complete | 2026-03-21 |
-| 4. Headless Mode and Visualizer | 3/3 | Complete | 2026-03-21 |
-| 5. GSD-2 Milestones, Slices, and Tasks UI | 2/2 | Complete   | 2026-03-21 |
-| 6. Reactive Updates and Headless Session Polish | 1/1 | Complete   | 2026-03-21 |
-| 7. Reactive Milestones/Slices/Tasks Invalidation | 1/1 | Complete   | 2026-03-21 |
-
-### Phase 5: GSD-2 Milestones, Slices, and Tasks UI
-**Goal**: The GSD-2 Milestones, Slices, and Tasks tabs display real data by connecting the existing Rust parsing commands to the frontend via TS invoke wrappers and React Query hooks
-**Depends on**: Phase 1 (all 5 parsing commands exist in Rust)
-**Requirements**: PARS-01, PARS-02, PARS-03, PARS-04, PARS-05 (frontend wiring — commands already verified at Rust level)
-**Gap Closure**: Closes integration gaps identified in v1.0 audit — parsing commands unreachable from UI
-**Plans:** 2/2 plans complete
-
-Plans:
-- [x] 05-01-PLAN.md — TypeScript invoke wrappers, interface types, query key entries, React Query hooks for all 5 parsing commands
-- [x] 05-02-PLAN.md — Gsd2MilestonesTab, Gsd2SlicesTab, Gsd2TasksTab components, barrel export, project.tsx tab wiring
-
-**Success Criteria** (what must be TRUE):
-  1. The Milestones GSD-2 tab shows a list of milestones with ID, title, and done/pending status (from `gsd2_list_milestones`)
-  2. Clicking a milestone expands or navigates to show its slices (from `gsd2_get_milestone`)
-  3. The Slices tab shows a flat list of all slices with ID, title, and task count; clicking a slice shows its tasks (from `gsd2_get_slice`)
-  4. The Tasks tab shows all active/pending tasks derived from `gsd2_derive_state` with status indicators
-  5. All three tabs include loading, error, and empty states
-
-### Phase 6: Reactive Updates and Headless Session Polish
-**Goal**: Worktrees and Visualizer refresh reactively on .gsd/ file changes; headless session log rows survive tab navigation; minor documentation gaps closed
-**Depends on**: Phase 4
-**Requirements**: N/A — no new v1 requirements; closes integration and flow gaps from v1.0 audit
-**Gap Closure**: Closes HDLS-04 flow gap, WORK-05/VIZ-04 reactive invalidation gaps, and documentation gaps
-**Plans:** 1/1 plans complete
-
-Plans:
-- [x] 06-01-PLAN.md — Reactive invalidation for Worktrees/Visualizer, headless session log persistence via prop lift, documentation gap fixes
-
-**Success Criteria** (what must be TRUE):
-  1. Editing a .gsd/ file while the Worktrees tab is open causes the worktree list to refresh within 2 seconds (not waiting for 30s poll)
-  2. Editing a .gsd/ file while the Visualizer tab is open causes the visualizer data to refresh within 2 seconds
-  3. Navigating away from the Headless tab during a running session and navigating back shows all previously accumulated log rows (none lost)
-  4. ROADMAP.md Phase 1 progress table is accurate; 02-01 and 03-01 SUMMARY files have `requirements-completed` frontmatter
-
-### Phase 7: Reactive Milestones/Slices/Tasks Invalidation
-**Goal**: Milestones, Slices, and Tasks tabs refresh within 2 seconds of a .gsd/ file change (currently wait up to 30s); ROADMAP.md doc checkbox corrected
-**Depends on**: Phase 6
-**Requirements**: N/A — no new v1 requirements; closes tech debt from v1.0 audit
-**Gap Closure**: Closes tech debt items: missing gsd2:file-changed invalidation for Milestones/Slices/Tasks tabs; ROADMAP.md Phase 6 checkbox fix
-**Plans:** 1/1 plans complete
-
-Plans:
-- [x] 07-01-PLAN.md — Add gsd2Milestones, gsd2DerivedState, gsd2Milestone (prefix), gsd2Slice (prefix) invalidations to use-gsd-file-watcher.ts; fix ROADMAP.md checkbox
-
-**Success Criteria** (what must be TRUE):
-  1. Editing a .gsd/ file while the Milestones tab is open causes the milestones list to refresh within 2 seconds (not waiting for 30s poll)
-  2. Editing a .gsd/ file while the Slices or Tasks tab is open causes those tabs to refresh within 2 seconds
-  3. ROADMAP.md 06-01-PLAN.md checkbox reads `[x]` (not `[ ]`)
+| Phase | Milestone | Plans Complete | Status | Completed |
+|-------|-----------|---------------|--------|-----------|
+| 1. GSD-2 Backend Foundation | v1.0 | 3/3 | Complete | 2026-03-20 |
+| 2. Health Widget, Adaptive UI, and Reactive Updates | v1.0 | 2/2 | Complete | 2026-03-21 |
+| 3. Worktrees Panel | v1.0 | 2/2 | Complete | 2026-03-21 |
+| 4. Headless Mode and Visualizer | v1.0 | 3/3 | Complete | 2026-03-21 |
+| 5. GSD-2 Milestones, Slices, and Tasks UI | v1.0 | 2/2 | Complete | 2026-03-21 |
+| 6. Reactive Updates and Headless Session Polish | v1.0 | 1/1 | Complete | 2026-03-21 |
+| 7. Reactive Milestones/Slices/Tasks Invalidation | v1.0 | 1/1 | Complete | 2026-03-21 |
