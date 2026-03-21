@@ -15,10 +15,10 @@
 
 ### Strings
 
-- [ ] **STRN-01**: All hardcoded "Track Your Shit" string literals in TSX/TS files replaced with "GSD VibeFlow"
-- [ ] **STRN-02**: Page titles and document.title references updated to GSD VibeFlow
-- [ ] **STRN-03**: User-facing error messages and toast strings referencing old name updated
-- [ ] **STRN-04**: README.md and CLAUDE.md updated to reflect GSD VibeFlow name and description
+- [x] **STRN-01**: All hardcoded "Track Your Shit" string literals in TSX/TS files replaced with "GSD VibeFlow"
+- [x] **STRN-02**: Page titles and document.title references updated to GSD VibeFlow
+- [x] **STRN-03**: User-facing error messages and toast strings referencing old name updated
+- [x] **STRN-04**: README.md and CLAUDE.md updated to reflect GSD VibeFlow name and description
 
 ### Visual
 
@@ -65,10 +65,10 @@
 | IDNT-02 | Phase 8 | Complete |
 | IDNT-03 | Phase 8 | Pending |
 | IDNT-04 | Phase 8 | Complete |
-| STRN-01 | Phase 8 | Pending |
-| STRN-02 | Phase 8 | Pending |
-| STRN-03 | Phase 8 | Pending |
-| STRN-04 | Phase 8 | Pending |
+| STRN-01 | Phase 8 | Complete |
+| STRN-02 | Phase 8 | Complete |
+| STRN-03 | Phase 8 | Complete |
+| STRN-04 | Phase 8 | Complete |
 | HDRS-01 | Phase 8 | Pending |
 | HDRS-02 | Phase 8 | Pending |
 | VISL-01 | Phase 9 | Pending |
