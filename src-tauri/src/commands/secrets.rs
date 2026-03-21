@@ -66,7 +66,7 @@ impl KeyIndex {
 /// Store a secret in the OS keychain.
 ///
 /// # Arguments
-/// * `service` - Keychain service name (use "net.fluxlabs.track-your-shit")
+/// * `service` - Keychain service name (use "io.gsd.vibeflow")
 /// * `key` - The secret key name (e.g., "ANTHROPIC_API_KEY")
 /// * `value` - The secret value to store
 #[tauri::command]
