@@ -1,133 +1,94 @@
-# Requirements: Track Your Shit — GSD-2 Integration
+# Requirements: GSD VibeFlow
 
-**Defined:** 2026-03-20
+**Defined:** 2026-03-21
+**Milestone:** v1.1 GSD VibeFlow Rebrand
 **Core Value:** Per-project version detection drives everything — correctly identify .gsd/ vs .planning/ and render the right data and terminology for each project.
 
-## v1 Requirements
+## v1.1 Requirements
 
-### Version Detection
+### Identity
 
-- [x] **VERS-01**: App detects whether a project uses `.gsd/` (gsd2), `.planning/` (gsd1), or neither (none) on project load
-- [x] **VERS-02**: Version detection result is returned as a typed enum (`"gsd2" | "gsd1" | "none"`) from a new `gsd2_detect_version` Rust command
-- [x] **VERS-03**: Existing GSD-1 Rust commands return an explicit error when called with a gsd2 project ID (no more silent empty results)
-- [x] **VERS-04**: File watcher (`watcher.rs`) watches `.gsd/` directory in addition to existing `.planning/` watch, emitting `gsd2:file-changed` events
+- [ ] **IDNT-01**: App name updated to "GSD VibeFlow" in tauri.conf.json, package.json, and Cargo.toml
+- [ ] **IDNT-02**: Window title displays "GSD VibeFlow" instead of "Track Your Shit"
+- [ ] **IDNT-03**: About dialog shows correct app name, version, and copyright for GSD VibeFlow
+- [ ] **IDNT-04**: Bundle identifier updated to com.gsd-vibeflow (or equivalent)
 
-### File Parsing
+### Strings
 
-- [x] **PARS-01**: `gsd2_list_milestones` lists milestone directories from `.gsd/milestones/` using three-tier path resolution (exact ID match → ID-prefix match → legacy bare suffix)
-- [x] **PARS-02**: `gsd2_get_milestone` reads a milestone's `M001-ROADMAP.md` and returns slices with ID, title, done status, and dependencies
-- [x] **PARS-03**: `gsd2_get_slice` reads a slice's `S01-PLAN.md` and returns tasks with ID, title, done status, and estimate
-- [x] **PARS-04**: `gsd2_derive_state` returns the active milestone ID, active slice ID, active task ID, overall progress (M/S/T done/total), and current phase
-- [x] **PARS-05**: `gsd2_get_roadmap_progress` returns milestone/slice/task completion counts suitable for a progress bar
+- [ ] **STRN-01**: All hardcoded "Track Your Shit" string literals in TSX/TS files replaced with "GSD VibeFlow"
+- [ ] **STRN-02**: Page titles and document.title references updated to GSD VibeFlow
+- [ ] **STRN-03**: User-facing error messages and toast strings referencing old name updated
+- [ ] **STRN-04**: README.md and CLAUDE.md updated to reflect GSD VibeFlow name and description
 
-### Health Widget
+### Visual
 
-- [x] **HLTH-01**: `gsd2_get_health` returns budget spent, budget ceiling (if set), environment error count, environment warning count, active milestone/slice/task, phase, blocker (if any), ETA (if available), and next action
-- [x] **HLTH-02**: Health data is read directly from `.gsd/STATE.md` frontmatter and `.gsd/metrics.json` (never via subprocess)
-- [x] **HLTH-03**: A new Health tab (or widget within the project overview) renders health data with budget bar, env status, active unit display, and M/S/T progress counters
-- [x] **HLTH-04**: Health display auto-refreshes on `.gsd/` file changes (via watcher) and on a 10s polling interval
+- [ ] **VISL-01**: Color palette migrated to gsd.build brand (black background, white text, cyan accent)
+- [ ] **VISL-02**: New app icon created and applied for all target sizes (macOS, Windows, Linux)
+- [ ] **VISL-03**: Splash/loading screen updated with GSD VibeFlow branding (if splash exists)
+- [ ] **VISL-04**: CSS design token names updated to remove old brand references
 
-### Adaptive Terminology
+### Headers
 
-- [x] **TERM-01**: Project detail tabs show "Milestones", "Slices", "Tasks" terminology for gsd2 projects
-- [x] **TERM-02**: Project detail tabs show existing "Phases", "Plans", "Tasks" terminology for gsd1 projects (unchanged behavior)
-- [x] **TERM-03**: Project list / dashboard cards show a "GSD-2" badge for gsd2 projects and "GSD-1" badge for gsd1 projects
+- [ ] **HDRS-01**: All .rs source file headers updated from "Track Your Shit" to "GSD VibeFlow"
+- [ ] **HDRS-02**: All .ts/.tsx source file headers updated from "Track Your Shit" to "GSD VibeFlow"
 
-### Worktrees Panel
+### Dead Code
 
-- [x] **WORK-01**: `gsd2_list_worktrees` lists active git worktrees for a project (name, branch, path, exists)
-- [x] **WORK-02**: Worktree paths are canonicalized via `std::fs::canonicalize` before comparison to handle macOS symlinks
-- [x] **WORK-03**: `gsd2_remove_worktree` removes a worktree (git worktree remove + branch cleanup)
-- [x] **WORK-04**: `gsd2_get_worktree_diff` returns a summary of files added/modified/removed in a worktree vs main `.gsd/` (for merge preview)
-- [x] **WORK-05**: A new Worktrees tab in the project detail view renders the worktree list with name, branch, diff summary, and remove button
+- [ ] **DEAD-01**: Unused Rust commands identified and removed from gsd2.rs / gsd.rs / lib.rs
+- [ ] **DEAD-02**: Unused React components identified and removed from src/components/
+- [ ] **DEAD-03**: Unused hooks and TypeScript types/interfaces identified and removed
+- [ ] **DEAD-04**: Orphaned files (no imports, no references) identified and removed
 
-### Headless Mode
+### Quality
 
-- [x] **HDLS-01**: `gsd2_headless_query` runs `gsd headless --json next` as a child process (not PTY), parses the JSON snapshot, and returns `{ state, next, cost }`
-- [x] **HDLS-02**: `gsd2_headless_start` starts a full `gsd headless` session via PTY (reuses existing `TerminalManager`), returning a session ID
-- [x] **HDLS-03**: `gsd2_headless_stop` sends interrupt to a running headless PTY session and waits for it to exit
-- [x] **HDLS-04**: Headless session output (JSON lines) streams to the frontend via existing `pty:output:{id}` events
-- [x] **HDLS-05**: A HeadlessSessionRegistry tracks active sessions and ensures all sessions are cleaned up on app close
-- [x] **HDLS-06**: A new Headless tab in the project detail view shows session status (idle/running/complete), start/stop controls, streamed output, and the last query snapshot (state/next/cost)
+- [ ] **QLTY-01**: Pre-existing 4 test failures in projects.test.tsx and main-layout.test.tsx fixed
+- [ ] **QLTY-02**: Build passes with no TypeScript errors after all changes
 
-### Visualizer
+## Future Requirements
 
-- [x] **VIZ-01**: `gsd2_get_visualizer_data` returns the full milestone → slice → task progress tree with done/active/pending status per node
-- [x] **VIZ-02**: Visualizer data includes cost/token metrics aggregated by phase (milestone) and by model
-- [x] **VIZ-03**: Visualizer data includes a chronological timeline of execution history (completed slices/tasks with timestamps)
-- [x] **VIZ-04**: A new Visualizer tab in the project detail view renders the progress tree, cost/token bar charts by phase and model, and the execution timeline
-
-## v2 Requirements
-
-### Visualizer Enhancements
-
-- **VIZ-05**: Critical path highlighting in the progress tree
-- **VIZ-06**: Pending captures count badge in the visualizer header
-
-### Headless Enhancements
-
-- **HDLS-07**: Multiple concurrent headless sessions (parallel milestone execution dashboard)
-
-### Worktree Enhancements
-
-- **WORK-06**: Inline diff viewer for worktree files (before remove/merge)
+*(None identified for v1.2+ at this time)*
 
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
-| GSD-2 LLM orchestration | TYS monitors and controls; it does not replace the gsd CLI |
-| `.planning/` → `.gsd/` migration tooling | Not TYS's responsibility |
+| New feature development | v1.1 is rebrand + cleanup only — no new capabilities |
+| GSD-2 LLM orchestration | TYS monitors/controls; does not replace the gsd CLI |
+| Migration tooling (.planning/ → .gsd/) | Not a TYS responsibility |
 | VS Code extension features | Separate product |
-| cmux integration | gsd-2 internal detail, not surfaced in TYS |
-| Extension marketplace / registry management | Too deep into gsd-2 internals |
-| Worktree LLM-guided merge | gsd-2's job; TYS shows diff and tells user to run merge command |
 
 ## Traceability
 
+*(Populated during roadmap creation)*
+
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| VERS-01 | Phase 1 | Complete |
-| VERS-02 | Phase 1 | Complete |
-| VERS-03 | Phase 1 | Complete |
-| VERS-04 | Phase 1 | Complete |
-| PARS-01 | Phase 1 | Complete |
-| PARS-02 | Phase 1 | Complete |
-| PARS-03 | Phase 1 | Complete |
-| PARS-04 | Phase 1 | Complete |
-| PARS-05 | Phase 1 | Complete |
-| HLTH-01 | Phase 2 | Complete |
-| HLTH-02 | Phase 2 | Complete |
-| HLTH-03 | Phase 2 | Complete |
-| HLTH-04 | Phase 2 | Complete |
-| TERM-01 | Phase 2 | Complete |
-| TERM-02 | Phase 2 | Complete |
-| TERM-03 | Phase 2 | Complete |
-| WORK-01 | Phase 3 | Complete |
-| WORK-02 | Phase 3 | Complete |
-| WORK-03 | Phase 3 | Complete |
-| WORK-04 | Phase 3 | Complete |
-| WORK-05 | Phase 3 | Complete |
-| HDLS-01 | Phase 4 | Complete |
-| HDLS-02 | Phase 4 | Complete |
-| HDLS-03 | Phase 4 | Complete |
-| HDLS-04 | Phase 4 | Complete |
-| HDLS-05 | Phase 4 | Complete |
-| HDLS-06 | Phase 4 | Complete |
-| VIZ-01 | Phase 4 | Complete |
-| VIZ-02 | Phase 4 | Complete |
-| VIZ-03 | Phase 4 | Complete |
-| VIZ-04 | Phase 4 | Complete |
+| IDNT-01 | — | Pending |
+| IDNT-02 | — | Pending |
+| IDNT-03 | — | Pending |
+| IDNT-04 | — | Pending |
+| STRN-01 | — | Pending |
+| STRN-02 | — | Pending |
+| STRN-03 | — | Pending |
+| STRN-04 | — | Pending |
+| VISL-01 | — | Pending |
+| VISL-02 | — | Pending |
+| VISL-03 | — | Pending |
+| VISL-04 | — | Pending |
+| HDRS-01 | — | Pending |
+| HDRS-02 | — | Pending |
+| DEAD-01 | — | Pending |
+| DEAD-02 | — | Pending |
+| DEAD-03 | — | Pending |
+| DEAD-04 | — | Pending |
+| QLTY-01 | — | Pending |
+| QLTY-02 | — | Pending |
 
 **Coverage:**
-- v1 requirements: 31 total
-- Mapped to phases: 31
-- Unmapped: 0 ✓
-
-**Gap Closure Phases (from v1.0 audit):**
-- Phase 5 adds frontend wiring for PARS-01..05 (Rust commands verified; UI consumers deferred from Phase 2)
-- Phase 6 closes HDLS-04 flow gap and adds reactive invalidation for Worktrees/Visualizer
+- v1.1 requirements: 20 total
+- Mapped to phases: 0 (pending roadmap)
+- Unmapped: 20 ⚠️
 
 ---
-*Requirements defined: 2026-03-20*
-*Last updated: 2026-03-21 — gap-closure phases 5 and 6 added after v1.0 audit (tech_debt status; no unsatisfied requirements)*
+*Requirements defined: 2026-03-21*
+*Last updated: 2026-03-21 after initial definition*
