@@ -8,10 +8,10 @@
 
 ### Identity
 
-- [ ] **IDNT-01**: App name updated to "GSD VibeFlow" in tauri.conf.json, package.json, and Cargo.toml
-- [ ] **IDNT-02**: Window title displays "GSD VibeFlow" instead of "Track Your Shit"
+- [x] **IDNT-01**: App name updated to "GSD VibeFlow" in tauri.conf.json, package.json, and Cargo.toml
+- [x] **IDNT-02**: Window title displays "GSD VibeFlow" instead of "Track Your Shit"
 - [ ] **IDNT-03**: About dialog shows correct app name, version, and copyright for GSD VibeFlow
-- [ ] **IDNT-04**: Bundle identifier updated to com.gsd-vibeflow (or equivalent)
+- [x] **IDNT-04**: Bundle identifier updated to com.gsd-vibeflow (or equivalent)
 
 ### Strings
 
@@ -61,10 +61,10 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| IDNT-01 | Phase 8 | Pending |
-| IDNT-02 | Phase 8 | Pending |
+| IDNT-01 | Phase 8 | Complete |
+| IDNT-02 | Phase 8 | Complete |
 | IDNT-03 | Phase 8 | Pending |
-| IDNT-04 | Phase 8 | Pending |
+| IDNT-04 | Phase 8 | Complete |
 | STRN-01 | Phase 8 | Pending |
 | STRN-02 | Phase 8 | Pending |
 | STRN-03 | Phase 8 | Pending |

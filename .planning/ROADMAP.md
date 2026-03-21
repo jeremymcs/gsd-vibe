@@ -94,6 +94,6 @@ Plans:
 | 5. GSD-2 Milestones, Slices, and Tasks UI | v1.0 | 2/2 | Complete | 2026-03-21 |
 | 6. Reactive Updates and Headless Session Polish | v1.0 | 1/1 | Complete | 2026-03-21 |
 | 7. Reactive Milestones/Slices/Tasks Invalidation | v1.0 | 1/1 | Complete | 2026-03-21 |
-| 8. Identity, Strings, and Headers | v1.1 | 0/3 | Planning | - |
+| 8. Identity, Strings, and Headers | 1/3 | In Progress|  | - |
 | 9. Visual Identity | v1.1 | 0/2 | Not started | - |
 | 10. Dead Code Removal and Quality | v1.1 | 0/2 | Not started | - |
