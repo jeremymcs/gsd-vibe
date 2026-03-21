@@ -1359,3 +1359,68 @@ export const gsd2HeadlessStop = (sessionId: string) =>
 // GSD-2 Visualizer
 export const gsd2GetVisualizerData = (projectId: string) =>
   invoke<VisualizerData>('gsd2_get_visualizer_data', { projectId });
+
+// GSD-2 Milestones / Slices / Tasks (Phase 5)
+export interface Gsd2MilestoneListItem {
+  id: string;
+  title: string;
+  dir_name: string;
+  done: boolean;
+  slices: Gsd2SliceSummary[];
+  dependencies: string[];
+}
+
+export interface Gsd2SliceSummary {
+  id: string;
+  title: string;
+  done: boolean;
+  risk: string | null;
+  dependencies: string[];
+  tasks: Gsd2TaskItem[];
+}
+
+export interface Gsd2TaskItem {
+  id: string;
+  title: string;
+  done: boolean;
+  estimate: string | null;
+  files: string[];
+  verify: string | null;
+}
+
+export interface Gsd2DerivedState {
+  active_milestone_id: string | null;
+  active_slice_id: string | null;
+  active_task_id: string | null;
+  phase: string | null;
+  milestones_done: number;
+  milestones_total: number;
+  slices_done: number;
+  slices_total: number;
+  tasks_done: number;
+  tasks_total: number;
+}
+
+export interface Gsd2RoadmapProgressData {
+  milestones_done: number;
+  milestones_total: number;
+  slices_done: number;
+  slices_total: number;
+  tasks_done: number;
+  tasks_total: number;
+}
+
+export const gsd2ListMilestones = (projectId: string) =>
+  invoke<Gsd2MilestoneListItem[]>('gsd2_list_milestones', { projectId });
+
+export const gsd2GetMilestone = (projectId: string, milestoneId: string) =>
+  invoke<Gsd2MilestoneListItem>('gsd2_get_milestone', { projectId, milestoneId });
+
+export const gsd2GetSlice = (projectId: string, milestoneId: string, sliceId: string) =>
+  invoke<Gsd2SliceSummary>('gsd2_get_slice', { projectId, milestoneId, sliceId });
+
+export const gsd2DeriveState = (projectId: string) =>
+  invoke<Gsd2DerivedState>('gsd2_derive_state', { projectId });
+
+export const gsd2GetRoadmapProgress = (projectId: string) =>
+  invoke<Gsd2RoadmapProgressData>('gsd2_get_roadmap_progress', { projectId });
