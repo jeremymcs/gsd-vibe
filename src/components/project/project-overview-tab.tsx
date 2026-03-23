@@ -32,29 +32,30 @@ export function ProjectOverviewTab({
 }: ProjectOverviewTabProps) {
   const gsdSync = useGsdSync();
   const hasPlanning = project.tech_stack?.has_planning ?? false;
+  const isGsd1 = hasPlanning && project.gsd_version !== 'gsd2';
 
   return (
     <div className="space-y-4 pb-4">
       {/* Quick Actions */}
       <QuickActionsBar
         onOpenShell={onOpenShell}
-        onSyncGsd={hasPlanning ? () => gsdSync.mutate(project.id) : undefined}
+        onSyncGsd={isGsd1 ? () => gsdSync.mutate(project.id) : undefined}
         isSyncingGsd={gsdSync.isPending}
-        hasPlanning={hasPlanning}
+        hasPlanning={isGsd1}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* GSD State — primary card for GSD projects */}
-        {hasPlanning && <GsdStateCard projectId={project.id} />}
+        {/* GSD State — primary card for GSD-1 projects */}
+        {isGsd1 && <GsdStateCard projectId={project.id} />}
 
         {/* Roadmap Progress — phase completion from ROADMAP.md */}
-        {hasPlanning && <RoadmapProgressCard projectId={project.id} />}
+        {isGsd1 && <RoadmapProgressCard projectId={project.id} />}
 
         {/* Vision (PROJECT.md) */}
-        {hasPlanning && <VisionCard projectPath={project.path} />}
+        {isGsd1 && <VisionCard projectPath={project.path} />}
 
         {/* Requirements Coverage (REQUIREMENTS.md) */}
-        {hasPlanning && <RequirementsCard projectId={project.id} />}
+        {isGsd1 && <RequirementsCard projectId={project.id} />}
 
         {/* Git Status */}
         <GitStatusWidget projectPath={project.path} />

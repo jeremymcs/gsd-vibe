@@ -121,6 +121,12 @@ export function Gsd2HealthTab({ projectId }: Gsd2HealthTabProps) {
                 <span className="text-muted-foreground">Phase:</span> {health.phase}
               </div>
             )}
+            {health.next_action && (
+              <div className="text-xs p-2 rounded bg-muted/40 border border-border/30">
+                <span className="text-muted-foreground font-medium">Next: </span>
+                {health.next_action}
+              </div>
+            )}
           </div>
         )}
 

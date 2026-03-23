@@ -49,9 +49,9 @@ export function ProjectCard({ project, showDescription, selected, onToggleSelect
     e.preventDefault();
     e.stopPropagation();
     if (action === 'shell') {
-      void navigate(`/projects/${project.id}?tab=shell`);
+      void navigate(`/projects/${project.id}?view=shell`);
     } else {
-      void navigate(`/projects/${project.id}?tab=gsd`);
+      void navigate(`/projects/${project.id}?view=gsd`);
     }
   };
 

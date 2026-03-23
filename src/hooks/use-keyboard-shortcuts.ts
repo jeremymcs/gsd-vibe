@@ -15,7 +15,7 @@ export interface ShortcutDef {
   /** Human-readable description */
   description: string;
   /** Grouping category */
-  category: 'Navigation' | 'Search' | 'Shell' | 'General';
+  category: 'Navigation' | 'Search' | 'Shell' | 'General' | 'Project Views';
   /** Display keys shown in UI (platform aware) */
   displayKeys: () => string[];
 }
@@ -29,24 +29,44 @@ export const SHORTCUTS: ShortcutDef[] = [
     displayKeys: () => [modKey(), 'K'],
   },
 
-  // Navigation
+  // Navigation (global — overridden inside project context)
   {
     keys: 'mod+1',
-    description: 'Go to Dashboard',
+    description: 'Go to Dashboard / Overview',
     category: 'Navigation',
     displayKeys: () => [modKey(), '1'],
   },
   {
     keys: 'mod+2',
-    description: 'Go to Projects',
+    description: 'Go to Projects / Files',
     category: 'Navigation',
     displayKeys: () => [modKey(), '2'],
   },
   {
     keys: 'mod+3',
-    description: 'Go to Terminal',
+    description: 'Go to Terminal / Dependencies',
     category: 'Navigation',
     displayKeys: () => [modKey(), '3'],
+  },
+
+  // Project-specific view shortcuts
+  {
+    keys: 'mod+4',
+    description: 'Knowledge (in project)',
+    category: 'Project Views',
+    displayKeys: () => [modKey(), '4'],
+  },
+  {
+    keys: 'mod+5',
+    description: 'Shell (in project)',
+    category: 'Project Views',
+    displayKeys: () => [modKey(), '5'],
+  },
+  {
+    keys: 'mod+6',
+    description: 'Env Vars (in project)',
+    category: 'Project Views',
+    displayKeys: () => [modKey(), '6'],
   },
 
   // Shell

@@ -98,7 +98,7 @@ export function Dashboard() {
       {/* Header */}
       <div className="px-8 pt-6 pb-4">
         <PageHeader
-          title="All Your Shit"
+          title="Projects"
           description="Your GSD projects at a glance"
           icon={<LayoutDashboard className="h-6 w-6 text-muted-foreground" />}
           actions={

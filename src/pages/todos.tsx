@@ -111,7 +111,7 @@ function TodoRow({ todo, onComplete, completing, showProject = false }: TodoRowP
       {showProject && (
         <button
           type="button"
-          onClick={() => void navigate(`/projects/${todo.project_id}?tab=gsd`)}
+          onClick={() => void navigate(`/projects/${todo.project_id}?view=gsd`)}
           className="flex-shrink-0 text-[10px] px-2 py-0.5 rounded-full bg-gsd-cyan/10 text-gsd-cyan border border-gsd-cyan/20 hover:bg-gsd-cyan/20 transition-colors font-medium"
           title={`Go to ${todo.project_name}`}
         >
@@ -158,7 +158,7 @@ function ProjectGroup({ projectId, projectName, todos, onComplete, completingKey
           type="button"
           onClick={(e) => {
             e.stopPropagation();
-            void navigate(`/projects/${projectId}?tab=gsd`);
+            void navigate(`/projects/${projectId}?view=gsd`);
           }}
           className="text-sm font-semibold text-foreground hover:text-gsd-cyan transition-colors"
         >

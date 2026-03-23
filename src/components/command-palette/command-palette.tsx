@@ -1,9 +1,9 @@
 // GSD VibeFlow - Command Palette (Cmd+K)
-// Global search with cmdk for projects, phases, decisions, knowledge, and pages
+// Global search with cmdk for projects, phases, decisions, knowledge, pages, and project views
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
-import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { Command } from 'cmdk';
 import {
   Search,
@@ -18,17 +18,25 @@ import {
   Settings,
 } from 'lucide-react';
 import { navLinks } from '@/lib/navigation';
-import { useGlobalSearch } from '@/lib/queries';
+import { useGlobalSearch, useProject } from '@/lib/queries';
 import {
   getRecentSearches,
   addRecentSearch,
   clearRecentSearches,
 } from '@/lib/recent-searches';
 import { modKey } from '@/hooks/use-keyboard-shortcuts';
+import { getVisibleViews, type ProjectViewContext } from '@/lib/project-views';
 
 interface CommandPaletteProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+}
+
+/** Extract project ID from current pathname */
+function useCurrentProjectId(): string | null {
+  const location = useLocation();
+  const match = location.pathname.match(/^\/projects\/([^/]+)/);
+  return match ? match[1] : null;
 }
 
 export function CommandPalette({ onOpenChange }: CommandPaletteProps) {
@@ -36,6 +44,25 @@ export function CommandPalette({ onOpenChange }: CommandPaletteProps) {
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const navigate = useNavigate();
   const recentSearches = getRecentSearches();
+
+  // Detect if we're inside a project
+  const projectId = useCurrentProjectId();
+  const { data: project } = useProject(projectId ?? '');
+  const [searchParams] = useSearchParams();
+  const currentView = searchParams.get('view') ?? searchParams.get('tab') ?? 'overview';
+
+  // Compute visible project views
+  const viewCtx: ProjectViewContext = useMemo(() => {
+    const hasPlanning = project?.tech_stack?.has_planning ?? false;
+    const isGsd2 = project?.gsd_version === 'gsd2';
+    const isGsd1 = hasPlanning && !isGsd2;
+    return { isGsd2, isGsd1 };
+  }, [project]);
+
+  const visibleViews = useMemo(
+    () => (projectId ? getVisibleViews(viewCtx) : []),
+    [projectId, viewCtx]
+  );
 
   // Debounce search input
   useEffect(() => {
@@ -62,6 +89,10 @@ export function CommandPalette({ onOpenChange }: CommandPaletteProps) {
       // Parse the value format: "type:path"
       if (value.startsWith('nav:')) {
         void navigate(value.slice(4));
+      } else if (value.startsWith('view:')) {
+        // Project view navigation
+        const viewId = value.slice(5);
+        if (projectId) void navigate(`/projects/${projectId}?view=${viewId}`);
       } else if (value.startsWith('action:')) {
         const action = value.slice(7);
         if (action === 'new-project' || action === 'import-project') {
@@ -72,18 +103,18 @@ export function CommandPalette({ onOpenChange }: CommandPaletteProps) {
       } else if (value.startsWith('project:')) {
         void navigate(`/projects/${value.slice(8)}`);
       } else if (value.startsWith('phase:')) {
-        const [, projectId] = value.slice(6).split('|');
-        if (projectId) void navigate(`/projects/${projectId}?tab=gsd`);
+        const [, pid] = value.slice(6).split('|');
+        if (pid) void navigate(`/projects/${pid}?view=gsd`);
       } else if (value.startsWith('decision:')) {
         void navigate('/decisions');
       } else if (value.startsWith('knowledge:')) {
-        const [, projectId] = value.slice(10).split('|');
-        if (projectId) void navigate(`/projects/${projectId}?tab=knowledge`);
+        const [, pid] = value.slice(10).split('|');
+        if (pid) void navigate(`/projects/${pid}?view=knowledge`);
       } else if (value.startsWith('recent:')) {
         setInputValue(value.slice(7));
       }
     },
-    [navigate, onOpenChange, effectiveQuery, inputValue]
+    [navigate, onOpenChange, effectiveQuery, inputValue, projectId]
   );
 
   const showResults = effectiveQuery.length >= 2 && results;
@@ -107,6 +138,21 @@ export function CommandPalette({ onOpenChange }: CommandPaletteProps) {
       (showDecisions && results.decisions.length > 0) ||
       (showKnowledge && results.knowledge.length > 0));
 
+  // Filter project views by search query
+  const filteredViews = useMemo(() => {
+    if (!visibleViews.length) return [];
+    const q = effectiveQuery.toLowerCase();
+    if (!q) return visibleViews.filter((v) => v.id !== currentView);
+    return visibleViews.filter(
+      (v) =>
+        v.id !== currentView &&
+        (v.label.toLowerCase().includes(q) ||
+          v.section.toLowerCase().includes(q))
+    );
+  }, [visibleViews, effectiveQuery, currentView]);
+
+  const showViewShortcuts = projectId && filteredViews.length > 0 && (!prefix || prefix === '/');
+
   return (
     <div className="fixed inset-0 z-50">
       {/* Backdrop */}
@@ -128,7 +174,11 @@ export function CommandPalette({ onOpenChange }: CommandPaletteProps) {
             <Command.Input
               value={inputValue}
               onValueChange={setInputValue}
-              placeholder="Search projects, phases, decisions... or type / for pages"
+              placeholder={
+                projectId
+                  ? "Search views, projects, phases... or type / for pages"
+                  : "Search projects, phases, decisions... or type / for pages"
+              }
               className="flex-1 py-3 text-sm bg-transparent outline-none placeholder:text-muted-foreground/60"
               autoFocus
             />
@@ -149,6 +199,27 @@ export function CommandPalette({ onOpenChange }: CommandPaletteProps) {
                 ? 'No results found.'
                 : 'Type to search...'}
             </Command.Empty>
+
+            {/* Project View Shortcuts — shown when inside a project */}
+            {showViewShortcuts && (
+              <Command.Group heading="Go to View">
+                {filteredViews.slice(0, 8).map((view) => {
+                  const Icon = view.icon;
+                  return (
+                    <Command.Item
+                      key={view.id}
+                      value={`view:${view.id}`}
+                      onSelect={handleSelect}
+                      className="flex items-center gap-2 px-2 py-1.5 rounded-md text-sm cursor-pointer data-[selected=true]:bg-accent/50"
+                    >
+                      <Icon className="h-4 w-4 text-gsd-cyan" />
+                      <span className="flex-1">{view.label}</span>
+                      <span className="text-[10px] text-muted-foreground/50">{view.section}</span>
+                    </Command.Item>
+                  );
+                })}
+              </Command.Group>
+            )}
 
             {/* Recent searches */}
             {showRecent && (
@@ -320,7 +391,7 @@ export function CommandPalette({ onOpenChange }: CommandPaletteProps) {
             )}
 
             {/* No results state when there IS a query */}
-            {effectiveQuery.length >= 2 && !hasResults && !showPages && (
+            {effectiveQuery.length >= 2 && !hasResults && !showPages && !showViewShortcuts && (
               <div className="py-8 text-center text-sm text-muted-foreground">
                 No results found.
               </div>

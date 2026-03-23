@@ -1,32 +1,11 @@
 // GSD VibeFlow - Project Page
+// Sidebar-driven views — no more nested tabs
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { useParams, Link, useSearchParams, useNavigate } from "react-router-dom";
-import {
-  ArrowLeft,
-  LayoutDashboard,
-  ClipboardList,
-  SquareTerminal,
-  FolderTree,
-  Package,
-  CheckSquare,
-  Bug,
-  Flag,
-  FileText,
-  ShieldCheck,
-  Key,
-  Lightbulb,
-  FlaskConical,
-  ClipboardCheck,
-  Activity,
-  GitBranch,
-  Play,
-  BarChart3,
-  Layers,
-} from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -51,7 +30,6 @@ import {
   GsdUatTab,
   DependenciesTab,
   KnowledgeTab,
-  TabGroup,
   EnvVarsTab,
   Gsd2HealthTab,
   Gsd2WorktreesTab,
@@ -60,6 +38,10 @@ import {
   Gsd2MilestonesTab,
   Gsd2SlicesTab,
   Gsd2TasksTab,
+  DoctorPanel,
+  ForensicsPanel,
+  SkillHealthPanel,
+  KnowledgeCapturesPanel,
 } from "@/components/project";
 import { TerminalTabs } from "@/components/terminal";
 import { watchProjectFiles } from "@/lib/tauri";
@@ -71,12 +53,12 @@ import {
   useDeleteProject,
 } from "@/lib/queries";
 import { truncatePath } from "@/lib/utils";
+import { resolveViewFromTab } from "@/lib/project-views";
 
 export function ProjectPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = searchParams.get("tab") || "overview";
+  const [searchParams] = useSearchParams();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const { data: project, isLoading: projectLoading } = useProject(id!);
@@ -88,12 +70,30 @@ export function ProjectPage() {
   const isGsd1 = hasPlanning && !isGsd2;
   const showGsdTab = isGsd2 || isGsd1;
 
+  // Resolve active view from ?view= or legacy ?tab= param
+  const viewCtx = useMemo(() => ({ isGsd2, isGsd1 }), [isGsd2, isGsd1]);
+  const rawView = searchParams.get('view') ?? searchParams.get('tab') ?? null;
+  const activeView = useMemo(
+    () => resolveViewFromTab(rawView, viewCtx),
+    [rawView, viewCtx]
+  );
+
+  // Sync URL: if no ?view= param, set it so the URL is shareable
+  useEffect(() => {
+    if (!searchParams.get('view') && !searchParams.get('tab') && id) {
+      void navigate(`/projects/${id}?view=${activeView}`, { replace: true });
+    }
+  }, [id, activeView, searchParams, navigate]);
+
   // Stable ref to avoid listener leaks in useGsdFileWatcher
   const syncProjectRef = useRef(syncProject);
   syncProjectRef.current = syncProject;
 
+  const isGsd1Ref = useRef(isGsd1);
+  isGsd1Ref.current = isGsd1;
+
   const handleGsdSync = useCallback(() => {
-    if (id && !syncProjectRef.current.isPending) {
+    if (id && isGsd1Ref.current && !syncProjectRef.current.isPending) {
       syncProjectRef.current.mutate(id);
     }
   }, [id]);
@@ -101,7 +101,7 @@ export function ProjectPage() {
   // Real-time GSD file watcher
   useGsdFileWatcher(id!, project?.path ?? '', showGsdTab, handleGsdSync);
 
-  // Headless session state — lifted to page level so logs survive tab navigation
+  // Headless session state — lifted to page level so logs survive view navigation
   const headlessSession = useHeadlessSession();
 
   // Start file watcher for GSD projects on mount
@@ -111,12 +111,12 @@ export function ProjectPage() {
     }
   }, [project?.path, showGsdTab]);
 
-  // Auto-sync GSD data on project load
+  // Auto-sync GSD data on project load (GSD-1 only)
   const syncAttemptedRef = useRef<string | null>(null);
   useEffect(() => {
     if (
       project &&
-      project.tech_stack?.has_planning &&
+      isGsd1 &&
       !syncProject.isPending &&
       syncAttemptedRef.current !== project.id
     ) {
@@ -125,10 +125,6 @@ export function ProjectPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [project?.id, project?.tech_stack]);
-
-  const handleTabChange = (value: string) => {
-    setSearchParams({ tab: value });
-  };
 
   const handleDeleteProject = () => {
     deleteProject.mutate(project!.id, {
@@ -162,6 +158,9 @@ export function ProjectPage() {
     );
   }
 
+  const projectId = project.id;
+  const projectPath = project.path;
+
   return (
     <div className="h-full flex flex-col">
       <ProjectHeader
@@ -169,193 +168,31 @@ export function ProjectPage() {
         onDelete={() => setShowDeleteDialog(true)}
       />
 
-      <Tabs value={activeTab} onValueChange={handleTabChange} className="flex-1 flex flex-col min-h-0 p-6">
-        <TabsList className="w-fit flex-shrink-0 mb-6">
-          <TabsTrigger value="overview" className="gap-2">
-            <LayoutDashboard className="h-4 w-4" />
-            Overview
-          </TabsTrigger>
-          <TabsTrigger value="project" className="gap-2">
-            <Package className="h-4 w-4" />
-            Project
-          </TabsTrigger>
-          <TabsTrigger value="knowledge" className="gap-2">
-            <ClipboardList className="h-4 w-4" />
-            Knowledge
-          </TabsTrigger>
-          <TabsTrigger value="shell" className="gap-2">
-            <SquareTerminal className="h-4 w-4" />
-            Shell
-          </TabsTrigger>
-          <TabsTrigger value="envvars" className="gap-2">
-            <Key className="h-4 w-4" />
-            Env Vars
-          </TabsTrigger>
-          {showGsdTab && (
-            <TabsTrigger value="gsd" className="gap-2">
-              <CheckSquare className="h-4 w-4" />
-              GSD
-            </TabsTrigger>
-          )}
-        </TabsList>
-
-        {/* Overview */}
-        <TabsContent value="overview" className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pr-2">
-          <ProjectOverviewTab
-            project={project}
-            onOpenShell={() => setSearchParams({ tab: "shell" })}
-          />
-        </TabsContent>
-
-        {/* Project — Files + Dependencies */}
-        <TabsContent value="project" className="flex-1 min-h-0">
-          <TabGroup
-            defaultTab="files"
-            tabs={[
-              {
-                id: "files",
-                label: "Files",
-                icon: FolderTree,
-                content: <FileBrowser projectId={project.id} projectPath={project.path} />,
-              },
-              {
-                id: "dependencies",
-                label: "Dependencies",
-                icon: Package,
-                content: <DependenciesTab projectId={project.id} projectPath={project.path} />,
-              },
-            ]}
-          />
-        </TabsContent>
-
-        {/* Knowledge */}
-        <TabsContent value="knowledge" className="flex-1 min-h-0">
-          <KnowledgeTab projectId={project.id} />
-        </TabsContent>
-
-        {/* Shell */}
-        <TabsContent value="shell" forceMount className="flex-1 flex flex-col min-h-0">
+      {/* Active view content */}
+      <div className="flex-1 min-h-0 overflow-hidden">
+        {/* Shell is always mounted (CSS hidden) to preserve xterm.js sessions */}
+        <div className={activeView === 'shell' ? 'h-full flex flex-col' : 'hidden'}>
           <TerminalTabs
-            projectId={project.id}
-            workingDirectory={project.path}
+            projectId={projectId}
+            workingDirectory={projectPath}
             className="flex-1 min-h-0"
           />
-        </TabsContent>
+        </div>
 
-        {/* Env Vars */}
-        <TabsContent value="envvars" className="flex-1 min-h-0 overflow-y-auto">
-          <EnvVarsTab projectId={project.id} projectPath={project.path} />
-        </TabsContent>
-
-        {/* GSD — adaptive tab set based on gsd_version */}
-        {showGsdTab && (
-          <TabsContent value="gsd" className="flex-1 min-h-0">
-            {isGsd2 ? (
-              <TabGroup
-                defaultTab="gsd2-health"
-                tabs={[
-                  {
-                    id: "gsd2-health",
-                    label: "Health",
-                    icon: Activity,
-                    content: <Gsd2HealthTab projectId={project.id} projectPath={project.path} />,
-                  },
-                  {
-                    id: "gsd2-headless",
-                    label: "Headless",
-                    icon: Play,
-                    content: <Gsd2HeadlessTab projectId={project.id} projectPath={project.path} session={headlessSession} />,
-                  },
-                  {
-                    id: "gsd2-worktrees",
-                    label: "Worktrees",
-                    icon: GitBranch,
-                    content: <Gsd2WorktreesTab projectId={project.id} projectPath={project.path} />,
-                  },
-                  {
-                    id: "gsd2-visualizer",
-                    label: "Visualizer",
-                    icon: BarChart3,
-                    content: <Gsd2VisualizerTab projectId={project.id} projectPath={project.path} />,
-                  },
-                  {
-                    id: "gsd2-milestones",
-                    label: "Milestones",
-                    icon: Flag,
-                    content: <Gsd2MilestonesTab projectId={project.id} projectPath={project.path} />,
-                  },
-                  {
-                    id: "gsd2-slices",
-                    label: "Slices",
-                    icon: Layers,
-                    content: <Gsd2SlicesTab projectId={project.id} projectPath={project.path} />,
-                  },
-                  {
-                    id: "gsd2-tasks",
-                    label: "Tasks",
-                    icon: CheckSquare,
-                    content: <Gsd2TasksTab projectId={project.id} projectPath={project.path} />,
-                  },
-                ]}
-              />
-            ) : (
-              <TabGroup
-                defaultTab="gsd-plans"
-                tabs={[
-                  {
-                    id: "gsd-plans",
-                    label: "Plans",
-                    icon: FileText,
-                    content: <GsdPlansTab projectId={project.id} />,
-                  },
-                  {
-                    id: "gsd-context",
-                    label: "Context",
-                    icon: Lightbulb,
-                    content: <GsdContextTab projectId={project.id} />,
-                  },
-                  {
-                    id: "gsd-todos",
-                    label: "Todos",
-                    icon: CheckSquare,
-                    content: <GsdTodosTab projectId={project.id} />,
-                  },
-                  {
-                    id: "gsd-validation",
-                    label: "Validation",
-                    icon: FlaskConical,
-                    content: <GsdValidationPlanTab projectId={project.id} />,
-                  },
-                  {
-                    id: "gsd-uat",
-                    label: "UAT",
-                    icon: ClipboardCheck,
-                    content: <GsdUatTab projectId={project.id} />,
-                  },
-                  {
-                    id: "gsd-verification",
-                    label: "Verification",
-                    icon: ShieldCheck,
-                    content: <GsdVerificationTab projectId={project.id} />,
-                  },
-                  {
-                    id: "gsd-milestones",
-                    label: "Milestones",
-                    icon: Flag,
-                    content: <GsdMilestonesTab projectId={project.id} />,
-                  },
-                  {
-                    id: "gsd-debug",
-                    label: "Debug",
-                    icon: Bug,
-                    content: <GsdDebugTab projectId={project.id} />,
-                  },
-                ]}
-              />
-            )}
-          </TabsContent>
+        {/* All other views render conditionally */}
+        {activeView !== 'shell' && (
+          <div className="h-full overflow-y-auto p-6">
+            <ViewRenderer
+              activeView={activeView}
+              project={project}
+              isGsd2={isGsd2}
+              isGsd1={isGsd1}
+              headlessSession={headlessSession}
+              onOpenShell={() => void navigate(`/projects/${projectId}?view=shell`)}
+            />
+          </div>
         )}
-      </Tabs>
+      </div>
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
@@ -365,7 +202,7 @@ export function ProjectPage() {
               This will remove <span className="font-semibold">{project.name}</span> from GSD VibeFlow.
               <br /><br />
               <span className="text-foreground">Your project files will NOT be deleted.</span> The project folder at{" "}
-              <code className="text-xs bg-muted px-1 py-0.5 rounded">{truncatePath(project.path, 50)}</code>{" "}
+              <code className="text-xs bg-muted px-1 py-0.5 rounded">{truncatePath(projectPath, 50)}</code>{" "}
               will remain untouched. You can re-import this project at any time.
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -382,4 +219,83 @@ export function ProjectPage() {
       </AlertDialog>
     </div>
   );
+}
+
+/** Renders the active view component based on the view ID */
+function ViewRenderer({
+  activeView,
+  project,
+  isGsd2: _isGsd2,
+  isGsd1: _isGsd1,
+  headlessSession,
+  onOpenShell,
+}: {
+  activeView: string;
+  project: NonNullable<ReturnType<typeof useProject>['data']>;
+  isGsd2: boolean;
+  isGsd1: boolean;
+  headlessSession: ReturnType<typeof useHeadlessSession>;
+  onOpenShell: () => void;
+}) {
+  const projectId = project.id;
+  const projectPath = project.path;
+
+  switch (activeView) {
+    // Core views
+    case 'overview':
+      return <ProjectOverviewTab project={project} onOpenShell={onOpenShell} />;
+    case 'files':
+      return <FileBrowser projectId={projectId} projectPath={projectPath} />;
+    case 'dependencies':
+      return <DependenciesTab projectId={projectId} projectPath={projectPath} />;
+    case 'knowledge':
+      return <KnowledgeTab projectId={projectId} />;
+    case 'envvars':
+      return <EnvVarsTab projectId={projectId} projectPath={projectPath} />;
+
+    // GSD-2 views
+    case 'gsd2-health':
+      return <Gsd2HealthTab projectId={projectId} projectPath={projectPath} />;
+    case 'gsd2-headless':
+      return <Gsd2HeadlessTab projectId={projectId} projectPath={projectPath} session={headlessSession} />;
+    case 'gsd2-worktrees':
+      return <Gsd2WorktreesTab projectId={projectId} projectPath={projectPath} />;
+    case 'gsd2-visualizer':
+      return <Gsd2VisualizerTab projectId={projectId} projectPath={projectPath} />;
+    case 'gsd2-milestones':
+      return <Gsd2MilestonesTab projectId={projectId} projectPath={projectPath} />;
+    case 'gsd2-slices':
+      return <Gsd2SlicesTab projectId={projectId} projectPath={projectPath} />;
+    case 'gsd2-tasks':
+      return <Gsd2TasksTab projectId={projectId} projectPath={projectPath} />;
+    case 'gsd2-doctor':
+      return <DoctorPanel projectId={projectId} projectPath={projectPath} />;
+    case 'gsd2-forensics':
+      return <ForensicsPanel projectId={projectId} projectPath={projectPath} />;
+    case 'gsd2-skill-health':
+      return <SkillHealthPanel projectId={projectId} projectPath={projectPath} />;
+    case 'gsd2-knowledge-captures':
+      return <KnowledgeCapturesPanel projectId={projectId} projectPath={projectPath} />;
+
+    // GSD-1 views
+    case 'gsd-plans':
+      return <GsdPlansTab projectId={projectId} />;
+    case 'gsd-context':
+      return <GsdContextTab projectId={projectId} />;
+    case 'gsd-todos':
+      return <GsdTodosTab projectId={projectId} />;
+    case 'gsd-validation':
+      return <GsdValidationPlanTab projectId={projectId} />;
+    case 'gsd-uat':
+      return <GsdUatTab projectId={projectId} />;
+    case 'gsd-verification':
+      return <GsdVerificationTab projectId={projectId} />;
+    case 'gsd-milestones':
+      return <GsdMilestonesTab projectId={projectId} />;
+    case 'gsd-debug':
+      return <GsdDebugTab projectId={projectId} />;
+
+    default:
+      return <ProjectOverviewTab project={project} onOpenShell={onOpenShell} />;
+  }
 }

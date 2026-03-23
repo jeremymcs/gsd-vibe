@@ -147,7 +147,7 @@ export function ImportProjectDialog({
         
         action: {
           label: "Open Project",
-          onClick: () => void navigate(`/projects/${result.project.id}?tab=gsd`),
+          onClick: () => void navigate(`/projects/${result.project.id}?view=gsd`),
         },
       });
     } catch (err) {

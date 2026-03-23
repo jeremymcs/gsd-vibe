@@ -25,7 +25,7 @@ export interface NavSection {
 export type NavigationItem = NavItem | NavSection;
 
 export const navigation: NavigationItem[] = [
-  { type: 'section', label: 'Your Shit' },
+  { type: 'section', label: 'Workspace' },
   { type: 'link', name: 'Home', href: '/', icon: LayoutDashboard },
   { type: 'link', name: 'Todos', href: '/todos', icon: CheckSquare },
   { type: 'link', name: 'Terminal', href: '/terminal', icon: Terminal },

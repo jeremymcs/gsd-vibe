@@ -1,7 +1,8 @@
 // GSD VibeFlow - Breadcrumb Navigation
+// Shows Home > ProjectName > ActiveView with view label from project-views registry
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { ChevronRight, Home, Bookmark, BookOpen } from 'lucide-react';
 import { navLinks } from '@/lib/navigation';
 import { useProject, useKnowledgeBookmarks } from '@/lib/queries';
@@ -12,6 +13,7 @@ import {
   PopoverContent,
 } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
+import { projectViews, resolveViewFromTab } from '@/lib/project-views';
 
 interface Crumb {
   label: string;
@@ -21,6 +23,14 @@ interface Crumb {
 function useProjectName(id: string | undefined): string | null {
   const { data } = useProject(id ?? '');
   return data?.name ?? null;
+}
+
+function useProjectGsdContext(id: string | undefined) {
+  const { data } = useProject(id ?? '');
+  const hasPlanning = data?.tech_stack?.has_planning ?? false;
+  const isGsd2 = data?.gsd_version === 'gsd2';
+  const isGsd1 = hasPlanning && !isGsd2;
+  return { isGsd2, isGsd1 };
 }
 
 function BookmarkPopover({ projectId }: { projectId: string }) {
@@ -84,13 +94,19 @@ function BookmarkPopover({ projectId }: { projectId: string }) {
 
 export function Breadcrumbs() {
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const segments = location.pathname.split('/').filter(Boolean);
 
-  // Extract project ID from URL path (e.g. /projects/:id or /projects/:id/executions/:eid)
-  // useParams() doesn't work here because Breadcrumbs is outside <Routes>
+  // Extract project ID from URL path
   const projectId =
     segments[0] === 'projects' && segments.length >= 2 ? segments[1] : undefined;
   const projectName = useProjectName(projectId);
+  const gsdCtx = useProjectGsdContext(projectId);
+
+  // Resolve active view for project routes
+  const rawView = searchParams.get('view') ?? searchParams.get('tab') ?? null;
+  const activeViewId = projectId ? resolveViewFromTab(rawView, gsdCtx) : null;
+  const activeViewDef = activeViewId ? projectViews.find((v) => v.id === activeViewId) : null;
 
   const crumbs: Crumb[] = [];
 
@@ -107,17 +123,16 @@ export function Breadcrumbs() {
     const navItem = navLinks.find((n) => n.href === currentPath);
 
     if (navItem) {
-      const isLast = i === segments.length - 1;
+      const isLast = i === segments.length - 1 && !activeViewDef;
       crumbs.push({
         label: navItem.name,
         href: isLast ? undefined : navItem.href,
       });
     } else if (projectId && segment === projectId) {
-      // This is a project ID segment — resolve to project name
-      const isLast = i === segments.length - 1;
+      // Project name crumb — always a link when there's a view after it
       crumbs.push({
         label: projectName ?? 'Loading...',
-        href: isLast ? undefined : `/projects/${projectId}`,
+        href: activeViewDef ? `/projects/${projectId}` : undefined,
       });
     } else {
       // Capitalize generic segment
@@ -128,6 +143,11 @@ export function Breadcrumbs() {
         href: isLast ? undefined : currentPath,
       });
     }
+  }
+
+  // Append active view as final crumb (if not "overview" — that's the default)
+  if (activeViewDef && activeViewId !== 'overview') {
+    crumbs.push({ label: activeViewDef.label });
   }
 
   // Dashboard route (no segments) — render just the notification bell

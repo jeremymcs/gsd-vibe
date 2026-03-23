@@ -3,6 +3,7 @@
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { useState, useEffect } from 'react';
+import { readProjectFile } from '@/lib/tauri';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -57,43 +58,39 @@ export function EnvVarsTab({ projectId, projectPath }: EnvVarsTabProps) {
     loadEnvVars();
   }, [projectId]);
 
+  const parseEnvContent = (content: string): EnvVar[] => {
+    const vars: EnvVar[] = [];
+    for (const line of content.split('\n')) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith('#')) continue;
+      const match = trimmed.match(/^([^=]+)=(.*)$/);
+      if (match) {
+        const key = match[1].trim();
+        let value = match[2].trim();
+        if ((value.startsWith('"') && value.endsWith('"')) ||
+            (value.startsWith("'") && value.endsWith("'"))) {
+          value = value.slice(1, -1);
+        }
+        vars.push({ key, value, isSecret: isLikelySecret(key), source: 'project' });
+      }
+    }
+    return vars;
+  };
+
   const loadEnvVars = async () => {
     setIsLoading(true);
     try {
-      const envFilePath = `${projectPath}/.env`;
-      const vars: EnvVar[] = [];
-      
-      try {
-        const response = await fetch(`file://${envFilePath}`);
-        if (response.ok) {
-          const content = await response.text();
-          const lines = content.split('\n');
-          for (const line of lines) {
-            const trimmed = line.trim();
-            if (trimmed && !trimmed.startsWith('#')) {
-              const match = trimmed.match(/^([^=]+)=(.*)$/);
-              if (match) {
-                const key = match[1].trim();
-                let value = match[2].trim();
-                if ((value.startsWith('"') && value.endsWith('"')) || 
-                    (value.startsWith("'") && value.endsWith("'"))) {
-                  value = value.slice(1, -1);
-                }
-                vars.push({
-                  key,
-                  value,
-                  isSecret: isLikelySecret(key),
-                  source: 'project'
-                });
-              }
-            }
-          }
+      // Try .env first, then .env.local as fallback
+      let content: string | null = null;
+      for (const filename of ['.env', '.env.local']) {
+        try {
+          content = await readProjectFile(projectPath, filename);
+          break;
+        } catch {
+          // file doesn't exist, try next
         }
-      } catch {
-        // .env file doesn't exist
       }
-      
-      setEnvVars(vars);
+      setEnvVars(content ? parseEnvContent(content) : []);
     } catch (error) {
       console.error('Failed to load env vars:', error);
     } finally {

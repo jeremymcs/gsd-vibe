@@ -39,7 +39,7 @@ export function RequirementsCard({ projectId }: RequirementsCardProps) {
             <ClipboardList className="h-4 w-4" />
             Requirements
           </span>
-          <Link to={`/projects/${projectId}?tab=gsd`} className="text-muted-foreground hover:text-foreground">
+          <Link to={`/projects/${projectId}?view=gsd`} className="text-muted-foreground hover:text-foreground">
             <ExternalLink className="h-3.5 w-3.5" />
           </Link>
         </CardTitle>
