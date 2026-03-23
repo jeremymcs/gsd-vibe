@@ -1068,15 +1068,29 @@ export const useGsdRoadmapProgress = (projectId: string) =>
 export const useGsdSync = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (projectId: string) => api.gsdSyncProject(projectId),
+    mutationFn: async (projectId: string) => {
+      // Guard: skip sync for GSD-2 projects — they use gsd2_* commands
+      const project = queryClient.getQueryData<api.Project>(['project', projectId]);
+      if (project?.gsd_version === 'gsd2') {
+        return { todos_synced: 0, milestones_synced: 0, plans_synced: 0, summaries_synced: 0, requirements_synced: 0, verifications_synced: 0 } as api.GsdSyncResult;
+      }
+      return api.gsdSyncProject(projectId);
+    },
     onSuccess: (result, projectId) => {
+      if (result.todos_synced === 0 && result.milestones_synced === 0 && result.plans_synced === 0 && result.summaries_synced === 0) {
+        return; // Silent no-op for GSD-2 or empty sync
+      }
       void queryClient.invalidateQueries({ queryKey: ['gsd', projectId] });
       toast.success(
         `GSD synced: ${result.todos_synced} todos, ${result.milestones_synced} milestones, ${result.plans_synced} plans, ${result.summaries_synced} summaries`,
       );
     },
     onError: (error) => {
-      toast.error('Failed to sync GSD data', { description: getErrorMessage(error) });
+      // Silently ignore GSD-2 guard errors — project version may not have been
+      // in the query cache when the mutation was triggered
+      const msg = getErrorMessage(error);
+      if (msg.includes('Use gsd2_* commands instead')) return;
+      toast.error('Failed to sync GSD data', { description: msg });
     },
   });
 };
@@ -1260,3 +1274,82 @@ export const useGsd2DerivedState = (projectId: string) =>
     refetchInterval: 30_000,
   });
 
+// GSD-2 Diagnostics — Doctor, Forensics, Skill Health
+export const useGsd2DoctorReport = (projectId: string) =>
+  useQuery({
+    queryKey: queryKeys.gsd2DoctorReport(projectId),
+    queryFn: () => api.gsd2GetDoctorReport(projectId),
+    enabled: !!projectId,
+    staleTime: 30_000,
+  });
+
+export const useGsd2ForensicsReport = (projectId: string) =>
+  useQuery({
+    queryKey: queryKeys.gsd2ForensicsReport(projectId),
+    queryFn: () => api.gsd2GetForensicsReport(projectId),
+    enabled: !!projectId,
+    staleTime: 30_000,
+  });
+
+export const useGsd2SkillHealth = (projectId: string) =>
+  useQuery({
+    queryKey: queryKeys.gsd2SkillHealth(projectId),
+    queryFn: () => api.gsd2GetSkillHealth(projectId),
+    enabled: !!projectId,
+    staleTime: 60_000,
+  });
+
+export const useGsd2ApplyDoctorFixes = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (projectId: string) => api.gsd2ApplyDoctorFixes(projectId),
+    onSuccess: (_data, projectId) => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.gsd2DoctorReport(projectId) });
+    },
+    onError: (error) => {
+      toast.error('Failed to apply doctor fixes', { description: getErrorMessage(error) });
+    },
+  });
+};
+
+export const useGsd2KnowledgeData = (projectId: string) =>
+  useQuery({
+    queryKey: queryKeys.gsd2KnowledgeData(projectId),
+    queryFn: () => api.gsd2GetKnowledge(projectId),
+    enabled: !!projectId,
+    staleTime: 30_000,
+  });
+
+export const useGsd2CapturesData = (projectId: string) =>
+  useQuery({
+    queryKey: queryKeys.gsd2CapturesData(projectId),
+    queryFn: () => api.gsd2GetCaptures(projectId),
+    enabled: !!projectId,
+    staleTime: 30_000,
+  });
+
+export const useGsd2ResolveCapture = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      projectId,
+      captureId,
+      classification,
+      resolution,
+      rationale,
+    }: {
+      projectId: string;
+      captureId: string;
+      classification: string;
+      resolution: string;
+      rationale: string;
+    }) =>
+      api.gsd2ResolveCapture(projectId, captureId, classification, resolution, rationale),
+    onSuccess: (_data, { projectId }) => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.gsd2CapturesData(projectId) });
+    },
+    onError: (error) => {
+      toast.error('Failed to resolve capture', { description: getErrorMessage(error) });
+    },
+  });
+};

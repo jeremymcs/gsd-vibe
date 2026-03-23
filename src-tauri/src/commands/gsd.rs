@@ -2559,7 +2559,20 @@ fn gsd_sync_project_by_path(
 ) -> Result<GsdSyncResult, String> {
     let planning_dir = Path::new(project_path).join(".planning");
 
+    // GSD-2 projects use .gsd/ instead of .planning/ — no DB sync needed (reads files directly)
     if !planning_dir.exists() {
+        if Path::new(project_path).join(".gsd").exists() {
+            return Ok(GsdSyncResult {
+                todos_synced: 0,
+                milestones_synced: 0,
+                requirements_synced: 0,
+                verifications_synced: 0,
+                plans_synced: 0,
+                summaries_synced: 0,
+                phase_research_synced: 0,
+                uat_synced: 0,
+            });
+        }
         return Err("No .planning/ directory found".to_string());
     }
 

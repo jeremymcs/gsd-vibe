@@ -5,5 +5,5 @@
 #![cfg_attr(all(not(debug_assertions)), windows_subsystem = "windows")]
 
 fn main() {
-    track_your_shit_lib::run()
+    gsd_vibeflow_lib::run()
 }

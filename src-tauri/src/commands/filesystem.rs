@@ -1587,6 +1587,6 @@ pub async fn delete_project_file(path: String, filename: String) -> Result<bool,
         return Err("Path is a directory".to_string());
     }
 
-    std::fs::remove_file(&file_path).map_err(|e| e.to_string())?;
+    trash::delete(&file_path).map_err(|e| e.to_string())?;
     Ok(true)
 }

@@ -109,4 +109,9 @@ export const queryKeys = {
   gsd2Milestone: (projectId: string, milestoneId: string) => ['gsd2', 'milestone', projectId, milestoneId] as const,
   gsd2Slice: (projectId: string, milestoneId: string, sliceId: string) => ['gsd2', 'slice', projectId, milestoneId, sliceId] as const,
   gsd2DerivedState: (projectId: string) => ['gsd2', 'derived-state', projectId] as const,
+  gsd2DoctorReport: (projectId: string) => ['gsd2', 'doctor', projectId] as const,
+  gsd2ForensicsReport: (projectId: string) => ['gsd2', 'forensics', projectId] as const,
+  gsd2SkillHealth: (projectId: string) => ['gsd2', 'skill-health', projectId] as const,
+  gsd2KnowledgeData: (projectId: string) => ['gsd2', 'knowledge', projectId] as const,
+  gsd2CapturesData: (projectId: string) => ['gsd2', 'captures', projectId] as const,
 };

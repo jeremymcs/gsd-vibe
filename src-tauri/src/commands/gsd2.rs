@@ -1824,6 +1824,1252 @@ pub async fn gsd2_get_visualizer_data(
 }
 
 // ============================================================
+// Doctor / Session / Model / Worktree-extra / Headless-with-model commands
+// ============================================================
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DoctorCheck {
+    pub category: String,
+    pub label: String,
+    pub status: String,
+    pub detail: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DoctorReport {
+    pub checks: Vec<DoctorCheck>,
+    pub error_count: u32,
+    pub warning_count: u32,
+    pub ok_count: u32,
+    pub gsd_version: String,
+}
+
+/// Run a structural health check on a GSD-2 project directory.
+#[tauri::command]
+pub async fn gsd2_doctor(
+    db: tauri::State<'_, DbState>,
+    project_id: String,
+) -> Result<DoctorReport, String> {
+    let project_path = {
+        let db_guard = db.write().await;
+        get_project_path(&db_guard, &project_id)?
+    };
+
+    let mut checks: Vec<DoctorCheck> = Vec::new();
+
+    // --- Get gsd --version ---
+    let gsd_version = {
+        let out = std::process::Command::new("gsd")
+            .arg("--version")
+            .current_dir(&project_path)
+            .output();
+        match out {
+            Ok(o) => {
+                let raw = String::from_utf8_lossy(&o.stdout).to_string();
+                // Extract version number from "GSD v2.41.0 — Get Shit Done" style output
+                raw.split_whitespace()
+                    .find(|tok| tok.starts_with('v') && tok.chars().nth(1).map(|c| c.is_ascii_digit()).unwrap_or(false))
+                    .map(|v| v.trim_start_matches('v').to_string())
+                    .unwrap_or_else(|| raw.trim().to_string())
+            }
+            Err(_) => "unknown".to_string(),
+        }
+    };
+
+    let base = Path::new(&project_path);
+
+    // --- Structure checks ---
+    let gsd_dir = base.join(".gsd");
+    if gsd_dir.is_dir() {
+        checks.push(DoctorCheck {
+            category: "structure".to_string(),
+            label: ".gsd/ directory".to_string(),
+            status: "ok".to_string(),
+            detail: None,
+        });
+    } else {
+        checks.push(DoctorCheck {
+            category: "structure".to_string(),
+            label: ".gsd/ directory".to_string(),
+            status: "error".to_string(),
+            detail: Some("Missing .gsd/ directory — not a GSD-2 project".to_string()),
+        });
+    }
+
+    // --- State checks ---
+    let state_file = gsd_dir.join("STATE.md");
+    checks.push(DoctorCheck {
+        category: "state".to_string(),
+        label: "STATE.md".to_string(),
+        status: if state_file.exists() { "ok" } else { "warning" }.to_string(),
+        detail: if state_file.exists() { None } else { Some("STATE.md not found".to_string()) },
+    });
+
+    let metrics_file = gsd_dir.join("metrics.json");
+    checks.push(DoctorCheck {
+        category: "state".to_string(),
+        label: "metrics.json".to_string(),
+        status: if metrics_file.exists() { "ok" } else { "warning" }.to_string(),
+        detail: if metrics_file.exists() { None } else { Some("metrics.json not found — budget tracking unavailable".to_string()) },
+    });
+
+    // --- Milestones checks ---
+    let milestones_dir = gsd_dir.join("milestones");
+    if milestones_dir.is_dir() {
+        checks.push(DoctorCheck {
+            category: "milestones".to_string(),
+            label: "milestones/ directory".to_string(),
+            status: "ok".to_string(),
+            detail: None,
+        });
+
+        // Walk milestone directories
+        if let Ok(rd) = std::fs::read_dir(&milestones_dir) {
+            for entry in rd.flatten() {
+                if !entry.path().is_dir() {
+                    continue;
+                }
+                let dir_name = entry.file_name().to_string_lossy().to_string();
+                let id = milestone_id_from_dir_name(&dir_name);
+                let milestone_dir = entry.path();
+
+                // Try M001-ROADMAP.md then ROADMAP.md
+                let has_roadmap = milestone_dir.join(format!("{}-ROADMAP.md", id)).exists()
+                    || milestone_dir.join("ROADMAP.md").exists()
+                    || resolve_file_by_id(&milestone_dir, &id, "ROADMAP").is_some();
+
+                checks.push(DoctorCheck {
+                    category: "milestones".to_string(),
+                    label: format!("{} ROADMAP.md", dir_name),
+                    status: if has_roadmap { "ok" } else { "warning" }.to_string(),
+                    detail: if has_roadmap {
+                        None
+                    } else {
+                        Some(format!("No ROADMAP.md found in {}", dir_name))
+                    },
+                });
+            }
+        }
+    } else {
+        checks.push(DoctorCheck {
+            category: "milestones".to_string(),
+            label: "milestones/ directory".to_string(),
+            status: "warning".to_string(),
+            detail: Some("milestones/ not found — no milestones defined".to_string()),
+        });
+    }
+
+    // --- Env check ---
+    let env_file = base.join(".env");
+    checks.push(DoctorCheck {
+        category: "env".to_string(),
+        label: "Environment file".to_string(),
+        status: if env_file.exists() { "ok" } else { "warning" }.to_string(),
+        detail: if env_file.exists() { None } else { Some(".env file not found at project root".to_string()) },
+    });
+
+    // Tally
+    let error_count = checks.iter().filter(|c| c.status == "error").count() as u32;
+    let warning_count = checks.iter().filter(|c| c.status == "warning").count() as u32;
+    let ok_count = checks.iter().filter(|c| c.status == "ok").count() as u32;
+
+    Ok(DoctorReport {
+        checks,
+        error_count,
+        warning_count,
+        ok_count,
+        gsd_version,
+    })
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GsdSessionEntry {
+    pub raw: String,
+}
+
+/// List past GSD sessions for a project by running `gsd sessions`.
+#[tauri::command]
+pub async fn gsd2_list_sessions(
+    db: tauri::State<'_, DbState>,
+    project_id: String,
+) -> Result<Vec<GsdSessionEntry>, String> {
+    let project_path = {
+        let db_guard = db.write().await;
+        get_project_path(&db_guard, &project_id)?
+    };
+
+    let output = std::process::Command::new("gsd")
+        .arg("sessions")
+        .current_dir(&project_path)
+        .output()
+        .map_err(|e| format!("Failed to run gsd sessions: {}", e))?;
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+
+    if stdout.contains("No sessions found") {
+        return Ok(Vec::new());
+    }
+
+    let entries: Vec<GsdSessionEntry> = stdout
+        .lines()
+        .filter(|line| {
+            let t = line.trim();
+            !t.is_empty() && !t.contains("Loading sessions")
+        })
+        .map(|line| GsdSessionEntry { raw: line.to_string() })
+        .collect();
+
+    Ok(entries)
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GsdModelEntry {
+    pub provider: String,
+    pub id: String,
+    pub name: String,
+}
+
+/// List available GSD models by running `gsd --list-models [search]`.
+#[tauri::command]
+pub async fn gsd2_list_models(
+    search: Option<String>,
+) -> Result<Vec<GsdModelEntry>, String> {
+    let mut cmd = std::process::Command::new("gsd");
+    cmd.arg("--list-models");
+    if let Some(ref s) = search {
+        cmd.arg(s);
+    }
+
+    let output = cmd
+        .output()
+        .map_err(|e| format!("Failed to run gsd --list-models: {}", e))?;
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let mut entries: Vec<GsdModelEntry> = Vec::new();
+
+    for line in stdout.lines() {
+        let trimmed = line.trim();
+        if trimmed.is_empty() {
+            continue;
+        }
+        // Skip header line starting with "provider"
+        if trimmed.to_lowercase().starts_with("provider") {
+            continue;
+        }
+        // Split by 2+ consecutive spaces
+        let parts: Vec<&str> = trimmed
+            .splitn(3, "  ")
+            .map(|p| p.trim())
+            .filter(|p| !p.is_empty())
+            .collect();
+        if parts.len() >= 3 {
+            entries.push(GsdModelEntry {
+                provider: parts[0].to_string(),
+                id: parts[1].to_string(),
+                name: parts[2].to_string(),
+            });
+        } else if parts.len() == 2 {
+            entries.push(GsdModelEntry {
+                provider: parts[0].to_string(),
+                id: parts[1].to_string(),
+                name: parts[1].to_string(),
+            });
+        }
+    }
+
+    Ok(entries)
+}
+
+/// Merge a worktree via `gsd worktree merge {name}`.
+#[tauri::command]
+pub async fn gsd2_merge_worktree(
+    db: tauri::State<'_, DbState>,
+    project_id: String,
+    worktree_name: String,
+) -> Result<String, String> {
+    let project_path = {
+        let db_guard = db.write().await;
+        get_project_path(&db_guard, &project_id)?
+    };
+
+    let output = std::process::Command::new("gsd")
+        .args(["worktree", "merge", &worktree_name])
+        .current_dir(&project_path)
+        .output()
+        .map_err(|e| format!("Failed to run gsd worktree merge: {}", e))?;
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    Ok(format!("{}{}", stdout, stderr))
+}
+
+/// Clean stale worktrees via `gsd worktree clean`.
+#[tauri::command]
+pub async fn gsd2_clean_worktrees(
+    db: tauri::State<'_, DbState>,
+    project_id: String,
+) -> Result<String, String> {
+    let project_path = {
+        let db_guard = db.write().await;
+        get_project_path(&db_guard, &project_id)?
+    };
+
+    let output = std::process::Command::new("gsd")
+        .args(["worktree", "clean"])
+        .current_dir(&project_path)
+        .output()
+        .map_err(|e| format!("Failed to run gsd worktree clean: {}", e))?;
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    Ok(format!("{}{}", stdout, stderr))
+}
+
+/// Start a headless GSD session with a specific model override (`gsd headless --model {model}`).
+#[tauri::command]
+pub async fn gsd2_headless_start_with_model(
+    app: tauri::AppHandle,
+    project_id: String,
+    model: String,
+    db: tauri::State<'_, DbState>,
+    registry: tauri::State<'_, HeadlessRegistryState>,
+    terminal_manager: tauri::State<'_, crate::pty::TerminalManagerState>,
+) -> Result<String, String> {
+    // Check for existing session for this project
+    {
+        let reg = registry.lock().await;
+        if reg.session_for_project(&project_id).is_some() {
+            return Err("A headless session is already running for this project".to_string());
+        }
+    }
+
+    // Get project path from DB
+    let project_path = {
+        let db_guard = db.write().await;
+        get_project_path(&db_guard, &project_id)?
+    };
+
+    let session_id = uuid::Uuid::new_v4().to_string();
+    let command = format!("gsd headless --model {}", model);
+
+    // Create PTY session
+    {
+        let mut manager = terminal_manager.lock().await;
+        manager.create_session(
+            &app,
+            session_id.clone(),
+            &project_path,
+            Some(&command),
+            80,
+            24,
+        )?;
+    }
+
+    // Register in headless registry
+    {
+        let mut reg = registry.lock().await;
+        reg.register(session_id.clone(), project_id.clone());
+    }
+
+    Ok(session_id)
+}
+
+// ============================================================
+// Doctor Report (frontend-shaped), Forensics, Skill Health, Knowledge, Captures
+// ============================================================
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DoctorIssue {
+    pub severity: String,
+    pub code: String,
+    pub scope: String,
+    pub unit_id: String,
+    pub message: String,
+    pub file: Option<String>,
+    pub fixable: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DoctorCodeCount {
+    pub code: String,
+    pub count: u32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DoctorSummary {
+    pub total: u32,
+    pub errors: u32,
+    pub warnings: u32,
+    pub infos: u32,
+    pub fixable: u32,
+    pub by_code: Vec<DoctorCodeCount>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DoctorReportFrontend {
+    pub ok: bool,
+    pub issues: Vec<DoctorIssue>,
+    pub fixes_applied: Vec<String>,
+    pub summary: DoctorSummary,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DoctorFixResult {
+    pub ok: bool,
+    pub fixes_applied: Vec<String>,
+}
+
+/// Doctor report shaped for the frontend UI (issues + summary).
+/// Internally delegates to the existing gsd2_doctor checks and transforms the output.
+#[tauri::command]
+pub async fn gsd2_get_doctor_report(
+    db: tauri::State<'_, DbState>,
+    project_id: String,
+) -> Result<DoctorReportFrontend, String> {
+    let project_path = {
+        let db_guard = db.write().await;
+        get_project_path(&db_guard, &project_id)?
+    };
+
+    // Reuse the existing doctor logic inline
+    let base = Path::new(&project_path);
+    let gsd_dir = base.join(".gsd");
+
+    let mut issues: Vec<DoctorIssue> = Vec::new();
+
+    // Structure checks
+    if !gsd_dir.is_dir() {
+        issues.push(DoctorIssue {
+            severity: "error".to_string(),
+            code: "missing-gsd-dir".to_string(),
+            scope: "structure".to_string(),
+            unit_id: String::new(),
+            message: "Missing .gsd/ directory — not a GSD-2 project".to_string(),
+            file: None,
+            fixable: false,
+        });
+    }
+
+    // STATE.md
+    if !gsd_dir.join("STATE.md").exists() {
+        issues.push(DoctorIssue {
+            severity: "warning".to_string(),
+            code: "missing-state".to_string(),
+            scope: "state".to_string(),
+            unit_id: String::new(),
+            message: "STATE.md not found".to_string(),
+            file: Some(".gsd/STATE.md".to_string()),
+            fixable: false,
+        });
+    }
+
+    // metrics.json
+    if !gsd_dir.join("metrics.json").exists() {
+        issues.push(DoctorIssue {
+            severity: "warning".to_string(),
+            code: "missing-metrics".to_string(),
+            scope: "state".to_string(),
+            unit_id: String::new(),
+            message: "metrics.json not found — budget tracking unavailable".to_string(),
+            file: Some(".gsd/metrics.json".to_string()),
+            fixable: false,
+        });
+    }
+
+    // KNOWLEDGE.md
+    if !gsd_dir.join("KNOWLEDGE.md").exists() {
+        issues.push(DoctorIssue {
+            severity: "info".to_string(),
+            code: "missing-knowledge".to_string(),
+            scope: "state".to_string(),
+            unit_id: String::new(),
+            message: "KNOWLEDGE.md not found".to_string(),
+            file: Some(".gsd/KNOWLEDGE.md".to_string()),
+            fixable: false,
+        });
+    }
+
+    // Milestones
+    let milestones_dir = gsd_dir.join("milestones");
+    if milestones_dir.is_dir() {
+        if let Ok(rd) = std::fs::read_dir(&milestones_dir) {
+            for entry in rd.flatten() {
+                if !entry.path().is_dir() {
+                    continue;
+                }
+                let dir_name = entry.file_name().to_string_lossy().to_string();
+                let id = milestone_id_from_dir_name(&dir_name);
+                let milestone_dir = entry.path();
+
+                let has_roadmap = milestone_dir.join(format!("{}-ROADMAP.md", id)).exists()
+                    || milestone_dir.join("ROADMAP.md").exists()
+                    || resolve_file_by_id(&milestone_dir, &id, "ROADMAP").is_some();
+
+                if !has_roadmap {
+                    issues.push(DoctorIssue {
+                        severity: "warning".to_string(),
+                        code: "missing-roadmap".to_string(),
+                        scope: "milestone".to_string(),
+                        unit_id: dir_name.clone(),
+                        message: format!("No ROADMAP.md found in {}", dir_name),
+                        file: Some(format!(".gsd/milestones/{}/", dir_name)),
+                        fixable: false,
+                    });
+                }
+            }
+        }
+    } else {
+        issues.push(DoctorIssue {
+            severity: "warning".to_string(),
+            code: "missing-milestones-dir".to_string(),
+            scope: "structure".to_string(),
+            unit_id: String::new(),
+            message: "milestones/ not found — no milestones defined".to_string(),
+            file: Some(".gsd/milestones/".to_string()),
+            fixable: false,
+        });
+    }
+
+    // .env check
+    if !base.join(".env").exists() {
+        issues.push(DoctorIssue {
+            severity: "warning".to_string(),
+            code: "missing-env".to_string(),
+            scope: "env".to_string(),
+            unit_id: String::new(),
+            message: ".env file not found at project root".to_string(),
+            file: Some(".env".to_string()),
+            fixable: false,
+        });
+    }
+
+    // Build summary
+    let errors = issues.iter().filter(|i| i.severity == "error").count() as u32;
+    let warnings = issues.iter().filter(|i| i.severity == "warning").count() as u32;
+    let infos = issues.iter().filter(|i| i.severity == "info").count() as u32;
+    let fixable = issues.iter().filter(|i| i.fixable).count() as u32;
+
+    // Group by code
+    let mut code_counts: HashMap<String, u32> = HashMap::new();
+    for issue in &issues {
+        *code_counts.entry(issue.code.clone()).or_insert(0) += 1;
+    }
+    let by_code: Vec<DoctorCodeCount> = code_counts
+        .into_iter()
+        .map(|(code, count)| DoctorCodeCount { code, count })
+        .collect();
+
+    let total = issues.len() as u32;
+    let ok = errors == 0;
+
+    Ok(DoctorReportFrontend {
+        ok,
+        issues,
+        fixes_applied: Vec::new(),
+        summary: DoctorSummary {
+            total,
+            errors,
+            warnings,
+            infos,
+            fixable,
+            by_code,
+        },
+    })
+}
+
+/// Apply auto-fixes for doctor issues. Currently a stub — no auto-fixes implemented.
+#[tauri::command]
+pub async fn gsd2_apply_doctor_fixes(
+    db: tauri::State<'_, DbState>,
+    project_id: String,
+) -> Result<DoctorFixResult, String> {
+    // Validate project exists
+    let _project_path = {
+        let db_guard = db.write().await;
+        get_project_path(&db_guard, &project_id)?
+    };
+
+    Ok(DoctorFixResult {
+        ok: true,
+        fixes_applied: Vec::new(),
+    })
+}
+
+// ============================================================
+// Forensics Report
+// ============================================================
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ForensicAnomaly {
+    pub type_name: String,
+    pub severity: String,
+    pub unit_type: Option<String>,
+    pub unit_id: Option<String>,
+    pub summary: String,
+    pub details: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ForensicRecentUnit {
+    pub type_name: String,
+    pub id: String,
+    pub cost: f64,
+    pub duration: f64,
+    pub model: String,
+    pub finished_at: f64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ForensicCrashLock {
+    pub pid: u64,
+    pub started_at: String,
+    pub unit_type: String,
+    pub unit_id: String,
+    pub unit_started_at: String,
+    pub completed_units: u32,
+    pub session_file: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ForensicMetricsSummary {
+    pub total_units: u32,
+    pub total_cost: f64,
+    pub total_duration: f64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ForensicReport {
+    pub gsd_version: String,
+    pub timestamp: String,
+    pub base_path: String,
+    pub active_milestone: Option<String>,
+    pub active_slice: Option<String>,
+    pub anomalies: Vec<ForensicAnomaly>,
+    pub recent_units: Vec<ForensicRecentUnit>,
+    pub crash_lock: Option<ForensicCrashLock>,
+    pub doctor_issue_count: u32,
+    pub unit_trace_count: u32,
+    pub completed_key_count: u32,
+    pub metrics: Option<ForensicMetricsSummary>,
+}
+
+/// Build a forensic analysis report from .gsd/ state, metrics, and runtime files.
+#[tauri::command]
+pub async fn gsd2_get_forensics_report(
+    db: tauri::State<'_, DbState>,
+    project_id: String,
+) -> Result<ForensicReport, String> {
+    let project_path = {
+        let db_guard = db.write().await;
+        get_project_path(&db_guard, &project_id)?
+    };
+
+    let base = Path::new(&project_path);
+    let gsd_dir = base.join(".gsd");
+    let now = chrono::Utc::now().to_rfc3339();
+
+    // Parse STATE.md for active milestone/slice
+    let (active_milestone, active_slice) = {
+        let state_path = gsd_dir.join("STATE.md");
+        if state_path.exists() {
+            let content = std::fs::read_to_string(&state_path).unwrap_or_default();
+            let parsed = parse_gsd2_state_md(&content);
+            (parsed.active_milestone.clone(), parsed.active_slice.clone())
+        } else {
+            (None, None)
+        }
+    };
+
+    // Parse metrics.json for cost/duration/recent units
+    let mut total_cost = 0.0_f64;
+    let mut total_duration = 0.0_f64;
+    let mut total_units = 0_u32;
+    let mut recent_units: Vec<ForensicRecentUnit> = Vec::new();
+    let mut anomalies: Vec<ForensicAnomaly> = Vec::new();
+
+    let metrics_path = gsd_dir.join("metrics.json");
+    if metrics_path.exists() {
+        if let Ok(content) = std::fs::read_to_string(&metrics_path) {
+            if let Ok(val) = serde_json::from_str::<serde_json::Value>(&content) {
+                // Walk timeline entries
+                if let Some(timeline) = val.get("timeline").and_then(|t| t.as_array()) {
+                    total_units = timeline.len() as u32;
+                    for entry in timeline {
+                        let cost = entry.get("cost").and_then(|c| c.as_f64()).unwrap_or(0.0);
+                        let started = entry.get("startedAt").and_then(|s| s.as_f64()).unwrap_or(0.0);
+                        let finished = entry.get("finishedAt").and_then(|s| s.as_f64()).unwrap_or(0.0);
+                        let duration = if finished > started { (finished - started) * 1000.0 } else { 0.0 };
+                        let model = entry.get("model").and_then(|m| m.as_str()).unwrap_or("unknown").to_string();
+                        let unit_type = entry.get("unitType").and_then(|u| u.as_str()).unwrap_or("task").to_string();
+                        let unit_id = entry.get("unitId").and_then(|u| u.as_str()).unwrap_or("").to_string();
+
+                        total_cost += cost;
+                        total_duration += duration;
+
+                        recent_units.push(ForensicRecentUnit {
+                            type_name: unit_type.clone(),
+                            id: unit_id.clone(),
+                            cost,
+                            duration,
+                            model,
+                            finished_at: finished,
+                        });
+
+                        // Anomaly: unit with zero cost but >60s duration
+                        if cost == 0.0 && duration > 60_000.0 {
+                            anomalies.push(ForensicAnomaly {
+                                type_name: "zero-cost-long-unit".to_string(),
+                                severity: "warning".to_string(),
+                                unit_type: Some(unit_type.clone()),
+                                unit_id: Some(unit_id.clone()),
+                                summary: format!("Unit {} ran for {:.0}s with zero cost", unit_id, duration / 1000.0),
+                                details: "May indicate a stalled or failed unit that didn't report metrics".to_string(),
+                            });
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Sort recent units by finished_at descending, keep last 10
+    recent_units.sort_by(|a, b| b.finished_at.partial_cmp(&a.finished_at).unwrap_or(std::cmp::Ordering::Equal));
+    recent_units.truncate(10);
+
+    // Check for crash lock
+    let crash_lock = {
+        let lock_path = gsd_dir.join("runtime").join("auto.lock");
+        if lock_path.exists() {
+            if let Ok(content) = std::fs::read_to_string(&lock_path) {
+                if let Ok(val) = serde_json::from_str::<serde_json::Value>(&content) {
+                    Some(ForensicCrashLock {
+                        pid: val.get("pid").and_then(|p| p.as_u64()).unwrap_or(0),
+                        started_at: val.get("startedAt").and_then(|s| s.as_str()).unwrap_or("").to_string(),
+                        unit_type: val.get("unitType").and_then(|u| u.as_str()).unwrap_or("").to_string(),
+                        unit_id: val.get("unitId").and_then(|u| u.as_str()).unwrap_or("").to_string(),
+                        unit_started_at: val.get("unitStartedAt").and_then(|u| u.as_str()).unwrap_or("").to_string(),
+                        completed_units: val.get("completedUnits").and_then(|c| c.as_u64()).unwrap_or(0) as u32,
+                        session_file: val.get("sessionFile").and_then(|s| s.as_str()).map(|s| s.to_string()),
+                    })
+                } else {
+                    None
+                }
+            } else {
+                None
+            }
+        } else {
+            None
+        }
+    };
+
+    // Count unit traces in runtime/
+    let runtime_dir = gsd_dir.join("runtime");
+    let unit_trace_count = if runtime_dir.is_dir() {
+        std::fs::read_dir(&runtime_dir)
+            .map(|rd| rd.flatten().filter(|e| {
+                e.path().extension().and_then(|ext| ext.to_str()) == Some("jsonl")
+            }).count() as u32)
+            .unwrap_or(0)
+    } else {
+        0
+    };
+
+    // Count completed keys
+    let completed_key_count = if runtime_dir.is_dir() {
+        std::fs::read_dir(&runtime_dir)
+            .map(|rd| rd.flatten().filter(|e| {
+                e.file_name().to_string_lossy().starts_with("completed-")
+            }).count() as u32)
+            .unwrap_or(0)
+    } else {
+        0
+    };
+
+    let metrics = if total_units > 0 {
+        Some(ForensicMetricsSummary {
+            total_units,
+            total_cost,
+            total_duration,
+        })
+    } else {
+        None
+    };
+
+    Ok(ForensicReport {
+        gsd_version: "gsd2".to_string(),
+        timestamp: now,
+        base_path: project_path,
+        active_milestone,
+        active_slice,
+        anomalies,
+        recent_units,
+        crash_lock,
+        doctor_issue_count: 0,
+        unit_trace_count,
+        completed_key_count,
+        metrics,
+    })
+}
+
+// ============================================================
+// Skill Health
+// ============================================================
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SkillHealthEntry {
+    pub name: String,
+    pub total_uses: u32,
+    pub success_rate: f64,
+    pub avg_tokens: f64,
+    pub token_trend: String,
+    pub last_used: f64,
+    pub stale_days: u32,
+    pub avg_cost: f64,
+    pub flagged: bool,
+    pub flag_reason: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SkillHealthSuggestion {
+    pub skill_name: String,
+    pub trigger: String,
+    pub message: String,
+    pub severity: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SkillHealthReport {
+    pub generated_at: String,
+    pub total_units_with_skills: u32,
+    pub skills: Vec<SkillHealthEntry>,
+    pub stale_skills: Vec<String>,
+    pub declining_skills: Vec<String>,
+    pub suggestions: Vec<SkillHealthSuggestion>,
+}
+
+/// Analyze skill usage from metrics.json timeline entries.
+#[tauri::command]
+pub async fn gsd2_get_skill_health(
+    db: tauri::State<'_, DbState>,
+    project_id: String,
+) -> Result<SkillHealthReport, String> {
+    let project_path = {
+        let db_guard = db.write().await;
+        get_project_path(&db_guard, &project_id)?
+    };
+
+    let gsd_dir = Path::new(&project_path).join(".gsd");
+    let metrics_path = gsd_dir.join("metrics.json");
+    let now = chrono::Utc::now();
+
+    if !metrics_path.exists() {
+        return Ok(SkillHealthReport {
+            generated_at: now.to_rfc3339(),
+            total_units_with_skills: 0,
+            skills: Vec::new(),
+            stale_skills: Vec::new(),
+            declining_skills: Vec::new(),
+            suggestions: Vec::new(),
+        });
+    }
+
+    let content = std::fs::read_to_string(&metrics_path)
+        .map_err(|e| format!("Failed to read metrics.json: {}", e))?;
+    let val: serde_json::Value = serde_json::from_str(&content)
+        .map_err(|e| format!("Failed to parse metrics.json: {}", e))?;
+
+    // Collect skill usage from timeline
+    let mut skill_map: HashMap<String, Vec<(f64, f64, f64)>> = HashMap::new(); // name -> Vec<(cost, tokens, finished_at)>
+    let mut total_with_skills = 0_u32;
+
+    if let Some(timeline) = val.get("timeline").and_then(|t| t.as_array()) {
+        for entry in timeline {
+            if let Some(skill) = entry.get("skill").and_then(|s| s.as_str()) {
+                if !skill.is_empty() {
+                    total_with_skills += 1;
+                    let cost = entry.get("cost").and_then(|c| c.as_f64()).unwrap_or(0.0);
+                    let tokens = entry.get("totalTokens").and_then(|t| t.as_f64())
+                        .or_else(|| entry.get("cacheRead").and_then(|c| c.as_f64()))
+                        .unwrap_or(0.0);
+                    let finished = entry.get("finishedAt").and_then(|f| f.as_f64()).unwrap_or(0.0);
+                    skill_map.entry(skill.to_string()).or_default().push((cost, tokens, finished));
+                }
+            }
+        }
+    }
+
+    let now_ts = now.timestamp() as f64;
+    let mut skills: Vec<SkillHealthEntry> = Vec::new();
+    let mut stale_skills: Vec<String> = Vec::new();
+    let mut declining_skills: Vec<String> = Vec::new();
+    let mut suggestions: Vec<SkillHealthSuggestion> = Vec::new();
+
+    for (name, usages) in &skill_map {
+        let total_uses = usages.len() as u32;
+        let avg_cost = usages.iter().map(|(c, _, _)| c).sum::<f64>() / total_uses as f64;
+        let avg_tokens = usages.iter().map(|(_, t, _)| t).sum::<f64>() / total_uses as f64;
+        let last_used = usages.iter().map(|(_, _, f)| *f).fold(0.0_f64, f64::max);
+        let stale_days = if last_used > 0.0 {
+            ((now_ts - last_used) / 86400.0).max(0.0) as u32
+        } else {
+            0
+        };
+
+        // Simple trend: compare first half avg tokens to second half
+        let token_trend = if usages.len() >= 4 {
+            let mid = usages.len() / 2;
+            let first_half_avg = usages[..mid].iter().map(|(_, t, _)| t).sum::<f64>() / mid as f64;
+            let second_half_avg = usages[mid..].iter().map(|(_, t, _)| t).sum::<f64>() / (usages.len() - mid) as f64;
+            if second_half_avg > first_half_avg * 1.2 {
+                "rising"
+            } else if second_half_avg < first_half_avg * 0.8 {
+                "declining"
+            } else {
+                "stable"
+            }
+        } else {
+            "stable"
+        };
+
+        let flagged = stale_days > 30 || token_trend == "rising";
+        let flag_reason = if stale_days > 30 {
+            Some(format!("Not used in {} days", stale_days))
+        } else if token_trend == "rising" {
+            Some("Token usage trending up".to_string())
+        } else {
+            None
+        };
+
+        if stale_days > 30 {
+            stale_skills.push(name.clone());
+        }
+        if token_trend == "declining" {
+            declining_skills.push(name.clone());
+        }
+
+        if stale_days > 30 {
+            suggestions.push(SkillHealthSuggestion {
+                skill_name: name.clone(),
+                trigger: "stale_usage".to_string(),
+                message: format!("{} hasn't been used in {} days — consider removing or updating", name, stale_days),
+                severity: "warning".to_string(),
+            });
+        }
+
+        skills.push(SkillHealthEntry {
+            name: name.clone(),
+            total_uses,
+            success_rate: 1.0, // No failure tracking in metrics.json yet
+            avg_tokens,
+            token_trend: token_trend.to_string(),
+            last_used,
+            stale_days,
+            avg_cost,
+            flagged,
+            flag_reason,
+        });
+    }
+
+    // Sort by total_uses descending
+    skills.sort_by(|a, b| b.total_uses.cmp(&a.total_uses));
+
+    Ok(SkillHealthReport {
+        generated_at: now.to_rfc3339(),
+        total_units_with_skills: total_with_skills,
+        skills,
+        stale_skills,
+        declining_skills,
+        suggestions,
+    })
+}
+
+// ============================================================
+// Knowledge
+// ============================================================
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct KnowledgeEntry {
+    pub id: String,
+    pub title: String,
+    pub content: String,
+    #[serde(rename = "type")]
+    pub entry_type: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct KnowledgeData {
+    pub entries: Vec<KnowledgeEntry>,
+}
+
+/// Parse KNOWLEDGE.md into structured entries.
+#[tauri::command]
+pub async fn gsd2_get_knowledge(
+    db: tauri::State<'_, DbState>,
+    project_id: String,
+) -> Result<KnowledgeData, String> {
+    let project_path = {
+        let db_guard = db.write().await;
+        get_project_path(&db_guard, &project_id)?
+    };
+
+    let knowledge_path = Path::new(&project_path).join(".gsd").join("KNOWLEDGE.md");
+    if !knowledge_path.exists() {
+        return Ok(KnowledgeData { entries: Vec::new() });
+    }
+
+    let content = std::fs::read_to_string(&knowledge_path)
+        .map_err(|e| format!("Failed to read KNOWLEDGE.md: {}", e))?;
+
+    let mut entries: Vec<KnowledgeEntry> = Vec::new();
+    let mut current_title = String::new();
+    let mut current_content = String::new();
+    let mut entry_idx = 0_u32;
+
+    for line in content.lines() {
+        if line.starts_with("## ") {
+            // Flush previous entry
+            if !current_title.is_empty() {
+                let entry_type = classify_knowledge_entry(&current_title, &current_content);
+                entries.push(KnowledgeEntry {
+                    id: format!("K{:03}", entry_idx),
+                    title: current_title.clone(),
+                    content: current_content.trim().to_string(),
+                    entry_type,
+                });
+            }
+            entry_idx += 1;
+            current_title = line.trim_start_matches('#').trim().to_string();
+            current_content = String::new();
+        } else if !current_title.is_empty() {
+            current_content.push_str(line);
+            current_content.push('\n');
+        }
+    }
+
+    // Flush last entry
+    if !current_title.is_empty() {
+        let entry_type = classify_knowledge_entry(&current_title, &current_content);
+        entries.push(KnowledgeEntry {
+            id: format!("K{:03}", entry_idx),
+            title: current_title,
+            content: current_content.trim().to_string(),
+            entry_type,
+        });
+    }
+
+    Ok(KnowledgeData { entries })
+}
+
+fn classify_knowledge_entry(title: &str, content: &str) -> String {
+    let lower_title = title.to_lowercase();
+    let lower_content = content.to_lowercase();
+    if lower_title.contains("rule") || lower_content.contains("must ") || lower_content.contains("never ") || lower_content.contains("always ") {
+        "rule".to_string()
+    } else if lower_title.contains("pattern") || lower_title.contains("convention") || lower_content.contains("pattern") {
+        "pattern".to_string()
+    } else if lower_title.contains("lesson") || lower_title.contains("gotcha") || lower_title.contains("workaround") {
+        "lesson".to_string()
+    } else {
+        "freeform".to_string()
+    }
+}
+
+// ============================================================
+// Captures
+// ============================================================
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CaptureEntry {
+    pub id: String,
+    pub text: String,
+    pub timestamp: String,
+    pub status: String,
+    pub classification: Option<String>,
+    pub resolution: Option<String>,
+    pub rationale: Option<String>,
+    pub resolved_at: Option<String>,
+    pub executed: Option<bool>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CapturesData {
+    pub entries: Vec<CaptureEntry>,
+    pub pending_count: u32,
+    pub actionable_count: u32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CaptureResolveResult {
+    pub ok: bool,
+    pub capture_id: String,
+    pub error: Option<String>,
+}
+
+/// Read captures from .gsd/runtime/captures/ directory.
+/// Each capture is a JSON file with id, text, timestamp, status fields.
+#[tauri::command]
+pub async fn gsd2_get_captures(
+    db: tauri::State<'_, DbState>,
+    project_id: String,
+) -> Result<CapturesData, String> {
+    let project_path = {
+        let db_guard = db.write().await;
+        get_project_path(&db_guard, &project_id)?
+    };
+
+    let captures_dir = Path::new(&project_path).join(".gsd").join("runtime").join("captures");
+    if !captures_dir.is_dir() {
+        return Ok(CapturesData {
+            entries: Vec::new(),
+            pending_count: 0,
+            actionable_count: 0,
+        });
+    }
+
+    let mut entries: Vec<CaptureEntry> = Vec::new();
+
+    if let Ok(rd) = std::fs::read_dir(&captures_dir) {
+        for file in rd.flatten() {
+            let path = file.path();
+            if path.extension().and_then(|e| e.to_str()) != Some("json") {
+                continue;
+            }
+            if let Ok(content) = std::fs::read_to_string(&path) {
+                if let Ok(val) = serde_json::from_str::<serde_json::Value>(&content) {
+                    entries.push(CaptureEntry {
+                        id: val.get("id").and_then(|v| v.as_str()).unwrap_or("").to_string(),
+                        text: val.get("text").and_then(|v| v.as_str()).unwrap_or("").to_string(),
+                        timestamp: val.get("timestamp").and_then(|v| v.as_str()).unwrap_or("").to_string(),
+                        status: val.get("status").and_then(|v| v.as_str()).unwrap_or("pending").to_string(),
+                        classification: val.get("classification").and_then(|v| v.as_str()).map(|s| s.to_string()),
+                        resolution: val.get("resolution").and_then(|v| v.as_str()).map(|s| s.to_string()),
+                        rationale: val.get("rationale").and_then(|v| v.as_str()).map(|s| s.to_string()),
+                        resolved_at: val.get("resolvedAt").and_then(|v| v.as_str()).map(|s| s.to_string()),
+                        executed: val.get("executed").and_then(|v| v.as_bool()),
+                    });
+                }
+            }
+        }
+    }
+
+    // Sort by timestamp descending
+    entries.sort_by(|a, b| b.timestamp.cmp(&a.timestamp));
+
+    let pending_count = entries.iter().filter(|e| e.status == "pending").count() as u32;
+    let actionable_count = entries.iter().filter(|e| {
+        e.status == "pending" || (e.classification.is_some() && e.executed != Some(true))
+    }).count() as u32;
+
+    Ok(CapturesData {
+        entries,
+        pending_count,
+        actionable_count,
+    })
+}
+
+/// Resolve a capture by updating its JSON file with classification, resolution, and rationale.
+#[tauri::command]
+pub async fn gsd2_resolve_capture(
+    db: tauri::State<'_, DbState>,
+    project_id: String,
+    capture_id: String,
+    classification: String,
+    resolution: String,
+    rationale: String,
+) -> Result<CaptureResolveResult, String> {
+    let project_path = {
+        let db_guard = db.write().await;
+        get_project_path(&db_guard, &project_id)?
+    };
+
+    let captures_dir = Path::new(&project_path).join(".gsd").join("runtime").join("captures");
+    if !captures_dir.is_dir() {
+        return Ok(CaptureResolveResult {
+            ok: false,
+            capture_id: capture_id.clone(),
+            error: Some("Captures directory not found".to_string()),
+        });
+    }
+
+    // Find the capture file
+    let target_file = captures_dir.join(format!("{}.json", capture_id));
+    if !target_file.exists() {
+        // Try scanning for a file containing this ID
+        let mut found_path = None;
+        if let Ok(rd) = std::fs::read_dir(&captures_dir) {
+            for file in rd.flatten() {
+                let path = file.path();
+                if path.extension().and_then(|e| e.to_str()) != Some("json") {
+                    continue;
+                }
+                if let Ok(content) = std::fs::read_to_string(&path) {
+                    if let Ok(val) = serde_json::from_str::<serde_json::Value>(&content) {
+                        if val.get("id").and_then(|v| v.as_str()) == Some(&capture_id) {
+                            found_path = Some(path);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        if found_path.is_none() {
+            return Ok(CaptureResolveResult {
+                ok: false,
+                capture_id: capture_id.clone(),
+                error: Some(format!("Capture {} not found", capture_id)),
+            });
+        }
+
+        // Update the found file
+        let path = found_path.unwrap();
+        let content = std::fs::read_to_string(&path)
+            .map_err(|e| format!("Failed to read capture file: {}", e))?;
+        let mut val: serde_json::Value = serde_json::from_str(&content)
+            .map_err(|e| format!("Failed to parse capture file: {}", e))?;
+
+        if let Some(obj) = val.as_object_mut() {
+            obj.insert("status".to_string(), serde_json::json!("resolved"));
+            obj.insert("classification".to_string(), serde_json::json!(classification));
+            obj.insert("resolution".to_string(), serde_json::json!(resolution));
+            obj.insert("rationale".to_string(), serde_json::json!(rationale));
+            obj.insert("resolvedAt".to_string(), serde_json::json!(chrono::Utc::now().to_rfc3339()));
+        }
+
+        std::fs::write(&path, serde_json::to_string_pretty(&val).unwrap())
+            .map_err(|e| format!("Failed to write capture file: {}", e))?;
+
+        return Ok(CaptureResolveResult {
+            ok: true,
+            capture_id,
+            error: None,
+        });
+    }
+
+    // Update the target file directly
+    let content = std::fs::read_to_string(&target_file)
+        .map_err(|e| format!("Failed to read capture file: {}", e))?;
+    let mut val: serde_json::Value = serde_json::from_str(&content)
+        .map_err(|e| format!("Failed to parse capture file: {}", e))?;
+
+    if let Some(obj) = val.as_object_mut() {
+        obj.insert("status".to_string(), serde_json::json!("resolved"));
+        obj.insert("classification".to_string(), serde_json::json!(classification));
+        obj.insert("resolution".to_string(), serde_json::json!(resolution));
+        obj.insert("rationale".to_string(), serde_json::json!(rationale));
+        obj.insert("resolvedAt".to_string(), serde_json::json!(chrono::Utc::now().to_rfc3339()));
+    }
+
+    std::fs::write(&target_file, serde_json::to_string_pretty(&val).unwrap())
+        .map_err(|e| format!("Failed to write capture file: {}", e))?;
+
+    Ok(CaptureResolveResult {
+        ok: true,
+        capture_id,
+        error: None,
+    })
+}
+
+// ============================================================
 // Tests
 // ============================================================
 

@@ -1412,3 +1412,188 @@ export const gsd2GetSlice = (projectId: string, milestoneId: string, sliceId: st
 
 export const gsd2DeriveState = (projectId: string) =>
   invoke<Gsd2DerivedState>('gsd2_derive_state', { projectId });
+
+// GSD-2 Diagnostics — Doctor, Forensics, Skill Health
+export interface DoctorIssue {
+  severity: string;
+  code: string;
+  scope: string;
+  unit_id: string;
+  message: string;
+  file?: string;
+  fixable: boolean;
+}
+
+export interface DoctorCodeCount {
+  code: string;
+  count: number;
+}
+
+export interface DoctorSummary {
+  total: number;
+  errors: number;
+  warnings: number;
+  infos: number;
+  fixable: number;
+  by_code: DoctorCodeCount[];
+}
+
+export interface DoctorReport {
+  ok: boolean;
+  issues: DoctorIssue[];
+  fixes_applied: string[];
+  summary: DoctorSummary;
+}
+
+export interface DoctorFixResult {
+  ok: boolean;
+  fixes_applied: string[];
+}
+
+export interface ForensicAnomaly {
+  type_name: string;
+  severity: string;
+  unit_type?: string;
+  unit_id?: string;
+  summary: string;
+  details: string;
+}
+
+export interface ForensicRecentUnit {
+  type_name: string;
+  id: string;
+  cost: number;
+  duration: number;
+  model: string;
+  finished_at: number;
+}
+
+export interface ForensicCrashLock {
+  pid: number;
+  started_at: string;
+  unit_type: string;
+  unit_id: string;
+  unit_started_at: string;
+  completed_units: number;
+  session_file?: string;
+}
+
+export interface ForensicMetricsSummary {
+  total_units: number;
+  total_cost: number;
+  total_duration: number;
+}
+
+export interface ForensicReport {
+  gsd_version: string;
+  timestamp: string;
+  base_path: string;
+  active_milestone: string | null;
+  active_slice: string | null;
+  anomalies: ForensicAnomaly[];
+  recent_units: ForensicRecentUnit[];
+  crash_lock: ForensicCrashLock | null;
+  doctor_issue_count: number;
+  unit_trace_count: number;
+  completed_key_count: number;
+  metrics: ForensicMetricsSummary | null;
+}
+
+export interface SkillHealthEntry {
+  name: string;
+  total_uses: number;
+  success_rate: number;
+  avg_tokens: number;
+  token_trend: string;
+  last_used: number;
+  stale_days: number;
+  avg_cost: number;
+  flagged: boolean;
+  flag_reason?: string;
+}
+
+export interface SkillHealthSuggestion {
+  skill_name: string;
+  trigger: string;
+  message: string;
+  severity: string;
+}
+
+export interface SkillHealthReport {
+  generated_at: string;
+  total_units_with_skills: number;
+  skills: SkillHealthEntry[];
+  stale_skills: string[];
+  declining_skills: string[];
+  suggestions: SkillHealthSuggestion[];
+}
+
+export const gsd2GetDoctorReport = (projectId: string) =>
+  invoke<DoctorReport>('gsd2_get_doctor_report', { projectId });
+
+export const gsd2ApplyDoctorFixes = (projectId: string) =>
+  invoke<DoctorFixResult>('gsd2_apply_doctor_fixes', { projectId });
+
+export const gsd2GetForensicsReport = (projectId: string) =>
+  invoke<ForensicReport>('gsd2_get_forensics_report', { projectId });
+
+export const gsd2GetSkillHealth = (projectId: string) =>
+  invoke<SkillHealthReport>('gsd2_get_skill_health', { projectId });
+
+export interface KnowledgeEntry {
+  id: string;
+  title: string;
+  content: string;
+  type: string; // 'rule' | 'pattern' | 'lesson' | 'freeform'
+}
+
+export interface KnowledgeData {
+  entries: KnowledgeEntry[];
+  file_path: string;
+  last_modified: string | null;
+}
+
+export interface CaptureEntry {
+  id: string;
+  text: string;
+  timestamp: string;
+  status: string;
+  classification?: string;
+  resolution?: string;
+  rationale?: string;
+  resolved_at?: string;
+  executed?: boolean;
+}
+
+export interface CapturesData {
+  entries: CaptureEntry[];
+  pending_count: number;
+  actionable_count: number;
+}
+
+export interface CaptureResolveResult {
+  ok: boolean;
+  capture_id: string;
+  error?: string;
+}
+
+export const gsd2GetKnowledge = (projectId: string) =>
+  invoke<KnowledgeData>('gsd2_get_knowledge', { projectId });
+
+export const gsd2GetCaptures = (projectId: string) =>
+  invoke<CapturesData>('gsd2_get_captures', { projectId });
+
+export const gsd2ResolveCapture = (
+  projectId: string,
+  captureId: string,
+  classification: string,
+  resolution: string,
+  rationale: string
+) =>
+  invoke<CaptureResolveResult>('gsd2_resolve_capture', {
+    projectId,
+    captureId,
+    classification,
+    resolution,
+    rationale,
+  });
