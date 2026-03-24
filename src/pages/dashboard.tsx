@@ -222,7 +222,7 @@ export function Dashboard() {
                 {filteredProjects.map((project, index) => (
                   <div
                     key={project.id}
-                    className="animate-stagger-in"
+                    className="animate-stagger-in flex"
                     style={{ animationDelay: `${Math.min(index * 50, 1000)}ms` }}
                   >
                     <ProjectCard
