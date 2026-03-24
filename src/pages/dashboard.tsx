@@ -215,7 +215,7 @@ export function Dashboard() {
 
             {/* Grid view */}
             {viewMode === 'grid' && filteredProjects.length > 0 && (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 auto-rows-fr">
                 {filteredProjects.map((project, index) => (
                   <div
                     key={project.id}
