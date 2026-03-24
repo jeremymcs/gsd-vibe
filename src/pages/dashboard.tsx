@@ -194,7 +194,7 @@ export function Dashboard() {
       </div>
 
       {/* Content area */}
-      <div className="flex-1 min-h-0 overflow-auto px-8 pb-4">
+      <div className="flex-1 min-h-0 overflow-auto px-8 pt-2 pb-4">
         {isLoading ? (
           <SkeletonGrid />
         ) : !projects?.length ? (
