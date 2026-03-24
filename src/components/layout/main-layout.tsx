@@ -213,6 +213,7 @@ export function MainLayout({ children }: MainLayoutProps) {
           <button
             className={cn(
               "flex items-center gap-2 mx-2 mt-2 rounded-md border border-border/40 text-muted-foreground/60 hover:text-foreground hover:border-border/80 hover:bg-muted/50 transition-colors cursor-pointer",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
               sidebarCollapsed ? "justify-center p-2" : "px-3 py-1.5"
             )}
             onClick={() => setSearchOpen(true)}
@@ -230,7 +231,9 @@ export function MainLayout({ children }: MainLayoutProps) {
           </button>
 
           {/* Navigation — context-aware */}
-          <nav className={cn(
+          <nav
+            aria-label={isProjectRoute ? "Project navigation" : "Sidebar navigation"}
+            className={cn(
             "flex-1 overflow-y-auto",
             sidebarCollapsed ? "p-2 space-y-1" : "p-2"
           )}>
@@ -263,8 +266,10 @@ export function MainLayout({ children }: MainLayoutProps) {
                           key={view.id}
                           type="button"
                           onClick={() => goToView(view.id)}
+                          aria-current={isActive ? "page" : undefined}
                           className={cn(
                             "w-full flex items-center rounded-md text-sm font-medium transition-colors duration-150 relative",
+                            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                             sidebarCollapsed
                               ? "justify-center px-0 py-2.5"
                               : "gap-3 px-3 py-1.5",
@@ -342,8 +347,10 @@ export function MainLayout({ children }: MainLayoutProps) {
                       key={item.name}
                       type="button"
                       onClick={() => void navigate(item.href)}
+                      aria-current={isActive ? "page" : undefined}
                       className={cn(
                         "w-full flex items-center rounded-md text-sm font-medium transition-colors duration-150 relative",
+                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                         sidebarCollapsed
                           ? "justify-center px-0 py-2.5"
                           : "gap-3 px-3 py-2",
@@ -401,6 +408,7 @@ export function MainLayout({ children }: MainLayoutProps) {
                   onClick={() => void navigate(`/projects/${rp.id}`)}
                   className={cn(
                     'w-full flex items-center gap-2 px-3 py-1.5 rounded-md text-xs text-muted-foreground/70 hover:text-foreground hover:bg-muted/50 transition-colors truncate',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
                     location.pathname === `/projects/${rp.id}` &&
                       'bg-muted/60 text-foreground'
                   )}
@@ -444,7 +452,7 @@ export function MainLayout({ children }: MainLayoutProps) {
         </aside>
 
         {/* Main content - vertical split: page content + persistent shell panel */}
-        <div className="flex-1 flex flex-col overflow-hidden bg-gradient-to-br from-background to-muted/10">
+        <div role="main" className="flex-1 flex flex-col overflow-hidden bg-gradient-to-br from-background to-muted/10">
           {/* Top bar: breadcrumbs + notification bell (always visible) */}
           {!isShellRoute && <Breadcrumbs />}
 

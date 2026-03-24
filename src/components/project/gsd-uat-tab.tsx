@@ -14,7 +14,9 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useGsdUatResults } from '@/lib/queries';
+import { ViewError } from '@/components/shared/loading-states';
 import { cn } from '@/lib/utils';
 import type { GsdUatResult, UatTestResult, UatIssue } from '@/lib/tauri';
 
@@ -242,14 +244,23 @@ function PhaseUatDetail({ uat }: { uat: GsdUatResult }) {
 // ── Main component ───────────────────────────────────────────
 
 export function GsdUatTab({ projectId }: GsdUatTabProps) {
-  const { data: uatResults, isLoading } = useGsdUatResults(projectId);
+  const { data: uatResults, isLoading, isError } = useGsdUatResults(projectId);
   const [selectedPhase, setSelectedPhase] = useState<string | null>(null);
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12 text-muted-foreground">
-        Loading UAT results...
+      <div className="space-y-3 py-2">
+        <Skeleton className="h-4 w-2/3" />
+        <Skeleton className="h-8 w-full" />
+        <Skeleton className="h-8 w-full" />
+        <Skeleton className="h-8 w-full" />
       </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <ViewError message="Failed to load UAT results — check that the project path is accessible." />
     );
   }
 

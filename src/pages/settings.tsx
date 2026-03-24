@@ -15,6 +15,7 @@ import { useTheme, Theme } from "@/hooks/use-theme";
 import { Download, Trash2, Settings as SettingsIcon, RotateCcw, Upload, Bug, Terminal, Bell, Database, ScrollText } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { LogsContent } from "./logs";
+import { SkeletonCard } from "@/components/ui/skeleton";
 
 export function SettingsPage() {
   const { data: settings, isLoading } = useSettings();
@@ -55,10 +56,10 @@ export function SettingsPage() {
 
   if (isLoading || !formData) {
     return (
-      <div className="p-8">
-        <div className="text-center py-8 text-muted-foreground">
-          Loading settings...
-        </div>
+      <div className="p-8 max-w-3xl space-y-4">
+        <SkeletonCard />
+        <SkeletonCard />
+        <SkeletonCard />
       </div>
     );
   }

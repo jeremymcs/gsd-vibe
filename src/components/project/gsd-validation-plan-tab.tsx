@@ -18,7 +18,9 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useGsdValidations } from '@/lib/queries';
+import { ViewError } from '@/components/shared/loading-states';
 import type { GsdValidation, TaskVerification, WaveTracking } from '@/lib/tauri';
 
 interface GsdValidationPlanTabProps {
@@ -33,13 +35,13 @@ function testTypeBadge(type: string) {
   const lower = type.toLowerCase();
   if (lower === 'manual') {
     return (
-      <Badge className="bg-purple-500/15 text-purple-400 border-purple-500/30 text-xs">
+      <Badge className="bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/30 text-xs">
         manual
       </Badge>
     );
   }
   return (
-    <Badge className="bg-blue-500/15 text-blue-400 border-blue-500/30 text-xs">
+    <Badge className="bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30 text-xs">
       automated
     </Badge>
   );
@@ -49,14 +51,14 @@ function statusBadge(status: string) {
   const lower = status.toLowerCase();
   if (lower === 'pass' || lower === 'passed') {
     return (
-      <Badge className="bg-green-500/15 text-green-400 border-green-500/30 text-xs">
+      <Badge className="bg-green-500/15 text-green-600 dark:text-green-400 border-green-500/30 text-xs">
         pass
       </Badge>
     );
   }
   if (lower === 'fail' || lower === 'failed') {
     return (
-      <Badge className="bg-red-500/15 text-red-400 border-red-500/30 text-xs">
+      <Badge className="bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/30 text-xs">
         fail
       </Badge>
     );
@@ -73,14 +75,14 @@ function waveStatusBadge(status: string | null) {
   const lower = status.toLowerCase();
   if (lower === 'complete' || lower === 'completed') {
     return (
-      <Badge className="bg-green-500/15 text-green-400 border-green-500/30 text-xs">
+      <Badge className="bg-green-500/15 text-green-600 dark:text-green-400 border-green-500/30 text-xs">
         complete
       </Badge>
     );
   }
   if (lower === 'in_progress' || lower === 'in progress') {
     return (
-      <Badge className="bg-yellow-500/15 text-yellow-400 border-yellow-500/30 text-xs">
+      <Badge className="bg-yellow-500/15 text-yellow-700 dark:text-yellow-400 border-yellow-500/30 text-xs">
         in progress
       </Badge>
     );
@@ -368,14 +370,23 @@ function WaveTrackingSection({ waves }: { waves: WaveTracking[] }) {
 // ============================================================
 
 export function GsdValidationPlanTab({ projectId }: GsdValidationPlanTabProps) {
-  const { data: validations, isLoading } = useGsdValidations(projectId);
+  const { data: validations, isLoading, isError } = useGsdValidations(projectId);
   const [selectedPhase, setSelectedPhase] = useState<string | null>(null);
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12 text-muted-foreground text-sm">
-        Loading validation plans...
+      <div className="space-y-3 py-2">
+        <Skeleton className="h-4 w-2/3" />
+        <Skeleton className="h-8 w-full" />
+        <Skeleton className="h-8 w-full" />
+        <Skeleton className="h-8 w-full" />
       </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <ViewError message="Failed to load validation plans — check that the project path is accessible." />
     );
   }
 

@@ -13,7 +13,47 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import hljs from 'highlight.js';
+import hljs from 'highlight.js/lib/core';
+import javascript from 'highlight.js/lib/languages/javascript';
+import typescript from 'highlight.js/lib/languages/typescript';
+import python from 'highlight.js/lib/languages/python';
+import ruby from 'highlight.js/lib/languages/ruby';
+import go from 'highlight.js/lib/languages/go';
+import rust from 'highlight.js/lib/languages/rust';
+import java from 'highlight.js/lib/languages/java';
+import kotlin from 'highlight.js/lib/languages/kotlin';
+import swift from 'highlight.js/lib/languages/swift';
+import c from 'highlight.js/lib/languages/c';
+import cpp from 'highlight.js/lib/languages/cpp';
+import csharp from 'highlight.js/lib/languages/csharp';
+import php from 'highlight.js/lib/languages/php';
+import lua from 'highlight.js/lib/languages/lua';
+import perl from 'highlight.js/lib/languages/perl';
+import r from 'highlight.js/lib/languages/r';
+import scala from 'highlight.js/lib/languages/scala';
+import dart from 'highlight.js/lib/languages/dart';
+import xml from 'highlight.js/lib/languages/xml';
+import css from 'highlight.js/lib/languages/css';
+import scss from 'highlight.js/lib/languages/scss';
+import less from 'highlight.js/lib/languages/less';
+import json from 'highlight.js/lib/languages/json';
+import yaml from 'highlight.js/lib/languages/yaml';
+import ini from 'highlight.js/lib/languages/ini';
+import markdown from 'highlight.js/lib/languages/markdown';
+import sql from 'highlight.js/lib/languages/sql';
+import bash from 'highlight.js/lib/languages/bash';
+import powershell from 'highlight.js/lib/languages/powershell';
+import dockerfile from 'highlight.js/lib/languages/dockerfile';
+import makefile from 'highlight.js/lib/languages/makefile';
+import gradle from 'highlight.js/lib/languages/gradle';
+import objectivec from 'highlight.js/lib/languages/objectivec';
+import elixir from 'highlight.js/lib/languages/elixir';
+import erlang from 'highlight.js/lib/languages/erlang';
+import haskell from 'highlight.js/lib/languages/haskell';
+import ocaml from 'highlight.js/lib/languages/ocaml';
+import vim from 'highlight.js/lib/languages/vim';
+import graphql from 'highlight.js/lib/languages/graphql';
+import plaintext from 'highlight.js/lib/languages/plaintext';
 import Editor from 'react-simple-code-editor';
 import {
   Folder,
@@ -28,6 +68,47 @@ import {
   Save,
   X,
 } from 'lucide-react';
+
+hljs.registerLanguage('javascript', javascript);
+hljs.registerLanguage('typescript', typescript);
+hljs.registerLanguage('python', python);
+hljs.registerLanguage('ruby', ruby);
+hljs.registerLanguage('go', go);
+hljs.registerLanguage('rust', rust);
+hljs.registerLanguage('java', java);
+hljs.registerLanguage('kotlin', kotlin);
+hljs.registerLanguage('swift', swift);
+hljs.registerLanguage('c', c);
+hljs.registerLanguage('cpp', cpp);
+hljs.registerLanguage('csharp', csharp);
+hljs.registerLanguage('php', php);
+hljs.registerLanguage('lua', lua);
+hljs.registerLanguage('perl', perl);
+hljs.registerLanguage('r', r);
+hljs.registerLanguage('scala', scala);
+hljs.registerLanguage('dart', dart);
+hljs.registerLanguage('xml', xml);
+hljs.registerLanguage('css', css);
+hljs.registerLanguage('scss', scss);
+hljs.registerLanguage('less', less);
+hljs.registerLanguage('json', json);
+hljs.registerLanguage('yaml', yaml);
+hljs.registerLanguage('ini', ini);
+hljs.registerLanguage('markdown', markdown);
+hljs.registerLanguage('sql', sql);
+hljs.registerLanguage('bash', bash);
+hljs.registerLanguage('powershell', powershell);
+hljs.registerLanguage('dockerfile', dockerfile);
+hljs.registerLanguage('makefile', makefile);
+hljs.registerLanguage('gradle', gradle);
+hljs.registerLanguage('objectivec', objectivec);
+hljs.registerLanguage('elixir', elixir);
+hljs.registerLanguage('erlang', erlang);
+hljs.registerLanguage('haskell', haskell);
+hljs.registerLanguage('ocaml', ocaml);
+hljs.registerLanguage('vim', vim);
+hljs.registerLanguage('graphql', graphql);
+hljs.registerLanguage('plaintext', plaintext);
 
 interface FileBrowserProps {
   projectId: string;
@@ -90,8 +171,7 @@ const EXTENSION_TO_LANGUAGE: Record<string, string> = {
   vim: 'vim',
   graphql: 'graphql',
   gql: 'graphql',
-  tf: 'hcl',
-  sol: 'solidity',
+  tf: 'ini',
 };
 
 function detectLanguage(filename: string): string {
@@ -104,7 +184,7 @@ function highlightCode(code: string, language: string): string {
     if (language && hljs.getLanguage(language)) {
       return hljs.highlight(code, { language }).value;
     }
-    return hljs.highlightAuto(code).value;
+    return code;
   } catch {
     return code;
   }

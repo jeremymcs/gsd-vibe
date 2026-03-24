@@ -11,7 +11,9 @@ import {
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useGsdMilestones, useGsdState } from '@/lib/queries';
+import { ViewError } from '@/components/shared/loading-states';
 import { cn } from '@/lib/utils';
 
 interface GsdMilestonesTabProps {
@@ -41,16 +43,25 @@ function milestoneStatusVariant(status: string | null) {
 }
 
 export function GsdMilestonesTab({ projectId }: GsdMilestonesTabProps) {
-  const { data: milestones, isLoading } = useGsdMilestones(projectId);
+  const { data: milestones, isLoading, isError } = useGsdMilestones(projectId);
   const { data: state } = useGsdState(projectId);
 
   const currentMilestone = state?.current_position?.milestone;
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12 text-muted-foreground">
-        Loading milestones...
+      <div className="space-y-3 py-2">
+        <Skeleton className="h-4 w-2/3" />
+        <Skeleton className="h-8 w-full" />
+        <Skeleton className="h-8 w-full" />
+        <Skeleton className="h-8 w-full" />
       </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <ViewError message="Failed to load milestones — check that the project path is accessible." />
     );
   }
 

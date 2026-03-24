@@ -21,10 +21,10 @@ function PriorityBadge({ priority }: { priority: string | null }) {
   if (!priority) return null;
 
   const colors: Record<string, string> = {
-    critical: 'bg-red-500/20 text-red-400 border-red-500/30',
-    blocker: 'bg-red-500/20 text-red-400 border-red-500/30',
-    high: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
-    medium: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
+    critical: 'bg-red-500/20 text-red-600 dark:text-red-400 border-red-500/30',
+    blocker: 'bg-red-500/20 text-red-600 dark:text-red-400 border-red-500/30',
+    high: 'bg-orange-500/20 text-orange-600 dark:text-orange-400 border-orange-500/30',
+    medium: 'bg-yellow-500/20 text-yellow-700 dark:text-yellow-400 border-yellow-500/30',
     normal: 'bg-muted/60 text-muted-foreground border-border/40',
     low: 'bg-muted/30 text-muted-foreground/60 border-border/20',
   };
@@ -60,13 +60,13 @@ function TodoRow({ todo, onComplete, completing, showProject = false }: TodoRowP
       {/* Blocker icon or status toggle */}
       <div className="flex items-center gap-1.5 mt-0.5 flex-shrink-0">
         {todo.is_blocker && !isDone && (
-          <AlertTriangle className="h-3.5 w-3.5 text-red-400 flex-shrink-0" aria-label="Blocker" />
+          <AlertTriangle className="h-3.5 w-3.5 text-red-600 dark:text-red-400 flex-shrink-0" aria-label="Blocker" />
         )}
         <button
           type="button"
           disabled={isDone || completing}
           onClick={() => onComplete(todo.project_id, todo.id)}
-          className="flex-shrink-0 text-muted-foreground hover:text-green-400 disabled:cursor-default disabled:opacity-50 transition-colors"
+          className="flex-shrink-0 text-muted-foreground hover:text-green-600 dark:hover:text-green-400 disabled:cursor-default disabled:opacity-50 transition-colors"
           title={isDone ? 'Completed' : 'Mark as done'}
           aria-label={isDone ? 'Completed' : 'Mark todo as done'}
         >

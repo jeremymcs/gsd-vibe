@@ -835,11 +835,6 @@ impl TerminalManager {
         Ok(exit_code)
     }
 
-    /// List all active session IDs
-    pub fn list_sessions(&self) -> Vec<String> {
-        self.sessions.keys().cloned().collect()
-    }
-
     /// Check if a session is active
     pub fn is_active(&mut self, session_id: &str) -> bool {
         // For tmux sessions, also check tmux itself

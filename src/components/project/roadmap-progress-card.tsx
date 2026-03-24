@@ -5,8 +5,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Map, CheckCircle2, Circle, Loader2 } from 'lucide-react';
+import { Map, CheckCircle2, Circle } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useGsdRoadmapProgress } from '@/lib/queries';
+import { ViewError } from '@/components/shared/loading-states';
 import { cn } from '@/lib/utils';
 import type { GsdRoadmapPhaseProgress } from '@/lib/tauri';
 
@@ -15,7 +17,7 @@ interface RoadmapProgressCardProps {
 }
 
 export function RoadmapProgressCard({ projectId }: RoadmapProgressCardProps) {
-  const { data: roadmap, isLoading } = useGsdRoadmapProgress(projectId);
+  const { data: roadmap, isLoading, isError } = useGsdRoadmapProgress(projectId);
 
   if (isLoading) {
     return (
@@ -26,8 +28,26 @@ export function RoadmapProgressCard({ projectId }: RoadmapProgressCardProps) {
             Roadmap Progress
           </CardTitle>
         </CardHeader>
-        <CardContent className="flex items-center justify-center py-6">
-          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+        <CardContent className="space-y-3 pb-4">
+          <Skeleton className="h-4 w-2/3" />
+          <Skeleton className="h-8 w-full" />
+          <Skeleton className="h-8 w-full" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (isError) {
+    return (
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-sm">
+            <Map className="h-4 w-4 text-gsd-cyan" />
+            Roadmap Progress
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pb-4">
+          <ViewError message="Failed to load roadmap data." />
         </CardContent>
       </Card>
     );

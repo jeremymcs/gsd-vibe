@@ -261,7 +261,7 @@ export function CommandPalette({ onOpenChange }: CommandPaletteProps) {
                   onSelect={handleSelect}
                   className="flex items-center gap-2 px-2 py-1.5 rounded-md text-sm cursor-pointer data-[selected=true]:bg-accent/50"
                 >
-                  <Plus className="h-4 w-4 text-green-400" />
+                  <Plus className="h-4 w-4 text-green-600 dark:text-green-400" />
                   <span>New Project</span>
                   <span className="ml-auto text-[10px] text-muted-foreground/50">{modKey()}+N</span>
                 </Command.Item>
@@ -270,7 +270,7 @@ export function CommandPalette({ onOpenChange }: CommandPaletteProps) {
                   onSelect={handleSelect}
                   className="flex items-center gap-2 px-2 py-1.5 rounded-md text-sm cursor-pointer data-[selected=true]:bg-accent/50"
                 >
-                  <FolderOpen className="h-4 w-4 text-blue-400" />
+                  <FolderOpen className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                   <span>Import Project</span>
                 </Command.Item>
                 <Command.Item
@@ -320,7 +320,7 @@ export function CommandPalette({ onOpenChange }: CommandPaletteProps) {
                     onSelect={handleSelect}
                     className="flex items-center gap-2 px-2 py-1.5 rounded-md text-sm cursor-pointer data-[selected=true]:bg-accent/50"
                   >
-                    <FolderOpen className="h-4 w-4 text-blue-400" />
+                    <FolderOpen className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                     <span className="flex-1 truncate">{project.name}</span>
                     <span className="text-[10px] text-muted-foreground/60 bg-muted rounded px-1.5 py-0.5">
                       {project.status}
@@ -340,7 +340,7 @@ export function CommandPalette({ onOpenChange }: CommandPaletteProps) {
                     onSelect={handleSelect}
                     className="flex items-center gap-2 px-2 py-1.5 rounded-md text-sm cursor-pointer data-[selected=true]:bg-accent/50"
                   >
-                    <Layers className="h-4 w-4 text-purple-400" />
+                    <Layers className="h-4 w-4 text-purple-600 dark:text-purple-400" />
                     <span className="flex-1 truncate">{phase.name}</span>
                     <span className="text-[10px] text-muted-foreground/60 truncate max-w-32">
                       {phase.project_name}
@@ -360,7 +360,7 @@ export function CommandPalette({ onOpenChange }: CommandPaletteProps) {
                     onSelect={handleSelect}
                     className="flex items-center gap-2 px-2 py-1.5 rounded-md text-sm cursor-pointer data-[selected=true]:bg-accent/50"
                   >
-                    <GitBranch className="h-4 w-4 text-green-400" />
+                    <GitBranch className="h-4 w-4 text-green-600 dark:text-green-400" />
                     <span className="flex-1 truncate">{decision.question}</span>
                     <span className="text-[10px] text-muted-foreground/60 truncate max-w-32">
                       {decision.project_name}
@@ -380,7 +380,7 @@ export function CommandPalette({ onOpenChange }: CommandPaletteProps) {
                     onSelect={handleSelect}
                     className="flex items-center gap-2 px-2 py-1.5 rounded-md text-sm cursor-pointer data-[selected=true]:bg-accent/50"
                   >
-                    <BookOpen className="h-4 w-4 text-orange-400" />
+                    <BookOpen className="h-4 w-4 text-orange-600 dark:text-orange-400" />
                     <span className="flex-1 truncate">{item.title}</span>
                     <span className="text-[10px] text-muted-foreground/60 bg-muted rounded px-1.5 py-0.5">
                       {item.category}

@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Select,
   SelectContent,
@@ -21,6 +22,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useGsdDebugSessions } from '@/lib/queries';
+import { ViewError } from '@/components/shared/loading-states';
 import { cn } from '@/lib/utils';
 
 interface GsdDebugTabProps {
@@ -31,7 +33,7 @@ export function GsdDebugTab({ projectId }: GsdDebugTabProps) {
   const [filter, setFilter] = useState<string>('all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  const { data: sessions, isLoading } = useGsdDebugSessions(projectId);
+  const { data: sessions, isLoading, isError } = useGsdDebugSessions(projectId);
 
   const filteredSessions = (sessions ?? []).filter((s) => {
     if (filter === 'all') return true;
@@ -49,9 +51,18 @@ export function GsdDebugTab({ projectId }: GsdDebugTabProps) {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12 text-muted-foreground">
-        Loading debug sessions...
+      <div className="space-y-3 py-2">
+        <Skeleton className="h-4 w-2/3" />
+        <Skeleton className="h-8 w-full" />
+        <Skeleton className="h-8 w-full" />
+        <Skeleton className="h-8 w-full" />
       </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <ViewError message="Failed to load debug sessions — check that the project path is accessible." />
     );
   }
 

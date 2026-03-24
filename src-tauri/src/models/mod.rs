@@ -65,24 +65,6 @@ pub struct ActivityEntry {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Decision {
-    pub id: String,
-    pub project_id: String,
-    pub execution_id: Option<String>,
-    pub phase: Option<String>,
-    pub category: Option<String>,
-    pub question: String,
-    pub answer: String,
-    pub reasoning: Option<String>,
-    pub tags: Option<String>,
-    pub impact_status: Option<String>,
-    pub impact_reason: Option<String>,
-    pub impact_updated_at: Option<String>,
-    pub created_at: String,
-    pub updated_at: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Settings {
     pub theme: String,
     pub start_on_login: bool,

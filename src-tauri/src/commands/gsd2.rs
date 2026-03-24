@@ -206,6 +206,7 @@ pub struct Gsd2State {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[allow(dead_code)]
 pub struct Gsd2RoadmapProgress {
     pub milestones_done: u32,
     pub milestones_total: u32,
@@ -884,6 +885,7 @@ pub fn derive_state_from_dir(project_path: &str) -> Gsd2State {
 }
 
 /// Get roadmap progress counts from a project path (testable helper without DB).
+#[allow(dead_code)]
 pub fn get_roadmap_progress_from_dir(project_path: &str) -> Gsd2RoadmapProgress {
     let state = derive_state_from_dir(project_path);
     Gsd2RoadmapProgress {

@@ -54,6 +54,7 @@ import {
 } from "@/lib/queries";
 import { truncatePath } from "@/lib/utils";
 import { resolveViewFromTab } from "@/lib/project-views";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export function ProjectPage() {
   const { id } = useParams<{ id: string }>();
@@ -137,7 +138,13 @@ export function ProjectPage() {
   if (projectLoading) {
     return (
       <div className="p-8">
-        <div className="text-center py-8 text-muted-foreground">Loading project...</div>
+        <div className="space-y-3">
+          <Skeleton className="h-8 w-1/3" />
+          <Skeleton className="h-4 w-1/2" />
+          <Skeleton className="h-10 w-full mt-4" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+        </div>
       </div>
     );
   }
@@ -181,7 +188,7 @@ export function ProjectPage() {
 
         {/* All other views render conditionally */}
         {activeView !== 'shell' && (
-          <div className="h-full overflow-y-auto p-6">
+          <div key={activeView} className="h-full overflow-y-auto p-6 animate-fade-in">
             <ViewRenderer
               activeView={activeView}
               project={project}

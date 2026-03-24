@@ -308,6 +308,7 @@ export const useImportProjectEnhanced = () => {
     mutationFn: ({ path, autoSyncRoadmap, ptySessionId, skipConversion }: { path: string; autoSyncRoadmap: boolean; ptySessionId?: string; skipConversion?: boolean }) =>
       api.importProjectEnhanced(path, autoSyncRoadmap, ptySessionId, skipConversion),
     onSuccess: () => {
+      toast.success("Project imported");
       void queryClient.invalidateQueries({ queryKey: queryKeys.projects() });
     },
     onError: (error) => {
@@ -334,6 +335,7 @@ export const useCreateProject = () => {
         params.ptySessionId
       ),
     onSuccess: () => {
+      toast.success("Project created");
       void queryClient.invalidateQueries({ queryKey: queryKeys.projects() });
     },
     onError: (error) => {
@@ -363,6 +365,7 @@ export const useUpdateProject = () => {
     mutationFn: ({ id, updates }: { id: string; updates: api.ProjectUpdate }) =>
       api.updateProject(id, updates),
     onSuccess: (project) => {
+      toast.success("Project updated");
       void queryClient.invalidateQueries({ queryKey: queryKeys.projects() });
       void queryClient.invalidateQueries({ queryKey: queryKeys.projectsWithStats() });
       void queryClient.invalidateQueries({ queryKey: queryKeys.project(project.id) });
@@ -378,6 +381,7 @@ export const useDeleteProject = () => {
   return useMutation({
     mutationFn: api.deleteProject,
     onSuccess: () => {
+      toast.success("Project deleted");
       void queryClient.invalidateQueries({ queryKey: queryKeys.projects() });
       void queryClient.invalidateQueries({ queryKey: queryKeys.projectsWithStats() });
     },
@@ -402,6 +406,7 @@ export const useIndexProjectMarkdown = () => {
     mutationFn: ({ projectId, projectPath }: { projectId: string; projectPath: string }) =>
       api.indexProjectMarkdown(projectId, projectPath),
     onSuccess: (_count, variables) => {
+      toast.success("Documentation indexed");
       void queryClient.invalidateQueries({
         queryKey: queryKeys.knowledgeFiles(variables.projectPath),
       });
@@ -440,6 +445,7 @@ export const useDeleteProjectFile = () => {
     mutationFn: ({ projectPath, filePath }: { projectId: string; projectPath: string; filePath: string }) =>
       api.deleteProjectFile(projectPath, filePath),
     onSuccess: (_deleted, variables) => {
+      toast.success("File deleted");
       void queryClient.invalidateQueries({ queryKey: queryKeys.knowledgeFiles(variables.projectPath) });
       void queryClient.invalidateQueries({ queryKey: queryKeys.knowledgeFile(variables.projectId, variables.filePath) });
     },
@@ -461,6 +467,7 @@ export const useUpdateSettings = () => {
   return useMutation({
     mutationFn: api.updateSettings,
     onSuccess: () => {
+      toast.success("Settings saved");
       void queryClient.invalidateQueries({ queryKey: queryKeys.settings() });
     },
     onError: (error) => {
@@ -604,6 +611,7 @@ export const useClearCommandHistory = () => {
   return useMutation({
     mutationFn: (projectId: string) => api.clearCommandHistory(projectId),
     onSuccess: (_, projectId) => {
+      toast.success("Command history cleared");
       void queryClient.invalidateQueries({ queryKey: queryKeys.commandHistory(projectId) });
     },
     onError: (error) => {
@@ -647,6 +655,7 @@ export const useCreateSnippet = () => {
     mutationFn: ({ projectId, input }: { projectId: string | null; input: api.SnippetInput }) =>
       api.createSnippet(projectId, input),
     onSuccess: () => {
+      toast.success("Snippet created");
       void queryClient.invalidateQueries({ queryKey: queryKeys.allSnippets() });
     },
     onError: (error) => {
@@ -661,6 +670,7 @@ export const useUpdateSnippet = () => {
     mutationFn: ({ id, input }: { id: string; input: api.SnippetInput }) =>
       api.updateSnippet(id, input),
     onSuccess: () => {
+      toast.success("Snippet saved");
       void queryClient.invalidateQueries({ queryKey: queryKeys.allSnippets() });
     },
     onError: (error) => {
@@ -674,6 +684,7 @@ export const useDeleteSnippet = () => {
   return useMutation({
     mutationFn: (id: string) => api.deleteSnippet(id),
     onSuccess: () => {
+      toast.success("Snippet deleted");
       void queryClient.invalidateQueries({ queryKey: queryKeys.allSnippets() });
     },
     onError: (error) => {
@@ -703,6 +714,7 @@ export const useCreateAutoCommand = () => {
     mutationFn: ({ projectId, input }: { projectId: string; input: api.AutoCommandInput }) =>
       api.createAutoCommand(projectId, input),
     onSuccess: (cmd) => {
+      toast.success("Auto-command created");
       void queryClient.invalidateQueries({ queryKey: queryKeys.autoCommands(cmd.project_id) });
     },
     onError: (error) => {
@@ -717,6 +729,7 @@ export const useUpdateAutoCommand = () => {
     mutationFn: (vars: { id: string; input: api.AutoCommandInput; projectId: string }) =>
       api.updateAutoCommand(vars.id, vars.input),
     onSuccess: (_, variables) => {
+      toast.success("Auto-command updated");
       void queryClient.invalidateQueries({ queryKey: queryKeys.autoCommands(variables.projectId) });
     },
     onError: (error) => {
@@ -731,6 +744,7 @@ export const useDeleteAutoCommand = () => {
     mutationFn: (vars: { id: string; projectId: string }) =>
       api.deleteAutoCommand(vars.id),
     onSuccess: (_, variables) => {
+      toast.success("Auto-command deleted");
       void queryClient.invalidateQueries({ queryKey: queryKeys.autoCommands(variables.projectId) });
     },
     onError: (error) => {
@@ -744,7 +758,8 @@ export const useToggleAutoCommand = () => {
   return useMutation({
     mutationFn: (vars: { id: string; projectId: string }) =>
       api.toggleAutoCommand(vars.id),
-    onSuccess: (_, variables) => {
+    onSuccess: (result, variables) => {
+      toast.success(`Auto-command ${result.enabled ? "enabled" : "disabled"}`);
       void queryClient.invalidateQueries({ queryKey: queryKeys.autoCommands(variables.projectId) });
     },
     onError: (error) => {
@@ -786,6 +801,7 @@ export const useMarkAllNotificationsRead = () => {
   return useMutation({
     mutationFn: api.markAllNotificationsRead,
     onSuccess: () => {
+      toast.success("All notifications marked read");
       void queryClient.invalidateQueries({ queryKey: queryKeys.allNotifications() });
       void queryClient.invalidateQueries({ queryKey: queryKeys.unreadCount() });
     },
@@ -800,6 +816,7 @@ export const useClearNotifications = () => {
   return useMutation({
     mutationFn: api.clearNotifications,
     onSuccess: () => {
+      toast.success("Notifications cleared");
       void queryClient.invalidateQueries({ queryKey: queryKeys.allNotifications() });
       void queryClient.invalidateQueries({ queryKey: queryKeys.unreadCount() });
     },
@@ -1304,6 +1321,7 @@ export const useGsd2ApplyDoctorFixes = () => {
   return useMutation({
     mutationFn: (projectId: string) => api.gsd2ApplyDoctorFixes(projectId),
     onSuccess: (_data, projectId) => {
+      toast.success("Doctor fixes applied");
       void queryClient.invalidateQueries({ queryKey: queryKeys.gsd2DoctorReport(projectId) });
     },
     onError: (error) => {

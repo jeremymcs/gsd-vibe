@@ -54,7 +54,6 @@ export default defineConfig({
             'react-markdown',
             'remark-gfm',
             'rehype-highlight',
-            'highlight.js',
           ],
           'vendor-dnd': [
             '@dnd-kit/core',

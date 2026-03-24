@@ -7,6 +7,7 @@ import { Settings2, Plus, Trash2, Pencil, X, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import {
   useAutoCommands,
@@ -15,6 +16,7 @@ import {
   useAutoCommandPresets,
   useCreateAutoCommand,
 } from '@/lib/queries';
+import { ViewError } from '@/components/shared/loading-states';
 import type { AutoCommand } from '@/lib/tauri';
 import { AutoCommandDialog } from './auto-command-dialog';
 
@@ -80,7 +82,7 @@ function CommandRow({
 }
 
 export function AutoCommandsPanel({ projectId, onClose }: AutoCommandsPanelProps) {
-  const { data: commands, isLoading } = useAutoCommands(projectId);
+  const { data: commands, isLoading, isError } = useAutoCommands(projectId);
   const { data: presets } = useAutoCommandPresets();
   const createAutoCommand = useCreateAutoCommand();
 
@@ -197,9 +199,13 @@ export function AutoCommandsPanel({ projectId, onClose }: AutoCommandsPanelProps
       {/* Content */}
       <div className="flex-1 overflow-y-auto py-1">
         {isLoading ? (
-          <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
-            Loading...
+          <div className="p-3 space-y-2">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full" />
           </div>
+        ) : isError ? (
+          <ViewError message="Failed to load auto-commands." className="m-2" />
         ) : (
           <>
             {renderSection('Pre-Execution', 'pre_execution', preExecution)}

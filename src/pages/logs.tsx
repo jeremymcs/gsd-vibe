@@ -32,9 +32,9 @@ const LEVEL_COLORS: Record<string, string> = {
 };
 
 const LEVEL_STAT_COLORS: Record<string, string> = {
-  error: "bg-red-500/10 text-red-600",
-  warn: "bg-amber-500/10 text-amber-600",
-  info: "bg-blue-500/10 text-blue-600",
+  error: "bg-red-500/10 text-red-600 dark:text-red-500",
+  warn: "bg-amber-500/10 text-amber-600 dark:text-amber-500",
+  info: "bg-blue-500/10 text-blue-600 dark:text-blue-500",
   debug: "bg-muted text-muted-foreground",
   trace: "bg-muted text-muted-foreground",
 };
@@ -394,7 +394,7 @@ export function LogsContent() {
                 className="gap-2"
               >
                 <Radio
-                  className={`h-3 w-3 ${liveMode ? "text-green-400 animate-pulse" : ""}`}
+                  className={`h-3 w-3 ${liveMode ? "text-green-600 dark:text-green-400 animate-pulse" : ""}`}
                 />
                 Live
               </Button>

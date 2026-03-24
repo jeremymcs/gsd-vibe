@@ -3,9 +3,11 @@
 
 import { Bookmark, Trash2, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { formatRelativeTime } from '@/lib/utils';
 import { useKnowledgeBookmarks, useDeleteKnowledgeBookmark } from '@/lib/queries';
+import { ViewError } from '@/components/shared/loading-states';
 import type { KnowledgeBookmark } from '@/lib/tauri';
 
 interface KnowledgeBookmarksProps {
@@ -60,7 +62,7 @@ function BookmarkEntry({
 }
 
 export function KnowledgeBookmarks({ projectId, onNavigate }: KnowledgeBookmarksProps) {
-  const { data: bookmarks, isLoading } = useKnowledgeBookmarks(projectId);
+  const { data: bookmarks, isLoading, isError } = useKnowledgeBookmarks(projectId);
   const deleteBookmark = useDeleteKnowledgeBookmark();
 
   return (
@@ -75,7 +77,13 @@ export function KnowledgeBookmarks({ projectId, onNavigate }: KnowledgeBookmarks
 
       <div className="flex-1 overflow-y-auto py-1">
         {isLoading ? (
-          <div className="p-4 text-center text-xs text-muted-foreground">Loading...</div>
+          <div className="p-3 space-y-2">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full" />
+          </div>
+        ) : isError ? (
+          <ViewError message="Failed to load bookmarks." className="m-2 text-xs" />
         ) : !bookmarks || bookmarks.length === 0 ? (
           <div className="p-4 text-center">
             <Bookmark className="h-6 w-6 text-muted-foreground/50 mx-auto mb-1" />

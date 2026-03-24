@@ -52,7 +52,7 @@ function getSystemTheme(): "light" | "dark" {
 function getInitialTheme(): Theme {
   if (typeof window === "undefined") return "dark";
   const stored = localStorage.getItem(THEME_KEY);
-  if (stored === "dark" || stored === "system") {
+  if (stored === "dark" || stored === "system" || stored === "light") {
     return stored;
   }
   return "dark";
@@ -191,7 +191,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
       .then((settings) => {
         if (settings.theme && settings.theme !== theme) {
           const validTheme = settings.theme as Theme;
-          if (validTheme === "dark" || validTheme === "system") {
+          if (validTheme === "dark" || validTheme === "system" || validTheme === "light") {
             setThemeState(validTheme);
           }
         }

@@ -39,6 +39,49 @@
     --status-pending: 220 12% 58%;
     --status-blocked: 30 95% 58%;
     --status-paused: 45 100% 58%;
+
+    /* Terminal Colors */
+    --terminal-bg: 0 0% 4%;
+    --terminal-fg: 0 0% 95%;
+  }
+
+  .light {
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+    --primary: 189 94% 35%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 189 94% 35%;
+    --radius: 0.5rem;
+
+    /* GSD VibeFlow Brand Color - darker for white background contrast (~7:1) */
+    --gsd-cyan: 189 94% 35%;
+
+    /* Status Colors - Semantic (Light - shifted to 36-50% lightness for white bg) */
+    --status-success: 142 76% 36%;
+    --status-warning: 38 95% 38%;
+    --status-error: 0 84% 50%;
+    --status-info: 217 91% 50%;
+    --status-pending: 220 12% 40%;
+    --status-blocked: 30 95% 42%;
+    --status-paused: 45 100% 38%;
+
+    /* Terminal Colors */
+    --terminal-bg: 240 5.9% 96%;
+    --terminal-fg: 240 10% 3.9%;
   }
 }
 
@@ -122,6 +165,33 @@
 
 .animate-fade-in {
   animation: fade-in 0.3s ease-out;
+}
+
+/* Shimmer animation for skeleton loading states */
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--muted)) 25%,
+    hsl(var(--muted-foreground) / 0.1) 50%,
+    hsl(var(--muted)) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* Stagger-in animation for list/grid entrance */
+@keyframes stagger-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.animate-stagger-in {
+  animation: stagger-in 0.4s ease-out both;
 }
 
 /* Gradient text utility */
@@ -215,8 +285,11 @@
 
   .animate-spin,
   .animate-pulse,
-  .animate-fade-in {
+  .animate-fade-in,
+  .animate-shimmer,
+  .animate-stagger-in {
     animation: none !important;
+    opacity: 1;
   }
 }
 

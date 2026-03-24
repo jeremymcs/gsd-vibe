@@ -28,7 +28,7 @@ const cardVariants = cva(
           "border-2 border-gsd-cyan/30 bg-terminal-bg shadow-lg shadow-gsd-cyan/10",
       },
       interactive: {
-        true: "cursor-pointer hover:scale-[1.01] active:scale-[0.99]",
+        true: "cursor-pointer hover:scale-[1.01] hover:-translate-y-0.5 hover:shadow-xl active:scale-[0.99]",
         false: "",
       },
     },

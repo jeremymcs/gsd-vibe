@@ -13,7 +13,7 @@ function Skeleton({ className, ...props }: SkeletonProps) {
   return (
     <div
       className={cn(
-        "animate-pulse rounded-md bg-muted",
+        "rounded-md animate-shimmer",
         className
       )}
       {...props}

@@ -223,3 +223,47 @@ describe("MainLayout - Collapsible Sidebar", () => {
     expect(screen.getByText("Test Content")).toBeInTheDocument();
   });
 });
+
+describe("MainLayout - Accessibility", () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  it("has a main content region", () => {
+    render(
+      <MainLayout>
+        <div>Content</div>
+      </MainLayout>
+    );
+
+    expect(screen.getByRole("main")).toBeInTheDocument();
+  });
+
+  it("has a named navigation landmark", () => {
+    render(
+      <MainLayout>
+        <div>Content</div>
+      </MainLayout>
+    );
+
+    expect(
+      screen.getByRole("navigation", { name: "Sidebar navigation" })
+    ).toBeInTheDocument();
+  });
+
+  it("marks active nav item with aria-current=page", () => {
+    render(
+      <MainLayout>
+        <div>Content</div>
+      </MainLayout>
+    );
+
+    // On the default "/" route, Home should be the active nav item
+    const homeButton = screen.getByRole("button", { name: "Home" });
+    expect(homeButton).toHaveAttribute("aria-current", "page");
+
+    // A non-active item should NOT have aria-current
+    const settingsButton = screen.getByRole("button", { name: "Settings" });
+    expect(settingsButton).not.toHaveAttribute("aria-current");
+  });
+});

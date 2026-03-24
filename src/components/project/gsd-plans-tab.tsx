@@ -19,7 +19,9 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useGsdPlans, useGsdSummaries, useGsdPhaseResearchList } from '@/lib/queries';
+import { ViewError } from '@/components/shared/loading-states';
 import { cn } from '@/lib/utils';
 import type { GsdPlan, GsdSummary, GsdPhaseResearch, GsdSummaryDecision } from '@/lib/tauri';
 
@@ -28,15 +30,24 @@ interface GsdPlansTabProps {
 }
 
 export function GsdPlansTab({ projectId }: GsdPlansTabProps) {
-  const { data: plans, isLoading: plansLoading } = useGsdPlans(projectId);
+  const { data: plans, isLoading: plansLoading, isError: plansError } = useGsdPlans(projectId);
   const { data: summaries } = useGsdSummaries(projectId);
   const { data: researchDocs } = useGsdPhaseResearchList(projectId);
 
   if (plansLoading) {
     return (
-      <div className="flex items-center justify-center py-12 text-muted-foreground">
-        Loading plans...
+      <div className="space-y-3 py-2">
+        <Skeleton className="h-4 w-2/3" />
+        <Skeleton className="h-8 w-full" />
+        <Skeleton className="h-8 w-full" />
+        <Skeleton className="h-8 w-full" />
       </div>
+    );
+  }
+
+  if (plansError) {
+    return (
+      <ViewError message="Failed to load plans — check that the project path is accessible." />
     );
   }
 

@@ -84,11 +84,11 @@ function KnowEmpty({ message }: { message: string }) {
 function knowledgeTypeBadgeClass(type: string): string {
   switch (type) {
     case "rule":
-      return "border-blue-500/30 bg-blue-500/10 text-blue-400";
+      return "border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-400";
     case "pattern":
-      return "border-purple-500/30 bg-purple-500/10 text-purple-400";
+      return "border-purple-500/30 bg-purple-500/10 text-purple-600 dark:text-purple-400";
     case "lesson":
-      return "border-amber-500/30 bg-amber-500/10 text-amber-400";
+      return "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400";
     default:
       return "border-border/40 bg-card/50 text-foreground/70";
   }
@@ -178,13 +178,13 @@ const CLASSIFICATIONS = [
 function classificationBadgeClass(classification: string): string {
   switch (classification) {
     case "quick-task":
-      return "border-green-500/30 bg-green-500/10 text-green-400";
+      return "border-green-500/30 bg-green-500/10 text-green-600 dark:text-green-400";
     case "inject":
-      return "border-blue-500/30 bg-blue-500/10 text-blue-400";
+      return "border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-400";
     case "defer":
-      return "border-amber-500/30 bg-amber-500/10 text-amber-400";
+      return "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400";
     case "replan":
-      return "border-red-500/30 bg-red-500/10 text-red-400";
+      return "border-red-500/30 bg-red-500/10 text-red-600 dark:text-red-400";
     case "note":
       return "border-border/40 bg-card/50 text-foreground/70";
     default:
@@ -219,8 +219,8 @@ function CaptureEntryRow({
           className={cn(
             "text-[10px] px-1.5 py-0",
             entry.status === "pending"
-              ? "border-yellow-500/30 bg-yellow-500/10 text-yellow-400"
-              : "border-green-500/30 bg-green-500/10 text-green-400"
+              ? "border-yellow-500/30 bg-yellow-500/10 text-yellow-700 dark:text-yellow-400"
+              : "border-green-500/30 bg-green-500/10 text-green-600 dark:text-green-400"
           )}
           data-testid={`capture-status-badge-${entry.id}`}
         >
@@ -285,7 +285,7 @@ function CapturesTabContent({ projectId }: { projectId: string }) {
           data && data.pending_count > 0 ? (
             <Badge
               variant="outline"
-              className="text-[10px] px-1.5 py-0 border-yellow-500/30 bg-yellow-500/10 text-yellow-400"
+              className="text-[10px] px-1.5 py-0 border-yellow-500/30 bg-yellow-500/10 text-yellow-700 dark:text-yellow-400"
               data-testid="pending-count-badge"
             >
               {data.pending_count} pending

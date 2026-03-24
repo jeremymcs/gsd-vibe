@@ -216,12 +216,17 @@ export function Dashboard() {
             {/* Grid view */}
             {viewMode === 'grid' && filteredProjects.length > 0 && (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                {filteredProjects.map((project) => (
-                  <ProjectCard
+                {filteredProjects.map((project, index) => (
+                  <div
                     key={project.id}
-                    project={project}
-                    gitInfo={gitMap.get(project.id) ?? null}
-                  />
+                    className="animate-stagger-in"
+                    style={{ animationDelay: `${Math.min(index * 50, 1000)}ms` }}
+                  >
+                    <ProjectCard
+                      project={project}
+                      gitInfo={gitMap.get(project.id) ?? null}
+                    />
+                  </div>
                 ))}
               </div>
             )}
@@ -229,12 +234,17 @@ export function Dashboard() {
             {/* List view */}
             {viewMode === 'list' && filteredProjects.length > 0 && (
               <div className="flex flex-col gap-1">
-                {filteredProjects.map((project) => (
-                  <ProjectRow
+                {filteredProjects.map((project, index) => (
+                  <div
                     key={project.id}
-                    project={project}
-                    gitInfo={gitMap.get(project.id) ?? null}
-                  />
+                    className="animate-stagger-in"
+                    style={{ animationDelay: `${Math.min(index * 50, 1000)}ms` }}
+                  >
+                    <ProjectRow
+                      project={project}
+                      gitInfo={gitMap.get(project.id) ?? null}
+                    />
+                  </div>
                 ))}
               </div>
             )}

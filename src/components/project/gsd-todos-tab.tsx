@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Select,
   SelectContent,
@@ -38,6 +39,7 @@ import {
   useGsdCompleteTodo,
   useGsdDeleteTodo,
 } from '@/lib/queries';
+import { ViewError } from '@/components/shared/loading-states';
 import { cn } from '@/lib/utils';
 import type { GsdTodo } from '@/lib/tauri';
 
@@ -80,7 +82,7 @@ export function GsdTodosTab({ projectId }: GsdTodosTabProps) {
   const [newPhase, setNewPhase] = useState('');
   const [newIsBlocker, setNewIsBlocker] = useState(false);
 
-  const { data: todos, isLoading } = useGsdTodos(projectId);
+  const { data: todos, isLoading, isError } = useGsdTodos(projectId);
   const createTodo = useGsdCreateTodo();
   const completeTodo = useGsdCompleteTodo();
   const deleteTodo = useGsdDeleteTodo();
@@ -150,9 +152,18 @@ export function GsdTodosTab({ projectId }: GsdTodosTabProps) {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12 text-muted-foreground">
-        Loading todos...
+      <div className="space-y-3 py-2">
+        <Skeleton className="h-4 w-2/3" />
+        <Skeleton className="h-8 w-full" />
+        <Skeleton className="h-8 w-full" />
+        <Skeleton className="h-8 w-full" />
       </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <ViewError message="Failed to load todos — check that the project path is accessible." />
     );
   }
 

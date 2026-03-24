@@ -3,7 +3,7 @@
 
 import { createContext, useContext } from "react";
 
-export type Theme = "dark" | "system";
+export type Theme = "dark" | "system" | "light";
 export type AccentColor = "default";
 export type UiDensity = "compact" | "normal" | "spacious";
 export type FontScale = "sm" | "md" | "lg";

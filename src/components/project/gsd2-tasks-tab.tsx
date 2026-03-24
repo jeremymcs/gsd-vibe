@@ -22,7 +22,7 @@ function StatusIcon({ status }: { status: string }) {
     return <span className="text-status-success">✔</span>;
   }
   if (status === 'active') {
-    return <span className="text-yellow-500 animate-pulse">▶</span>;
+    return <span className="text-yellow-600 dark:text-yellow-500 animate-pulse">▶</span>;
   }
   return <span className="text-muted-foreground">○</span>;
 }

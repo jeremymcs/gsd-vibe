@@ -14,7 +14,9 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useGsdValidations } from '@/lib/queries';
+import { ViewError } from '@/components/shared/loading-states';
 import type { GsdValidation } from '@/lib/tauri';
 
 interface GsdVerificationTabProps {
@@ -66,13 +68,22 @@ function deriveResult(validation: GsdValidation): string | null {
 
 export function GsdVerificationTab({ projectId }: GsdVerificationTabProps) {
   const [expandedPhase, setExpandedPhase] = useState<string | null>(null);
-  const { data: validations, isLoading } = useGsdValidations(projectId);
+  const { data: validations, isLoading, isError } = useGsdValidations(projectId);
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12 text-muted-foreground">
-        Loading verifications...
+      <div className="space-y-3 py-2">
+        <Skeleton className="h-4 w-2/3" />
+        <Skeleton className="h-8 w-full" />
+        <Skeleton className="h-8 w-full" />
+        <Skeleton className="h-8 w-full" />
       </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <ViewError message="Failed to load verifications — check that the project path is accessible." />
     );
   }
 
