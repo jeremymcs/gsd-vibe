@@ -98,7 +98,7 @@ export function KnowledgeSearch({ projectPath, onNavigate }: KnowledgeSearchProp
       </div>
 
       {showResults && debouncedQuery.length >= 2 && (
-        <div className="absolute z-50 mt-1 w-full max-h-80 overflow-auto bg-background border rounded-lg shadow-lg">
+        <div className="absolute z-50 mt-1 w-full max-h-80 overflow-auto bg-background border rounded-lg">
           {isLoading ? (
             <div className="px-4 py-3 text-sm text-muted-foreground">Searching...</div>
           ) : groupedResults.size === 0 ? (

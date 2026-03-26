@@ -41,7 +41,7 @@ export function BulkProjectBar({
 
   return (
     <>
-      <div className="sticky top-0 z-10 mb-4 flex items-center justify-between gap-4 rounded-lg border bg-gradient-to-r from-gsd-cyan/10 to-gsd-cyan/5 backdrop-blur-sm p-4 shadow-md">
+      <div className="sticky top-0 z-10 mb-4 flex items-center justify-between gap-4 rounded-lg border bg-muted/80 p-4">
         <div className="flex items-center gap-3">
           <span className="text-sm font-medium">
             {selectedCount} project{selectedCount !== 1 ? 's' : ''} selected

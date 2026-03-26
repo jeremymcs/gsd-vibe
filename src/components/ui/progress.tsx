@@ -13,7 +13,6 @@ const progressVariants = cva(
     variants: {
       variant: {
         default: "bg-primary/20",
-        brand: "bg-gsd-cyan/20",
         success: "bg-status-success/20",
         warning: "bg-status-warning/20",
         error: "bg-status-error/20",
@@ -38,7 +37,6 @@ const indicatorVariants = cva(
     variants: {
       variant: {
         default: "bg-primary",
-        brand: "bg-gsd-cyan bg-size-200 shadow-lg shadow-gsd-cyan/50",
         success: "bg-status-success",
         warning: "bg-status-warning",
         error: "bg-status-error",
@@ -67,10 +65,7 @@ const Progress = React.forwardRef<
   >
     <ProgressPrimitive.Indicator
       className={cn(indicatorVariants({ variant }), indicatorClassName)}
-      style={{
-        transform: `translateX(-${100 - (value || 0)}%)`,
-        backgroundPosition: `${(value || 0)}% 0`,
-      }}
+      style={{ transform: `translateX(-${100 - (value || 0)}%)` }}
     />
   </ProgressPrimitive.Root>
 ));

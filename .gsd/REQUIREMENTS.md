@@ -4,180 +4,360 @@ This file is the explicit capability and coverage contract for the project.
 
 ## Active
 
-### R043 — Every view with a list or data grid must show a meaningful empty state (icon + contextual message explaining what to do) when there is no data; not "No items found" — something specific to the view
+### R043 — Every view with a list or data grid shows meaningful empty state
 - Class: quality-attribute
 - Status: active
-- Description: Every view with a list or data grid must show a meaningful empty state (icon + contextual message explaining what to do) when there is no data; not "No items found" — something specific to the view
-- Why it matters: Empty project views look broken; dashboard EmptyState is the quality bar to match
+- Description: Every view with a list or data grid shows meaningful empty state
+- Why it matters: Empty views look broken without contextual messages
 - Source: user
 - Primary owning slice: M005/S02
 - Supporting slices: none
 - Validation: unmapped
-- Notes: S02 created the ViewEmpty primitive and preserved existing empty states, but did not update them to use the new component; this requirement remains active for future work to upgrade all empty states to ViewEmpty with contextual messages
+- Notes: Carried forward from M005 — still active
 
+### R060 — Replace the current pure-black dark / cool-gray light palette with warm neutral grays. Dark bg ~#1a1a1a (off-black, slight warmth), light bg pure white. Card/popover/muted surfaces use barely-perceptible tonal shifts from the base. All 30+ CSS custom properties updated in both .dark and .light blocks.
+- Class: core-capability
+- Status: active
+- Description: Replace the current pure-black dark / cool-gray light palette with warm neutral grays. Dark bg ~#1a1a1a (off-black, slight warmth), light bg pure white. Card/popover/muted surfaces use barely-perceptible tonal shifts from the base. All 30+ CSS custom properties updated in both .dark and .light blocks.
+- Why it matters: The color foundation drives the entire visual feel — warm neutrals read as calm and professional vs. the current cold/neon aesthetic
+- Source: user
+- Primary owning slice: M007/S01
+- Supporting slices: none
+- Validation: unmapped
+- Notes: Values need visual verification — warm grays can look muddy if hue/chroma isn't right
 
+### R062 — Single card variant with thin 1px border, flat background, zero box-shadow. Delete elevated, glass, highlight, success, warning, danger, and terminal card variants. Status communicated through content (text color, badges), not container chrome. Popovers/dropdowns differentiated by border only.
+- Class: core-capability
+- Status: active
+- Description: Single card variant with thin 1px border, flat background, zero box-shadow. Delete elevated, glass, highlight, success, warning, danger, and terminal card variants. Status communicated through content (text color, badges), not container chrome. Popovers/dropdowns differentiated by border only.
+- Why it matters: 8 card variants create visual noise and inconsistency. Linear uses one card style — status lives in the content, not the frame.
+- Source: user
+- Primary owning slice: M007/S02
+- Supporting slices: none
+- Validation: unmapped
+- Notes: Components currently using variant="elevated" or variant="terminal" will need migration to default
+
+### R063 — Button (no shadows, no active:scale, no premium gradient), Input (no backdrop-blur, no shadow, no glow focus), Badge (simplified variants, no shadow), Dialog/Popover/Select/DropdownMenu (no shadow-lg), Skeleton (keep shimmer), Progress (flat), Switch/Checkbox/Tabs — all updated to 6px radius, flat style, restrained accent.
+- Class: core-capability
+- Status: active
+- Description: Button (no shadows, no active:scale, no premium gradient), Input (no backdrop-blur, no shadow, no glow focus), Badge (simplified variants, no shadow), Dialog/Popover/Select/DropdownMenu (no shadow-lg), Skeleton (keep shimmer), Progress (flat), Switch/Checkbox/Tabs — all updated to 6px radius, flat style, restrained accent.
+- Why it matters: UI primitives are the atomic building blocks — if they carry shadows and glows, every composed component inherits the noise
+- Source: user
+- Primary owning slice: M007/S02
+- Supporting slices: none
+- Validation: unmapped
+- Notes: 18 files in src/components/ui/
+
+### R064 — Sidebar items are text-only with near-invisible hover (color shift, no bg change). Active item indicated by thin left-edge bar and text color only — no bg-muted/80, no nav-item-active glow, no box-shadow. Sidebar background is a subtle surface shift from main content, not a gradient.
+- Class: core-capability
+- Status: active
+- Description: Sidebar items are text-only with near-invisible hover (color shift, no bg change). Active item indicated by thin left-edge bar and text color only — no bg-muted/80, no nav-item-active glow, no box-shadow. Sidebar background is a subtle surface shift from main content, not a gradient.
+- Why it matters: The sidebar is the most-seen UI surface — its glow effects and busy hover states are the first thing that reads as "not Linear"
+- Source: user
+- Primary owning slice: M007/S03
+- Supporting slices: none
+- Validation: unmapped
+- Notes: 9 gsd-cyan references in main-layout.tsx currently
+
+### R065 — Breadcrumbs use plain text with subtle separators. Page headers are clean typography, no icon tinting. Shell panel toggle is minimal — no gradient, no glow border, no animated indicator line.
+- Class: quality-attribute
+- Status: active
+- Description: Breadcrumbs use plain text with subtle separators. Page headers are clean typography, no icon tinting. Shell panel toggle is minimal — no gradient, no glow border, no animated indicator line.
+- Why it matters: These structural elements appear on every page — decorative styling on them adds cumulative visual noise
+- Source: user
+- Primary owning slice: M007/S03
+- Supporting slices: none
+- Validation: unmapped
+- Notes: breadcrumbs.tsx, page-header.tsx, shell toggle in main-layout.tsx
+
+### R067 — Status color classes in design-tokens.ts updated to reference new token values. Project type badges simplified — no gsd-cyan tinting. systemGroupConfig updated.
+- Class: quality-attribute
+- Status: active
+- Description: Status color classes in design-tokens.ts updated to reference new token values. Project type badges simplified — no gsd-cyan tinting. systemGroupConfig updated.
+- Why it matters: design-tokens.ts is the TypeScript-side of the design system — 38 component files use status color classes from here
+- Source: user
+- Primary owning slice: M007/S04
+- Supporting slices: none
+- Validation: unmapped
+- Notes: statusColors, projectTypeConfig, systemGroupConfig all need updates
+
+### R070 — Dark and light modes both render correctly across all major views — dashboard, project overview, GSD health, visualizer, shell, settings. No invisible text, no broken contrast, no unreadable status colors. Visual spot-check of at least 6 views in each theme.
+- Class: quality-attribute
+- Status: active
+- Description: Dark and light modes both render correctly across all major views — dashboard, project overview, GSD health, visualizer, shell, settings. No invisible text, no broken contrast, no unreadable status colors. Visual spot-check of at least 6 views in each theme.
+- Why it matters: The last redesign (M005 light theme) had contrast issues that required calibration — both themes need concurrent verification
+- Source: user
+- Primary owning slice: M007/S06
+- Supporting slices: none
+- Validation: unmapped
+- Notes: Key risk area: status colors on warm gray backgrounds in both themes
+
+### R071 — pnpm build exits 0 with no TypeScript errors. pnpm test passes all 146+ existing tests. No new test failures introduced by visual changes.
+- Class: operability
+- Status: active
+- Description: pnpm build exits 0 with no TypeScript errors. pnpm test passes all 146+ existing tests. No new test failures introduced by visual changes.
+- Why it matters: A visual redesign that breaks compilation or tests is not shippable
+- Source: inferred
+- Primary owning slice: M007/S06
+- Supporting slices: none
+- Validation: unmapped
+- Notes: Tests should be stable since changes are CSS/class-name only — but badge variant renames could affect test assertions
 
 ## Validated
 
 ### R001 — Untitled
 - Status: validated
 
-### R040 — Define `:root` light theme CSS variables for all tokens (background, foreground, card, muted, border, input, ring, primary, secondary, destructive, accent, popover, status colors, terminal colors, gsd-cyan) so the app renders correctly when `.light` class is applied
+### R040 — Define light theme CSS variables for all tokens
 - Class: core-capability
 - Status: validated
-- Description: Define `:root` light theme CSS variables for all tokens (background, foreground, card, muted, border, input, ring, primary, secondary, destructive, accent, popover, status colors, terminal colors, gsd-cyan) so the app renders correctly when `.light` class is applied
-- Why it matters: The app has a theme toggle (dark / system) but no light variables — system mode on a light-preference OS produces invisible text and broken colors
+- Description: Define light theme CSS variables for all tokens
+- Why it matters: App renders correctly in light mode
 - Source: user
 - Primary owning slice: M005/S01
 - Supporting slices: none
-- Validation: S01/T01 added complete .light {} CSS variable block with 32 tokens to globals.css (background, foreground, card, muted, border, input, ring, primary, secondary, destructive, accent, popover, status colors, terminal-bg/fg, gsd-cyan). Verified by grep-c '--' returning 78 (+32), terminal-bg present in both .dark and .light blocks, pnpm build exit 0.
-- Notes: All 30+ views must render with proper contrast in light mode; status colors need recalibration for light backgrounds
+- Validation: validated
+- Notes: Will be superseded by M007/S01 new token values
 
-### R041 — Every view that fetches data must show a skeleton loading state (not bare "Loading..." text) while data is in flight; skeletons should approximate the shape of the loaded content
+### R041 — Every data-fetching view shows skeleton loading state
 - Class: quality-attribute
 - Status: validated
-- Description: Every view that fetches data must show a skeleton loading state (not bare "Loading..." text) while data is in flight; skeletons should approximate the shape of the loaded content
-- Why it matters: ~20 components currently show plain text or nothing during loading; inconsistent loading states feel unfinished
+- Description: Every data-fetching view shows skeleton loading state
+- Why it matters: Consistent loading UX
 - Source: user
 - Primary owning slice: M005/S02
 - Supporting slices: none
-- Validation: S02 created ViewSkeleton primitive in src/components/shared/loading-states.tsx and updated all 12 data-fetching views to use skeleton shapes (7 GSD tabs, knowledge-bookmarks, auto-commands-panel, settings, project, roadmap-progress-card). Verified via rg showing 0 bare "Loading..." text in production components and pnpm test passing 143/143 tests.
-- Notes: Components already using Skeleton can serve as the pattern; goal is coverage across all views
+- Validation: validated
+- Notes: Skeleton shapes preserved in M007; shimmer animation stays
 
-### R042 — Every view that fetches data must show a styled error card (icon + message + optional retry) when the query or command fails; no unhandled silent failures
+### R042 — Every data-fetching view shows styled error card on failure
 - Class: quality-attribute
 - Status: validated
-- Description: Every view that fetches data must show a styled error card (icon + message + optional retry) when the query or command fails; no unhandled silent failures
-- Why it matters: Some views currently have no error handling; users see blank panels with no explanation when data fails to load
+- Description: Every data-fetching view shows styled error card on failure
+- Why it matters: No silent failures
 - Source: inferred
 - Primary owning slice: M005/S02
 - Supporting slices: none
-- Validation: S02 created ViewError primitive with AlertCircle icon and text-status-error color, then added isError handling to all 12 data-fetching views. Verified via grep showing all 7 GSD tabs contain 'isError' and pnpm build exit 0 with zero TypeScript errors.
-- Notes: Gsd2HealthTab is the reference implementation for error state handling
+- Validation: validated
+- Notes: ViewError component preserved in M007
 
-### R044 — Every mutation that a user triggers (delete, save, sync, archive, toggle, import, export, etc.) must show a toast on success and a toast on failure; no silent mutations
+### R044 — Every user-triggered mutation shows success/failure toast
 - Class: quality-attribute
 - Status: validated
-- Description: Every mutation that a user triggers (delete, save, sync, archive, toggle, import, export, etc.) must show a toast on success and a toast on failure; no silent mutations
-- Why it matters: Users currently have no feedback when many actions complete or fail — the app feels unresponsive
+- Description: Every user-triggered mutation shows success/failure toast
+- Why it matters: No silent mutations
 - Source: inferred
 - Primary owning slice: M005/S03
 - Supporting slices: none
-- Validation: rg 'toast.success' src/lib/queries.ts | wc -l returns 36 (18 new + 18 pre-existing). All 18 user-facing mutations named in the plan have contextual messages. pnpm build exits 0, 143 tests pass. M005/S03/T01.
-- Notes: Sonner toaster is already wired in App.tsx; pattern is to add onSuccess/onError callbacks to existing useMutation calls
+- Validation: validated
+- Notes: Toast styling may need minor adjustment for new palette
 
-### R045 — Add view crossfade transition on nav-rail navigation, skeleton shimmer animation, hover lift effect on cards (translateY + shadow), list item stagger on mount, smooth panel expand/collapse; all via CSS only (no animation library)
+### R045 — View crossfade, shimmer skeleton, hover lift, stagger-in
 - Class: quality-attribute
 - Status: validated
-- Description: Add view crossfade transition on nav-rail navigation, skeleton shimmer animation, hover lift effect on cards (translateY + shadow), list item stagger on mount, smooth panel expand/collapse; all via CSS only (no animation library)
-- Why it matters: The app currently has only fade-in and transition-colors; it feels static compared to a polished desktop app
+- Description: View crossfade, shimmer skeleton, hover lift, stagger-in
+- Why it matters: App feels polished
 - Source: user
 - Primary owning slice: M005/S03
-- Supporting slices: M005/S01
-- Validation: All 4 animation systems delivered: shimmer skeleton (animate-shimmer replacing animate-pulse), stagger-in list entrance (dashboard cards), card hover lift (hover:-translate-y-0.5 hover:shadow-xl), view crossfade (key={activeView} + animate-fade-in). All CSS-only, all covered by prefers-reduced-motion. pnpm build exits 0, 143 tests pass. M005/S03/T02.
-- Notes: Respect prefers-reduced-motion; the CSS hook for this is already in globals.css
+- Supporting slices: none
+- Validation: validated
+- Notes: M007 will restrain these — hover lift removed, others faster
 
-### R046 — Tab key moves logically through sidebar nav items and into the active view; Enter/Space activates focused nav items; Escape closes dialogs; focus ring is visible on all interactive elements
+### R046 — Tab key navigation with visible focus rings
 - Class: quality-attribute
 - Status: validated
-- Description: Tab key moves logically through sidebar nav items and into the active view; Enter/Space activates focused nav items; Escape closes dialogs; focus ring is visible on all interactive elements
-- Why it matters: Many buttons currently lack visible focus rings; users who rely on keyboard or tab through forms get stuck
+- Description: Tab key navigation with visible focus rings
+- Why it matters: Keyboard accessibility
 - Source: inferred
 - Primary owning slice: M005/S04
 - Supporting slices: none
-- Validation: focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 classes applied to all 4 sidebar button groups in main-layout.tsx; verified by grep (4 occurrences) and pnpm test (146 pass including 3 new accessibility tests)
-- Notes: Focus ring CSS is already in globals.css but not consistently applied; most focus-visible is limited to button.tsx
+- Validation: validated
+- Notes: Focus ring color changes with new --ring token
 
-### R047 — Add `role="navigation"` to sidebar, `role="main"` to main content area, `aria-label` to nav sections, `aria-current="page"` to active nav items
+### R047 — Sidebar nav, main content, aria-current on active items
 - Class: quality-attribute
 - Status: validated
-- Description: Add `role="navigation"` to sidebar, `role="main"` to main content area, `aria-label` to nav sections, `aria-current="page"` to active nav items
-- Why it matters: Screen readers have no structural context for the layout; the landmark structure is invisible
+- Description: Sidebar nav, main content, aria-current on active items
+- Why it matters: Screen reader structure
 - Source: inferred
 - Primary owning slice: M005/S04
 - Supporting slices: none
-- Validation: S04/T01 added role=main to content area, context-sensitive aria-label to nav (driven by isProjectRoute), aria-current=page to active nav items. grep confirms 1 role=main, 1 aria-label=navigation, 2 aria-current; getByRole assertions in 3 new tests pass. pnpm test shows 146 pass.
-- Notes: Changes are in main-layout.tsx — low risk
+- Validation: validated
+- Notes: Preserved in M007
 
-### R048 — Replace full highlight.js (192 languages, 1.2MB chunk) with a selective language subset for the languages actually used in knowledge base files; reduce vendor-markdown chunk below 500KB gzipped
+### R048 — vendor-markdown chunk below 500KB via selective imports
 - Class: quality-attribute
 - Status: validated
-- Description: Replace full highlight.js (192 languages, 1.2MB chunk) with a selective language subset for the languages actually used in knowledge base files; reduce vendor-markdown chunk below 500KB gzipped
-- Why it matters: The 1.2MB chunk is 3× larger than necessary; it delays initial load and triggers Vite's chunk size warning on every build
+- Description: vendor-markdown chunk below 500KB via selective imports
+- Why it matters: Bundle size
 - Source: inferred
 - Primary owning slice: M005/S05
 - Supporting slices: none
-- Validation: S05/T01 switched file-browser.tsx from full highlight.js to highlight.js/lib/core + 40 explicit language imports. vendor-markdown chunk dropped from ~1,282 KB to 362.30 KB. Verified by pnpm build output: dist/assets/vendor-markdown-kXn2w5HK.js 362.30 kB │ gzip: 108.73 kB
-- Notes: highlight.js supports `import hljs from 'highlight.js/lib/core'` + selective language registration; file-browser uses hljs.highlightAuto which complicates full removal
+- Validation: validated
+- Notes: Unchanged in M007
 
-### R049 — Remove or suppress all 4 dead-code warnings in the Rust backend: `Gsd2RoadmapProgress`, `get_roadmap_progress_from_dir`, `Decision`, `list_sessions`
+### R049 — cargo check --lib shows 0 warnings
 - Class: operability
 - Status: validated
-- Description: Remove or suppress all 4 dead-code warnings in the Rust backend: `Gsd2RoadmapProgress`, `get_roadmap_progress_from_dir`, `Decision`, `list_sessions`
-- Why it matters: Dead code warnings mask real issues introduced later; clean baseline makes future regressions visible
+- Description: cargo check --lib shows 0 warnings
+- Why it matters: Clean warning baseline
 - Source: user
 - Primary owning slice: M005/S06
 - Supporting slices: none
-- Validation: S06/T01 suppressed 2 test-only items (Gsd2RoadmapProgress, get_roadmap_progress_from_dir) with item-level #[allow(dead_code)], deleted 2 truly unused items (Decision, list_sessions). cargo check --lib 2>&1 | grep '^warning:' | wc -l returns 0, cargo test -- get_roadmap_progress shows 2 passed.
-- Notes: Dead-code triage pattern: item-level allow for test-only, deletion for zero callers
+- Validation: validated
+- Notes: M007 is frontend-only — no Rust changes
 
-### R050 — `pnpm build` runs to completion without any "Some chunks are larger than 500 kB after minification" warnings
+### R050 — pnpm build has no chunk size warnings
 - Class: operability
 - Status: validated
-- Description: `pnpm build` runs to completion without any "Some chunks are larger than 500 kB after minification" warnings
-- Why it matters: Build warnings are noise that masks real issues; clean build output is the baseline for production
+- Description: pnpm build has no chunk size warnings
+- Why it matters: Clean build output
 - Source: inferred
 - Primary owning slice: M005/S05
 - Supporting slices: none
-- Validation: S05/T01+T02 reduced vendor-markdown chunk via selective highlight.js imports (362 KB < 500 KB threshold). pnpm build 2>&1 | grep -c 'chunks are larger than 500 kB' returns 0. Verified in M005 milestone completion.
-- Notes: R048 (markdown chunk) was the driver; achieved via highlight.js/lib/core + 40 language imports
+- Validation: validated
+- Notes: Unchanged in M007
+
+### R061 — Cyan accent (--primary, --ring, --gsd-cyan) retained as the brand hue but used only for focus rings, active nav indicators, links, and interactive highlights. Removed from backgrounds, glows, gradients, card borders, and decorative elements. Saturation may be reduced for subtlety.
+- Class: core-capability
+- Status: validated
+- Description: Cyan accent (--primary, --ring, --gsd-cyan) retained as the brand hue but used only for focus rings, active nav indicators, links, and interactive highlights. Removed from backgrounds, glows, gradients, card borders, and decorative elements. Saturation may be reduced for subtlety.
+- Why it matters: The current design splashes cyan across 34 files — backgrounds, glows, gradients, badges, progress bars. This is the single biggest contributor to the "gamer" feel.
+- Source: user
+- Primary owning slice: M007/S01
+- Supporting slices: M007/S04, M007/S05
+- Validation: S05 T01 sweep removed all decorative cyan (bg-gsd-cyan/*, text-gsd-cyan for icons) from 8 files: todos.tsx, command-palette.tsx, notification-item.tsx, terminal-tabs.tsx, global-terminals.tsx, broadcast-indicator.tsx, terminal-search-bar.tsx, shell.tsx. Functional cyan (bg-primary, text-primary) preserved on interactive states. Verified via rg patterns and build pass.
+- Notes: gsd-cyan CSS variable stays but may get lower saturation; the Tailwind gsd.cyan color reference stays
+
+### R066 — Every component file containing gsd-cyan overuse, shadow-md/lg/xl, bg-gradient, glass, hover:-translate, active:scale, or rounded-xl is updated to use the new design language. Specific files: dashboard cards, project overview, knowledge viewer, activity feed, diagnostics panels, terminal panels, command palette, notification items, todos, logs, projects list.
+- Class: core-capability
+- Status: validated
+- Description: Every component file containing gsd-cyan overuse, shadow-md/lg/xl, bg-gradient, glass, hover:-translate, active:scale, or rounded-xl is updated to use the new design language. Specific files: dashboard cards, project overview, knowledge viewer, activity feed, diagnostics panels, terminal panels, command palette, notification items, todos, logs, projects list.
+- Why it matters: A design system only works if it's applied everywhere — leaving old patterns in 49 files would create a split personality
+- Source: user
+- Primary owning slice: M007/S04
+- Supporting slices: M007/S05
+- Validation: S04 + S05 combined swept all 49 component files. S04 covered dashboard/project/knowledge (30 files); S05 covered terminal/settings/pages (8 files). All old patterns (gsd-cyan overuse, shadow-md/lg/xl, bg-gradient, rounded-xl) removed. Build and type-check pass.
+- Notes: Split across S04 (dashboard/project/knowledge — 30 files) and S05 (terminal/settings/pages — 19 files)
+
+### R068 — Reduce animation durations (fade-in 0.2→0.15s, stagger-in 0.4→0.25s). Remove hover:-translate-y-0.5 and hover:shadow-xl from interactive cards. Keep shimmer and crossfade but faster. Stagger delay cap stays at 1000ms.
+- Class: quality-attribute
+- Status: validated
+- Description: Reduce animation durations (fade-in 0.2→0.15s, stagger-in 0.4→0.25s). Remove hover:-translate-y-0.5 and hover:shadow-xl from interactive cards. Keep shimmer and crossfade but faster. Stagger delay cap stays at 1000ms.
+- Why it matters: The hover lift (translateY + shadow-xl) is the most un-Linear animation pattern in the app
+- Source: user
+- Primary owning slice: M007/S05
+- Supporting slices: none
+- Validation: S05 verified globals.css animations already tightened: fade-in 0.15s, stagger-in 0.25s. Removed all shadow-lg/2xl and backdrop-blur from terminal/command-palette. Removed hover:shadow and rounded-xl. No hover lift patterns remain. Build clean.
+- Notes: Animations defined in both globals.css and tailwind.config.js — both need updating
+
+### R069 — Remove .glass backdrop-blur utility, .nav-item-active glow box-shadow, .badge-status high-contrast overrides, .text-gradient utility, shadow-glow definitions from tailwind.config.js. Clean density/font presets if unused.
+- Class: quality-attribute
+- Status: validated
+- Description: Remove .glass backdrop-blur utility, .nav-item-active glow box-shadow, .badge-status high-contrast overrides, .text-gradient utility, shadow-glow definitions from tailwind.config.js. Clean density/font presets if unused.
+- Why it matters: Dead CSS utilities that reference the old design language will confuse future contributors and may leak back into components
+- Source: user
+- Primary owning slice: M007/S05
+- Supporting slices: none
+- Validation: S05 T01 verified via rg: no .glass backdrop-blur utility, no .nav-item-active glow, no .badge-status high-contrast overrides, no .text-gradient utility found. Density/font presets remain intact (.font-scale-sm/md/lg). Build clean with zero utility references remaining.
+- Notes: Some utilities may still be referenced — verify with grep before deletion
 
 ## Deferred
 
-### R051 — Full WCAG 2.1 Level AA audit covering color contrast ratios (4.5:1 for text), focus management, screen reader testing with VoiceOver/NVDA, form labeling, and complete keyboard operation
+### R051 — Full accessibility audit with VoiceOver/NVDA testing
 - Class: compliance/security
 - Status: deferred
-- Description: Full WCAG 2.1 Level AA audit covering color contrast ratios (4.5:1 for text), focus management, screen reader testing with VoiceOver/NVDA, form labeling, and complete keyboard operation
-- Why it matters: Required for accessibility compliance in enterprise or public-facing deployments
+- Description: Full accessibility audit with VoiceOver/NVDA testing
+- Why it matters: Enterprise/public compliance
 - Source: inferred
 - Primary owning slice: none
 - Supporting slices: none
 - Validation: unmapped
-- Notes: Deferred — M005 targets "feels like a shipped product" not audit-grade compliance
+- Notes: Deferred from M005
 
-### R052 — Lighthouse performance score above 90 in Tauri WebKit context, covering LCP, TBT, CLS
+### R052 — LCP, TBT, CLS performance targets
 - Class: quality-attribute
 - Status: deferred
-- Description: Lighthouse performance score above 90 in Tauri WebKit context, covering LCP, TBT, CLS
-- Why it matters: Signals real-world rendering performance for large project lists and complex views
+- Description: LCP, TBT, CLS performance targets
+- Why it matters: Real-world rendering performance
 - Source: inferred
 - Primary owning slice: none
 - Supporting slices: none
 - Validation: unmapped
-- Notes: Deferred — Tauri apps use WebKit not Chromium; Lighthouse scores are environment-dependent
+- Notes: Deferred from M005
+
+### R072 — Allow users to choose a custom accent color (like Linear's theme builder)
+- Class: differentiator
+- Status: deferred
+- Description: Allow users to choose a custom accent color (like Linear's theme builder)
+- Why it matters: Personalization — Linear's most-loved theme feature
+- Source: research
+- Primary owning slice: none
+- Supporting slices: none
+- Validation: unmapped
+- Notes: Deferred — foundation work in M007 makes this easier later by reducing accent to a single CSS variable
+
+## Out of Scope
+
+### R073 — Lucide icons stay — no swap to a different icon set
+- Class: quality-attribute
+- Status: out-of-scope
+- Description: Lucide icons stay — no swap to a different icon set
+- Why it matters: Prevents scope creep into icon migration
+- Source: inferred
+- Primary owning slice: none
+- Supporting slices: none
+- Validation: n/a
+- Notes: Lucide is already clean and Linear-compatible
+
+### R074 — Sidebar position, view routing, page structure, component hierarchy all stay as-is. This is a visual-only redesign.
+- Class: constraint
+- Status: out-of-scope
+- Description: Sidebar position, view routing, page structure, component hierarchy all stay as-is. This is a visual-only redesign.
+- Why it matters: Prevents scope creep into architectural refactoring
+- Source: inferred
+- Primary owning slice: none
+- Supporting slices: none
+- Validation: n/a
+- Notes: The nav-rail structure is correct — only the styling changes
 
 ## Traceability
 
 | ID | Class | Status | Primary owner | Supporting | Proof |
 |---|---|---|---|---|---|
 | R001 |  | validated | none | none | unmapped |
-| R040 | core-capability | validated | M005/S01 | none | S01/T01 added complete .light {} CSS variable block with 32 tokens to globals.css (background, foreground, card, muted, border, input, ring, primary, secondary, destructive, accent, popover, status colors, terminal-bg/fg, gsd-cyan). Verified by grep-c '--' returning 78 (+32), terminal-bg present in both .dark and .light blocks, pnpm build exit 0. |
-| R041 | quality-attribute | validated | M005/S02 | none | S02 created ViewSkeleton primitive in src/components/shared/loading-states.tsx and updated all 12 data-fetching views to use skeleton shapes (7 GSD tabs, knowledge-bookmarks, auto-commands-panel, settings, project, roadmap-progress-card). Verified via rg showing 0 bare "Loading..." text in production components and pnpm test passing 143/143 tests. |
-| R042 | quality-attribute | validated | M005/S02 | none | S02 created ViewError primitive with AlertCircle icon and text-status-error color, then added isError handling to all 12 data-fetching views. Verified via grep showing all 7 GSD tabs contain 'isError' and pnpm build exit 0 with zero TypeScript errors. |
+| R040 | core-capability | validated | M005/S01 | none | validated |
+| R041 | quality-attribute | validated | M005/S02 | none | validated |
+| R042 | quality-attribute | validated | M005/S02 | none | validated |
 | R043 | quality-attribute | active | M005/S02 | none | unmapped |
-| R044 | quality-attribute | validated | M005/S03 | none | rg 'toast.success' src/lib/queries.ts | wc -l returns 36 (18 new + 18 pre-existing). All 18 user-facing mutations named in the plan have contextual messages. pnpm build exits 0, 143 tests pass. M005/S03/T01. |
-| R045 | quality-attribute | validated | M005/S03 | M005/S01 | All 4 animation systems delivered: shimmer skeleton (animate-shimmer replacing animate-pulse), stagger-in list entrance (dashboard cards), card hover lift (hover:-translate-y-0.5 hover:shadow-xl), view crossfade (key={activeView} + animate-fade-in). All CSS-only, all covered by prefers-reduced-motion. pnpm build exits 0, 143 tests pass. M005/S03/T02. |
-| R046 | quality-attribute | validated | M005/S04 | none | focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 classes applied to all 4 sidebar button groups in main-layout.tsx; verified by grep (4 occurrences) and pnpm test (146 pass including 3 new accessibility tests) |
-| R047 | quality-attribute | validated | M005/S04 | none | S04/T01 added role=main, context-sensitive aria-label, aria-current=page. grep: 1 role=main, 1 aria-label=navigation, 2 aria-current; 3 new tests pass |
-| R048 | quality-attribute | validated | M005/S05 | none | S05/T01 switched file-browser.tsx from full highlight.js to highlight.js/lib/core + 40 explicit language imports. vendor-markdown chunk dropped from ~1,282 KB to 362.30 KB. Verified by pnpm build output: dist/assets/vendor-markdown-kXn2w5HK.js 362.30 kB │ gzip: 108.73 kB |
-| R049 | operability | validated | M005/S06 | none | S06/T01 suppressed 2 test-only items with #[allow(dead_code)], deleted 2 unused items. cargo check --lib 2>&1 | grep '^warning:' | wc -l returns 0 |
-| R050 | operability | validated | M005/S05 | none | S05/T01+T02 reduced vendor-markdown to 362 KB. pnpm build 2>&1 | grep -c 'chunks are larger than 500 kB' returns 0 |
+| R044 | quality-attribute | validated | M005/S03 | none | validated |
+| R045 | quality-attribute | validated | M005/S03 | none | validated |
+| R046 | quality-attribute | validated | M005/S04 | none | validated |
+| R047 | quality-attribute | validated | M005/S04 | none | validated |
+| R048 | quality-attribute | validated | M005/S05 | none | validated |
+| R049 | operability | validated | M005/S06 | none | validated |
+| R050 | operability | validated | M005/S05 | none | validated |
 | R051 | compliance/security | deferred | none | none | unmapped |
 | R052 | quality-attribute | deferred | none | none | unmapped |
+| R060 | core-capability | active | M007/S01 | none | unmapped |
+| R061 | core-capability | validated | M007/S01 | M007/S04, M007/S05 | S05 T01 sweep removed all decorative cyan (bg-gsd-cyan/*, text-gsd-cyan for icons) from 8 files: todos.tsx, command-palette.tsx, notification-item.tsx, terminal-tabs.tsx, global-terminals.tsx, broadcast-indicator.tsx, terminal-search-bar.tsx, shell.tsx. Functional cyan (bg-primary, text-primary) preserved on interactive states. Verified via rg patterns and build pass. |
+| R062 | core-capability | active | M007/S02 | none | unmapped |
+| R063 | core-capability | active | M007/S02 | none | unmapped |
+| R064 | core-capability | active | M007/S03 | none | unmapped |
+| R065 | quality-attribute | active | M007/S03 | none | unmapped |
+| R066 | core-capability | validated | M007/S04 | M007/S05 | S04 + S05 combined swept all 49 component files. S04 covered dashboard/project/knowledge (30 files); S05 covered terminal/settings/pages (8 files). All old patterns (gsd-cyan overuse, shadow-md/lg/xl, bg-gradient, rounded-xl) removed. Build and type-check pass. |
+| R067 | quality-attribute | active | M007/S04 | none | unmapped |
+| R068 | quality-attribute | validated | M007/S05 | none | S05 verified globals.css animations already tightened: fade-in 0.15s, stagger-in 0.25s. Removed all shadow-lg/2xl and backdrop-blur from terminal/command-palette. Removed hover:shadow and rounded-xl. No hover lift patterns remain. Build clean. |
+| R069 | quality-attribute | validated | M007/S05 | none | S05 T01 verified via rg: no .glass backdrop-blur utility, no .nav-item-active glow, no .badge-status high-contrast overrides, no .text-gradient utility found. Density/font presets remain intact (.font-scale-sm/md/lg). Build clean with zero utility references remaining. |
+| R070 | quality-attribute | active | M007/S06 | none | unmapped |
+| R071 | operability | active | M007/S06 | none | unmapped |
+| R072 | differentiator | deferred | none | none | unmapped |
+| R073 | quality-attribute | out-of-scope | none | none | n/a |
+| R074 | constraint | out-of-scope | none | none | n/a |
 
 ## Coverage Summary
 
-- Active requirements: 1
-- Mapped to slices: 1
-- Validated: 11 (R001, R040, R041, R042, R044, R045, R046, R047, R048, R049, R050)
+- Active requirements: 9
+- Mapped to slices: 9
+- Validated: 15 (R001, R040, R041, R042, R044, R045, R046, R047, R048, R049, R050, R061, R066, R068, R069)
 - Unmapped active requirements: 0

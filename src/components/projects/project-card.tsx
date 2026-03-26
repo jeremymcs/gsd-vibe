@@ -82,7 +82,7 @@ export function ProjectCard({ project, showDescription, selected, onToggleSelect
   return (
     <Link
       to={`/projects/${project.id}`}
-      className="block p-4 rounded-lg border bg-gradient-to-r from-card to-card/80 hover:from-card hover:to-accent/20 hover:border-gsd-cyan/30 hover:shadow-md transition-all duration-200 group"
+      className="block p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors group"
     >
       {/* Row 1: Name + Running indicator */}
       <div className="flex items-start justify-between gap-4">
@@ -114,7 +114,7 @@ export function ProjectCard({ project, showDescription, selected, onToggleSelect
             />
           </Button>
 
-          <h3 className="font-semibold truncate group-hover:text-gsd-cyan transition-colors">
+          <h3 className="font-semibold truncate">
             {project.name}
           </h3>
 
@@ -152,7 +152,7 @@ export function ProjectCard({ project, showDescription, selected, onToggleSelect
             <Button
               variant="ghost"
               size="icon-xs"
-              className="h-7 w-7 rounded-md hover:bg-gsd-cyan/10 hover:text-gsd-cyan"
+              className="h-7 w-7 rounded-md hover:bg-muted hover:text-foreground"
               onClick={(e) => handleQuickAction(e, 'shell')}
               title="Open Shell"
               aria-label="Open Shell"
@@ -162,7 +162,7 @@ export function ProjectCard({ project, showDescription, selected, onToggleSelect
             <Button
               variant="ghost"
               size="icon-xs"
-              className="h-7 w-7 rounded-md hover:bg-gsd-cyan/10 hover:text-gsd-cyan"
+              className="h-7 w-7 rounded-md hover:bg-muted hover:text-foreground"
               onClick={(e) => handleQuickAction(e, 'plan')}
               title="View Plan"
               aria-label="View Plan"
@@ -247,7 +247,7 @@ export function ProjectCard({ project, showDescription, selected, onToggleSelect
             <div className="flex items-center gap-2 flex-1 min-w-0">
               <Progress
                 value={progressPct}
-                variant="brand"
+                variant="default"
                 size="sm"
                 className="flex-1 max-w-[140px]"
               />

@@ -80,11 +80,6 @@ export default {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
-      boxShadow: {
-        'glow-sm': '0 0 10px hsl(var(--gsd-cyan) / 0.2)',
-        'glow': '0 0 20px hsl(var(--gsd-cyan) / 0.3)',
-        'glow-lg': '0 0 30px hsl(var(--gsd-cyan) / 0.4)',
-      },
       keyframes: {
         "fade-in": {
           from: { opacity: "0" },
@@ -104,10 +99,10 @@ export default {
         },
       },
       animation: {
-        "fade-in": "fade-in 0.2s ease-out",
+        "fade-in": "fade-in 0.15s ease-out",
         "fade-out": "fade-out 0.2s ease-out",
         "shimmer": "shimmer 1.5s ease-in-out infinite",
-        "stagger-in": "stagger-in 0.4s ease-out both",
+        "stagger-in": "stagger-in 0.25s ease-out both",
       },
     },
   },

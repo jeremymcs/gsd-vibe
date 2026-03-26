@@ -94,7 +94,7 @@ export function GsdMilestonesTab({ projectId }: GsdMilestonesTabProps) {
           {completedCount} completed
         </Badge>
         {currentMilestone && (
-          <Badge variant="subtle-purple">
+          <Badge variant="subtle-cyan">
             Current: {currentMilestone}
           </Badge>
         )}
@@ -135,7 +135,7 @@ export function GsdMilestonesTab({ projectId }: GsdMilestonesTabProps) {
                             {milestone.name}
                           </h3>
                           {isCurrent && (
-                            <Badge variant="subtle-purple" size="sm">
+                            <Badge variant="subtle-cyan" size="sm">
                               current
                             </Badge>
                           )}

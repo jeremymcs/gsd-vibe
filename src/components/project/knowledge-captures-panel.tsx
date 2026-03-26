@@ -349,7 +349,7 @@ export function KnowledgeCapturesPanel({
           className={cn(
             "flex items-center gap-1.5 rounded px-3 py-1.5 text-xs font-medium transition-colors",
             activeTab === "knowledge"
-              ? "bg-background shadow-sm text-foreground"
+              ? "bg-background text-foreground"
               : "text-muted-foreground hover:text-foreground"
           )}
           data-testid="tab-knowledge"
@@ -363,7 +363,7 @@ export function KnowledgeCapturesPanel({
           className={cn(
             "flex items-center gap-1.5 rounded px-3 py-1.5 text-xs font-medium transition-colors",
             activeTab === "captures"
-              ? "bg-background shadow-sm text-foreground"
+              ? "bg-background text-foreground"
               : "text-muted-foreground hover:text-foreground"
           )}
           data-testid="tab-captures"

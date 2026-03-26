@@ -88,7 +88,7 @@ export function Gsd2HealthTab({ projectId }: Gsd2HealthTabProps) {
           {budgetPct !== null && (
             <Progress
               value={budgetPct}
-              variant={budgetPct > 80 ? 'warning' : 'brand'}
+              variant={budgetPct > 80 ? 'warning' : 'default'}
               size="sm"
             />
           )}

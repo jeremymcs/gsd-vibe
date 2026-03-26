@@ -157,14 +157,14 @@ export function CommandPalette({ onOpenChange }: CommandPaletteProps) {
     <div className="fixed inset-0 z-50">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/50"
         onClick={() => onOpenChange(false)}
       />
 
       {/* Palette container */}
       <div className="relative flex justify-center pt-[20vh]">
         <Command
-          className="w-full max-w-xl bg-card/95 backdrop-blur-xl border border-border/50 rounded-xl shadow-2xl overflow-hidden"
+          className="w-full max-w-xl bg-card border border-border rounded-lg overflow-hidden"
           shouldFilter={false}
           loop
         >
@@ -212,7 +212,7 @@ export function CommandPalette({ onOpenChange }: CommandPaletteProps) {
                       onSelect={handleSelect}
                       className="flex items-center gap-2 px-2 py-1.5 rounded-md text-sm cursor-pointer data-[selected=true]:bg-accent/50"
                     >
-                      <Icon className="h-4 w-4 text-gsd-cyan" />
+                      <Icon className="h-4 w-4 text-muted-foreground" />
                       <span className="flex-1">{view.label}</span>
                       <span className="text-[10px] text-muted-foreground/50">{view.section}</span>
                     </Command.Item>

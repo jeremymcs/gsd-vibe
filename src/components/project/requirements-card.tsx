@@ -13,7 +13,7 @@ interface RequirementsCardProps {
 const priorityColors: Record<string, string> = {
   must: 'bg-status-error',
   should: 'bg-orange-500',
-  could: 'bg-gsd-cyan',
+  could: 'bg-status-info',
   wont: 'bg-muted-foreground/50',
 };
 

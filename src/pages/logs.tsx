@@ -66,7 +66,7 @@ function LogEntryRow({ entry, isNew }: { entry: AppLogEntry; isNew?: boolean }) 
   return (
     <div
       className={`border rounded-lg px-3 py-2 hover:bg-accent/50 transition-all cursor-pointer ${
-        isNew ? "animate-in fade-in slide-in-from-top-1 duration-300 border-gsd-cyan/30" : ""
+        isNew ? "animate-in fade-in slide-in-from-top-1 duration-300 border-border/60" : ""
       }`}
       onClick={() => setExpanded(!expanded)}
     >
@@ -417,8 +417,8 @@ export function LogsContent() {
             </div>
           ) : sortedLogs.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="p-4 rounded-full bg-gsd-cyan/10 w-fit mx-auto mb-4">
-                <ScrollText className="h-12 w-12 text-gsd-cyan" />
+              <div className="p-4 rounded-full bg-muted w-fit mx-auto mb-4">
+                <ScrollText className="h-12 w-12 text-muted-foreground" />
               </div>
               <h3 className="text-lg font-medium text-foreground mb-2">No Logs Found</h3>
               <p className="text-sm text-muted-foreground max-w-md">

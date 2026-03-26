@@ -12,16 +12,13 @@ const badgeVariants = cva(
     variants: {
       variant: {
         default:
-          "border-transparent bg-primary text-primary-foreground shadow hover:bg-primary/80",
+          "border-transparent bg-primary text-primary-foreground hover:bg-primary/80",
         secondary:
           "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
         destructive:
-          "border-transparent bg-destructive text-destructive-foreground shadow hover:bg-destructive/80",
+          "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80",
         outline:
           "text-foreground border-border",
-        // Brand variants
-        brand:
-          "border-transparent bg-gsd-cyan text-black shadow-md shadow-gsd-cyan/30",
         // Status variants (using design tokens)
         success:
           "border-status-success/30 bg-status-success/10 text-status-success",
@@ -33,11 +30,7 @@ const badgeVariants = cva(
           "border-status-info/30 bg-status-info/10 text-status-info",
         pending:
           "border-status-pending/30 bg-status-pending/10 text-status-pending",
-        // Subtle variants (muted backgrounds)
-        "subtle-blue":
-          "border-gsd-cyan/20 bg-gsd-cyan/10 text-gsd-cyan",
-        "subtle-purple":
-          "border-gsd-cyan/20 bg-gsd-cyan/10 text-gsd-cyan",
+        // Subtle variant
         "subtle-cyan":
           "border-gsd-cyan/20 bg-gsd-cyan/10 text-gsd-cyan",
       },

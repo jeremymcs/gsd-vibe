@@ -146,7 +146,7 @@ export function Dashboard() {
               className={cn(
                 'px-3 py-1 text-xs rounded transition-colors',
                 activeFilter === tab.value
-                  ? 'bg-background text-foreground shadow-sm font-medium'
+                  ? 'bg-background text-foreground font-medium'
                   : 'text-muted-foreground hover:text-foreground',
               )}
             >
@@ -267,8 +267,8 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
   return (
     <div className="flex-1 flex items-center justify-center min-h-[400px]">
       <div className="text-center py-16">
-        <div className="p-4 rounded-full bg-gsd-cyan/10 w-fit mx-auto mb-4">
-          <FolderOpen className="h-12 w-12 text-gsd-cyan" />
+        <div className="p-4 rounded-full bg-muted w-fit mx-auto mb-4">
+          <FolderOpen className="h-12 w-12 text-muted-foreground" />
         </div>
         <h3 className="text-lg font-medium mb-2">No projects yet</h3>
         <p className="text-sm text-muted-foreground mb-5">
@@ -289,7 +289,7 @@ function SkeletonGrid() {
       {Array.from({ length: 6 }).map((_, i) => (
         <div
           key={i}
-          className="rounded-xl border bg-card/30 p-4 space-y-3 animate-pulse"
+          className="rounded-lg border bg-card/30 p-4 space-y-3 animate-pulse"
         >
           <div className="flex items-center gap-2">
             <div className="h-4 w-4 bg-muted/50 rounded" />

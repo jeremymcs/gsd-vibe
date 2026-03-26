@@ -26,7 +26,7 @@ function Skeleton({ className, ...props }: SkeletonProps) {
  */
 function SkeletonCard({ className }: { className?: string }) {
   return (
-    <div className={cn("rounded-xl border bg-card p-6 space-y-4", className)}>
+    <div className={cn("rounded-lg border bg-card p-6 space-y-4", className)}>
       <Skeleton className="h-4 w-1/3" />
       <Skeleton className="h-8 w-1/2" />
       <Skeleton className="h-3 w-2/3" />
@@ -67,7 +67,7 @@ function SkeletonProjectItem({ className }: { className?: string }) {
  */
 function SkeletonStatsCard({ className }: { className?: string }) {
   return (
-    <div className={cn("rounded-xl border bg-card", className)}>
+    <div className={cn("rounded-lg border bg-card", className)}>
       <div className="p-6 pb-2 flex items-center justify-between">
         <Skeleton className="h-4 w-24" />
         <Skeleton className="h-4 w-4" />

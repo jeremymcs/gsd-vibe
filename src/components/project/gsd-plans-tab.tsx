@@ -100,7 +100,7 @@ export function GsdPlansTab({ projectId }: GsdPlansTabProps) {
       {/* Summary Bar */}
       <div className="flex items-center gap-4 text-sm">
         <span className="flex items-center gap-1.5">
-          <FileText className="h-4 w-4 text-gsd-cyan" />
+          <FileText className="h-4 w-4 text-muted-foreground" />
           <span className="font-medium">{totalPlans}</span> plans
         </span>
         <span className="flex items-center gap-1.5">

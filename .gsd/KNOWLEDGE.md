@@ -508,6 +508,36 @@ Custom animation classes defined only in globals.css will work for the specific 
 
 The fade-in crossfade on project view navigation works by placing `key={activeView}` on the wrapper div (the one with `animate-fade-in`). This forces React to unmount/remount the div on every view switch, restarting the keyframe. Placing `key` on the ViewRenderer component itself doesn't work because ViewRenderer has no animation class. The terminal view must remain OUTSIDE this keyed wrapper (always mounted via CSS hide/show) to preserve xterm.js sessions.
 
+## S04: Component Sweep Pattern — Icon Tint Removal at Scale
+
+When systematically removing decorative icon colors across dozens of files (dashboard, projects, project/ components):
+
+1. **Classify uses upfront** — distinguish functional (stars, progress bars, active indicators, links, semantic status colors) from decorative (card header icons, empty state icons). The classification rules (D032/D033/D038 for M007) are the authority.
+
+2. **Icon tint removal is purely CSS** — no logic changes. Use sed for multi-line patterns or Edit for surgical single-file changes. No behavioral risk, only visual.
+
+3. **Empty state neutralization pattern** — `bg-gsd-cyan/10 text-gsd-cyan` becomes `bg-muted text-muted-foreground` universally for "no data" states across pages, panels, and components. This is consistent enough to establish as a pattern.
+
+4. **Status color segregation** — Functional status colors (in_progress, success, error, warning) remain in their semantic map entries; secondary-tier priorities (e.g., MoSCoW "could") migrate to their own semantic color (e.g., bg-status-info for blue). This keeps status meaning tied to color intent, not just visual highlight.
+
+5. **Design system path resolution** — When a hardcoded gsd-cyan value on a button/interactive element can't be removed entirely (because it serves a functional purpose like active state), migrate from hardcoded `bg-gsd-cyan text-black` to design-system tokens `bg-primary text-primary-foreground`. This maintains the same visual result today while decoupling from the specific color value — future theme changes won't break the token resolution.
+
+6. **Terminal/CLI edit tools — use sed for multi-instance patterns** — The Edit tool's oldText matching is precise but can fail if surrounding context has similar lines. For cases where you need to replace the same pattern N times in one file (e.g., project-terminal-tab.tsx with 2 active-button instances), sed's line-based substitution is safer than trying to construct unique oldText anchors.
+
+## S04: Design Tokens as the First Domino
+
+Changes to `design-tokens.ts` cascade across 38+ component files that import status color classes or badge variants from that file. Updating design-tokens.ts first (T01) ensures that all downstream components (T02, T03) can reference clean, neutral values without residual cyan tinting baked into the token-driven defaults. This is why T01 had to complete before T02/T03 could verify correctly.
+
+## S04: Verification Across File Groups is Non-Trivial
+
+The slice verification spans 4 distinct component hierarchies (dashboard/, projects/, knowledge/, project/), each with its own functional-use expectations. Verification commands must be written carefully:
+
+- `grep -c 'gsd-cyan' file.tsx` checks for exact zero count — useful for broad neutralization
+- `rg 'pattern' file.tsx | grep -v "keep_pattern"` excludes functional uses — needed when the file has both decorative and functional cyan
+- `rg 'bg-gradient|shadow-md' dir/` across multiple dirs needs anchoring — the directory structure must be correct
+
+A single wrong verification command (misplaced characters, missing quotes) can produce false positives that block a slice from completing. Always test verification commands manually first before committing them to the plan.
+
 ## aria-current pattern: use undefined not false for inactive nav items
 
 When adding `aria-current` to nav buttons, use `aria-current={isActive ? "page" : undefined}` — NOT `aria-current={isActive ? "page" : false}`. Setting `aria-current={false}` renders `aria-current="false"` in the DOM, which is technically valid but confusing to screen readers and a lint smell. Setting it to `undefined` causes React to omit the attribute entirely for inactive items, which is the correct ARIA spec pattern.

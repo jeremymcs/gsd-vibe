@@ -58,7 +58,7 @@ export const ProjectCard = React.memo(function ProjectCard({
 
   return (
     <Link to={`/projects/${project.id}`} className="block">
-      <Card variant="elevated" interactive className="h-full">
+      <Card className="h-full">
         {/* Header */}
         <div className="flex items-center gap-2 p-4 pb-0">
           <button
@@ -123,7 +123,7 @@ export const ProjectCard = React.memo(function ProjectCard({
 
               {/* Phase count badge */}
               {project.tech_stack?.gsd_phase_count != null && (
-                <span className="inline-flex items-center gap-1 text-[10px] font-medium text-gsd-cyan bg-gsd-cyan/10 border border-gsd-cyan/20 rounded px-1.5 py-0.5">
+                <span className="inline-flex items-center gap-1 text-[10px] font-medium text-muted-foreground bg-muted/60 border border-border/50 rounded px-1.5 py-0.5">
                   {project.tech_stack.gsd_phase_count}{' '}
                   {project.tech_stack.gsd_phase_count === 1 ? 'phase' : 'phases'}
                 </span>

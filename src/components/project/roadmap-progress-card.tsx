@@ -24,7 +24,7 @@ export function RoadmapProgressCard({ projectId }: RoadmapProgressCardProps) {
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-sm">
-            <Map className="h-4 w-4 text-gsd-cyan" />
+            <Map className="h-4 w-4 text-muted-foreground" />
             Roadmap Progress
           </CardTitle>
         </CardHeader>
@@ -42,7 +42,7 @@ export function RoadmapProgressCard({ projectId }: RoadmapProgressCardProps) {
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-sm">
-            <Map className="h-4 w-4 text-gsd-cyan" />
+            <Map className="h-4 w-4 text-muted-foreground" />
             Roadmap Progress
           </CardTitle>
         </CardHeader>
@@ -58,7 +58,7 @@ export function RoadmapProgressCard({ projectId }: RoadmapProgressCardProps) {
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-sm">
-            <Map className="h-4 w-4 text-gsd-cyan" />
+            <Map className="h-4 w-4 text-muted-foreground" />
             Roadmap Progress
           </CardTitle>
         </CardHeader>
@@ -73,7 +73,7 @@ export function RoadmapProgressCard({ projectId }: RoadmapProgressCardProps) {
     <Card>
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center gap-2 text-sm">
-          <Map className="h-4 w-4 text-gsd-cyan" />
+          <Map className="h-4 w-4 text-muted-foreground" />
           Roadmap Progress
         </CardTitle>
       </CardHeader>

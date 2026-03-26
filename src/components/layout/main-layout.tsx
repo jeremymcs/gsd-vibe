@@ -135,7 +135,7 @@ export function MainLayout({ children }: MainLayoutProps) {
     <KeyboardShortcutsProvider>
       {({ searchOpen, setSearchOpen, helpOpen, setHelpOpen }) => (
     <TooltipProvider delayDuration={0}>
-      <div className="flex h-screen bg-gradient-to-br from-background via-background to-muted/20">
+      <div className="flex h-screen bg-background">
         {/* Sidebar */}
         <aside
           className={cn(
@@ -177,7 +177,7 @@ export function MainLayout({ children }: MainLayoutProps) {
                     <span>Home</span>
                   </button>
                   <div className="flex items-center gap-2 px-1">
-                    <FolderOpen className="h-4 w-4 text-gsd-cyan flex-shrink-0" />
+                    <FolderOpen className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                     <span className="text-sm font-semibold text-foreground truncate">
                       {project.name}
                     </span>
@@ -195,7 +195,7 @@ export function MainLayout({ children }: MainLayoutProps) {
             >
               {sidebarCollapsed ? (
                 <div className="flex flex-col items-center gap-0.5">
-                  <span className="text-[10px] font-bold text-gsd-cyan font-mono leading-none">GSD</span>
+                  <span className="text-[10px] font-bold text-foreground font-mono leading-none">GSD</span>
                   <span className="text-[8px] font-semibold text-muted-foreground/60 tracking-widest uppercase leading-none">VF</span>
                 </div>
               ) : (
@@ -274,7 +274,7 @@ export function MainLayout({ children }: MainLayoutProps) {
                               ? "justify-center px-0 py-2.5"
                               : "gap-3 px-3 py-1.5",
                             isActive
-                              ? "bg-muted/80 text-foreground nav-item-active"
+                              ? "text-foreground"
                               : "text-muted-foreground/70 hover:text-foreground hover:bg-muted/50"
                           )}
                         >
@@ -355,7 +355,7 @@ export function MainLayout({ children }: MainLayoutProps) {
                           ? "justify-center px-0 py-2.5"
                           : "gap-3 px-3 py-2",
                         isActive
-                          ? "bg-muted/80 text-foreground nav-item-active"
+                          ? "text-foreground"
                           : "text-muted-foreground/70 hover:text-foreground hover:bg-muted/50"
                       )}
                     >
@@ -452,7 +452,7 @@ export function MainLayout({ children }: MainLayoutProps) {
         </aside>
 
         {/* Main content - vertical split: page content + persistent shell panel */}
-        <div role="main" className="flex-1 flex flex-col overflow-hidden bg-gradient-to-br from-background to-muted/10">
+        <div role="main" className="flex-1 flex flex-col overflow-hidden bg-background">
           {/* Top bar: breadcrumbs + notification bell (always visible) */}
           {!isShellRoute && <Breadcrumbs />}
 
@@ -470,22 +470,14 @@ export function MainLayout({ children }: MainLayoutProps) {
               className={cn(
                 "relative flex items-center gap-2 px-4 py-2 border-t cursor-pointer select-none flex-shrink-0 w-full transition-all duration-200 group",
                 shellPanelCollapsed
-                  ? "border-gsd-cyan/30 bg-gradient-to-r from-gsd-cyan/5 to-transparent hover:from-gsd-cyan/10"
+                  ? "border-border/50 bg-muted/30 hover:bg-muted/50"
                   : "border-border/50 bg-muted/30 hover:bg-muted/50"
               )}
               onClick={() => setShellPanelCollapsed(!shellPanelCollapsed)}
               aria-label={shellPanelCollapsed ? "Expand shell panel" : "Collapse shell panel"}
               aria-expanded={!shellPanelCollapsed}
             >
-              {shellPanelCollapsed && (
-                <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-gsd-cyan to-gsd-cyan/0" />
-              )}
-              <SquareTerminal className={cn(
-                "h-4 w-4 transition-colors duration-200",
-                shellPanelCollapsed
-                  ? "text-gsd-cyan group-hover:text-gsd-cyan"
-                  : "text-muted-foreground"
-              )} />
+              <SquareTerminal className="h-4 w-4 text-muted-foreground transition-colors duration-200" />
               <span className={cn(
                 "text-xs font-medium transition-colors duration-200",
                 shellPanelCollapsed

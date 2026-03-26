@@ -77,7 +77,7 @@ export function TerminalSearchBar({
   return (
     <div
       className={cn(
-        'absolute top-2 right-2 z-50 flex items-center gap-1 bg-background border rounded-md shadow-lg px-2 py-1',
+        'absolute top-2 right-2 z-50 flex items-center gap-1 bg-background border rounded-md px-2 py-1',
         className,
       )}
     >

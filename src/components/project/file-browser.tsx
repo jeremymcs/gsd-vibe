@@ -363,7 +363,7 @@ export function FileBrowser({ projectId, projectPath }: FileBrowserProps) {
                       ) : (
                         <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                       )}
-                      <FolderIcon className="h-4 w-4 text-gsd-cyan flex-shrink-0" />
+                      <FolderIcon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                       <span className="text-sm font-medium flex-1 truncate">
                         {folder.display_name}
                       </span>

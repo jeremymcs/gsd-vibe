@@ -91,7 +91,7 @@ export function ShellPage() {
                 className={cn(
                   'flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
                   mode === 'shell'
-                    ? 'bg-background text-foreground shadow-sm'
+                    ? 'bg-background text-foreground'
                     : 'text-muted-foreground hover:text-foreground'
                 )}
                 onClick={() => setMode('shell')}
@@ -103,7 +103,7 @@ export function ShellPage() {
                 className={cn(
                   'flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
                   mode === 'output'
-                    ? 'bg-background text-foreground shadow-sm'
+                    ? 'bg-background text-foreground'
                     : 'text-muted-foreground hover:text-foreground'
                 )}
                 onClick={() => setMode('output')}
@@ -162,7 +162,7 @@ export function ShellPage() {
               isTerminalRoute && !isTerminalActive && 'invisible',
               isTerminalRoute &&
                 mode === 'shell' &&
-                'rounded-xl border bg-card text-card-foreground shadow overflow-hidden'
+                'rounded-lg border bg-card text-card-foreground overflow-hidden'
             )}
           >
             {/* Shell mode or compact mode (bottom panel always shows shell) */}
