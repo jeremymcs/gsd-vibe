@@ -114,4 +114,13 @@ export const queryKeys = {
   gsd2SkillHealth: (projectId: string) => ['gsd2', 'skill-health', projectId] as const,
   gsd2KnowledgeData: (projectId: string) => ['gsd2', 'knowledge', projectId] as const,
   gsd2CapturesData: (projectId: string) => ['gsd2', 'captures', projectId] as const,
+  gsd2Inspect: (projectId: string) => ['gsd2', 'inspect', projectId] as const,
+  gsd2SteerContent: (projectId: string) => ['gsd2', 'steer', projectId] as const,
+  gsd2UndoInfo: (projectId: string) => ['gsd2', 'undo', projectId] as const,
+  gsd2RecoveryInfo: (projectId: string) => ['gsd2', 'recovery', projectId] as const,
+  gsd2History: (projectId: string) => ['gsd2', 'history', projectId] as const,
+  gsd2Hooks: (projectId: string) => ['gsd2', 'hooks', projectId] as const,
+  gsd2GitSummary: (projectId: string) => ['gsd2', 'git-summary', projectId] as const,
+  gsd2Export: (projectId: string) => ['gsd2', 'export', projectId] as const,
+  gsd2ReportsIndex: (projectId: string) => ['gsd2', 'reports-index', projectId] as const,
 };

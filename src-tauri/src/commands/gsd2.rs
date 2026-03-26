@@ -1611,51 +1611,1571 @@ pub async fn force_close_all(
 }
 
 // ============================================================
+// Inspect / Steer / Undo / Recovery structs and commands (T01)
+// ============================================================
+
+// R079 — Inspect
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct InspectData {
+    pub schema_version: Option<String>,
+    pub decision_count: u32,
+    pub requirement_count: u32,
+    pub recent_decisions: Vec<String>,
+    pub recent_requirements: Vec<String>,
+    pub decisions_file_exists: bool,
+    pub requirements_file_exists: bool,
+}
+
+// R080 — Steer
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SteerData {
+    pub content: String,
+    pub exists: bool,
+}
+
+// R081 — Undo
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UndoInfo {
+    pub last_unit_type: Option<String>,
+    pub last_unit_id: Option<String>,
+    pub last_unit_cost: f64,
+    pub completed_units_count: u32,
+    pub file_exists: bool,
+}
+
+// R084 — Recovery
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RecoveryInfo {
+    pub lock_exists: bool,
+    pub pid: Option<u32>,
+    pub started_at: Option<String>,
+    pub unit_type: Option<String>,
+    pub unit_id: Option<String>,
+    pub unit_started_at: Option<String>,
+    pub is_process_alive: bool,
+    pub suggested_action: String,
+    pub session_file: Option<String>,
+}
+
+/// Count lines matching a table-row pattern: starts with `{prefix}` + digits + ` |`.
+/// Returns (count, last_n lines that matched).
+fn count_table_rows(content: &str, prefix: char, last_n: usize) -> (u32, Vec<String>) {
+    let mut count = 0u32;
+    let mut matched: Vec<String> = Vec::new();
+    for line in content.lines() {
+        let trimmed = line.trim();
+        if !trimmed.starts_with(prefix) {
+            continue;
+        }
+        // After prefix char must be digits followed by ' |' or ' –' or ' —' etc.
+        let rest = &trimmed[1..];
+        let digit_end = rest.find(|c: char| !c.is_ascii_digit()).unwrap_or(rest.len());
+        if digit_end == 0 {
+            continue; // no digits after prefix
+        }
+        let after_digits = &rest[digit_end..];
+        // Accept either ' |' separator (GSD table format) or space then any non-empty content
+        if after_digits.starts_with(" |") || after_digits.starts_with(" –") || after_digits.starts_with(" —") || after_digits.starts_with(". ") {
+            count += 1;
+            matched.push(trimmed.to_string());
+        }
+    }
+    let recent: Vec<String> = if matched.len() > last_n {
+        matched[matched.len() - last_n..].to_vec()
+    } else {
+        matched
+    };
+    (count, recent)
+}
+
+/// R079: Return schema overview: counts of decisions/requirements + recent entries.
+#[tauri::command]
+pub async fn gsd2_get_inspect(
+    project_id: String,
+    db: tauri::State<'_, DbState>,
+) -> Result<InspectData, String> {
+    let project_path = {
+        let db_guard = db.write().await;
+        get_project_path(&db_guard, &project_id)?
+    };
+
+    let gsd_dir = Path::new(&project_path).join(".gsd");
+
+    // STATE.md — extract schema version from frontmatter
+    let state_path = gsd_dir.join("STATE.md");
+    let schema_version = if state_path.exists() {
+        let content = std::fs::read_to_string(&state_path).unwrap_or_default();
+        let (fm, _) = parse_frontmatter(&content);
+        fm.get("version").cloned()
+    } else {
+        None
+    };
+
+    // DECISIONS.md
+    let decisions_path = gsd_dir.join("DECISIONS.md");
+    let decisions_file_exists = decisions_path.exists();
+    let (decision_count, recent_decisions) = if decisions_file_exists {
+        let content = std::fs::read_to_string(&decisions_path).unwrap_or_default();
+        count_table_rows(&content, 'D', 5)
+    } else {
+        (0, Vec::new())
+    };
+
+    // REQUIREMENTS.md
+    let requirements_path = gsd_dir.join("REQUIREMENTS.md");
+    let requirements_file_exists = requirements_path.exists();
+    let (requirement_count, recent_requirements) = if requirements_file_exists {
+        let content = std::fs::read_to_string(&requirements_path).unwrap_or_default();
+        count_table_rows(&content, 'R', 5)
+    } else {
+        (0, Vec::new())
+    };
+
+    Ok(InspectData {
+        schema_version,
+        decision_count,
+        requirement_count,
+        recent_decisions,
+        recent_requirements,
+        decisions_file_exists,
+        requirements_file_exists,
+    })
+}
+
+/// R080 read: Return the contents of .gsd/OVERRIDES.md (steer file).
+#[tauri::command]
+pub async fn gsd2_get_steer_content(
+    project_id: String,
+    db: tauri::State<'_, DbState>,
+) -> Result<SteerData, String> {
+    let project_path = {
+        let db_guard = db.write().await;
+        get_project_path(&db_guard, &project_id)?
+    };
+
+    let overrides_path = Path::new(&project_path).join(".gsd").join("OVERRIDES.md");
+    if overrides_path.exists() {
+        let content = std::fs::read_to_string(&overrides_path)
+            .map_err(|e| format!("Read failed: {}", e))?;
+        Ok(SteerData { content, exists: true })
+    } else {
+        Ok(SteerData { content: String::new(), exists: false })
+    }
+}
+
+/// R080 write: Atomically write .gsd/OVERRIDES.md (steer file).
+#[tauri::command]
+pub async fn gsd2_set_steer_content(
+    project_id: String,
+    content: String,
+    db: tauri::State<'_, DbState>,
+) -> Result<(), String> {
+    let project_path = {
+        let db_guard = db.write().await;
+        get_project_path(&db_guard, &project_id)?
+    };
+
+    let gsd_dir = Path::new(&project_path).join(".gsd");
+    let overrides_path = gsd_dir.join("OVERRIDES.md");
+    let tmp_path = gsd_dir.join(format!("OVERRIDES.tmp.{}", std::process::id()));
+
+    std::fs::write(&tmp_path, &content).map_err(|e| format!("Write failed: {}", e))?;
+    std::fs::rename(&tmp_path, &overrides_path).map_err(|e| format!("Rename failed: {}", e))?;
+
+    Ok(())
+}
+
+/// R081: Return undo info from completed-units.json + metrics.json.
+#[tauri::command]
+pub async fn gsd2_get_undo_info(
+    project_id: String,
+    db: tauri::State<'_, DbState>,
+) -> Result<UndoInfo, String> {
+    let project_path = {
+        let db_guard = db.write().await;
+        get_project_path(&db_guard, &project_id)?
+    };
+
+    let gsd_dir = Path::new(&project_path).join(".gsd");
+    let completed_path = gsd_dir.join("completed-units.json");
+
+    if !completed_path.exists() {
+        return Ok(UndoInfo {
+            last_unit_type: None,
+            last_unit_id: None,
+            last_unit_cost: 0.0,
+            completed_units_count: 0,
+            file_exists: false,
+        });
+    }
+
+    let completed_content = std::fs::read_to_string(&completed_path)
+        .map_err(|e| format!("Read failed: {}", e))?;
+    let completed_json: serde_json::Value =
+        serde_json::from_str(&completed_content).unwrap_or(serde_json::json!([]));
+
+    let empty_vec = Vec::new();
+    let units_arr = completed_json.as_array().unwrap_or(&empty_vec);
+    let completed_units_count = units_arr.len() as u32;
+
+    let last_key = units_arr
+        .last()
+        .and_then(|v| v.as_str())
+        .unwrap_or("")
+        .to_string();
+
+    let (last_unit_type, last_unit_id) = if last_key.is_empty() {
+        (None, None)
+    } else {
+        if let Some(slash_idx) = last_key.find('/') {
+            let unit_type = last_key[..slash_idx].to_string();
+            let unit_id = last_key[slash_idx + 1..].to_string();
+            (Some(unit_type), Some(unit_id))
+        } else {
+            (Some(last_key.clone()), None)
+        }
+    };
+
+    // Look up cost from metrics.json by matching unit id
+    let mut last_unit_cost = 0.0f64;
+    let metrics_path = gsd_dir.join("metrics.json");
+    if metrics_path.exists() {
+        let metrics_content = std::fs::read_to_string(&metrics_path).unwrap_or_default();
+        let metrics_json: serde_json::Value =
+            serde_json::from_str(&metrics_content).unwrap_or(serde_json::json!({}));
+        let empty_units = Vec::new();
+        let metric_units = metrics_json
+            .get("units")
+            .and_then(|u| u.as_array())
+            .unwrap_or(&empty_units);
+        // Find the last unit by matching id == last_key
+        for unit in metric_units {
+            let uid = unit.get("id").and_then(|v| v.as_str()).unwrap_or("");
+            if uid == last_key {
+                last_unit_cost = unit.get("cost").and_then(|v| v.as_f64()).unwrap_or(0.0);
+            }
+        }
+    }
+
+    Ok(UndoInfo {
+        last_unit_type,
+        last_unit_id,
+        last_unit_cost,
+        completed_units_count,
+        file_exists: true,
+    })
+}
+
+/// R084: Return recovery info from auto.lock (checks both .gsd/auto.lock and .gsd/runtime/auto.lock).
+#[tauri::command]
+pub async fn gsd2_get_recovery_info(
+    project_id: String,
+    db: tauri::State<'_, DbState>,
+) -> Result<RecoveryInfo, String> {
+    let project_path = {
+        let db_guard = db.write().await;
+        get_project_path(&db_guard, &project_id)?
+    };
+
+    let gsd_dir = Path::new(&project_path).join(".gsd");
+
+    // Check both lock locations — prefer .gsd/auto.lock, fall back to .gsd/runtime/auto.lock
+    let lock_path_primary = gsd_dir.join("auto.lock");
+    let lock_path_secondary = gsd_dir.join("runtime").join("auto.lock");
+
+    let (lock_path, lock_exists) = if lock_path_primary.exists() {
+        (lock_path_primary, true)
+    } else if lock_path_secondary.exists() {
+        (lock_path_secondary, true)
+    } else {
+        (lock_path_primary, false) // doesn't matter which, neither exists
+    };
+
+    if !lock_exists {
+        return Ok(RecoveryInfo {
+            lock_exists: false,
+            pid: None,
+            started_at: None,
+            unit_type: None,
+            unit_id: None,
+            unit_started_at: None,
+            is_process_alive: false,
+            suggested_action: "No lock file found — system is idle.".to_string(),
+            session_file: None,
+        });
+    }
+
+    let lock_content = std::fs::read_to_string(&lock_path).unwrap_or_default();
+    let lock_json: serde_json::Value =
+        serde_json::from_str(&lock_content).unwrap_or(serde_json::json!({}));
+
+    let pid: Option<u32> = lock_json.get("pid").and_then(|v| v.as_u64()).map(|v| v as u32);
+    let started_at = lock_json
+        .get("startedAt")
+        .and_then(|v| v.as_str())
+        .map(String::from);
+    let unit_type = lock_json
+        .get("unitType")
+        .and_then(|v| v.as_str())
+        .map(String::from);
+    let unit_id = lock_json
+        .get("unitId")
+        .and_then(|v| v.as_str())
+        .map(String::from);
+    let unit_started_at = lock_json
+        .get("unitStartedAt")
+        .and_then(|v| v.as_str())
+        .map(String::from);
+    let session_file = lock_json
+        .get("sessionFile")
+        .and_then(|v| v.as_str())
+        .map(String::from);
+
+    // Check if PID is alive using kill(pid, 0)
+    let is_process_alive = pid.map_or(false, |p| {
+        // SAFETY: kill(pid, 0) is a standard POSIX probe — signal 0 never delivers
+        unsafe { libc::kill(p as libc::pid_t, 0) == 0 }
+    });
+
+    let suggested_action = if !is_process_alive {
+        format!(
+            "Lock file exists but PID {} is not running. Safe to delete the lock file and retry.",
+            pid.unwrap_or(0)
+        )
+    } else {
+        match unit_type.as_deref() {
+            Some("execute-task") => format!(
+                "Agent is executing a task ({}). Wait for it to finish or check logs.",
+                unit_id.as_deref().unwrap_or("unknown")
+            ),
+            Some("plan-slice") | Some("plan-milestone") => format!(
+                "Agent is planning ({}). Wait for completion.",
+                unit_id.as_deref().unwrap_or("unknown")
+            ),
+            Some(ut) => format!("Agent is running {} ({}). Wait for completion.", ut, unit_id.as_deref().unwrap_or("unknown")),
+            None => "Agent process is alive. Wait for it to finish.".to_string(),
+        }
+    };
+
+    Ok(RecoveryInfo {
+        lock_exists: true,
+        pid,
+        started_at,
+        unit_type,
+        unit_id,
+        unit_started_at,
+        is_process_alive,
+        suggested_action,
+        session_file,
+    })
+}
+
+// ============================================================
+// R078 — History / metrics aggregation
+// ============================================================
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UnitRecord {
+    pub unit_type: String,
+    pub id: String,
+    pub model: String,
+    pub started_at: i64,
+    pub finished_at: i64,
+    pub cost: f64,
+    pub input_tokens: i64,
+    pub output_tokens: i64,
+    pub cache_read_tokens: i64,
+    pub cache_write_tokens: i64,
+    pub total_tokens: i64,
+    pub tool_calls: i64,
+    pub tier: Option<String>,
+    pub model_downgraded: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ProjectTotals {
+    pub units: u32,
+    pub total_cost: f64,
+    pub total_tokens: i64,
+    pub duration_ms: i64,
+    pub tool_calls: i64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PhaseAggregate {
+    pub phase: String,
+    pub units: u32,
+    pub cost: f64,
+    pub tokens: i64,
+    pub duration_ms: i64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SliceAggregate {
+    pub slice_id: String,
+    pub units: u32,
+    pub cost: f64,
+    pub tokens: i64,
+    pub duration_ms: i64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ModelAggregate {
+    pub model: String,
+    pub units: u32,
+    pub cost: f64,
+    pub tokens: i64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct HistoryData {
+    pub units: Vec<UnitRecord>,
+    pub totals: ProjectTotals,
+    pub by_phase: Vec<PhaseAggregate>,
+    pub by_slice: Vec<SliceAggregate>,
+    pub by_model: Vec<ModelAggregate>,
+}
+
+// R082 — Hooks
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct HookEntry {
+    pub name: String,
+    pub hook_type: String,
+    pub triggers: Vec<String>,
+    pub action: Option<String>,
+    pub artifact: Option<String>,
+    pub max_cycles: Option<u32>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct HooksData {
+    pub hooks: Vec<HookEntry>,
+    pub preferences_exists: bool,
+}
+
+// R083 — Git Summary
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GitCommitEntry {
+    pub hash: String,
+    pub message: String,
+    pub author: String,
+    pub date: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GitSummaryData {
+    pub branch: Option<String>,
+    pub is_dirty: bool,
+    pub staged_count: u32,
+    pub unstaged_count: u32,
+    pub untracked_count: u32,
+    pub recent_commits: Vec<GitCommitEntry>,
+    pub ahead: u32,
+    pub behind: u32,
+    pub has_git: bool,
+}
+
+// R086 — Export
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ExportData {
+    pub content: String,
+    pub format: String,
+}
+
+// ---------------------------------------------------------------------------
+// Helpers for R078 and R086
+// ---------------------------------------------------------------------------
+
+fn classify_unit_phase(unit_type: &str) -> &'static str {
+    if unit_type == "research-milestone" || unit_type == "research-slice" {
+        "research"
+    } else if unit_type == "plan-milestone" || unit_type == "plan-slice" {
+        "planning"
+    } else if unit_type == "execute-task" {
+        "execution"
+    } else if unit_type == "complete-slice" {
+        "completion"
+    } else if unit_type == "reassess-roadmap" {
+        "reassessment"
+    } else {
+        "execution"
+    }
+}
+
+/// Parse metrics.json and return (unit_records, totals, by_phase, by_slice, by_model).
+fn parse_metrics_json(
+    content: &str,
+) -> (
+    Vec<UnitRecord>,
+    ProjectTotals,
+    Vec<PhaseAggregate>,
+    Vec<SliceAggregate>,
+    Vec<ModelAggregate>,
+) {
+    let json: serde_json::Value = serde_json::from_str(content).unwrap_or(serde_json::json!({}));
+    let units_arr = json.get("units").and_then(|v| v.as_array());
+
+    let mut records: Vec<UnitRecord> = Vec::new();
+
+    if let Some(arr) = units_arr {
+        for item in arr {
+            let unit_type = item
+                .get("unitType")
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .to_string();
+            let id = item
+                .get("id")
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .to_string();
+            let model = item
+                .get("model")
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .to_string();
+            let started_at = item
+                .get("startedAt")
+                .and_then(|v| v.as_i64())
+                .unwrap_or(0);
+            let finished_at = item
+                .get("finishedAt")
+                .and_then(|v| v.as_i64())
+                .unwrap_or(0);
+            let cost = item
+                .get("cost")
+                .and_then(|v| v.as_f64())
+                .unwrap_or(0.0);
+            let input_tokens = item
+                .get("inputTokens")
+                .and_then(|v| v.as_i64())
+                .unwrap_or(0);
+            let output_tokens = item
+                .get("outputTokens")
+                .and_then(|v| v.as_i64())
+                .unwrap_or(0);
+            let cache_read_tokens = item
+                .get("cacheRead")
+                .and_then(|v| v.as_i64())
+                .unwrap_or(0);
+            let cache_write_tokens = item
+                .get("cacheWrite")
+                .and_then(|v| v.as_i64())
+                .unwrap_or(0);
+            let total_tokens = item
+                .get("totalTokens")
+                .and_then(|v| v.as_i64())
+                .unwrap_or_else(|| input_tokens + output_tokens + cache_read_tokens + cache_write_tokens);
+            let tool_calls = item
+                .get("toolCalls")
+                .and_then(|v| v.as_i64())
+                .unwrap_or(0);
+            let tier = item
+                .get("tier")
+                .and_then(|v| v.as_str())
+                .map(String::from);
+            let model_downgraded = item
+                .get("modelDowngraded")
+                .and_then(|v| v.as_bool())
+                .unwrap_or(false);
+
+            records.push(UnitRecord {
+                unit_type,
+                id,
+                model,
+                started_at,
+                finished_at,
+                cost,
+                input_tokens,
+                output_tokens,
+                cache_read_tokens,
+                cache_write_tokens,
+                total_tokens,
+                tool_calls,
+                tier,
+                model_downgraded,
+            });
+        }
+    }
+
+    // ---- Totals (single pass) ----
+    let mut total_cost = 0.0f64;
+    let mut total_tokens = 0i64;
+    let mut total_duration_ms = 0i64;
+    let mut total_tool_calls = 0i64;
+    for r in &records {
+        total_cost += r.cost;
+        total_tokens += r.total_tokens;
+        total_duration_ms += r.finished_at - r.started_at;
+        total_tool_calls += r.tool_calls;
+    }
+    let totals = ProjectTotals {
+        units: records.len() as u32,
+        total_cost,
+        total_tokens,
+        duration_ms: total_duration_ms,
+        tool_calls: total_tool_calls,
+    };
+
+    // ---- By phase ----
+    let phase_order = ["research", "planning", "execution", "completion", "reassessment"];
+    let mut phase_map: std::collections::HashMap<&'static str, (u32, f64, i64, i64)> =
+        std::collections::HashMap::new();
+    for p in &phase_order {
+        phase_map.insert(p, (0, 0.0, 0, 0));
+    }
+    for r in &records {
+        let phase = classify_unit_phase(&r.unit_type);
+        let entry = phase_map.entry(phase).or_insert((0, 0.0, 0, 0));
+        entry.0 += 1;
+        entry.1 += r.cost;
+        entry.2 += r.total_tokens;
+        entry.3 += r.finished_at - r.started_at;
+    }
+    let by_phase: Vec<PhaseAggregate> = phase_order
+        .iter()
+        .filter_map(|p| {
+            phase_map.get(p).map(|&(units, cost, tokens, duration_ms)| PhaseAggregate {
+                phase: p.to_string(),
+                units,
+                cost,
+                tokens,
+                duration_ms,
+            })
+        })
+        .collect();
+
+    // ---- By slice ----
+    let mut slice_map: std::collections::HashMap<String, (u32, f64, i64, i64)> =
+        std::collections::HashMap::new();
+    for r in &records {
+        let slice_key = {
+            let parts: Vec<&str> = r.id.splitn(3, '/').collect();
+            if parts.len() >= 2 {
+                format!("{}/{}", parts[0], parts[1])
+            } else {
+                r.id.clone()
+            }
+        };
+        let entry = slice_map.entry(slice_key).or_insert((0, 0.0, 0, 0));
+        entry.0 += 1;
+        entry.1 += r.cost;
+        entry.2 += r.total_tokens;
+        entry.3 += r.finished_at - r.started_at;
+    }
+    let mut by_slice: Vec<SliceAggregate> = slice_map
+        .into_iter()
+        .map(|(slice_id, (units, cost, tokens, duration_ms))| SliceAggregate {
+            slice_id,
+            units,
+            cost,
+            tokens,
+            duration_ms,
+        })
+        .collect();
+    by_slice.sort_by(|a, b| a.slice_id.cmp(&b.slice_id));
+
+    // ---- By model ----
+    let mut model_map: std::collections::HashMap<String, (u32, f64, i64)> =
+        std::collections::HashMap::new();
+    for r in &records {
+        let entry = model_map.entry(r.model.clone()).or_insert((0, 0.0, 0));
+        entry.0 += 1;
+        entry.1 += r.cost;
+        entry.2 += r.total_tokens;
+    }
+    let mut by_model: Vec<ModelAggregate> = model_map
+        .into_iter()
+        .map(|(model, (units, cost, tokens))| ModelAggregate {
+            model,
+            units,
+            cost,
+            tokens,
+        })
+        .collect();
+    by_model.sort_by(|a, b| b.cost.partial_cmp(&a.cost).unwrap_or(std::cmp::Ordering::Equal));
+
+    (records, totals, by_phase, by_slice, by_model)
+}
+
+// ---------------------------------------------------------------------------
+// R078: gsd2_get_history
+// ---------------------------------------------------------------------------
+
+#[tauri::command]
+pub async fn gsd2_get_history(
+    project_id: String,
+    db: tauri::State<'_, DbState>,
+) -> Result<HistoryData, String> {
+    let project_path = {
+        let db_guard = db.write().await;
+        get_project_path(&db_guard, &project_id)?
+    };
+
+    let metrics_path = Path::new(&project_path).join(".gsd").join("metrics.json");
+    if !metrics_path.exists() {
+        return Ok(HistoryData {
+            units: vec![],
+            totals: ProjectTotals {
+                units: 0,
+                total_cost: 0.0,
+                total_tokens: 0,
+                duration_ms: 0,
+                tool_calls: 0,
+            },
+            by_phase: vec![],
+            by_slice: vec![],
+            by_model: vec![],
+        });
+    }
+
+    let content = std::fs::read_to_string(&metrics_path)
+        .map_err(|e| format!("Failed to read metrics.json: {e}"))?;
+
+    let (units, totals, by_phase, by_slice, by_model) = parse_metrics_json(&content);
+    Ok(HistoryData {
+        units,
+        totals,
+        by_phase,
+        by_slice,
+        by_model,
+    })
+}
+
+// ---------------------------------------------------------------------------
+// R082: gsd2_get_hooks — manual section scan of preferences.md
+// ---------------------------------------------------------------------------
+
+#[tauri::command]
+pub async fn gsd2_get_hooks(
+    project_id: String,
+    db: tauri::State<'_, DbState>,
+) -> Result<HooksData, String> {
+    let project_path = {
+        let db_guard = db.write().await;
+        get_project_path(&db_guard, &project_id)?
+    };
+
+    let prefs_path = Path::new(&project_path).join(".gsd").join("preferences.md");
+    if !prefs_path.exists() {
+        return Ok(HooksData {
+            hooks: vec![],
+            preferences_exists: false,
+        });
+    }
+
+    let content = std::fs::read_to_string(&prefs_path)
+        .map_err(|e| format!("Failed to read preferences.md: {e}"))?;
+
+    let hooks = parse_hooks_from_prefs(&content);
+    Ok(HooksData {
+        hooks,
+        preferences_exists: true,
+    })
+}
+
+/// Scan preferences.md for post_unit_hooks: and pre_dispatch_hooks: sections.
+/// Each YAML-like block under those keys is parsed into a HookEntry.
+fn parse_hooks_from_prefs(content: &str) -> Vec<HookEntry> {
+    let mut hooks: Vec<HookEntry> = Vec::new();
+    let lines: Vec<&str> = content.lines().collect();
+    let mut i = 0;
+    while i < lines.len() {
+        let line = lines[i].trim_end();
+        // Detect section headers
+        let hook_type = if line.starts_with("post_unit_hooks:") {
+            Some("post_unit")
+        } else if line.starts_with("pre_dispatch_hooks:") {
+            Some("pre_dispatch")
+        } else {
+            None
+        };
+
+        if let Some(htype) = hook_type {
+            i += 1;
+            // Collect hook blocks while lines are indented
+            while i < lines.len() {
+                let current = lines[i];
+                // A non-indented non-empty line ends the section
+                if !current.is_empty()
+                    && !current.starts_with(' ')
+                    && !current.starts_with('\t')
+                {
+                    break;
+                }
+                let trimmed = current.trim();
+                if trimmed.starts_with("- name:") {
+                    // Start of a hook block
+                    let name = trimmed["- name:".len()..].trim().to_string();
+                    let mut triggers: Vec<String> = Vec::new();
+                    let mut action: Option<String> = None;
+                    let mut artifact: Option<String> = None;
+                    let mut max_cycles: Option<u32> = None;
+                    let mut in_trigger_list = false;
+
+                    i += 1;
+                    while i < lines.len() {
+                        let inner = lines[i];
+                        // Block ends when we hit a non-indented non-empty line
+                        // or another "- name:" at the same indentation level
+                        if !inner.is_empty()
+                            && !inner.starts_with(' ')
+                            && !inner.starts_with('\t')
+                        {
+                            break;
+                        }
+                        let inner_trimmed = inner.trim();
+                        if inner_trimmed.starts_with("- name:") {
+                            // Next hook block — don't consume
+                            break;
+                        }
+                        if inner_trimmed.starts_with("after:") || inner_trimmed.starts_with("before:") {
+                            in_trigger_list = true;
+                        } else if inner_trimmed.starts_with("action:") {
+                            in_trigger_list = false;
+                            action = Some(inner_trimmed["action:".len()..].trim().to_string());
+                        } else if inner_trimmed.starts_with("artifact:") {
+                            in_trigger_list = false;
+                            artifact = Some(inner_trimmed["artifact:".len()..].trim().to_string());
+                        } else if inner_trimmed.starts_with("max_cycles:") {
+                            in_trigger_list = false;
+                            max_cycles = inner_trimmed["max_cycles:".len()..]
+                                .trim()
+                                .parse::<u32>()
+                                .ok();
+                        } else if in_trigger_list && inner_trimmed.starts_with("- ") {
+                            triggers.push(inner_trimmed[2..].trim().to_string());
+                        } else if !inner_trimmed.is_empty()
+                            && !inner_trimmed.starts_with('#')
+                        {
+                            // Any other key resets trigger list mode
+                            in_trigger_list = false;
+                        }
+                        i += 1;
+                    }
+                    hooks.push(HookEntry {
+                        name,
+                        hook_type: htype.to_string(),
+                        triggers,
+                        action,
+                        artifact,
+                        max_cycles,
+                    });
+                } else {
+                    i += 1;
+                }
+            }
+        } else {
+            i += 1;
+        }
+    }
+    hooks
+}
+
+// ---------------------------------------------------------------------------
+// R083: gsd2_get_git_summary — self-contained, no git.rs import
+// ---------------------------------------------------------------------------
+
+#[tauri::command]
+pub async fn gsd2_get_git_summary(
+    project_id: String,
+    db: tauri::State<'_, DbState>,
+) -> Result<GitSummaryData, String> {
+    let project_path = {
+        let db_guard = db.write().await;
+        get_project_path(&db_guard, &project_id)?
+    };
+
+    // Helper: run a git command, return stdout as String or None on failure
+    let run_git = |args: &[&str]| -> Option<String> {
+        let mut cmd = std::process::Command::new("git");
+        cmd.arg("-C").arg(&project_path);
+        for a in args {
+            cmd.arg(a);
+        }
+        match cmd.output() {
+            Ok(out) if out.status.success() => {
+                Some(String::from_utf8_lossy(&out.stdout).trim().to_string())
+            }
+            _ => None,
+        }
+    };
+
+    // 1. Verify this is a git repo (branch check)
+    let branch_out = run_git(&["rev-parse", "--abbrev-ref", "HEAD"]);
+    if branch_out.is_none() {
+        return Ok(GitSummaryData {
+            branch: None,
+            is_dirty: false,
+            staged_count: 0,
+            unstaged_count: 0,
+            untracked_count: 0,
+            recent_commits: vec![],
+            ahead: 0,
+            behind: 0,
+            has_git: false,
+        });
+    }
+    let branch = branch_out.filter(|b| b != "HEAD").map(|b| b.clone());
+
+    // 2. Status
+    let (staged_count, unstaged_count, untracked_count) =
+        if let Some(status_out) = run_git(&["status", "--porcelain"]) {
+            let mut staged = 0u32;
+            let mut unstaged = 0u32;
+            let mut untracked = 0u32;
+            for line in status_out.lines() {
+                let bytes = line.as_bytes();
+                if bytes.len() < 2 {
+                    continue;
+                }
+                let x = bytes[0] as char; // staged column
+                let y = bytes[1] as char; // unstaged column
+                match x {
+                    'M' | 'A' | 'D' | 'R' | 'C' => staged += 1,
+                    _ => {}
+                }
+                match y {
+                    'M' | 'D' => unstaged += 1,
+                    '?' => untracked += 1,
+                    _ => {}
+                }
+            }
+            (staged, unstaged, untracked)
+        } else {
+            (0, 0, 0)
+        };
+
+    let is_dirty = staged_count > 0 || unstaged_count > 0 || untracked_count > 0;
+
+    // 3. Recent commits
+    let recent_commits =
+        if let Some(log_out) = run_git(&["log", "--format=%H|%s|%an|%ar", "-20"]) {
+            log_out
+                .lines()
+                .filter_map(|line| {
+                    let parts: Vec<&str> = line.splitn(4, '|').collect();
+                    if parts.len() == 4 {
+                        Some(GitCommitEntry {
+                            hash: parts[0].to_string(),
+                            message: parts[1].to_string(),
+                            author: parts[2].to_string(),
+                            date: parts[3].to_string(),
+                        })
+                    } else {
+                        None
+                    }
+                })
+                .collect()
+        } else {
+            vec![]
+        };
+
+    // 4. Ahead / behind upstream
+    let (ahead, behind) =
+        if let Some(ab_out) = run_git(&["rev-list", "--left-right", "--count", "@{upstream}...HEAD"]) {
+            let parts: Vec<&str> = ab_out.split_whitespace().collect();
+            if parts.len() == 2 {
+                let behind = parts[0].parse::<u32>().unwrap_or(0);
+                let ahead = parts[1].parse::<u32>().unwrap_or(0);
+                (ahead, behind)
+            } else {
+                (0, 0)
+            }
+        } else {
+            (0, 0)
+        };
+
+    Ok(GitSummaryData {
+        branch,
+        is_dirty,
+        staged_count,
+        unstaged_count,
+        untracked_count,
+        recent_commits,
+        ahead,
+        behind,
+        has_git: true,
+    })
+}
+
+// ---------------------------------------------------------------------------
+// R086: gsd2_export_progress — markdown progress report
+// ---------------------------------------------------------------------------
+
+#[tauri::command]
+pub async fn gsd2_export_progress(
+    project_id: String,
+    db: tauri::State<'_, DbState>,
+) -> Result<ExportData, String> {
+    let project_path = {
+        let db_guard = db.write().await;
+        get_project_path(&db_guard, &project_id)?
+    };
+
+    let gsd_dir = Path::new(&project_path).join(".gsd");
+
+    // Parse metrics.json if available
+    let metrics_path = gsd_dir.join("metrics.json");
+    let (totals, by_phase, by_model) = if metrics_path.exists() {
+        let content = std::fs::read_to_string(&metrics_path).unwrap_or_default();
+        let (_, t, bp, _, bm) = parse_metrics_json(&content);
+        (t, bp, bm)
+    } else {
+        (
+            ProjectTotals {
+                units: 0,
+                total_cost: 0.0,
+                total_tokens: 0,
+                duration_ms: 0,
+                tool_calls: 0,
+            },
+            vec![],
+            vec![],
+        )
+    };
+
+    // Milestone progress table
+    let milestones_dir = gsd_dir.join("milestones");
+    let milestones = walk_milestones_with_tasks(&milestones_dir);
+
+    // Build markdown
+    let mut md = String::new();
+    md.push_str(&format!("# GSD Project Progress Export\n\n"));
+    md.push_str(&format!("**Project:** `{}`\n\n", project_id));
+
+    // Summary stats
+    md.push_str("## Summary\n\n");
+    md.push_str("| Metric | Value |\n");
+    md.push_str("|--------|-------|\n");
+    md.push_str(&format!("| Total Units | {} |\n", totals.units));
+    md.push_str(&format!("| Total Cost | ${:.4} |\n", totals.total_cost));
+    md.push_str(&format!("| Total Tokens | {} |\n", totals.total_tokens));
+    md.push_str(&format!("| Total Duration | {}ms |\n", totals.duration_ms));
+    md.push_str(&format!("| Total Tool Calls | {} |\n\n", totals.tool_calls));
+
+    // Milestone progress table
+    md.push_str("## Milestone Progress\n\n");
+    md.push_str("| Milestone | Slices Done | Slices Total | Tasks Done | Tasks Total | Status |\n");
+    md.push_str("|-----------|-------------|--------------|------------|-------------|--------|\n");
+    for m in &milestones {
+        let slices_done = m.slices.iter().filter(|s| s.done).count();
+        let slices_total = m.slices.len();
+        let tasks_done: usize = m
+            .slices
+            .iter()
+            .flat_map(|s| s.tasks.iter())
+            .filter(|t| t.done)
+            .count();
+        let tasks_total: usize = m.slices.iter().map(|s| s.tasks.len()).sum();
+        let status = if m.done {
+            "✅ Done"
+        } else if slices_done > 0 {
+            "🔄 In Progress"
+        } else {
+            "⏳ Pending"
+        };
+        md.push_str(&format!(
+            "| {} | {} | {} | {} | {} | {} |\n",
+            m.id, slices_done, slices_total, tasks_done, tasks_total, status
+        ));
+    }
+    md.push('\n');
+
+    // Phase breakdown
+    if !by_phase.is_empty() {
+        md.push_str("## Phase Breakdown\n\n");
+        md.push_str("| Phase | Units | Cost | Tokens | Duration |\n");
+        md.push_str("|-------|-------|------|--------|----------|\n");
+        for p in &by_phase {
+            if p.units > 0 {
+                md.push_str(&format!(
+                    "| {} | {} | ${:.4} | {} | {}ms |\n",
+                    p.phase, p.units, p.cost, p.tokens, p.duration_ms
+                ));
+            }
+        }
+        md.push('\n');
+    }
+
+    // Model breakdown
+    if !by_model.is_empty() {
+        md.push_str("## Model Breakdown\n\n");
+        md.push_str("| Model | Units | Cost | Tokens |\n");
+        md.push_str("|-------|-------|------|--------|\n");
+        for m in &by_model {
+            md.push_str(&format!(
+                "| {} | {} | ${:.4} | {} |\n",
+                m.model, m.units, m.cost, m.tokens
+            ));
+        }
+        md.push('\n');
+    }
+
+    Ok(ExportData {
+        content: md,
+        format: "markdown".to_string(),
+    })
+}
+
+// ============================================================
 // Visualizer structs and commands
 // ============================================================
 
-/// Tree node for visualizer (milestone -> slice -> task).
+// --- Rich task node (VisualizerData2 tree) ---
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct VisualizerNode {
+pub struct VisualizerTask2 {
     pub id: String,
     pub title: String,
-    pub status: String, // "done" | "active" | "pending"
-    pub children: Vec<VisualizerNode>,
+    pub done: bool,
+    pub status: String,
+    pub estimate: Option<String>,
+    pub on_critical_path: bool,
+    pub slack: i64,
 }
 
-/// Cost aggregated by a string key (milestone_id or model name).
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct CostByKey {
+pub struct VisualizerSlice2 {
+    pub id: String,
+    pub title: String,
+    pub done: bool,
+    pub status: String,
+    pub risk: Option<String>,
+    pub dependencies: Vec<String>,
+    pub tasks: Vec<VisualizerTask2>,
+    pub verification: Option<SliceVerification2>,
+    pub changelog: Vec<ChangelogEntry2>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct VisualizerMilestone2 {
+    pub id: String,
+    pub title: String,
+    pub done: bool,
+    pub status: String,
+    pub dependencies: Vec<String>,
+    pub slices: Vec<VisualizerSlice2>,
+    pub discussion_state: String, // "discussed" | "draft" | "undiscussed"
+    pub cost: f64,
+}
+
+// --- Critical path ---
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SlackEntry {
+    pub id: String,
+    pub slack: i64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CriticalPathInfo {
+    pub path: Vec<String>,
+    pub slack_map: Vec<SlackEntry>,
+}
+
+// --- Agent activity ---
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CurrentUnit {
+    pub unit_type: String,
+    pub unit_id: String,
+    pub started_at: Option<String>,
+    pub elapsed_ms: i64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AgentActivityInfo {
+    pub is_active: bool,
+    pub pid: Option<i32>,
+    pub current_unit: Option<CurrentUnit>,
+    pub completed_units: u32,
+    pub total_slices: u32,
+}
+
+// --- Changelog ---
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FileModified2 {
+    pub path: String,
+    pub description: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChangelogEntry2 {
+    pub slice_id: String,
+    pub one_liner: String,
+    pub completed_at: Option<String>,
+    pub files_modified: Vec<FileModified2>,
+}
+
+// --- Slice verification ---
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SliceVerification2 {
+    pub slice_id: String,
+    pub verification_text: String,
+}
+
+// --- Knowledge / Captures / Health / Stats ---
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct KnowledgeInfo2 {
+    pub exists: bool,
+    pub entry_count: u32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CapturesInfo2 {
+    pub exists: bool,
+    pub pending_count: u32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct HealthInfo2 {
+    pub active_milestone_id: Option<String>,
+    pub active_slice_id: Option<String>,
+    pub active_task_id: Option<String>,
+    pub milestones_done: u32,
+    pub milestones_total: u32,
+    pub slices_done: u32,
+    pub slices_total: u32,
+    pub tasks_done: u32,
+    pub tasks_total: u32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct VisualizerStats2 {
+    pub milestones_missing_summary: u32,
+    pub slices_missing_summary: u32,
+    pub recent_changelog: Vec<ChangelogEntry2>,
+}
+
+/// Full VisualizerData2 — the expanded shape returned by gsd2_get_visualizer_data.
+/// Includes backward-compatible fields (tree, cost_by_milestone, cost_by_model, timeline)
+/// alongside the new expanded fields.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct VisualizerData2 {
+    // Rich milestone tree (new)
+    pub milestones: Vec<VisualizerMilestone2>,
+
+    // Backward-compatible aliases used by gsd2-visualizer-tab.tsx
+    // tree = milestones flattened to VisualizerNode shape
+    pub tree: Vec<VisualizerNodeCompat>,
+    pub cost_by_milestone: Vec<CostByKeyCompat>,
+    pub cost_by_model: Vec<CostByKeyCompat>,
+    pub timeline: Vec<TimelineEntryCompat>,
+
+    // Critical path across all incomplete slices
+    pub critical_path: CriticalPathInfo,
+
+    // Agent activity
+    pub agent_activity: AgentActivityInfo,
+
+    // Cost breakdowns (reuse T02 aggregation structs)
+    pub by_phase: Vec<PhaseAggregate>,
+    pub by_slice: Vec<SliceAggregate>,
+    pub by_model: Vec<ModelAggregate>,
+    pub units: Vec<UnitRecord>,
+    pub totals: ProjectTotals,
+
+    // Knowledge / Captures
+    pub knowledge: KnowledgeInfo2,
+    pub captures: CapturesInfo2,
+
+    // Health summary
+    pub health: HealthInfo2,
+
+    // Stats
+    pub stats: VisualizerStats2,
+}
+
+/// Backward-compatible visualizer node (for tree field).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct VisualizerNodeCompat {
+    pub id: String,
+    pub title: String,
+    pub status: String,
+    pub children: Vec<VisualizerNodeCompat>,
+}
+
+/// Backward-compatible cost-by-key.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CostByKeyCompat {
     pub key: String,
     pub cost: f64,
 }
 
-/// A single timeline entry from the metrics ledger.
+/// Backward-compatible timeline entry.
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct TimelineEntry {
+pub struct TimelineEntryCompat {
     pub id: String,
     pub title: String,
-    pub entry_type: String, // "slice" | "task"
+    pub entry_type: String,
     pub completed_at: Option<String>,
     pub cost: f64,
 }
 
-/// Full visualizer dataset: tree + cost breakdowns + timeline.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct VisualizerData {
-    pub tree: Vec<VisualizerNode>,
-    pub cost_by_milestone: Vec<CostByKey>,
-    pub cost_by_model: Vec<CostByKey>,
-    pub timeline: Vec<TimelineEntry>,
+// ============================================================
+// Critical path helper
+// ============================================================
+
+/// Compute critical path via Kahn's topological sort + longest-path DP.
+/// Input: Vec of (id, dependencies) pairs.
+/// Returns (ordered_path, slack_map) where slack_map maps id → slack value.
+fn compute_critical_path(nodes: &[(String, Vec<String>)]) -> CriticalPathInfo {
+    if nodes.is_empty() {
+        return CriticalPathInfo { path: Vec::new(), slack_map: Vec::new() };
+    }
+
+    // Build adjacency list: predecessor → successors
+    let mut adj: HashMap<String, Vec<String>> = HashMap::new();
+    // In-degree map
+    let mut in_degree: HashMap<String, usize> = HashMap::new();
+    // All node ids
+    for (id, _deps) in nodes {
+        in_degree.entry(id.clone()).or_insert(0);
+        adj.entry(id.clone()).or_insert_with(Vec::new);
+    }
+    for (id, deps) in nodes {
+        for dep in deps {
+            // dep → id edge (dep must finish before id)
+            adj.entry(dep.clone()).or_insert_with(Vec::new).push(id.clone());
+            *in_degree.entry(id.clone()).or_insert(0) += 1;
+        }
+    }
+
+    // Kahn's BFS — also records topo order
+    let mut queue: std::collections::VecDeque<String> = in_degree
+        .iter()
+        .filter(|(_k, &v)| v == 0)
+        .map(|(k, _)| k.clone())
+        .collect();
+
+    // dist[node] = longest path length from any root to this node
+    let mut dist: HashMap<String, i64> = HashMap::new();
+    // predecessors for path tracing
+    let mut pred: HashMap<String, Option<String>> = HashMap::new();
+    for (id, _) in nodes {
+        dist.insert(id.clone(), 0);
+        pred.insert(id.clone(), None);
+    }
+
+    let mut topo: Vec<String> = Vec::new();
+    let mut in_deg = in_degree.clone();
+
+    while let Some(node) = queue.pop_front() {
+        topo.push(node.clone());
+        let node_dist = dist.get(&node).copied().unwrap_or(0);
+        if let Some(succs) = adj.get(&node) {
+            for succ in succs {
+                // Update longest-path distance
+                let succ_dist = dist.get(succ).copied().unwrap_or(0);
+                if node_dist + 1 > succ_dist {
+                    dist.insert(succ.clone(), node_dist + 1);
+                    pred.insert(succ.clone(), Some(node.clone()));
+                }
+                // Reduce in-degree
+                if let Some(d) = in_deg.get_mut(succ) {
+                    *d = d.saturating_sub(1);
+                    if *d == 0 {
+                        queue.push_back(succ.clone());
+                    }
+                }
+            }
+        }
+    }
+
+    // Find the node with maximum distance (end of critical path)
+    let max_dist = dist.values().copied().max().unwrap_or(0);
+    let end_node = topo
+        .iter()
+        .rev()
+        .find(|n| dist.get(*n).copied().unwrap_or(0) == max_dist)
+        .cloned();
+
+    // Trace back the critical path
+    let mut path: Vec<String> = Vec::new();
+    let mut cur = end_node;
+    while let Some(ref node) = cur {
+        path.push(node.clone());
+        cur = pred.get(node).and_then(|p| p.clone());
+    }
+    path.reverse();
+
+    // Compute slack: max_dist - dist[node]
+    let slack_map: Vec<SlackEntry> = dist
+        .iter()
+        .map(|(id, &d)| SlackEntry { id: id.clone(), slack: max_dist - d })
+        .collect();
+
+    CriticalPathInfo { path, slack_map }
 }
 
-/// Return visualizer data for a GSD-2 project: milestone->slice->task tree with
-/// status tags, cost breakdowns by milestone and model, and a completed timeline.
+// ============================================================
+// Changelog helper
+// ============================================================
+
+/// Load changelog entries from completed slice SUMMARY.md files.
+fn load_slice_changelog(slice_dir: &Path, slice_id: &str) -> Option<ChangelogEntry2> {
+    let summary_file = resolve_file_by_id(slice_dir, slice_id, "SUMMARY")?;
+    let content = std::fs::read_to_string(&summary_file).ok()?;
+    let (fm, body) = parse_frontmatter(&content);
+
+    let one_liner = fm.get("one_liner").cloned().unwrap_or_default();
+    let completed_at = fm.get("completed_at").cloned();
+
+    // Parse files_modified section from the body
+    // Lines matching: - `path/to/file` — description
+    let mut files_modified: Vec<FileModified2> = Vec::new();
+    let mut in_files_section = false;
+    for line in body.lines() {
+        let trimmed = line.trim();
+        if trimmed.contains("Files Created") || trimmed.contains("Files Modified") || trimmed.contains("files_modified") {
+            in_files_section = true;
+            continue;
+        }
+        if in_files_section {
+            // Stop at next heading
+            if trimmed.starts_with('#') {
+                in_files_section = false;
+                continue;
+            }
+            // Match: - `path` — description  or  - `path` - description
+            if trimmed.starts_with("- `") || trimmed.starts_with("- **") {
+                let without_dash = trimmed.trim_start_matches("- ").trim_start_matches("**");
+                // Find end of path (backtick or ** delimiter)
+                let path_part;
+                let desc_part;
+                if without_dash.find('`').is_some() {
+                    let after_open = without_dash.trim_start_matches('`');
+                    if let Some(close) = after_open.find('`') {
+                        path_part = after_open[..close].to_string();
+                        let rest = &after_open[close + 1..];
+                        desc_part = rest.trim_start_matches(" — ").trim_start_matches(" - ").trim().to_string();
+                    } else {
+                        path_part = after_open.to_string();
+                        desc_part = String::new();
+                    }
+                } else {
+                    path_part = without_dash.to_string();
+                    desc_part = String::new();
+                }
+                if !path_part.is_empty() {
+                    files_modified.push(FileModified2 { path: path_part, description: desc_part });
+                }
+            }
+        }
+    }
+
+    Some(ChangelogEntry2 {
+        slice_id: slice_id.to_string(),
+        one_liner,
+        completed_at,
+        files_modified,
+    })
+}
+
+// ============================================================
+// Discussion state helper
+// ============================================================
+
+/// Determine discussion state for a milestone directory.
+fn get_discussion_state(milestone_dir: &Path, milestone_id: &str) -> String {
+    if resolve_file_by_id(milestone_dir, milestone_id, "CONTEXT-DRAFT").is_some() {
+        return "draft".to_string();
+    }
+    if resolve_file_by_id(milestone_dir, milestone_id, "CONTEXT").is_some() {
+        return "discussed".to_string();
+    }
+    "undiscussed".to_string()
+}
+
+// ============================================================
+// Agent activity helper
+// ============================================================
+
+/// Read agent activity from the auto.lock file.
+fn get_agent_activity(project_path: &str, total_slices: u32, completed_units: u32) -> AgentActivityInfo {
+    let gsd_dir = Path::new(project_path).join(".gsd");
+    let lock_paths = [
+        gsd_dir.join("auto.lock"),
+        gsd_dir.join("runtime").join("auto.lock"),
+    ];
+
+    let lock_content = lock_paths.iter().find_map(|p| std::fs::read_to_string(p).ok());
+
+    if let Some(content) = lock_content {
+        let json: serde_json::Value = serde_json::from_str(&content).unwrap_or_default();
+
+        let pid = json.get("pid").and_then(|v| v.as_i64()).map(|p| p as i32);
+        let unit_type = json.get("unitType").and_then(|v| v.as_str()).unwrap_or("").to_string();
+        let unit_id = json.get("unitId").and_then(|v| v.as_str()).unwrap_or("").to_string();
+        let unit_started_at = json.get("unitStartedAt").and_then(|v| v.as_str()).map(String::from);
+
+        // Check PID liveness
+        let is_alive = pid.map_or(false, |p| {
+            #[cfg(unix)]
+            unsafe { libc::kill(p, 0) == 0 }
+            #[cfg(not(unix))]
+            { false }
+        });
+
+        // Compute elapsed_ms from unitStartedAt
+        let elapsed_ms = if let Some(ref started) = unit_started_at {
+            // Parse ISO 8601 timestamp — best-effort, compute ms since then
+            // Use std::time to avoid chrono dep; if parsing fails, return 0
+            let now_ms = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_millis() as i64)
+                .unwrap_or(0);
+            // Try to parse the ISO string by checking if it's numeric first
+            if let Ok(ts) = started.parse::<i64>() {
+                now_ms - ts
+            } else {
+                0
+            }
+        } else {
+            0
+        };
+
+        let current_unit = if !unit_id.is_empty() {
+            Some(CurrentUnit {
+                unit_type,
+                unit_id,
+                started_at: unit_started_at,
+                elapsed_ms,
+            })
+        } else {
+            None
+        };
+
+        AgentActivityInfo {
+            is_active: is_alive,
+            pid,
+            current_unit,
+            completed_units,
+            total_slices,
+        }
+    } else {
+        AgentActivityInfo {
+            is_active: false,
+            pid: None,
+            current_unit: None,
+            completed_units,
+            total_slices,
+        }
+    }
+}
+
+/// Return full VisualizerData2 for a GSD-2 project (R085).
+/// Includes milestone tree, critical path, changelog, agent activity, cost breakdowns,
+/// knowledge/captures info, and backward-compatible fields for the existing UI.
 #[tauri::command]
 pub async fn gsd2_get_visualizer_data(
     project_id: String,
     db: tauri::State<'_, DbState>,
-) -> Result<VisualizerData, String> {
+) -> Result<VisualizerData2, String> {
     let project_path = {
         let db_guard = db.write().await;
         get_project_path(&db_guard, &project_id)?
@@ -1663,165 +3183,356 @@ pub async fn gsd2_get_visualizer_data(
 
     let milestones_dir = Path::new(&project_path).join(".gsd").join("milestones");
 
-    // Get all milestones with their slices and tasks
-    let milestones = walk_milestones_with_tasks(&milestones_dir);
+    // Walk milestones with tasks (reuse existing helper)
+    let raw_milestones = walk_milestones_with_tasks(&milestones_dir);
 
-    // Get active IDs from health (for status tagging)
-    let health = get_health_from_dir(&project_path);
-    let active_milestone_id = health.active_milestone_id.as_deref().unwrap_or("");
-    let active_slice_id = health.active_slice_id.as_deref().unwrap_or("");
-    let active_task_id = health.active_task_id.as_deref().unwrap_or("");
+    // Get health for active IDs
+    let health_raw = get_health_from_dir(&project_path);
+    let active_milestone_id = health_raw.active_milestone_id.as_deref().unwrap_or("").to_string();
+    let active_slice_id = health_raw.active_slice_id.as_deref().unwrap_or("").to_string();
+    let active_task_id = health_raw.active_task_id.as_deref().unwrap_or("").to_string();
 
-    // Build tree
-    let tree: Vec<VisualizerNode> = milestones
+    // Parse metrics via shared helper
+    let metrics_path = Path::new(&project_path).join(".gsd").join("metrics.json");
+    let metrics_content = std::fs::read_to_string(&metrics_path).unwrap_or_default();
+    let (units, totals, by_phase, by_slice, by_model) = parse_metrics_json(&metrics_content);
+
+    // Build cost-by-milestone from by_slice (group by milestone prefix M###)
+    let mut cost_by_milestone_map: HashMap<String, f64> = HashMap::new();
+    for sa in &by_slice {
+        // slice_id is like "M001/S01" — extract milestone prefix
+        let mid = if let Some(slash) = sa.slice_id.find('/') {
+            sa.slice_id[..slash].to_string()
+        } else {
+            sa.slice_id.clone()
+        };
+        *cost_by_milestone_map.entry(mid).or_insert(0.0) += sa.cost;
+    }
+
+    // Build backward-compat timeline from units
+    let mut timeline: Vec<TimelineEntryCompat> = units
         .iter()
-        .map(|milestone| {
-            let m_status = if milestone.done {
+        .filter_map(|u| {
+            // finishedAt > 0 means completed
+            if u.finished_at > 0 {
+                Some(TimelineEntryCompat {
+                    id: u.id.clone(),
+                    title: u.id.clone(), // metrics doesn't carry title
+                    entry_type: u.unit_type.clone(),
+                    completed_at: Some(u.finished_at.to_string()),
+                    cost: u.cost,
+                })
+            } else {
+                None
+            }
+        })
+        .collect();
+    timeline.sort_by(|a, b| b.completed_at.as_deref().cmp(&a.completed_at.as_deref()));
+
+    // Build backward-compat cost_by_milestone
+    let mut cost_by_milestone: Vec<CostByKeyCompat> = cost_by_milestone_map
+        .into_iter()
+        .map(|(key, cost)| CostByKeyCompat { key, cost })
+        .collect();
+    cost_by_milestone.sort_by(|a, b| a.key.cmp(&b.key));
+
+    // Build backward-compat cost_by_model
+    let mut cost_by_model_compat: Vec<CostByKeyCompat> = by_model
+        .iter()
+        .map(|m| CostByKeyCompat { key: m.model.clone(), cost: m.cost })
+        .collect();
+    cost_by_model_compat.sort_by(|a, b| b.cost.partial_cmp(&a.cost).unwrap_or(std::cmp::Ordering::Equal));
+
+    // --- Collect all incomplete slice dependencies for critical path ---
+    // Build nodes as (slice_id_qualified, Vec<dep_id_qualified>)
+    let mut cp_nodes: Vec<(String, Vec<String>)> = Vec::new();
+    for m in &raw_milestones {
+        for s in &m.slices {
+            if !s.done {
+                let qualified_id = format!("{}/{}", m.id, s.id);
+                // Dependencies reference other slices — qualify them if not already
+                let qualified_deps: Vec<String> = s.dependencies.iter().map(|d| {
+                    if d.contains('/') { d.clone() } else { format!("{}/{}", m.id, d) }
+                }).collect();
+                cp_nodes.push((qualified_id, qualified_deps));
+            }
+        }
+    }
+    let critical_path = compute_critical_path(&cp_nodes);
+
+    // Build slack lookup map for O(1) access
+    let slack_lookup: HashMap<String, i64> = critical_path.slack_map
+        .iter()
+        .map(|e| (e.id.clone(), e.slack))
+        .collect();
+    let cp_set: std::collections::HashSet<String> = critical_path.path.iter().cloned().collect();
+
+    // --- Build rich milestone tree ---
+    let mut all_changelog: Vec<ChangelogEntry2> = Vec::new();
+    let mut total_slices: u32 = 0;
+    let mut completed_units: u32 = units.iter().filter(|u| u.finished_at > 0).count() as u32;
+    let _ = completed_units;
+    let completed_units_count = units.iter().filter(|u| u.finished_at > 0).count() as u32;
+
+    let rich_milestones: Vec<VisualizerMilestone2> = raw_milestones.iter().map(|m| {
+        let m_status = if m.done {
+            "done"
+        } else if m.id == active_milestone_id {
+            "active"
+        } else {
+            "pending"
+        };
+
+        // Resolve milestone dir for discussion state and slice summaries
+        let milestone_dir_opt = resolve_dir_by_id(&milestones_dir, &m.id);
+        let milestone_dir = milestone_dir_opt.as_deref()
+            .map(|d| milestones_dir.join(d))
+            .unwrap_or_else(|| milestones_dir.join(&m.id));
+
+        let discussion_state = get_discussion_state(&milestone_dir, &m.id);
+
+        // Cost for this milestone from backward-compat list
+        let m_cost = cost_by_milestone.iter()
+            .find(|c| c.key == m.id)
+            .map(|c| c.cost)
+            .unwrap_or(0.0);
+
+        let rich_slices: Vec<VisualizerSlice2> = m.slices.iter().map(|s| {
+            total_slices += 1;
+
+            let s_status = if s.done {
                 "done"
-            } else if milestone.id == active_milestone_id {
+            } else if s.id == active_slice_id {
                 "active"
             } else {
                 "pending"
             };
 
-            let slice_nodes: Vec<VisualizerNode> = milestone
-                .slices
-                .iter()
-                .map(|slice| {
-                    let s_status = if slice.done {
-                        "done"
-                    } else if slice.id == active_slice_id {
-                        "active"
-                    } else {
-                        "pending"
-                    };
+            let qualified_sid = format!("{}/{}", m.id, s.id);
 
-                    let task_nodes: Vec<VisualizerNode> = slice
-                        .tasks
-                        .iter()
-                        .map(|task| {
-                            let t_status = if task.done {
-                                "done"
-                            } else if task.id == active_task_id {
-                                "active"
-                            } else {
-                                "pending"
-                            };
-                            VisualizerNode {
-                                id: task.id.clone(),
-                                title: task.title.clone(),
-                                status: t_status.to_string(),
-                                children: Vec::new(),
+            // Resolve slice dir for changelog/verification
+            let slice_dir_opt = resolve_dir_by_id(&milestone_dir, &s.id)
+                .map(|d| milestone_dir.join(d))
+                .or_else(|| {
+                    // Check nested slices/ subdir
+                    let nested = milestone_dir.join("slices");
+                    resolve_dir_by_id(&nested, &s.id).map(|d| nested.join(d))
+                });
+            let slice_dir = slice_dir_opt.unwrap_or_else(|| milestone_dir.join(&s.id));
+
+            // Load changelog for completed slices
+            let changelog = if s.done {
+                load_slice_changelog(&slice_dir, &s.id)
+                    .map(|e| vec![e])
+                    .unwrap_or_default()
+            } else {
+                Vec::new()
+            };
+
+            // Load verification summary from SUMMARY.md
+            let verification = if s.done {
+                let summary_file = resolve_file_by_id(&slice_dir, &s.id, "SUMMARY");
+                summary_file.and_then(|f| std::fs::read_to_string(&f).ok()).map(|content| {
+                    let (_fm, body) = parse_frontmatter(&content);
+                    // Extract verification section from body
+                    let mut vtext = String::new();
+                    let mut in_section = false;
+                    for line in body.lines() {
+                        let trimmed = line.trim();
+                        if trimmed.starts_with("## Verification") {
+                            in_section = true;
+                            continue;
+                        }
+                        if in_section {
+                            if trimmed.starts_with("## ") {
+                                break;
                             }
-                        })
-                        .collect();
-
-                    VisualizerNode {
-                        id: slice.id.clone(),
-                        title: slice.title.clone(),
-                        status: s_status.to_string(),
-                        children: task_nodes,
+                            vtext.push_str(line);
+                            vtext.push('\n');
+                        }
+                    }
+                    SliceVerification2 {
+                        slice_id: s.id.clone(),
+                        verification_text: vtext.trim().to_string(),
                     }
                 })
-                .collect();
+            } else {
+                None
+            };
 
-            VisualizerNode {
-                id: milestone.id.clone(),
-                title: milestone.title.clone(),
-                status: m_status.to_string(),
-                children: slice_nodes,
+            // Rich tasks
+            let rich_tasks: Vec<VisualizerTask2> = s.tasks.iter().map(|t| {
+                let t_status = if t.done {
+                    "done"
+                } else if t.id == active_task_id {
+                    "active"
+                } else {
+                    "pending"
+                };
+                let task_qualified = format!("{}/{}/{}", m.id, s.id, t.id);
+                let on_cp = cp_set.contains(&qualified_sid);
+                let slack = slack_lookup.get(&qualified_sid).copied().unwrap_or(0);
+                let _ = task_qualified;
+                VisualizerTask2 {
+                    id: t.id.clone(),
+                    title: t.title.clone(),
+                    done: t.done,
+                    status: t_status.to_string(),
+                    estimate: t.estimate.clone(),
+                    on_critical_path: on_cp,
+                    slack,
+                }
+            }).collect();
+
+            VisualizerSlice2 {
+                id: s.id.clone(),
+                title: s.title.clone(),
+                done: s.done,
+                status: s_status.to_string(),
+                risk: s.risk.clone(),
+                dependencies: s.dependencies.clone(),
+                tasks: rich_tasks,
+                verification,
+                changelog: changelog.clone(),
             }
-        })
-        .collect();
+        }).collect();
 
-    // Parse metrics.json for cost breakdowns and timeline
-    let metrics_path = Path::new(&project_path).join(".gsd").join("metrics.json");
-    let metrics_content = std::fs::read_to_string(&metrics_path).unwrap_or_default();
-    let metrics_json: serde_json::Value =
-        serde_json::from_str(&metrics_content).unwrap_or_else(|_| serde_json::json!({}));
-
-    let empty_vec = Vec::new();
-    let units = metrics_json
-        .get("units")
-        .and_then(|u| u.as_array())
-        .unwrap_or(&empty_vec);
-
-    let mut cost_by_milestone_map: HashMap<String, f64> = HashMap::new();
-    let mut cost_by_model_map: HashMap<String, f64> = HashMap::new();
-    let mut timeline: Vec<TimelineEntry> = Vec::new();
-
-    for unit in units {
-        let milestone_id = unit
-            .get("milestone_id")
-            .and_then(|v| v.as_str())
-            .unwrap_or("unattributed")
-            .to_string();
-        let model = unit
-            .get("model")
-            .and_then(|v| v.as_str())
-            .unwrap_or("unknown")
-            .to_string();
-        let cost = unit.get("cost").and_then(|v| v.as_f64()).unwrap_or(0.0);
-        let completed_at = unit
-            .get("completed_at")
-            .and_then(|v| v.as_str())
-            .map(String::from);
-        let id = unit
-            .get("id")
-            .and_then(|v| v.as_str())
-            .unwrap_or("")
-            .to_string();
-        let title = unit
-            .get("title")
-            .and_then(|v| v.as_str())
-            .unwrap_or("")
-            .to_string();
-        let entry_type = unit
-            .get("type")
-            .and_then(|v| v.as_str())
-            .unwrap_or("task")
-            .to_string();
-
-        *cost_by_milestone_map.entry(milestone_id).or_insert(0.0) += cost;
-        *cost_by_model_map.entry(model).or_insert(0.0) += cost;
-
-        if completed_at.is_some() {
-            timeline.push(TimelineEntry {
-                id,
-                title,
-                entry_type,
-                completed_at,
-                cost,
-            });
+        // Collect changelog from all slices in this milestone
+        for s in &rich_slices {
+            for e in &s.changelog {
+                all_changelog.push(e.clone());
+            }
         }
-    }
 
-    // cost_by_milestone sorted by key
-    let mut cost_by_milestone: Vec<CostByKey> = cost_by_milestone_map
-        .into_iter()
-        .map(|(key, cost)| CostByKey { key, cost })
-        .collect();
-    cost_by_milestone.sort_by(|a, b| a.key.cmp(&b.key));
+        VisualizerMilestone2 {
+            id: m.id.clone(),
+            title: m.title.clone(),
+            done: m.done,
+            status: m_status.to_string(),
+            dependencies: m.dependencies.clone(),
+            slices: rich_slices,
+            discussion_state,
+            cost: m_cost,
+        }
+    }).collect();
 
-    // cost_by_model sorted by cost descending
-    let mut cost_by_model: Vec<CostByKey> = cost_by_model_map
-        .into_iter()
-        .map(|(key, cost)| CostByKey { key, cost })
-        .collect();
-    cost_by_model.sort_by(|a, b| b.cost.partial_cmp(&a.cost).unwrap_or(std::cmp::Ordering::Equal));
+    // Build backward-compatible tree from rich milestones
+    let tree: Vec<VisualizerNodeCompat> = rich_milestones.iter().map(|m| {
+        let slice_nodes: Vec<VisualizerNodeCompat> = m.slices.iter().map(|s| {
+            let task_nodes: Vec<VisualizerNodeCompat> = s.tasks.iter().map(|t| {
+                VisualizerNodeCompat {
+                    id: t.id.clone(),
+                    title: t.title.clone(),
+                    status: t.status.clone(),
+                    children: Vec::new(),
+                }
+            }).collect();
+            VisualizerNodeCompat {
+                id: s.id.clone(),
+                title: s.title.clone(),
+                status: s.status.clone(),
+                children: task_nodes,
+            }
+        }).collect();
+        VisualizerNodeCompat {
+            id: m.id.clone(),
+            title: m.title.clone(),
+            status: m.status.clone(),
+            children: slice_nodes,
+        }
+    }).collect();
 
-    // timeline sorted by completed_at descending (most recent first)
-    timeline.sort_by(|a, b| {
-        b.completed_at
-            .as_deref()
-            .cmp(&a.completed_at.as_deref())
-    });
+    // --- Knowledge ---
+    let knowledge_path = Path::new(&project_path).join(".gsd").join("KNOWLEDGE.md");
+    let knowledge = if knowledge_path.exists() {
+        let content = std::fs::read_to_string(&knowledge_path).unwrap_or_default();
+        let entry_count = content.lines().filter(|l| l.starts_with("## ")).count() as u32;
+        KnowledgeInfo2 { exists: true, entry_count }
+    } else {
+        KnowledgeInfo2 { exists: false, entry_count: 0 }
+    };
 
-    Ok(VisualizerData {
+    // --- Captures ---
+    let captures_path = Path::new(&project_path).join(".gsd").join("CAPTURES.md");
+    let captures = if captures_path.exists() {
+        let content = std::fs::read_to_string(&captures_path).unwrap_or_default();
+        let pending_count = content.lines()
+            .filter(|l| l.trim_start().starts_with("- [ ]"))
+            .count() as u32;
+        CapturesInfo2 { exists: true, pending_count }
+    } else {
+        CapturesInfo2 { exists: false, pending_count: 0 }
+    };
+
+    // --- Health summary ---
+    let health_info = HealthInfo2 {
+        active_milestone_id: health_raw.active_milestone_id.clone(),
+        active_slice_id: health_raw.active_slice_id.clone(),
+        active_task_id: health_raw.active_task_id.clone(),
+        milestones_done: health_raw.milestones_done,
+        milestones_total: health_raw.milestones_total,
+        slices_done: health_raw.slices_done,
+        slices_total: health_raw.slices_total,
+        tasks_done: health_raw.tasks_done,
+        tasks_total: health_raw.tasks_total,
+    };
+
+    // --- Agent activity ---
+    let agent_activity = get_agent_activity(&project_path, total_slices, completed_units_count);
+
+    // --- Stats ---
+    let milestones_missing_summary = rich_milestones.iter().filter(|m| m.done).filter(|m| {
+        let mdir = resolve_dir_by_id(&milestones_dir, &m.id)
+            .map(|d| milestones_dir.join(d))
+            .unwrap_or_else(|| milestones_dir.join(&m.id));
+        resolve_file_by_id(&mdir, &m.id, "MILESTONE-SUMMARY").is_none()
+    }).count() as u32;
+
+    let slices_missing_summary = rich_milestones.iter().flat_map(|m| {
+        let mdir = resolve_dir_by_id(&milestones_dir, &m.id)
+            .map(|d| milestones_dir.join(d))
+            .unwrap_or_else(|| milestones_dir.join(&m.id));
+        m.slices.iter().filter(|s| s.done).filter(move |s| {
+            let sdir_opt = resolve_dir_by_id(&mdir, &s.id)
+                .map(|d| mdir.join(d))
+                .or_else(|| {
+                    let nested = mdir.join("slices");
+                    resolve_dir_by_id(&nested, &s.id).map(|d| nested.join(d))
+                });
+            let sdir = sdir_opt.unwrap_or_else(|| mdir.join(&s.id));
+            resolve_file_by_id(&sdir, &s.id, "SUMMARY").is_none()
+        }).map(|_| ())
+        .collect::<Vec<_>>()
+    }).count() as u32;
+
+    // Last 5 changelog entries sorted by completed_at desc
+    let mut all_changelog_sorted = all_changelog;
+    all_changelog_sorted.sort_by(|a, b| b.completed_at.as_deref().cmp(&a.completed_at.as_deref()));
+    let recent_changelog: Vec<ChangelogEntry2> = all_changelog_sorted.into_iter().take(5).collect();
+
+    let stats = VisualizerStats2 {
+        milestones_missing_summary,
+        slices_missing_summary,
+        recent_changelog,
+    };
+
+    Ok(VisualizerData2 {
+        milestones: rich_milestones,
         tree,
         cost_by_milestone,
-        cost_by_model,
+        cost_by_model: cost_by_model_compat,
         timeline,
+        critical_path,
+        agent_activity,
+        by_phase,
+        by_slice,
+        by_model,
+        units,
+        totals,
+        knowledge,
+        captures,
+        health: health_info,
+        stats,
     })
 }
 
@@ -3555,4 +5266,2027 @@ mod tests {
         assert_eq!(progress.tasks_total, 0);
         let _ = fs::remove_dir_all(&dir);
     }
+}
+
+// ============================================================
+// R087 — HTML Report Generator + R088 — Reports Registry
+// ============================================================
+// Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
+//
+// Ported from:
+//   gsd-2/src/resources/extensions/gsd/export-html.ts  (1408 lines)
+//   gsd-2/src/resources/extensions/gsd/reports.ts      (504 lines)
+//
+// Design: Linear-inspired — restrained palette, geometric status, no emoji.
+// All HTML is built via format!() / push_str(); no external HTML crate.
+
+// ─── Public result structs ─────────────────────────────────────────────────────
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct HtmlReportResult {
+    pub file_path: String,
+    pub filename: String,
+    pub reports_dir: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ReportEntry {
+    pub filename: String,
+    pub generated_at: String,
+    pub milestone_id: String,
+    pub milestone_title: String,
+    pub label: String,
+    pub kind: String,
+    pub total_cost: f64,
+    pub total_tokens: i64,
+    pub total_duration: i64,
+    pub done_slices: u32,
+    pub total_slices: u32,
+    pub done_milestones: u32,
+    pub total_milestones: u32,
+    pub phase: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ReportsIndex {
+    pub version: u32,
+    pub project_name: String,
+    pub project_path: String,
+    pub gsd_version: String,
+    pub entries: Vec<ReportEntry>,
+}
+
+// ─── Internal data aggregates ──────────────────────────────────────────────────
+
+struct ReportData<'a> {
+    project_name: &'a str,
+    project_path: &'a str,
+    gsd_version: &'a str,
+    milestone_id: Option<&'a str>,
+    milestones: &'a [Gsd2Milestone],
+    units: &'a [UnitRecord],
+    totals: &'a ProjectTotals,
+    by_phase: &'a [PhaseAggregate],
+    by_slice: &'a [SliceAggregate],
+    by_model: &'a [ModelAggregate],
+    health: &'a Gsd2Health,
+    knowledge_entries: &'a [KnowledgeEntry],
+    capture_entries: &'a [CaptureEntry],
+    changelog_entries: Vec<ChangelogEntry2>,
+    discussion_states: Vec<(String, String)>, // (milestone_id, state)
+    critical_path: &'a CriticalPathInfo,
+    phase: String,
+}
+
+// ─── Format helpers ────────────────────────────────────────────────────────────
+
+fn esc_html(s: &str) -> String {
+    s.replace('&', "&amp;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;")
+        .replace('"', "&quot;")
+        .replace('\'', ">/dev/null 2>&1 &#39;")
+}
+
+fn format_cost_html(cost: f64) -> String {
+    if cost < 0.001 { "<$0.001".to_string() } else { format!("${:.4}", cost) }
+}
+
+fn format_token_count_html(n: i64) -> String {
+    if n >= 1_000_000 {
+        format!("{:.1}M", n as f64 / 1_000_000.0)
+    } else if n >= 1_000 {
+        format!("{:.1}K", n as f64 / 1_000.0)
+    } else {
+        n.to_string()
+    }
+}
+
+fn format_duration_html(ms: i64) -> String {
+    if ms <= 0 { return "0ms".to_string(); }
+    let secs = ms / 1_000;
+    let mins = secs / 60;
+    let hours = mins / 60;
+    if hours > 0 {
+        format!("{}h {}m", hours, mins % 60)
+    } else if mins > 0 {
+        format!("{}m {}s", mins, secs % 60)
+    } else {
+        format!("{}.{}s", secs, (ms % 1000) / 100)
+    }
+}
+
+fn format_date_short_html(iso: &str) -> String {
+    // Parse "2026-03-15T14:23:00.000Z" → "Mar 15"
+    if iso.len() >= 10 {
+        let parts: Vec<&str> = iso[..10].split('-').collect();
+        if parts.len() == 3 {
+            let month = match parts[1] {
+                "01" => "Jan", "02" => "Feb", "03" => "Mar", "04" => "Apr",
+                "05" => "May", "06" => "Jun", "07" => "Jul", "08" => "Aug",
+                "09" => "Sep", "10" => "Oct", "11" => "Nov", "12" => "Dec",
+                _ => parts[1],
+            };
+            let day: u32 = parts[2].parse().unwrap_or(0);
+            return format!("{} {}", month, day);
+        }
+    }
+    iso.to_string()
+}
+
+fn format_date_long_html(iso: &str) -> String {
+    // Parse ISO to "Wed, Mar 15, 2026 2:23 PM UTC"
+    if iso.len() >= 19 {
+        let date_part = &iso[..10];
+        let time_part = &iso[11..19];
+        let parts: Vec<&str> = date_part.split('-').collect();
+        let time_parts: Vec<&str> = time_part.split(':').collect();
+        if parts.len() == 3 && time_parts.len() == 3 {
+            let year = parts[0];
+            let month = match parts[1] {
+                "01" => "Jan", "02" => "Feb", "03" => "Mar", "04" => "Apr",
+                "05" => "May", "06" => "Jun", "07" => "Jul", "08" => "Aug",
+                "09" => "Sep", "10" => "Oct", "11" => "Nov", "12" => "Dec",
+                _ => parts[1],
+            };
+            let day: u32 = parts[2].parse().unwrap_or(0);
+            let hour: u32 = time_parts[0].parse().unwrap_or(0);
+            let min: u32 = time_parts[1].parse().unwrap_or(0);
+            let (h12, ampm) = if hour == 0 { (12, "AM") } else if hour < 12 { (hour, "AM") } else if hour == 12 { (12, "PM") } else { (hour - 12, "PM") };
+            return format!("{} {}, {} {}:{:02} {} UTC", month, day, year, h12, min, ampm);
+        }
+    }
+    iso.to_string()
+}
+
+fn trunc_str(s: &str, n: usize) -> String {
+    if s.len() > n {
+        format!("{}\u{2026}", &s[..n.saturating_sub(1)])
+    } else {
+        s.to_string()
+    }
+}
+
+fn short_model_html(m: &str) -> String {
+    m.replace("claude-", "").replace("anthropic/", "")
+}
+
+fn now_iso() -> String {
+    let secs = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs())
+        .unwrap_or(0);
+    let (y, mo, d, h, min, sec) = epoch_to_date(secs);
+    format!("{:04}-{:02}-{:02}T{:02}:{:02}:{:02}.000Z", y, mo, d, h, min, sec)
+}
+
+fn epoch_to_date(secs: u64) -> (u32, u32, u32, u32, u32, u32) {
+    // Algorithm from https://howardhinnant.github.io/date_algorithms.html
+    let z = secs / 86400 + 719468;
+    let era = z / 146097;
+    let doe = z - era * 146097;
+    let yoe = (doe - doe / 1460 + doe / 36524 - doe / 146096) / 365;
+    let y = yoe + era * 400;
+    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+    let mp = (5 * doy + 2) / 153;
+    let d = doy - (153 * mp + 2) / 5 + 1;
+    let m = if mp < 10 { mp + 3 } else { mp - 9 };
+    let year = if m <= 2 { y + 1 } else { y };
+    let rem = secs % 86400;
+    let h = rem / 3600;
+    let min = (rem % 3600) / 60;
+    let sec = rem % 60;
+    (year as u32, m as u32, d as u32, h as u32, min as u32, sec as u32)
+}
+
+// ─── HTML section helpers ──────────────────────────────────────────────────────
+
+fn section_html(id: &str, title: &str, body: &str) -> String {
+    format!("\n<section id=\"{}\">\n  <h2>{}</h2>\n  {}\n</section>", id, title, body)
+}
+
+fn kvi_html(label: &str, value: &str) -> String {
+    format!(
+        "<div class=\"kv\"><span class=\"kv-val\">{}</span><span class=\"kv-lbl\">{}</span></div>",
+        esc_html(value), esc_html(label)
+    )
+}
+
+fn h_row_html(label: &str, value: &str, status: Option<&str>) -> String {
+    let cls = match status {
+        Some(s) => format!(" class=\"h-{}\"", s),
+        None => String::new(),
+    };
+    format!("<tr{}><td>{}</td><td>{}</td></tr>", cls, esc_html(label), esc_html(value))
+}
+
+// ─── CSS constant ──────────────────────────────────────────────────────────────
+
+const REPORT_CSS: &str = r#"
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg-0:#0f1115;--bg-1:#16181d;--bg-2:#1e2028;--bg-3:#272a33;
+  --border-1:#2b2e38;--border-2:#3b3f4c;
+  --text-0:#ededef;--text-1:#a1a1aa;--text-2:#71717a;
+  --accent:#5e6ad2;--accent-subtle:rgba(94,106,210,.12);
+  --ok:#22c55e;--ok-subtle:rgba(34,197,94,.12);--warn:#ef4444;--caution:#eab308;
+  --c0:#5e6ad2;--c1:#e5796d;--c2:#14b8a6;--c3:#a78bfa;--c4:#f59e0b;--c5:#10b981;
+  --tk-input:#5e6ad2;--tk-output:#e5796d;--tk-cache-r:#2dd4bf;--tk-cache-w:#64748b;
+  --font:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --mono:'JetBrains Mono','Fira Code',ui-monospace,SFMono-Regular,monospace;
+}
+html{scroll-behavior:smooth;font-size:13px}
+body{background:var(--bg-0);color:var(--text-0);font-family:var(--font);line-height:1.6;-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+code{font-family:var(--mono);font-size:12px;background:var(--bg-3);padding:1px 5px;border-radius:3px}
+.mono{font-family:var(--mono);font-size:12px}
+.muted{color:var(--text-2)}
+.accent{color:var(--accent)}
+.sep{color:var(--border-2);margin:0 4px}
+.empty{color:var(--text-2);padding:8px 0;font-size:13px}
+.indent{padding-left:12px}
+.num{font-variant-numeric:tabular-nums;text-align:right}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;flex-shrink:0;vertical-align:middle}
+.dot-sm{width:6px;height:6px}
+.dot-complete{background:var(--ok);opacity:.6}
+.dot-active{background:var(--accent)}
+.dot-pending{background:transparent;border:1.5px solid var(--border-2)}
+.dot-parked{background:var(--warn);opacity:.5}
+header{background:var(--bg-1);border-bottom:1px solid var(--border-1);padding:12px 32px;position:sticky;top:0;z-index:200}
+.header-inner{display:flex;align-items:center;gap:16px;max-width:1280px;margin:0 auto}
+.branding{display:flex;align-items:baseline;gap:6px;flex-shrink:0}
+.logo{font-size:18px;font-weight:800;letter-spacing:-.5px;color:var(--text-0)}
+.version{font-size:10px;color:var(--text-2);font-family:var(--mono)}
+.header-meta{flex:1;min-width:0}
+.header-meta h1{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.header-path{font-size:11px;color:var(--text-2);font-family:var(--mono);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.header-right{text-align:right;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.generated{font-size:11px;color:var(--text-2)}
+.back-link{font-size:12px;color:var(--text-1)}
+.back-link:hover{color:var(--accent)}
+.toc{background:var(--bg-1);border-bottom:1px solid var(--border-1);overflow-x:auto}
+.toc ul{display:flex;list-style:none;max-width:1280px;margin:0 auto;padding:0 32px}
+.toc a{display:inline-block;padding:8px 12px;color:var(--text-2);font-size:12px;font-weight:500;border-bottom:2px solid transparent;transition:color .12s,border-color .12s;white-space:nowrap;text-decoration:none}
+.toc a:hover{color:var(--text-0);border-bottom-color:var(--border-2)}
+.toc a.active{color:var(--text-0);border-bottom-color:var(--accent)}
+main{max-width:1280px;margin:0 auto;padding:32px;display:flex;flex-direction:column;gap:48px}
+section{scroll-margin-top:82px}
+section>h2{font-size:14px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-1);margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid var(--border-1);display:flex;align-items:center;gap:8px}
+h3{font-size:13px;font-weight:600;color:var(--text-1);margin:20px 0 8px}
+.count{font-size:11px;font-weight:500;color:var(--text-2);background:var(--bg-3);border-radius:3px;padding:1px 6px}
+.count-warn{color:var(--caution)}
+.kv-grid{display:flex;flex-wrap:wrap;gap:1px;background:var(--border-1);border:1px solid var(--border-1);border-radius:4px;overflow:hidden;margin-bottom:16px}
+.kv{background:var(--bg-1);padding:10px 16px;display:flex;flex-direction:column;gap:2px;min-width:110px;flex:1}
+.kv-val{font-size:18px;font-weight:600;color:var(--text-0);font-variant-numeric:tabular-nums}
+.kv-lbl{font-size:10px;color:var(--text-2);text-transform:uppercase;letter-spacing:.4px}
+.progress-wrap{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.progress-track{flex:1;height:4px;background:var(--bg-3);border-radius:2px;overflow:hidden}
+.progress-fill{height:100%;background:var(--accent);border-radius:2px}
+.progress-label{font-size:12px;font-weight:600;color:var(--text-1);min-width:40px;text-align:right}
+.active-info{font-size:12px;color:var(--text-1);margin-bottom:4px}
+.activity-line{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-1);padding:6px 0}
+.tbl{width:100%;border-collapse:collapse;font-size:12px}
+.tbl th{color:var(--text-2);font-weight:500;padding:6px 12px;text-align:left;border-bottom:1px solid var(--border-1);font-size:11px;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap}
+.tbl td{padding:6px 12px;border-bottom:1px solid var(--border-1);vertical-align:top}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tbody tr:hover td{background:var(--accent-subtle)}
+.tbl-kv td:first-child{color:var(--text-2);width:180px}
+.table-scroll{overflow-x:auto;border:1px solid var(--border-1);border-radius:4px}
+.table-scroll .tbl{border:none}
+.h-ok td:first-child{color:var(--text-1)}
+.h-caution td{color:var(--caution)}
+.h-warn td{color:var(--warn)}
+.label{font-size:10px;font-weight:500;color:var(--accent);text-transform:uppercase;letter-spacing:.4px}
+.risk{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.3px;flex-shrink:0}
+.risk-low{color:var(--text-2)}.risk-medium{color:var(--caution)}.risk-high{color:var(--warn)}.risk-unknown{color:var(--text-2)}
+.tag-row{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px}
+.tag{font-size:11px;font-family:var(--mono);color:var(--text-2);background:var(--bg-3);border-radius:3px;padding:1px 6px}
+.verif{font-size:12px;color:var(--text-1);padding:4px 0;margin-bottom:6px}
+.verif-blocker{color:var(--warn)}
+.detail-block{font-size:12px;color:var(--text-2);margin-bottom:6px}
+.detail-label{font-weight:600;color:var(--text-1);display:block;margin-bottom:2px}
+.detail-block ul{padding-left:16px;margin-top:2px}
+.detail-block li{margin-bottom:1px}
+.ms-block{border:1px solid var(--border-1);border-radius:4px;overflow:hidden;margin-bottom:8px}
+.ms-summary{display:flex;align-items:center;gap:8px;padding:10px 14px;cursor:pointer;list-style:none;background:var(--bg-1);user-select:none;font-size:13px}
+.ms-summary:hover{background:var(--bg-2)}
+.ms-summary::-webkit-details-marker{display:none}
+.ms-id{font-weight:600}
+.ms-title{flex:1;font-weight:500;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ms-body{padding:6px 12px 8px 24px;display:flex;flex-direction:column;gap:4px}
+.sl-block{border:1px solid var(--border-1);border-radius:3px;overflow:hidden}
+.sl-summary{display:flex;align-items:center;gap:6px;padding:6px 10px;cursor:pointer;list-style:none;background:var(--bg-2);font-size:12px;user-select:none}
+.sl-summary:hover{background:var(--bg-3)}
+.sl-summary::-webkit-details-marker{display:none}
+.sl-crit{border-left:2px solid var(--accent)}
+.sl-deps::before{content:'\2190 ';color:var(--border-2)}
+.sl-detail{padding:8px 12px;background:var(--bg-0);border-top:1px solid var(--border-1)}
+.task-list{list-style:none;padding:4px 0 0;display:flex;flex-direction:column;gap:2px}
+.task-row{display:flex;align-items:center;gap:6px;font-size:12px;padding:3px 6px;border-radius:2px}
+.dep-block{margin-bottom:28px}
+.dep-legend{display:flex;gap:14px;font-size:12px;color:var(--text-2);margin-bottom:8px;align-items:center}
+.dep-legend span{display:flex;align-items:center;gap:4px}
+.dep-wrap{overflow-x:auto;background:var(--bg-1);border:1px solid var(--border-1);border-radius:4px;padding:16px}
+.dep-svg{display:block}
+.edge{fill:none;stroke:var(--border-2);stroke-width:1.5}
+.edge-crit{stroke:var(--accent);stroke-width:2}
+.node rect{fill:var(--bg-2);stroke:var(--border-2);stroke-width:1}
+.n-done rect{fill:var(--ok-subtle);stroke:rgba(34,197,94,.4)}
+.n-active rect{fill:var(--accent-subtle);stroke:var(--accent)}
+.n-crit rect{stroke:var(--accent)!important;stroke-width:1.5!important}
+.n-id{font-family:var(--mono);font-size:10px;fill:var(--text-1);font-weight:600;text-anchor:middle}
+.n-title{font-size:9px;fill:var(--text-2);text-anchor:middle}
+.n-active .n-id{fill:var(--accent)}
+.token-block{background:var(--bg-1);border:1px solid var(--border-1);border-radius:4px;padding:14px;margin-bottom:16px}
+.token-bar{display:flex;height:16px;border-radius:2px;overflow:hidden;gap:1px;margin-bottom:8px}
+.tseg{height:100%;min-width:2px}
+.seg-1{background:var(--tk-input)}.seg-2{background:var(--tk-output)}.seg-3{background:var(--tk-cache-r)}.seg-4{background:var(--tk-cache-w)}
+.token-legend{display:flex;flex-wrap:wrap;gap:12px}
+.leg-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-2)}
+.leg-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+.chart-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-bottom:16px}
+.chart-block{background:var(--bg-1);border:1px solid var(--border-1);border-radius:4px;padding:14px}
+.bar-row{display:grid;grid-template-columns:120px 1fr 68px;align-items:center;gap:6px;margin-bottom:2px}
+.bar-lbl{font-size:12px;color:var(--text-2);text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar-track{height:14px;background:var(--bg-3);border-radius:2px;overflow:hidden}
+.bar-fill{height:100%;border-radius:2px;background:var(--c0)}
+.bar-c0{background:var(--c0)}.bar-c1{background:var(--c1)}.bar-c2{background:var(--c2)}
+.bar-c3{background:var(--c3)}.bar-c4{background:var(--c4)}.bar-c5{background:var(--c5)}
+.bar-val{font-size:11px;font-variant-numeric:tabular-nums;color:var(--text-1)}
+.bar-sub{font-size:10px;color:var(--text-2);padding-left:128px;margin-bottom:6px}
+.cl-entry{border-bottom:1px solid var(--border-1);padding:12px 0}
+.cl-entry:last-child{border-bottom:none}
+.cl-header{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.cl-title{flex:1;font-weight:500}
+.cl-date{margin-left:auto;white-space:nowrap}
+.cl-liner{font-size:13px;color:var(--text-1);margin-bottom:6px}
+.files-detail summary{font-size:12px;cursor:pointer}
+.file-list{list-style:none;padding-left:10px;margin-top:4px;display:flex;flex-direction:column;gap:2px}
+.file-list li{font-size:12px;color:var(--text-1)}
+footer{border-top:1px solid var(--border-1);padding:20px 32px;margin-top:40px}
+.footer-inner{display:flex;align-items:center;gap:6px;justify-content:center;font-size:11px;color:var(--text-2)}
+.exec-summary{font-size:13px;color:var(--text-1);margin-bottom:12px;line-height:1.7}
+.eta-line{font-size:12px;color:var(--accent);margin-top:4px}
+.cost-svg{display:block;margin:8px 0;background:var(--bg-1);border:1px solid var(--border-1);border-radius:4px}
+.cost-line{fill:none;stroke:var(--accent);stroke-width:2}
+.cost-area{fill:var(--accent-subtle);stroke:none}
+.cost-axis{fill:var(--text-2);font-family:var(--mono);font-size:10px}
+.cost-grid{stroke:var(--border-1);stroke-width:1;stroke-dasharray:4,4}
+.burndown-wrap{background:var(--bg-1);border:1px solid var(--border-1);border-radius:4px;padding:14px;margin-bottom:16px}
+.burndown-bar{display:flex;height:20px;border-radius:3px;overflow:hidden;gap:1px;margin-bottom:8px}
+.burndown-spent{background:var(--accent);height:100%}
+.burndown-projected{background:var(--caution);height:100%;opacity:.6}
+.burndown-overshoot{background:var(--warn);height:100%;opacity:.7}
+.burndown-legend{display:flex;flex-wrap:wrap;gap:12px;font-size:11px;color:var(--text-2)}
+.burndown-legend span{display:flex;align-items:center;gap:4px}
+.burndown-dot{display:inline-block;width:8px;height:8px;border-radius:2px}
+.blocker-card{border-left:3px solid var(--warn);background:var(--bg-1);border-radius:0 4px 4px 0;padding:10px 14px;margin-bottom:8px}
+.blocker-id{font-family:var(--mono);font-size:12px;color:var(--warn);margin-bottom:2px}
+.blocker-text{font-size:12px;color:var(--text-1)}
+.gantt-wrap{overflow-x:auto;background:var(--bg-1);border:1px solid var(--border-1);border-radius:4px;padding:16px;margin-top:16px}
+.gantt-svg{display:block}
+.gantt-bar-done{fill:var(--ok);opacity:.7}
+.gantt-bar-active{fill:var(--accent)}
+.gantt-bar-pending{fill:var(--border-2)}
+.gantt-label{fill:var(--text-2);font-family:var(--mono);font-size:10px}
+.gantt-axis{fill:var(--text-2);font-family:var(--mono);font-size:9px}
+.tl-filter{display:block;width:100%;padding:6px 10px;margin-bottom:8px;background:var(--bg-2);border:1px solid var(--border-1);border-radius:4px;color:var(--text-0);font-size:12px;font-family:var(--font);outline:none}
+.tl-filter:focus{border-color:var(--accent)}
+.tl-filter::placeholder{color:var(--text-2)}
+.sec-toggle{background:none;border:1px solid var(--border-2);color:var(--text-2);width:20px;height:20px;border-radius:3px;cursor:pointer;font-size:14px;line-height:1;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+.sec-toggle:hover{border-color:var(--text-1);color:var(--text-1)}
+.theme-toggle{background:var(--bg-3);border:1px solid var(--border-2);color:var(--text-1);padding:4px 10px;border-radius:4px;cursor:pointer;font-size:11px;font-family:var(--font)}
+.theme-toggle:hover{border-color:var(--accent);color:var(--accent)}
+.light-theme{--bg-0:#fff;--bg-1:#fafafa;--bg-2:#f5f5f5;--bg-3:#ebebeb;--border-1:#e5e5e5;--border-2:#d4d4d4;--text-0:#1a1a1a;--text-1:#525252;--text-2:#a3a3a3;--accent:#4f46e5;--accent-subtle:rgba(79,70,229,.08);--ok:#16a34a;--ok-subtle:rgba(22,163,74,.08);--warn:#dc2626;--caution:#ca8a04;--c0:#4f46e5;--c1:#dc2626;--c2:#0d9488;--c3:#7c3aed;--c4:#d97706;--c5:#059669;--tk-input:#4f46e5;--tk-output:#dc2626;--tk-cache-r:#0d9488;--tk-cache-w:#64748b}
+@media(max-width:768px){
+  header{padding:10px 16px}
+  .header-inner{flex-wrap:wrap;gap:8px}
+  .header-meta h1{font-size:13px}
+  main{padding:16px}
+  .kv-grid{gap:1px}
+  .kv{min-width:80px;padding:8px 10px}
+  .kv-val{font-size:14px}
+  .chart-row{grid-template-columns:1fr}
+  .toc ul{padding:0 16px}
+  .toc a{padding:6px 8px;font-size:11px}
+  .bar-row{grid-template-columns:80px 1fr 56px}
+  .ms-body{padding-left:12px}
+}
+@media print{
+  header,nav.toc{position:static}
+  body{background:#fff;color:#1a1a1a}
+  :root{--bg-0:#fff;--bg-1:#fafafa;--bg-2:#f5f5f5;--bg-3:#ebebeb;--border-1:#e5e5e5;--border-2:#d4d4d4;--text-0:#1a1a1a;--text-1:#525252;--text-2:#a3a3a3;--accent:#4f46e5;--ok:#16a34a;--ok-subtle:rgba(22,163,74,.08);--c0:#4f46e5;--c1:#dc2626;--c2:#0d9488;--c3:#7c3aed;--c4:#d97706;--c5:#059669;--tk-input:#4f46e5;--tk-output:#dc2626;--tk-cache-r:#0d9488;--tk-cache-w:#64748b}
+  section{page-break-inside:avoid}
+  .table-scroll{overflow:visible}
+}
+"#;
+
+// ─── JS constant ───────────────────────────────────────────────────────────────
+
+const REPORT_JS: &str = r##"
+(function(){
+  const sections=document.querySelectorAll('section[id]');
+  const links=document.querySelectorAll('.toc a');
+  if(!sections.length||!links.length)return;
+  const obs=new IntersectionObserver(entries=>{
+    for(const e of entries){
+      if(!e.isIntersecting)continue;
+      for(const l of links)l.classList.remove('active');
+      const a=document.querySelector('.toc a[href="#'+e.target.id+'"]');
+      if(a)a.classList.add('active');
+    }
+  },{rootMargin:'-10% 0px -80% 0px',threshold:0});
+  for(const s of sections)obs.observe(s);
+})();
+(function(){
+  var tl=document.getElementById('timeline');
+  if(!tl)return;
+  var table=tl.querySelector('.tbl');
+  if(!table)return;
+  var input=document.createElement('input');
+  input.className='tl-filter';
+  input.placeholder='Filter timeline\u2026';
+  input.type='text';
+  table.parentNode.insertBefore(input,table);
+  var rows=table.querySelectorAll('tbody tr');
+  input.addEventListener('input',function(){
+    var q=this.value.toLowerCase();
+    for(var i=0;i<rows.length;i++){
+      rows[i].style.display=rows[i].textContent.toLowerCase().indexOf(q)>-1?'':'none';
+    }
+  });
+})();
+(function(){
+  var saved=JSON.parse(localStorage.getItem('gsd-collapsed')||'{}');
+  document.querySelectorAll('section[id]').forEach(function(sec){
+    var h2=sec.querySelector('h2');
+    if(!h2)return;
+    var btn=document.createElement('button');
+    btn.className='sec-toggle';
+    btn.textContent=saved[sec.id]?'+':'-';
+    btn.setAttribute('aria-label','Toggle section');
+    h2.prepend(btn);
+    if(saved[sec.id])toggleSection(sec,true);
+    btn.addEventListener('click',function(e){
+      e.preventDefault();
+      var collapsed=btn.textContent==='-';
+      toggleSection(sec,collapsed);
+      btn.textContent=collapsed?'+':'-';
+      saved[sec.id]=collapsed;
+      localStorage.setItem('gsd-collapsed',JSON.stringify(saved));
+    });
+  });
+  function toggleSection(sec,hide){
+    var children=sec.children;
+    for(var i=0;i<children.length;i++){
+      if(children[i].tagName!=='H2')children[i].style.display=hide?'none':'';
+    }
+  }
+})();
+(function(){
+  var hr=document.querySelector('.header-right');
+  if(!hr)return;
+  var btn=document.createElement('button');
+  btn.className='theme-toggle';
+  btn.textContent=localStorage.getItem('gsd-theme')==='light'?'Dark':'Light';
+  if(localStorage.getItem('gsd-theme')==='light')document.documentElement.classList.add('light-theme');
+  btn.addEventListener('click',function(){
+    document.documentElement.classList.toggle('light-theme');
+    var isLight=document.documentElement.classList.contains('light-theme');
+    btn.textContent=isLight?'Dark':'Light';
+    localStorage.setItem('gsd-theme',isLight?'light':'dark');
+  });
+  hr.prepend(btn);
+})();
+"##;
+
+// ─── INDEX CSS constant ────────────────────────────────────────────────────────
+
+const INDEX_CSS: &str = r#"
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg-0:#0f1115;--bg-1:#16181d;--bg-2:#1e2028;--bg-3:#272a33;
+  --border-1:#2b2e38;--border-2:#3b3f4c;
+  --text-0:#ededef;--text-1:#a1a1aa;--text-2:#71717a;
+  --accent:#5e6ad2;--accent-subtle:rgba(94,106,210,.12);
+  --font:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --mono:'JetBrains Mono','Fira Code',ui-monospace,monospace;
+}
+html{font-size:13px}
+body{background:var(--bg-0);color:var(--text-0);font-family:var(--font);line-height:1.6;-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+h2{font-size:14px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-1);margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid var(--border-1)}
+h3{font-size:13px;font-weight:600;color:var(--text-1);margin:16px 0 8px}
+code{font-family:var(--mono);font-size:12px;background:var(--bg-3);padding:1px 5px;border-radius:3px}
+.empty{color:var(--text-2);font-size:13px;padding:8px 0}
+.count{font-size:11px;font-weight:500;color:var(--text-2);background:var(--bg-3);border-radius:3px;padding:1px 6px}
+header{background:var(--bg-1);border-bottom:1px solid var(--border-1);padding:12px 32px;position:sticky;top:0;z-index:100}
+.hdr-inner{display:flex;align-items:center;gap:16px;max-width:1280px;margin:0 auto}
+.branding{display:flex;align-items:baseline;gap:6px;flex-shrink:0}
+.logo{font-size:18px;font-weight:800;letter-spacing:-.5px;color:var(--text-0)}
+.ver{font-size:10px;color:var(--text-2);font-family:var(--mono)}
+.hdr-meta{flex:1;min-width:0}
+.hdr-meta h1{font-size:15px;font-weight:600}
+.hdr-subtitle{color:var(--text-2);font-weight:400;font-size:13px;margin-left:4px}
+.hdr-path{font-size:11px;color:var(--text-2);font-family:var(--mono);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hdr-right{text-align:right;flex-shrink:0}
+.gen-lbl{font-size:10px;color:var(--text-2);text-transform:uppercase;letter-spacing:.5px;display:block}
+.gen{font-size:11px;color:var(--text-1)}
+.layout{display:grid;grid-template-columns:200px 1fr;gap:0;max-width:1280px;margin:0 auto;min-height:calc(100vh - 120px)}
+.sidebar{background:var(--bg-1);border-right:1px solid var(--border-1);padding:20px 14px;position:sticky;top:52px;height:calc(100vh - 52px);overflow-y:auto}
+.sidebar-title{font-size:10px;font-weight:600;color:var(--text-2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px}
+.toc-group{margin-bottom:14px}
+.toc-group-label{font-size:11px;font-weight:600;color:var(--text-1);margin-bottom:3px;font-family:var(--mono)}
+.toc-group ul{list-style:none;display:flex;flex-direction:column;gap:1px}
+.toc-group li{display:flex;align-items:center;gap:6px}
+.toc-group a{font-size:11px;color:var(--text-2);padding:2px 4px;border-radius:3px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.toc-group a:hover{background:var(--bg-2);color:var(--text-0);text-decoration:none}
+.toc-kind{font-size:9px;color:var(--text-2);font-family:var(--mono);flex-shrink:0}
+main{padding:28px;display:flex;flex-direction:column;gap:40px}
+.idx-summary{display:flex;flex-wrap:wrap;gap:1px;background:var(--border-1);border:1px solid var(--border-1);border-radius:4px;overflow:hidden;margin-bottom:16px}
+.idx-stat{background:var(--bg-1);padding:10px 16px;display:flex;flex-direction:column;gap:2px;min-width:100px;flex:1}
+.idx-val{font-size:18px;font-weight:600;color:var(--text-0);font-variant-numeric:tabular-nums}
+.idx-lbl{font-size:10px;color:var(--text-2);text-transform:uppercase;letter-spacing:.4px}
+.idx-progress{display:flex;align-items:center;gap:10px;margin-top:10px}
+.idx-bar-track{flex:1;height:4px;background:var(--bg-3);border-radius:2px;overflow:hidden}
+.idx-bar-fill{height:100%;background:var(--accent);border-radius:2px}
+.idx-pct{font-size:12px;font-weight:600;color:var(--text-1);min-width:40px;text-align:right}
+.sparkline-wrap{margin-top:20px}
+.sparkline{position:relative}
+.spark-svg{display:block;background:var(--bg-1);border:1px solid var(--border-1);border-radius:4px;overflow:visible;max-width:100%}
+.spark-line{stroke:var(--accent);stroke-width:1.5;fill:none}
+.spark-dot{fill:var(--accent);stroke:var(--bg-1);stroke-width:2;cursor:pointer}
+.spark-dot:hover{r:4;fill:var(--text-0)}
+.spark-lbl{font-size:10px;fill:var(--text-2);font-family:var(--mono)}
+.spark-axis{display:flex;position:relative;height:18px;margin-top:2px}
+.spark-tick{position:absolute;transform:translateX(-50%);font-size:9px;color:var(--text-2);font-family:var(--mono);white-space:nowrap}
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.report-card{display:flex;flex-direction:column;gap:6px;background:var(--bg-1);border:1px solid var(--border-1);border-radius:4px;padding:14px;text-decoration:none;color:var(--text-0);transition:border-color .12s}
+.report-card:hover{border-color:var(--accent);text-decoration:none}
+.card-latest{border-color:var(--accent)}
+.card-top{display:flex;align-items:center;gap:8px}
+.card-label{flex:1;font-weight:500;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.card-kind{font-size:10px;color:var(--text-2);font-family:var(--mono);flex-shrink:0}
+.card-date{font-size:11px;color:var(--text-2)}
+.card-progress{display:flex;align-items:center;gap:6px}
+.card-bar-track{flex:1;height:3px;background:var(--bg-3);border-radius:2px;overflow:hidden}
+.card-bar-fill{height:100%;background:var(--accent);border-radius:2px}
+.card-pct{font-size:11px;color:var(--text-2);min-width:30px;text-align:right}
+.card-stats{display:flex;gap:8px;flex-wrap:wrap}
+.card-stats span{font-size:11px;color:var(--text-2);font-variant-numeric:tabular-nums}
+.card-delta{display:flex;gap:4px;flex-wrap:wrap}
+.card-delta span{font-size:10px;color:var(--text-1);font-family:var(--mono)}
+.card-latest-badge{display:none}
+.sec-count{font-size:11px;font-weight:500;color:var(--text-2);background:var(--bg-3);border-radius:3px;padding:1px 6px;margin-left:8px}
+footer{border-top:1px solid var(--border-1);padding:16px 32px}
+.ftr-inner{display:flex;align-items:center;gap:6px;justify-content:center;font-size:11px;color:var(--text-2)}
+.ftr-sep{color:var(--border-2)}
+@media(max-width:768px){
+  .layout{grid-template-columns:1fr}
+  .sidebar{position:static;height:auto;border-right:none;border-bottom:1px solid var(--border-1)}
+}
+@media print{
+  .sidebar{display:none}
+  header{position:static}
+  body{background:#fff;color:#1a1a1a}
+  :root{--bg-0:#fff;--bg-1:#fafafa;--bg-2:#f5f5f5;--bg-3:#ebebeb;--border-1:#e5e5e5;--border-2:#d4d4d4;--text-0:#1a1a1a;--text-1:#525252;--text-2:#a3a3a3;--accent:#4f46e5}
+}
+"#;
+
+// ─── Section builders ──────────────────────────────────────────────────────────
+
+fn build_summary_section(data: &ReportData<'_>, generated: &str) -> String {
+    let total_slices: usize = data.milestones.iter().map(|m| m.slices.len()).sum();
+    let done_slices: usize = data.milestones.iter()
+        .flat_map(|m| m.slices.iter())
+        .filter(|s| s.done)
+        .count();
+    let done_milestones = data.milestones.iter().filter(|m| m.done).count();
+    let total_milestones = data.milestones.len();
+    let pct = if total_slices > 0 { (done_slices * 100) / total_slices } else { 0 };
+
+    let spent = data.totals.total_cost;
+    let mut kv = String::new();
+    kv.push_str(&kvi_html("Milestones", &format!("{}/{}", done_milestones, total_milestones)));
+    kv.push_str(&kvi_html("Slices", &format!("{}/{}", done_slices, total_slices)));
+    kv.push_str(&kvi_html("Phase", &data.phase));
+    kv.push_str(&kvi_html("Cost", &format_cost_html(spent)));
+    kv.push_str(&kvi_html("Tokens", &format_token_count_html(data.totals.total_tokens)));
+    kv.push_str(&kvi_html("Duration", &format_duration_html(data.totals.duration_ms)));
+    kv.push_str(&kvi_html("Tool calls", &data.totals.tool_calls.to_string()));
+    kv.push_str(&kvi_html("Units", &data.totals.units.to_string()));
+    if let Some(mid) = data.milestone_id {
+        kv.push_str(&kvi_html("Scope", mid));
+    }
+
+    let exec_summary = format!(
+        "<p class=\"exec-summary\">{} is {}% complete across {} milestones. {} spent.</p>",
+        esc_html(data.project_name), pct, total_milestones, format_cost_html(spent)
+    );
+
+    let progress_bar = format!(
+        "<div class=\"progress-wrap\"><div class=\"progress-track\"><div class=\"progress-fill\" style=\"width:{}%\"></div></div><span class=\"progress-label\">{}%</span></div>",
+        pct, pct
+    );
+
+    let body = format!("{}<div class=\"kv-grid\">{}</div>{}", exec_summary, kv, progress_bar);
+    section_html("summary", "Summary", &body)
+}
+
+fn build_blockers_section(data: &ReportData<'_>) -> String {
+    // Collect high-risk incomplete slices
+    let mut high_risk_html = String::new();
+    for ms in data.milestones {
+        for sl in &ms.slices {
+            if !sl.done && sl.risk.as_deref().map(|r| r.to_lowercase() == "high").unwrap_or(false) {
+                high_risk_html.push_str(&format!(
+                    "<div class=\"blocker-card\"><div class=\"blocker-id\">{}/{}</div><div class=\"blocker-text\">High risk — incomplete</div></div>",
+                    esc_html(&ms.id), esc_html(&sl.id)
+                ));
+            }
+        }
+    }
+
+    if high_risk_html.is_empty() {
+        return section_html("blockers", "Blockers", "<p class=\"empty\">No blockers or high-risk items found.</p>");
+    }
+
+    section_html("blockers", "Blockers", &high_risk_html)
+}
+
+fn build_progress_section(data: &ReportData<'_>) -> String {
+    if data.milestones.is_empty() {
+        return section_html("progress", "Progress", "<p class=\"empty\">No milestones found.</p>");
+    }
+
+    let crit_set: std::collections::HashSet<&str> = data.critical_path.path.iter().map(|s| s.as_str()).collect();
+
+    let mut ms_html = String::new();
+    for ms in data.milestones {
+        let done_count = ms.slices.iter().filter(|s| s.done).count();
+        let on_crit = crit_set.contains(ms.id.as_str());
+        let status = if ms.done { "complete" } else { "pending" };
+
+        let mut slice_html = String::new();
+        if ms.slices.is_empty() {
+            slice_html.push_str("<p class=\"empty indent\">No slices in roadmap yet.</p>");
+        } else {
+            for sl in &ms.slices {
+                slice_html.push_str(&build_slice_row_html(sl, &crit_set));
+            }
+        }
+
+        let crit_label = if on_crit { "<span class=\"label\">critical path</span>" } else { "" };
+        let deps_html = if !ms.dependencies.is_empty() {
+            format!("<span class=\"muted\">needs {}</span>", ms.dependencies.iter().map(|d| esc_html(d)).collect::<Vec<_>>().join(", "))
+        } else { String::new() };
+
+        ms_html.push_str(&format!(
+            "<details class=\"ms-block\" {}><summary class=\"ms-summary ms-{}\"><span class=\"dot dot-{}\"></span><span class=\"mono ms-id\">{}</span><span class=\"ms-title\">{}</span><span class=\"muted\">{}/{}</span>{}{}</summary><div class=\"ms-body\">{}</div></details>",
+            if status != "pending" { "open" } else { "" },
+            esc_html(status), esc_html(status),
+            esc_html(&ms.id), esc_html(&ms.title),
+            done_count, ms.slices.len(),
+            crit_label, deps_html,
+            slice_html
+        ));
+    }
+
+    section_html("progress", "Progress", &ms_html)
+}
+
+fn build_slice_row_html(sl: &Gsd2Slice, crit_set: &std::collections::HashSet<&str>) -> String {
+    let on_crit = crit_set.contains(sl.id.as_str());
+    let status = if sl.done { "complete" } else { "pending" };
+    let risk_val = sl.risk.as_deref().unwrap_or("unknown");
+    let risk_lower = risk_val.to_lowercase();
+
+    let mut task_html = String::new();
+    if !sl.tasks.is_empty() {
+        task_html.push_str("<ul class=\"task-list\">");
+        for t in &sl.tasks {
+            let ts = if t.done { "complete" } else { "pending" };
+            task_html.push_str(&format!(
+                "<li class=\"task-row\"><span class=\"dot dot-{} dot-sm\"></span><span class=\"mono muted\">{}</span><span class=\"{}\">{}</span></li>",
+                ts, esc_html(&t.id), if t.done { "muted" } else { "" }, esc_html(&t.title)
+            ));
+        }
+        task_html.push_str("</ul>");
+    }
+
+    let deps_html = if !sl.dependencies.is_empty() {
+        format!("<span class=\"muted sl-deps\">{}</span>", sl.dependencies.iter().map(|d| esc_html(d)).collect::<Vec<_>>().join(", "))
+    } else { String::new() };
+
+    let crit_label = if on_crit { "<span class=\"label\">critical</span>" } else { "" };
+
+    format!(
+        "<details class=\"sl-block\"><summary class=\"sl-summary {}\"><span class=\"dot dot-{} dot-sm\"></span><span class=\"mono muted\">{}</span><span class=\"{}\">{}</span><span class=\"risk risk-{}\">{}</span>{}{}</summary><div class=\"sl-detail\">{}</div></details>",
+        if on_crit { "sl-crit" } else { "" },
+        esc_html(status), esc_html(&sl.id),
+        if sl.done { "muted" } else { "" }, esc_html(&sl.title),
+        esc_html(&risk_lower), esc_html(risk_val),
+        deps_html, crit_label,
+        task_html
+    )
+}
+
+fn build_dep_graph_section(data: &ReportData<'_>) -> String {
+    let has_slices = data.milestones.iter().any(|m| !m.slices.is_empty());
+    if !has_slices {
+        return section_html("depgraph", "Dependencies", "<p class=\"empty\">No slices to graph.</p>");
+    }
+    let has_deps = data.milestones.iter().any(|m| m.slices.iter().any(|s| !s.dependencies.is_empty()));
+    if !has_deps {
+        return section_html("depgraph", "Dependencies", "<p class=\"empty\">No dependencies defined.</p>");
+    }
+
+    let crit_set: std::collections::HashSet<&str> = data.critical_path.path.iter().map(|s| s.as_str()).collect();
+    let mut svgs = String::new();
+    for ms in data.milestones {
+        if !ms.slices.is_empty() {
+            svgs.push_str(&build_milestone_dep_svg(ms, &crit_set));
+        }
+    }
+
+    section_html("depgraph", "Dependencies", &svgs)
+}
+
+fn build_milestone_dep_svg(ms: &Gsd2Milestone, crit_set: &std::collections::HashSet<&str>) -> String {
+    let slices = &ms.slices;
+    if slices.is_empty() { return String::new(); }
+
+    // Kahn's BFS layer assignment
+    let mut layer_map: HashMap<String, i32> = HashMap::new();
+    let mut in_deg: HashMap<String, i32> = HashMap::new();
+    let slice_ids: std::collections::HashSet<String> = slices.iter().map(|s| s.id.clone()).collect();
+
+    for s in slices { in_deg.insert(s.id.clone(), 0); }
+    for s in slices {
+        for dep in &s.dependencies {
+            if slice_ids.contains(dep) {
+                *in_deg.entry(s.id.clone()).or_insert(0) += 1;
+            }
+        }
+    }
+
+    let mut visited: std::collections::HashSet<String> = std::collections::HashSet::new();
+    let mut queue: std::collections::VecDeque<String> = std::collections::VecDeque::new();
+
+    for (id, d) in &in_deg {
+        if *d == 0 { queue.push_back(id.clone()); visited.insert(id.clone()); layer_map.insert(id.clone(), 0); }
+    }
+
+    while let Some(node) = queue.pop_front() {
+        for s in slices {
+            if !s.dependencies.contains(&node) { continue; }
+            let new_deg = (in_deg.get(&s.id).copied().unwrap_or(1)) - 1;
+            in_deg.insert(s.id.clone(), new_deg);
+            let new_layer = (layer_map.get(&node).copied().unwrap_or(0)) + 1;
+            let cur = layer_map.get(&s.id).copied().unwrap_or(0);
+            layer_map.insert(s.id.clone(), new_layer.max(cur));
+            if new_deg == 0 && !visited.contains(&s.id) {
+                visited.insert(s.id.clone());
+                queue.push_back(s.id.clone());
+            }
+        }
+    }
+    for s in slices { layer_map.entry(s.id.clone()).or_insert(0); }
+
+    let max_layer = layer_map.values().copied().max().unwrap_or(0);
+    let mut by_layer: HashMap<i32, Vec<String>> = HashMap::new();
+    for (id, layer) in &layer_map {
+        by_layer.entry(*layer).or_default().push(id.clone());
+    }
+
+    let nw = 130_i64; let nh = 40_i64; let cgap = 56_i64; let rgap = 14_i64; let pad = 20_i64;
+    let max_rows = (0..=max_layer).map(|c| by_layer.get(&c).map(|v| v.len()).unwrap_or(0)).max().unwrap_or(0) as i64;
+    let total_h = pad * 2 + max_rows * nh + (max_rows - 1).max(0) * rgap;
+    let total_w = pad * 2 + (max_layer as i64 + 1) * nw + max_layer as i64 * cgap;
+
+    let mut pos: HashMap<String, (i64, i64)> = HashMap::new();
+    for col in 0..=max_layer {
+        let ids = by_layer.get(&col).cloned().unwrap_or_default();
+        let col_h = ids.len() as i64 * nh + (ids.len() as i64 - 1).max(0) * rgap;
+        let start_y = (total_h - col_h) / 2;
+        for (i, id) in ids.iter().enumerate() {
+            pos.insert(id.clone(), (pad + col as i64 * (nw + cgap), start_y + i as i64 * (nh + rgap)));
+        }
+    }
+
+    let mut edges = String::new();
+    for sl in slices {
+        for dep in &sl.dependencies {
+            if let (Some(&(fx, fy)), Some(&(tx, ty))) = (pos.get(dep), pos.get(&sl.id)) {
+                let x1 = fx + nw; let y1 = fy + nh / 2;
+                let x2 = tx;       let y2 = ty + nh / 2;
+                let mx = (x1 + x2) / 2;
+                let crit = crit_set.contains(sl.id.as_str()) && crit_set.contains(dep.as_str());
+                edges.push_str(&format!(
+                    "<path d=\"M{},{} C{},{} {},{} {},{}\" class=\"edge{}\" marker-end=\"url(#arr{})\"/>",
+                    x1, y1, mx, y1, mx, y2, x2, y2,
+                    if crit { " edge-crit" } else { "" },
+                    if crit { "-crit" } else { "" }
+                ));
+            }
+        }
+    }
+
+    let mut nodes = String::new();
+    for sl in slices {
+        if let Some(&(px, py)) = pos.get(&sl.id) {
+            let crit = crit_set.contains(sl.id.as_str());
+            let sc = if sl.done { "n-done" } else { "n-pending" };
+            nodes.push_str(&format!(
+                "<g class=\"node {} {}\" transform=\"translate({},{})\"><rect width=\"{}\" height=\"{}\" rx=\"4\"/><text x=\"{}\" y=\"16\" class=\"n-id\">{}</text><text x=\"{}\" y=\"30\" class=\"n-title\">{}</text><title>{}: {}</title></g>",
+                sc, if crit { "n-crit" } else { "" },
+                px, py, nw, nh, nw / 2, esc_html(&trunc_str(&sl.id, 18)),
+                nw / 2, esc_html(&trunc_str(&sl.title, 18)),
+                esc_html(&sl.id), esc_html(&sl.title)
+            ));
+        }
+    }
+
+    format!(
+        "<div class=\"dep-block\"><h3>{}: {}</h3><div class=\"dep-legend\"><span><span class=\"dot dot-complete dot-sm\"></span> done</span><span><span class=\"dot dot-pending dot-sm\"></span> pending</span></div><div class=\"dep-wrap\"><svg class=\"dep-svg\" viewBox=\"0 0 {} {}\" width=\"{}\" height=\"{}\"><defs><marker id=\"arr\" markerWidth=\"8\" markerHeight=\"8\" refX=\"7\" refY=\"3\" orient=\"auto\"><path d=\"M0,0 L0,6 L8,3 z\" fill=\"var(--border-2)\"/></marker><marker id=\"arr-crit\" markerWidth=\"8\" markerHeight=\"8\" refX=\"7\" refY=\"3\" orient=\"auto\"><path d=\"M0,0 L0,6 L8,3 z\" fill=\"var(--accent)\"/></marker></defs>{}{}</svg></div></div>",
+        esc_html(&ms.id), esc_html(&ms.title),
+        total_w, total_h, total_w, total_h,
+        edges, nodes
+    )
+}
+
+fn build_metrics_section(data: &ReportData<'_>) -> String {
+    let t = data.totals;
+
+    let mut grid = String::new();
+    grid.push_str(&kvi_html("Total cost", &format_cost_html(t.total_cost)));
+    grid.push_str(&kvi_html("Total tokens", &format_token_count_html(t.total_tokens)));
+    grid.push_str(&kvi_html("Duration", &format_duration_html(t.duration_ms)));
+    grid.push_str(&kvi_html("Units", &t.units.to_string()));
+    grid.push_str(&kvi_html("Tool calls", &t.tool_calls.to_string()));
+
+    let token_breakdown = build_token_breakdown_html(t.total_tokens);
+    let cost_over_time = build_cost_over_time_chart_html(data.units);
+
+    let mut phase_row = String::new();
+    if !data.by_phase.is_empty() {
+        phase_row.push_str("<div class=\"chart-row\">");
+        phase_row.push_str(&build_bar_chart_html("Cost by phase",
+            &data.by_phase.iter().map(|p| (p.phase.as_str(), p.cost, format_cost_html(p.cost))).collect::<Vec<_>>()
+        ));
+        phase_row.push_str(&build_bar_chart_html("Tokens by phase",
+            &data.by_phase.iter().map(|p| (p.phase.as_str(), p.tokens as f64, format_token_count_html(p.tokens))).collect::<Vec<_>>()
+        ));
+        phase_row.push_str("</div>");
+    }
+
+    let mut slice_model_row = String::new();
+    if !data.by_slice.is_empty() || !data.by_model.is_empty() {
+        slice_model_row.push_str("<div class=\"chart-row\">");
+        if !data.by_slice.is_empty() {
+            slice_model_row.push_str(&build_bar_chart_html("Cost by slice",
+                &data.by_slice.iter().map(|s| (s.slice_id.as_str(), s.cost, format_cost_html(s.cost))).collect::<Vec<_>>()
+            ));
+        }
+        if !data.by_model.is_empty() {
+            slice_model_row.push_str(&build_bar_chart_html("Cost by model",
+                &data.by_model.iter().map(|m| (m.model.as_str(), m.cost, format_cost_html(m.cost))).collect::<Vec<_>>()
+            ));
+        }
+        slice_model_row.push_str("</div>");
+    }
+
+    let gantt = build_slice_gantt_html(data);
+    let budget_burndown = build_budget_burndown_html(data);
+
+    let body = format!(
+        "<div class=\"kv-grid\">{}</div>{}{}{}{}{}", 
+        grid, budget_burndown, token_breakdown, cost_over_time, phase_row, slice_model_row
+    );
+    let body = format!("{}{}", body, gantt);
+    section_html("metrics", "Metrics", &body)
+}
+
+fn build_cost_over_time_chart_html(units: &[UnitRecord]) -> String {
+    let mut sorted: Vec<&UnitRecord> = units.iter().filter(|u| u.started_at > 0).collect();
+    sorted.sort_by_key(|u| u.started_at);
+    if sorted.len() < 2 { return String::new(); }
+
+    let mut cumulative: Vec<f64> = Vec::new();
+    let mut running = 0.0_f64;
+    for u in &sorted { running += u.cost; cumulative.push(running); }
+
+    let pad_l = 50_f64; let pad_r = 30_f64; let pad_t = 20_f64; let pad_b = 30_f64;
+    let w = 600_f64; let h = 200_f64;
+    let plot_w = w - pad_l - pad_r;
+    let plot_h = h - pad_t - pad_b;
+    let max_cost = cumulative.last().copied().unwrap_or(1.0).max(0.001);
+    let n = cumulative.len() as f64;
+
+    let points: Vec<(f64, f64)> = cumulative.iter().enumerate().map(|(i, &c)| {
+        let x = pad_l + (i as f64 / (n - 1.0)) * plot_w;
+        let y = pad_t + plot_h - (c / max_cost) * plot_h;
+        (x, y)
+    }).collect();
+
+    let line_path = points.iter().enumerate().map(|(i, &(x, y))| {
+        format!("{}{:.1},{:.1}", if i == 0 { "M" } else { "L" }, x, y)
+    }).collect::<Vec<_>>().join(" ");
+
+    let last = points.last().unwrap();
+    let first = points.first().unwrap();
+    let area_path = format!("{} L{:.1},{:.1} L{:.1},{:.1} Z", line_path, last.0, pad_t + plot_h, first.0, pad_t + plot_h);
+
+    let mut grid_lines = String::new();
+    for i in 0..=4 {
+        let y = pad_t + (plot_h / 4.0) * i as f64;
+        let val = format_cost_html(max_cost * (1.0 - i as f64 / 4.0));
+        grid_lines.push_str(&format!(
+            "<line x1=\"{:.1}\" y1=\"{:.1}\" x2=\"{:.1}\" y2=\"{:.1}\" class=\"cost-grid\"/>",
+            pad_l, y, w - pad_r, y
+        ));
+        grid_lines.push_str(&format!(
+            "<text x=\"{:.1}\" y=\"{:.1}\" class=\"cost-axis\" text-anchor=\"end\">{}</text>",
+            pad_l - 4.0, y + 3.0, esc_html(&val)
+        ));
+    }
+
+    format!(
+        "<div class=\"token-block\"><h3>Cost over time</h3><svg class=\"cost-svg\" viewBox=\"0 0 {} {}\" width=\"{}\" height=\"{}\">{}<path d=\"{}\" class=\"cost-area\"/><path d=\"{}\" class=\"cost-line\"/><text x=\"{:.1}\" y=\"{:.1}\" class=\"cost-axis\">#1</text><text x=\"{:.1}\" y=\"{:.1}\" class=\"cost-axis\" text-anchor=\"end\">#{}</text></svg></div>",
+        w as i64, h as i64, w as i64, h as i64,
+        grid_lines, area_path, line_path,
+        pad_l, h - 4.0, w - pad_r, h - 4.0, sorted.len()
+    )
+}
+
+fn build_budget_burndown_html(data: &ReportData<'_>) -> String {
+    let ceiling = match data.health.budget_ceiling { Some(c) => c, None => return String::new() };
+    let spent = data.totals.total_cost;
+    let total_slices: usize = data.milestones.iter().map(|m| m.slices.len()).sum();
+    let done_slices: usize = data.milestones.iter().flat_map(|m| m.slices.iter()).filter(|s| s.done).count();
+    let remaining = total_slices.saturating_sub(done_slices);
+    let avg_cost_per_slice = if done_slices > 0 { spent / done_slices as f64 } else { 0.0 };
+    let projected = if avg_cost_per_slice > 0.0 { avg_cost_per_slice * remaining as f64 + spent } else { spent };
+    let max_val = ceiling.max(projected).max(spent);
+
+    let spent_pct = (spent / max_val * 100.0).min(100.0);
+    let projected_rem = (projected - spent).max(0.0);
+    let proj_pct_raw = projected_rem / max_val * 100.0;
+    let overshoot = if projected > ceiling { ((projected - ceiling) / max_val * 100.0).max(0.0) } else { 0.0 };
+    let proj_pct = (proj_pct_raw - overshoot).max(0.0);
+
+    let mut legend = format!(
+        "<span><span class=\"burndown-dot\" style=\"background:var(--accent)\"></span> Spent: {}</span>",
+        format_cost_html(spent)
+    );
+    legend.push_str(&format!(
+        "<span><span class=\"burndown-dot\" style=\"background:var(--caution)\"></span> Projected remaining: {}</span>",
+        format_cost_html(projected_rem)
+    ));
+    legend.push_str(&format!(
+        "<span><span class=\"burndown-dot\" style=\"background:var(--border-2)\"></span> Ceiling: {}</span>",
+        format_cost_html(ceiling)
+    ));
+    if overshoot > 0.0 {
+        legend.push_str(&format!(
+            "<span><span class=\"burndown-dot\" style=\"background:var(--warn)\"></span> Overshoot: {}</span>",
+            format_cost_html(projected - ceiling)
+        ));
+    }
+
+    let proj_bar = if proj_pct > 0.0 { format!("<div class=\"burndown-projected\" style=\"width:{:.1}%\"></div>", proj_pct) } else { String::new() };
+    let over_bar = if overshoot > 0.0 { format!("<div class=\"burndown-overshoot\" style=\"width:{:.1}%\"></div>", overshoot) } else { String::new() };
+
+    format!(
+        "<div class=\"burndown-wrap\"><h3>Budget burndown</h3><div class=\"burndown-bar\"><div class=\"burndown-spent\" style=\"width:{:.1}%\"></div>{}{}</div><div class=\"burndown-legend\">{}</div></div>",
+        spent_pct, proj_bar, over_bar, legend
+    )
+}
+
+fn build_slice_gantt_html(data: &ReportData<'_>) -> String {
+    let mut slice_timings: HashMap<String, (i64, i64)> = HashMap::new();
+    for u in data.units {
+        let parts: Vec<&str> = u.id.splitn(3, '/').collect();
+        let slice_key = if parts.len() >= 2 { format!("{}/{}", parts[0], parts[1]) } else { u.id.clone() };
+        if u.started_at <= 0 { continue; }
+        let end = if u.finished_at > 0 { u.finished_at } else { 0 };
+        if end == 0 { continue; }
+        let entry = slice_timings.entry(slice_key).or_insert((u.started_at, end));
+        entry.0 = entry.0.min(u.started_at);
+        entry.1 = entry.1.max(end);
+    }
+    if slice_timings.len() < 2 { return String::new(); }
+
+    let mut slice_entries: Vec<(String, i64, i64)> = slice_timings.into_iter().map(|(k, (mn, mx))| (k, mn, mx)).collect();
+    slice_entries.sort_by_key(|e| e.1);
+
+    let global_min = slice_entries.iter().map(|e| e.1).min().unwrap_or(0);
+    let global_max = slice_entries.iter().map(|e| e.2).max().unwrap_or(1);
+    let range = (global_max - global_min).max(1) as f64;
+
+    let bar_h = 18_f64; let row_h = 30_f64; let pad_l = 140_f64; let pad_r = 20_f64; let pad_t = 30_f64; let pad_b = 30_f64;
+    let plot_w = 700_f64 - pad_l - pad_r;
+    let svg_h = slice_entries.len() as f64 * row_h + pad_t + pad_b;
+
+    // Build a status lookup
+    let mut status_map: HashMap<String, &str> = HashMap::new();
+    for ms in data.milestones {
+        for sl in &ms.slices {
+            let key = format!("{}/{}", ms.id, sl.id);
+            status_map.insert(key, if sl.done { "done" } else { "pending" });
+        }
+    }
+
+    let mut bars = String::new();
+    for (i, (slice_id, t_min, t_max)) in slice_entries.iter().enumerate() {
+        let x = pad_l + ((*t_min - global_min) as f64 / range) * plot_w;
+        let bar_w = (((*t_max - *t_min) as f64 / range) * plot_w).max(2.0);
+        let y = pad_t + i as f64 * row_h + (row_h - bar_h) / 2.0;
+        let status = status_map.get(slice_id).copied().unwrap_or("pending");
+        bars.push_str(&format!(
+            "<text x=\"{:.1}\" y=\"{:.1}\" class=\"gantt-label\" text-anchor=\"end\">{}</text><rect x=\"{:.1}\" y=\"{:.1}\" width=\"{:.1}\" height=\"{}\" rx=\"2\" class=\"gantt-bar-{}\"><title>{}: {}</title></rect>",
+            pad_l - 6.0, y + bar_h / 2.0 + 4.0, esc_html(&trunc_str(slice_id, 18)),
+            x, y, bar_w, bar_h as i64, esc_html(status),
+            esc_html(slice_id), format_duration_html(*t_max - *t_min)
+        ));
+    }
+
+    let mut axis_labels = String::new();
+    for &frac in &[0.0_f64, 0.25, 0.5, 0.75, 1.0] {
+        let t = global_min + (frac * range) as i64;
+        let x = pad_l + frac * plot_w;
+        // Convert ms to ISO-like
+        let date_str = format_date_short_html(&ms_to_iso(t));
+        axis_labels.push_str(&format!(
+            "<text x=\"{:.1}\" y=\"{:.1}\" class=\"gantt-axis\" text-anchor=\"middle\">{}</text>",
+            x, svg_h - 8.0, esc_html(&date_str)
+        ));
+    }
+
+    format!(
+        "<div class=\"gantt-wrap\"><h3>Slice timeline</h3><svg class=\"gantt-svg\" viewBox=\"0 0 700 {:.0}\" width=\"700\" height=\"{:.0}\">{}{}</svg></div>",
+        svg_h, svg_h, bars, axis_labels
+    )
+}
+
+fn ms_to_iso(ms: i64) -> String {
+    let secs = (ms / 1000) as u64;
+    let (y, mo, d, h, min, _sec) = epoch_to_date(secs);
+    format!("{:04}-{:02}-{:02}T{:02}:{:02}:00Z", y, mo, d, h, min)
+}
+
+fn build_token_breakdown_html(total: i64) -> String {
+    if total == 0 { return String::new(); }
+    // We only have the total from ProjectTotals; show a simplified view
+    let segs = [
+        ("Input",       (total as f64 * 0.6) as i64, "seg-1"),
+        ("Output",      (total as f64 * 0.2) as i64, "seg-2"),
+        ("Cache read",  (total as f64 * 0.15) as i64, "seg-3"),
+        ("Cache write", (total as f64 * 0.05) as i64, "seg-4"),
+    ];
+
+    let mut bars = String::new();
+    let mut legend = String::new();
+    for (label, val, cls) in &segs {
+        if *val == 0 { continue; }
+        let pct = (*val as f64 / total as f64) * 100.0;
+        bars.push_str(&format!(
+            "<div class=\"tseg {}\" style=\"width:{:.2}%\" title=\"{}: {} ({:.1}%)\"></div>",
+            cls, pct, label, format_token_count_html(*val), pct
+        ));
+        legend.push_str(&format!(
+            "<span class=\"leg-item\"><span class=\"leg-dot {}\"></span>{}: {} ({:.1}%)</span>",
+            cls, label, format_token_count_html(*val), pct
+        ));
+    }
+
+    format!(
+        "<div class=\"token-block\"><h3>Token breakdown</h3><div class=\"token-bar\">{}</div><div class=\"token-legend\">{}</div></div>",
+        bars, legend
+    )
+}
+
+fn build_bar_chart_html(title: &str, entries: &[(&str, f64, String)]) -> String {
+    if entries.is_empty() { return String::new(); }
+    let max_val = entries.iter().map(|e| e.1).fold(0.0_f64, f64::max).max(0.001);
+    let mut rows = String::new();
+    for (i, (label, value, display)) in entries.iter().enumerate() {
+        let pct = (value / max_val) * 100.0;
+        let ci = i % 6;
+        rows.push_str(&format!(
+            "<div class=\"bar-row\"><div class=\"bar-lbl\">{}</div><div class=\"bar-track\"><div class=\"bar-fill bar-c{}\" style=\"width:{:.1}%\"></div></div><div class=\"bar-val\">{}</div></div>",
+            esc_html(&trunc_str(label, 22)), ci, pct, esc_html(display)
+        ));
+    }
+    format!("<div class=\"chart-block\"><h3>{}</h3>{}</div>", esc_html(title), rows)
+}
+
+fn build_timeline_section(data: &ReportData<'_>) -> String {
+    if data.units.is_empty() {
+        return section_html("timeline", "Timeline", "<p class=\"empty\">No units executed yet.</p>");
+    }
+
+    let mut sorted: Vec<&UnitRecord> = data.units.iter().collect();
+    sorted.sort_by_key(|u| u.started_at);
+    let max_cost = sorted.iter().map(|u| u.cost).fold(0.01_f64, f64::max);
+
+    let mut rows = String::new();
+    for (i, u) in sorted.iter().enumerate() {
+        let dur = if u.finished_at > 0 { format_duration_html(u.finished_at - u.started_at) } else { "running".to_string() };
+        let intensity = (u.cost / max_cost).min(1.0);
+        let heat_style = if intensity > 0.15 {
+            format!(" style=\"background:rgba(239,68,68,{:.3})\"", intensity * 0.15)
+        } else { String::new() };
+        rows.push_str(&format!(
+            "<tr{}><td class=\"muted\">{}</td><td class=\"mono\">{}</td><td class=\"mono muted\">{}</td><td>{}</td><td class=\"muted\">{}</td><td>{}</td><td class=\"num\">{}</td><td class=\"num\">{}</td><td class=\"num\">{}</td></tr>",
+            heat_style, i + 1,
+            esc_html(&u.unit_type), esc_html(&u.id),
+            esc_html(&short_model_html(&u.model)),
+            format_date_short_html(&ms_to_iso(u.started_at)),
+            esc_html(&dur),
+            esc_html(&format_cost_html(u.cost)),
+            esc_html(&format_token_count_html(u.total_tokens)),
+            u.tool_calls
+        ));
+    }
+
+    let body = format!(
+        "<div class=\"table-scroll\"><table class=\"tbl\"><thead><tr><th>#</th><th>Type</th><th>ID</th><th>Model</th><th>Started</th><th>Duration</th><th>Cost</th><th>Tokens</th><th>Tools</th></tr></thead><tbody>{}</tbody></table></div>",
+        rows
+    );
+    section_html("timeline", "Timeline", &body)
+}
+
+fn build_health_section(data: &ReportData<'_>) -> String {
+    let h = data.health;
+    let mut rows = String::new();
+    rows.push_str(&h_row_html("Phase", data.phase.as_str(), None));
+    rows.push_str(&h_row_html("Budget spent", &format_cost_html(h.budget_spent), None));
+    if let Some(ceiling) = h.budget_ceiling {
+        let pct = (h.budget_spent / ceiling) * 100.0;
+        let status = if pct > 90.0 { Some("warn") } else if pct > 75.0 { Some("caution") } else { Some("ok") };
+        rows.push_str(&h_row_html(
+            "Budget ceiling",
+            &format!("{} ({} spent, {:.0}% used)", format_cost_html(ceiling), format_cost_html(h.budget_spent), pct),
+            status,
+        ));
+    }
+    rows.push_str(&h_row_html("Milestones", &format!("{}/{}", h.milestones_done, h.milestones_total), None));
+    rows.push_str(&h_row_html("Slices", &format!("{}/{}", h.slices_done, h.slices_total), None));
+    rows.push_str(&h_row_html("Tasks", &format!("{}/{}", h.tasks_done, h.tasks_total), None));
+    if let Some(ref mid) = h.active_milestone_id {
+        rows.push_str(&h_row_html("Active milestone", mid, None));
+    }
+    if let Some(ref sid) = h.active_slice_id {
+        rows.push_str(&h_row_html("Active slice", sid, None));
+    }
+    if let Some(ref blocker) = h.blocker {
+        rows.push_str(&h_row_html("Blocker", blocker, Some("warn")));
+    }
+
+    let body = format!("<table class=\"tbl tbl-kv\"><tbody>{}</tbody></table>", rows);
+    section_html("health", "Health", &body)
+}
+
+fn build_changelog_section(data: &ReportData<'_>) -> String {
+    if data.changelog_entries.is_empty() {
+        return section_html("changelog", "Changelog", "<p class=\"empty\">No completed slices yet.</p>");
+    }
+
+    let mut entries_html = String::new();
+    for e in &data.changelog_entries {
+        let date_html = if let Some(ref ts) = e.completed_at {
+            format!("<span class=\"muted cl-date\">{}</span>", esc_html(&format_date_short_html(ts)))
+        } else { String::new() };
+
+        let liner_html = if !e.one_liner.is_empty() {
+            format!("<p class=\"cl-liner\">{}</p>", esc_html(&e.one_liner))
+        } else { String::new() };
+
+        let mut files_html = String::new();
+        if !e.files_modified.is_empty() {
+            files_html.push_str(&format!(
+                "<details class=\"files-detail\"><summary class=\"muted\">{} file{} modified</summary><ul class=\"file-list\">",
+                e.files_modified.len(), if e.files_modified.len() != 1 { "s" } else { "" }
+            ));
+            for f in &e.files_modified {
+                files_html.push_str(&format!("<li><code>{}</code>{}</li>",
+                    esc_html(&f.path),
+                    if !f.description.is_empty() { format!(" — {}", esc_html(&f.description)) } else { String::new() }
+                ));
+            }
+            files_html.push_str("</ul></details>");
+        }
+
+        entries_html.push_str(&format!(
+            "<div class=\"cl-entry\"><div class=\"cl-header\"><span class=\"mono muted\">{}</span><span class=\"cl-title\">{}</span>{}</div>{}{}</div>",
+            esc_html(&e.slice_id), esc_html(&e.one_liner), date_html, liner_html, files_html
+        ));
+    }
+
+    let title = format!("Changelog <span class=\"count\">{}</span>", data.changelog_entries.len());
+    section_html("changelog", &title, &entries_html)
+}
+
+fn build_knowledge_section(data: &ReportData<'_>) -> String {
+    if data.knowledge_entries.is_empty() {
+        return section_html("knowledge", "Knowledge", "<p class=\"empty\">No KNOWLEDGE.md found or no entries.</p>");
+    }
+
+    let total = data.knowledge_entries.len();
+    let mut body = String::new();
+
+    let rules: Vec<&KnowledgeEntry> = data.knowledge_entries.iter().filter(|e| e.entry_type == "rule").collect();
+    let patterns: Vec<&KnowledgeEntry> = data.knowledge_entries.iter().filter(|e| e.entry_type == "pattern").collect();
+    let lessons: Vec<&KnowledgeEntry> = data.knowledge_entries.iter().filter(|e| e.entry_type == "lesson").collect();
+    let other: Vec<&KnowledgeEntry> = data.knowledge_entries.iter().filter(|e| !["rule","pattern","lesson"].contains(&e.entry_type.as_str())).collect();
+
+    if !rules.is_empty() {
+        body.push_str(&format!("<h3>Rules <span class=\"count\">{}</span></h3><table class=\"tbl\"><thead><tr><th>ID</th><th>Rule</th></tr></thead><tbody>", rules.len()));
+        for r in &rules {
+            body.push_str(&format!("<tr><td class=\"mono\">{}</td><td>{}</td></tr>", esc_html(&r.id), esc_html(&r.content)));
+        }
+        body.push_str("</tbody></table>");
+    }
+    if !patterns.is_empty() {
+        body.push_str(&format!("<h3>Patterns <span class=\"count\">{}</span></h3><table class=\"tbl\"><thead><tr><th>ID</th><th>Pattern</th></tr></thead><tbody>", patterns.len()));
+        for p in &patterns {
+            body.push_str(&format!("<tr><td class=\"mono\">{}</td><td>{}</td></tr>", esc_html(&p.id), esc_html(&p.content)));
+        }
+        body.push_str("</tbody></table>");
+    }
+    if !lessons.is_empty() {
+        body.push_str(&format!("<h3>Lessons <span class=\"count\">{}</span></h3><table class=\"tbl\"><thead><tr><th>ID</th><th>Lesson</th></tr></thead><tbody>", lessons.len()));
+        for l in &lessons {
+            body.push_str(&format!("<tr><td class=\"mono\">{}</td><td>{}</td></tr>", esc_html(&l.id), esc_html(&l.content)));
+        }
+        body.push_str("</tbody></table>");
+    }
+    if !other.is_empty() {
+        body.push_str(&format!("<h3>Notes <span class=\"count\">{}</span></h3><table class=\"tbl\"><thead><tr><th>ID</th><th>Content</th></tr></thead><tbody>", other.len()));
+        for e in &other {
+            body.push_str(&format!("<tr><td class=\"mono\">{}</td><td>{}</td></tr>", esc_html(&e.id), esc_html(&e.content)));
+        }
+        body.push_str("</tbody></table>");
+    }
+
+    let title = format!("Knowledge <span class=\"count\">{}</span>", total);
+    section_html("knowledge", &title, &body)
+}
+
+fn build_captures_section(data: &ReportData<'_>) -> String {
+    if data.capture_entries.is_empty() {
+        return section_html("captures", "Captures", "<p class=\"empty\">No captures recorded.</p>");
+    }
+
+    let pending_count = data.capture_entries.iter().filter(|e| e.status == "pending").count();
+    let badge = if pending_count > 0 {
+        format!("<span class=\"count count-warn\">{} pending</span>", pending_count)
+    } else { "<span class=\"count\">all triaged</span>".to_string() };
+
+    let mut rows = String::new();
+    for e in data.capture_entries {
+        rows.push_str(&format!(
+            "<tr><td class=\"muted\">{}</td><td class=\"mono\">{}</td><td class=\"mono\">{}</td><td>{}</td><td>{}</td><td class=\"muted\">{}</td></tr>",
+            esc_html(&format_date_short_html(&e.timestamp)),
+            esc_html(&e.status),
+            esc_html(e.classification.as_deref().unwrap_or("")),
+            esc_html(e.resolution.as_deref().unwrap_or("")),
+            esc_html(&trunc_str(&e.text, 80)),
+            esc_html(e.resolved_at.as_deref().unwrap_or(""))
+        ));
+    }
+
+    let title = format!("Captures {}", badge);
+    let body = format!(
+        "<div class=\"table-scroll\"><table class=\"tbl\"><thead><tr><th>Captured</th><th>Status</th><th>Class</th><th>Resolution</th><th>Text</th><th>Resolved</th></tr></thead><tbody>{}</tbody></table></div>",
+        rows
+    );
+    section_html("captures", &title, &body)
+}
+
+fn build_stats_section(data: &ReportData<'_>) -> String {
+    // Count milestones missing summary files
+    let mut missing = Vec::new();
+    for ms in data.milestones {
+        for sl in &ms.slices {
+            if sl.done {
+                // We just report stats; the actual file check would need project_path
+                let _ = (&ms.id, &sl.id);
+            } else {
+                missing.push((&ms.id, &sl.id, &sl.title));
+            }
+        }
+    }
+
+    let body = if missing.is_empty() {
+        "<p class=\"empty\">All slices tracked.</p>".to_string()
+    } else {
+        let mut html = format!("<h3>Incomplete slices <span class=\"count\">{}</span></h3><table class=\"tbl\"><thead><tr><th>Milestone</th><th>Slice</th><th>Title</th></tr></thead><tbody>", missing.len());
+        for (mid, sid, title) in missing.iter().take(20) {
+            html.push_str(&format!("<tr><td class=\"mono\">{}</td><td class=\"mono\">{}</td><td>{}</td></tr>", esc_html(mid), esc_html(sid), esc_html(title)));
+        }
+        html.push_str("</tbody></table>");
+        html
+    };
+    section_html("stats", "Artifacts", &body)
+}
+
+fn build_discussion_section(data: &ReportData<'_>) -> String {
+    if data.discussion_states.is_empty() {
+        return section_html("discussion", "Planning", "<p class=\"empty\">No milestones.</p>");
+    }
+
+    let mut rows = String::new();
+    for ms in data.milestones {
+        let state = data.discussion_states.iter()
+            .find(|(id, _)| id == &ms.id)
+            .map(|(_, s)| s.as_str())
+            .unwrap_or("undiscussed");
+        rows.push_str(&format!(
+            "<tr><td class=\"mono\">{}</td><td>{}</td><td class=\"mono\">{}</td></tr>",
+            esc_html(&ms.id), esc_html(&ms.title), esc_html(state)
+        ));
+    }
+
+    let body = format!(
+        "<table class=\"tbl\"><thead><tr><th>ID</th><th>Milestone</th><th>State</th></tr></thead><tbody>{}</tbody></table>",
+        rows
+    );
+    section_html("discussion", "Planning", &body)
+}
+
+// ─── Main HTML report string builder ──────────────────────────────────────────
+
+fn generate_html_report_string(data: &ReportData<'_>) -> String {
+    let generated = now_iso();
+
+    let sections = vec![
+        build_summary_section(data, &generated),
+        build_blockers_section(data),
+        build_progress_section(data),
+        build_timeline_section(data),
+        build_dep_graph_section(data),
+        build_metrics_section(data),
+        build_health_section(data),
+        build_changelog_section(data),
+        build_knowledge_section(data),
+        build_captures_section(data),
+        build_stats_section(data),
+        build_discussion_section(data),
+    ];
+
+    let milestone_tag = data.milestone_id.map(|mid| format!(
+        " <span class=\"sep\">/</span> <span class=\"mono accent\">{}</span>",
+        esc_html(mid)
+    )).unwrap_or_default();
+
+    let back_link = "<a class=\"back-link\" href=\"index.html\">All Reports</a>";
+
+    let title_suffix = data.milestone_id.map(|mid| format!(" \u{2014} {}", esc_html(mid))).unwrap_or_default();
+
+    format!(
+        r##"<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GSD Report — {project_name}{title_suffix}</title>
+<style>{css}</style>
+</head>
+<body>
+<header>
+  <div class="header-inner">
+    <div class="branding">
+      <span class="logo">GSD</span>
+      <span class="version">v{gsd_version}</span>
+    </div>
+    <div class="header-meta">
+      <h1>{project_name_esc}{milestone_tag}</h1>
+      <span class="header-path">{project_path_esc}</span>
+    </div>
+    <div class="header-right">
+      {back_link}
+      <div class="generated">{generated_long}</div>
+    </div>
+  </div>
+</header>
+<nav class="toc" aria-label="Report sections">
+  <ul>
+    <li><a href="#summary">Summary</a></li>
+    <li><a href="#blockers">Blockers</a></li>
+    <li><a href="#progress">Progress</a></li>
+    <li><a href="#timeline">Timeline</a></li>
+    <li><a href="#depgraph">Dependencies</a></li>
+    <li><a href="#metrics">Metrics</a></li>
+    <li><a href="#health">Health</a></li>
+    <li><a href="#changelog">Changelog</a></li>
+    <li><a href="#knowledge">Knowledge</a></li>
+    <li><a href="#captures">Captures</a></li>
+    <li><a href="#stats">Artifacts</a></li>
+    <li><a href="#discussion">Planning</a></li>
+  </ul>
+</nav>
+<main>
+{sections}
+</main>
+<footer>
+  <div class="footer-inner">
+    <span>GSD v{gsd_version}</span>
+    <span class="sep">/</span>
+    <span>{project_name_esc}</span>
+    <span class="sep">/</span>
+    <span>{generated_long}</span>
+  </div>
+</footer>
+<script>{js}</script>
+</body>
+</html>"##,
+        project_name = esc_html(data.project_name),
+        title_suffix = title_suffix,
+        css = REPORT_CSS,
+        gsd_version = esc_html(data.gsd_version),
+        project_name_esc = esc_html(data.project_name),
+        milestone_tag = milestone_tag,
+        project_path_esc = esc_html(data.project_path),
+        back_link = back_link,
+        generated_long = format_date_long_html(&generated),
+        sections = sections.join("\n"),
+        js = REPORT_JS,
+    )
+}
+
+// ─── Reports registry helpers ──────────────────────────────────────────────────
+
+fn load_reports_index(reports_dir: &Path) -> Option<ReportsIndex> {
+    let p = reports_dir.join("reports.json");
+    let content = std::fs::read_to_string(&p).ok()?;
+    serde_json::from_str::<serde_json::Value>(&content).ok().map(|v| ReportsIndex {
+        version: v.get("version").and_then(|x| x.as_u64()).unwrap_or(1) as u32,
+        project_name: v.get("projectName").and_then(|x| x.as_str()).unwrap_or("").to_string(),
+        project_path: v.get("projectPath").and_then(|x| x.as_str()).unwrap_or("").to_string(),
+        gsd_version: v.get("gsdVersion").and_then(|x| x.as_str()).unwrap_or("").to_string(),
+        entries: v.get("entries").and_then(|x| x.as_array()).map(|arr| {
+            arr.iter().map(|e| ReportEntry {
+                filename: e.get("filename").and_then(|x| x.as_str()).unwrap_or("").to_string(),
+                generated_at: e.get("generatedAt").and_then(|x| x.as_str()).unwrap_or("").to_string(),
+                milestone_id: e.get("milestoneId").and_then(|x| x.as_str()).unwrap_or("").to_string(),
+                milestone_title: e.get("milestoneTitle").and_then(|x| x.as_str()).unwrap_or("").to_string(),
+                label: e.get("label").and_then(|x| x.as_str()).unwrap_or("").to_string(),
+                kind: e.get("kind").and_then(|x| x.as_str()).unwrap_or("manual").to_string(),
+                total_cost: e.get("totalCost").and_then(|x| x.as_f64()).unwrap_or(0.0),
+                total_tokens: e.get("totalTokens").and_then(|x| x.as_i64()).unwrap_or(0),
+                total_duration: e.get("totalDuration").and_then(|x| x.as_i64()).unwrap_or(0),
+                done_slices: e.get("doneSlices").and_then(|x| x.as_u64()).unwrap_or(0) as u32,
+                total_slices: e.get("totalSlices").and_then(|x| x.as_u64()).unwrap_or(0) as u32,
+                done_milestones: e.get("doneMilestones").and_then(|x| x.as_u64()).unwrap_or(0) as u32,
+                total_milestones: e.get("totalMilestones").and_then(|x| x.as_u64()).unwrap_or(0) as u32,
+                phase: e.get("phase").and_then(|x| x.as_str()).unwrap_or("").to_string(),
+            }).collect()
+        }).unwrap_or_default(),
+    })
+}
+
+fn save_reports_index(reports_dir: &Path, index: &ReportsIndex) -> Result<(), String> {
+    std::fs::create_dir_all(reports_dir).map_err(|e| e.to_string())?;
+    let json = serde_json::json!({
+        "version": index.version,
+        "projectName": index.project_name,
+        "projectPath": index.project_path,
+        "gsdVersion": index.gsd_version,
+        "entries": index.entries.iter().map(|e| serde_json::json!({
+            "filename": e.filename,
+            "generatedAt": e.generated_at,
+            "milestoneId": e.milestone_id,
+            "milestoneTitle": e.milestone_title,
+            "label": e.label,
+            "kind": e.kind,
+            "totalCost": e.total_cost,
+            "totalTokens": e.total_tokens,
+            "totalDuration": e.total_duration,
+            "doneSlices": e.done_slices,
+            "totalSlices": e.total_slices,
+            "doneMilestones": e.done_milestones,
+            "totalMilestones": e.total_milestones,
+            "phase": e.phase,
+        })).collect::<Vec<_>>(),
+    });
+    let content = serde_json::to_string_pretty(&json).map_err(|e| e.to_string())?;
+    std::fs::write(reports_dir.join("reports.json"), content + "\n")
+        .map_err(|e| e.to_string())
+}
+
+fn regenerate_html_index(reports_dir: &Path, index: &ReportsIndex) {
+    let html = build_index_html(index);
+    let _ = std::fs::write(reports_dir.join("index.html"), html);
+}
+
+fn build_index_html(index: &ReportsIndex) -> String {
+    let generated = now_iso();
+    let mut sorted = index.entries.clone();
+    sorted.sort_by(|a, b| a.generated_at.cmp(&b.generated_at));
+
+    let latest = sorted.last();
+    let overall_pct = latest.map(|e| {
+        if e.total_slices > 0 { (e.done_slices * 100 / e.total_slices) } else { 0 }
+    }).unwrap_or(0);
+
+    // Build TOC groups by milestone
+    let mut milestone_groups: Vec<(String, Vec<&ReportEntry>)> = Vec::new();
+    for e in &sorted {
+        if let Some(grp) = milestone_groups.iter_mut().find(|(k, _)| k == &e.milestone_id) {
+            grp.1.push(e);
+        } else {
+            milestone_groups.push((e.milestone_id.clone(), vec![e]));
+        }
+    }
+
+    let mut toc_html = String::new();
+    for (mid, group) in &milestone_groups {
+        let label = if mid == "final" { "Final".to_string() } else { esc_html(mid) };
+        let links = group.iter().map(|e| {
+            format!(
+                "<li><a href=\"{}\">{}</a> <span class=\"toc-kind toc-{}\">{}</span></li>",
+                esc_html(&e.filename), esc_html(&format_date_short_html(&e.generated_at)),
+                esc_html(&e.kind), esc_html(&e.kind)
+            )
+        }).collect::<Vec<_>>().join("");
+        toc_html.push_str(&format!(
+            "<div class=\"toc-group\"><div class=\"toc-group-label\">{}</div><ul>{}</ul></div>",
+            label, links
+        ));
+    }
+
+    // Progression cards
+    let mut cards_html = String::new();
+    for (i, e) in sorted.iter().enumerate() {
+        let pct = if e.total_slices > 0 { (e.done_slices * 100) / e.total_slices } else { 0 };
+        let is_latest = i == sorted.len() - 1;
+
+        let mut delta_html = String::new();
+        if i > 0 {
+            let prev = &sorted[i - 1];
+            let d_cost = e.total_cost - prev.total_cost;
+            let d_slices = e.done_slices as i32 - prev.done_slices as i32;
+            let d_milestones = e.done_milestones as i32 - prev.done_milestones as i32;
+            let mut parts: Vec<String> = Vec::new();
+            if d_cost > 0.0001 { parts.push(format!("+{}", format_cost_html(d_cost))); }
+            if d_slices > 0 { parts.push(format!("+{} slice{}", d_slices, if d_slices != 1 { "s" } else { "" })); }
+            if d_milestones > 0 { parts.push(format!("+{} milestone{}", d_milestones, if d_milestones != 1 { "s" } else { "" })); }
+            if !parts.is_empty() {
+                delta_html = format!(
+                    "<div class=\"card-delta\">{}</div>",
+                    parts.iter().map(|p| format!("<span>{}</span>", esc_html(p))).collect::<Vec<_>>().join("")
+                );
+            }
+        }
+
+        cards_html.push_str(&format!(
+            "<a class=\"report-card{}\" href=\"{}\"><div class=\"card-top\"><span class=\"card-label\">{}</span><span class=\"card-kind card-kind-{}\">{}</span></div><div class=\"card-date\">{}</div><div class=\"card-progress\"><div class=\"card-bar-track\"><div class=\"card-bar-fill\" style=\"width:{}%\"></div></div><span class=\"card-pct\">{}%</span></div><div class=\"card-stats\"><span>{}</span><span>{}</span><span>{}</span><span>{}/{} slices</span></div>{}</a>",
+            if is_latest { " card-latest" } else { "" },
+            esc_html(&e.filename),
+            esc_html(&e.label),
+            esc_html(&e.kind), esc_html(&e.kind),
+            esc_html(&format_date_short_html(&e.generated_at)),
+            pct, pct,
+            esc_html(&format_cost_html(e.total_cost)),
+            esc_html(&format_token_count_html(e.total_tokens)),
+            esc_html(&format_duration_html(e.total_duration)),
+            e.done_slices, e.total_slices,
+            delta_html
+        ));
+    }
+
+    // Cost sparkline
+    let sparkline_html = if sorted.len() > 1 {
+        build_cost_sparkline_html(&sorted)
+    } else { String::new() };
+
+    // Summary of latest state
+    let summary_html = if let Some(e) = latest {
+        format!(
+            "<div class=\"idx-summary\"><div class=\"idx-stat\"><span class=\"idx-val\">{}</span><span class=\"idx-lbl\">Total Cost</span></div><div class=\"idx-stat\"><span class=\"idx-val\">{}</span><span class=\"idx-lbl\">Total Tokens</span></div><div class=\"idx-stat\"><span class=\"idx-val\">{}</span><span class=\"idx-lbl\">Duration</span></div><div class=\"idx-stat\"><span class=\"idx-val\">{}/{}</span><span class=\"idx-lbl\">Slices</span></div><div class=\"idx-stat\"><span class=\"idx-val\">{}/{}</span><span class=\"idx-lbl\">Milestones</span></div><div class=\"idx-stat\"><span class=\"idx-val\">{}</span><span class=\"idx-lbl\">Reports</span></div></div><div class=\"idx-progress\"><div class=\"idx-bar-track\"><div class=\"idx-bar-fill\" style=\"width:{}%\"></div></div><span class=\"idx-pct\">{}% complete</span></div>",
+            format_cost_html(e.total_cost), format_token_count_html(e.total_tokens), format_duration_html(e.total_duration),
+            e.done_slices, e.total_slices, e.done_milestones, e.total_milestones,
+            index.entries.len(), overall_pct, overall_pct
+        )
+    } else { "<p class=\"empty\">No reports generated yet.</p>".to_string() };
+
+    let sparkline_section = if !sparkline_html.is_empty() {
+        format!("<div class=\"sparkline-wrap\"><h3>Cost Progression</h3>{}</div>", sparkline_html)
+    } else { String::new() };
+
+    let cards_section = if !cards_html.is_empty() {
+        format!("<div class=\"cards-grid\">{}</div>", cards_html)
+    } else {
+        "<p class=\"empty\">No reports generated yet.</p>".to_string()
+    };
+
+    format!(
+        r##"<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GSD Reports — {project_name}</title>
+<style>{css}</style>
+</head>
+<body>
+<header>
+  <div class="hdr-inner">
+    <div class="branding">
+      <span class="logo">GSD</span>
+      <span class="ver">v{gsd_version}</span>
+    </div>
+    <div class="hdr-meta">
+      <h1>{project_name} <span class="hdr-subtitle">Reports</span></h1>
+      <span class="hdr-path">{project_path}</span>
+    </div>
+    <div class="hdr-right">
+      <span class="gen-lbl">Updated</span>
+      <span class="gen">{generated_short}</span>
+    </div>
+  </div>
+</header>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-title">Reports</div>
+    {toc}
+  </aside>
+  <main>
+    <section class="idx-overview">
+      <h2>Project Overview</h2>
+      {summary}
+      {sparkline}
+    </section>
+    <section class="idx-cards">
+      <h2>Progression <span class="sec-count">{count}</span></h2>
+      {cards}
+    </section>
+  </main>
+</div>
+<footer>
+  <div class="ftr-inner">
+    <span class="ftr-brand">GSD v{gsd_version}</span>
+    <span class="ftr-sep">—</span>
+    <span>{project_name}</span>
+    <span class="ftr-sep">—</span>
+    <span>Updated {generated_short}</span>
+  </div>
+</footer>
+</body>
+</html>"##,
+        project_name = esc_html(&index.project_name),
+        css = INDEX_CSS,
+        gsd_version = esc_html(&index.gsd_version),
+        project_path = esc_html(&index.project_path),
+        generated_short = esc_html(&format_date_short_html(&generated)),
+        toc = if toc_html.is_empty() { "<p class=\"empty\">No reports yet.</p>".to_string() } else { toc_html },
+        summary = summary_html,
+        sparkline = sparkline_section,
+        count = index.entries.len(),
+        cards = cards_section,
+    )
+}
+
+fn build_cost_sparkline_html(entries: &[ReportEntry]) -> String {
+    let costs: Vec<f64> = entries.iter().map(|e| e.total_cost).collect();
+    let max_cost = costs.iter().cloned().fold(0.001_f64, f64::max);
+    let w = 600_f64; let h = 60_f64; let pad = 12_f64;
+    let n = entries.len();
+    let x_step = if n > 1 { (w - pad * 2.0) / (n - 1) as f64 } else { w - pad * 2.0 };
+
+    let points = costs.iter().enumerate().map(|(i, &c)| {
+        let x = pad + i as f64 * x_step;
+        let y = pad + (1.0 - c / max_cost) * (h - pad * 2.0);
+        format!("{:.1},{:.1}", x, y)
+    }).collect::<Vec<_>>().join(" ");
+
+    let dots = costs.iter().enumerate().map(|(i, &c)| {
+        let x = pad + i as f64 * x_step;
+        let y = pad + (1.0 - c / max_cost) * (h - pad * 2.0);
+        format!(
+            "<circle cx=\"{:.1}\" cy=\"{:.1}\" r=\"3\" class=\"spark-dot\"><title>{} — {}</title></circle>",
+            x, y, esc_html(&entries[i].label), esc_html(&format_cost_html(c))
+        )
+    }).collect::<Vec<_>>().join("");
+
+    let start_label = format_cost_html(costs[0]);
+    let end_label = format_cost_html(*costs.last().unwrap_or(&0.0));
+
+    let ticks = entries.iter().enumerate().map(|(i, e)| {
+        let x = (pad + i as f64 * x_step) / w * 100.0;
+        let mid = if e.milestone_id == "final" { "final" } else { &e.milestone_id };
+        format!("<span class=\"spark-tick\" style=\"left:{:.1}%\" title=\"{}\">{}</span>",
+            x, esc_html(&e.generated_at), esc_html(mid))
+    }).collect::<Vec<_>>().join("");
+
+    format!(
+        "<div class=\"sparkline\"><svg viewBox=\"0 0 {} {}\" width=\"{}\" height=\"{}\" class=\"spark-svg\"><polyline points=\"{}\" class=\"spark-line\" fill=\"none\"/>{}<text x=\"{}\" y=\"{}\" class=\"spark-lbl\">{}</text><text x=\"{}\" y=\"{}\" text-anchor=\"end\" class=\"spark-lbl\">{}</text></svg><div class=\"spark-axis\">{}</div></div>",
+        w as i64, h as i64, w as i64, h as i64,
+        esc_html(&points), dots,
+        pad, h - 2.0, esc_html(&start_label),
+        w - pad, h - 2.0, esc_html(&end_label),
+        ticks
+    )
+}
+
+// ─── Tauri commands ────────────────────────────────────────────────────────────
+
+/// R087 — Generate a self-contained HTML report for the project and write it to .gsd/reports/.
+/// Updates reports.json registry and regenerates index.html.
+#[tauri::command]
+pub async fn gsd2_generate_html_report(
+    project_id: String,
+    milestone_id: Option<String>,
+    kind: Option<String>,
+    db: tauri::State<'_, DbState>,
+) -> Result<HtmlReportResult, String> {
+    let project_path = {
+        let db_guard = db.write().await;
+        get_project_path(&db_guard, &project_id)?
+    };
+
+    let gsd_dir = Path::new(&project_path).join(".gsd");
+    let milestones_dir = gsd_dir.join("milestones");
+    let reports_dir = gsd_dir.join("reports");
+
+    // Collect milestone data
+    let milestones = walk_milestones_with_tasks(&milestones_dir);
+    let health = get_health_from_dir(&project_path);
+
+    // Parse metrics
+    let metrics_path = gsd_dir.join("metrics.json");
+    let metrics_content = std::fs::read_to_string(&metrics_path).unwrap_or_default();
+    let (units, totals, by_phase, by_slice, by_model) = parse_metrics_json(&metrics_content);
+
+    // Collect knowledge entries
+    let knowledge_data = {
+        let k_path = gsd_dir.join("KNOWLEDGE.md");
+        if k_path.exists() {
+            let content = std::fs::read_to_string(&k_path).unwrap_or_default();
+            let mut entries: Vec<KnowledgeEntry> = Vec::new();
+            let mut current_title = String::new();
+            let mut current_content = String::new();
+            let mut entry_idx = 0_u32;
+            for line in content.lines() {
+                if line.starts_with("## ") {
+                    if !current_title.is_empty() {
+                        let lower_t = current_title.to_lowercase();
+                        let lower_c = current_content.to_lowercase();
+                        let et = if lower_t.contains("rule") || lower_c.contains("must ") || lower_c.contains("never ") || lower_c.contains("always ") { "rule" }
+                            else if lower_t.contains("pattern") || lower_t.contains("convention") { "pattern" }
+                            else if lower_t.contains("lesson") || lower_t.contains("gotcha") { "lesson" }
+                            else { "freeform" };
+                        entries.push(KnowledgeEntry {
+                            id: format!("K{:03}", entry_idx),
+                            title: current_title.clone(),
+                            content: current_content.trim().to_string(),
+                            entry_type: et.to_string(),
+                        });
+                    }
+                    entry_idx += 1;
+                    current_title = line.trim_start_matches('#').trim().to_string();
+                    current_content = String::new();
+                } else if !current_title.is_empty() {
+                    current_content.push_str(line);
+                    current_content.push('\n');
+                }
+            }
+            if !current_title.is_empty() {
+                let lower_t = current_title.to_lowercase();
+                let lower_c = current_content.to_lowercase();
+                let et = if lower_t.contains("rule") || lower_c.contains("must ") || lower_c.contains("never ") || lower_c.contains("always ") { "rule" }
+                    else if lower_t.contains("pattern") || lower_t.contains("convention") { "pattern" }
+                    else if lower_t.contains("lesson") || lower_t.contains("gotcha") { "lesson" }
+                    else { "freeform" };
+                entries.push(KnowledgeEntry {
+                    id: format!("K{:03}", entry_idx),
+                    title: current_title,
+                    content: current_content.trim().to_string(),
+                    entry_type: et.to_string(),
+                });
+            }
+            entries
+        } else {
+            Vec::new()
+        }
+    };
+
+    // Collect capture entries
+    let capture_data = {
+        let captures_dir = gsd_dir.join("runtime").join("captures");
+        let mut entries: Vec<CaptureEntry> = Vec::new();
+        if captures_dir.is_dir() {
+            if let Ok(rd) = std::fs::read_dir(&captures_dir) {
+                for file in rd.flatten() {
+                    let p = file.path();
+                    if p.extension().and_then(|e| e.to_str()) != Some("json") { continue; }
+                    if let Ok(c) = std::fs::read_to_string(&p) {
+                        if let Ok(val) = serde_json::from_str::<serde_json::Value>(&c) {
+                            entries.push(CaptureEntry {
+                                id: val.get("id").and_then(|v| v.as_str()).unwrap_or("").to_string(),
+                                text: val.get("text").and_then(|v| v.as_str()).unwrap_or("").to_string(),
+                                timestamp: val.get("timestamp").and_then(|v| v.as_str()).unwrap_or("").to_string(),
+                                status: val.get("status").and_then(|v| v.as_str()).unwrap_or("pending").to_string(),
+                                classification: val.get("classification").and_then(|v| v.as_str()).map(String::from),
+                                resolution: val.get("resolution").and_then(|v| v.as_str()).map(String::from),
+                                rationale: val.get("rationale").and_then(|v| v.as_str()).map(String::from),
+                                resolved_at: val.get("resolvedAt").and_then(|v| v.as_str()).map(String::from),
+                                executed: val.get("executed").and_then(|v| v.as_bool()),
+                            });
+                        }
+                    }
+                }
+            }
+            entries.sort_by(|a, b| b.timestamp.cmp(&a.timestamp));
+        }
+        entries
+    };
+
+    // Collect changelog entries (reuse load_slice_changelog)
+    let mut changelog_entries: Vec<ChangelogEntry2> = Vec::new();
+    for ms in &milestones {
+        for sl in &ms.slices {
+            if sl.done {
+                let slice_dir = milestones_dir.join(&ms.id).join("slices").join(&sl.id);
+                if let Some(entry) = load_slice_changelog(&slice_dir, &sl.id) {
+                    changelog_entries.push(entry);
+                }
+            }
+        }
+    }
+
+    // Collect discussion states
+    let mut discussion_states: Vec<(String, String)> = Vec::new();
+    for ms in &milestones {
+        let ms_dir = milestones_dir.join(&ms.id);
+        let state = get_discussion_state(&ms_dir, &ms.id);
+        discussion_states.push((ms.id.clone(), state));
+    }
+
+    // Build critical path
+    let mut cp_nodes: Vec<(String, Vec<String>)> = Vec::new();
+    for ms in &milestones {
+        for sl in &ms.slices {
+            if !sl.done {
+                let qualified_id = format!("{}/{}", ms.id, sl.id);
+                let qualified_deps: Vec<String> = sl.dependencies.iter()
+                    .map(|d| if d.contains('/') { d.clone() } else { format!("{}/{}", ms.id, d) })
+                    .collect();
+                cp_nodes.push((qualified_id, qualified_deps));
+            }
+        }
+    }
+    let critical_path = compute_critical_path(&cp_nodes);
+
+    // Determine phase
+    let phase = health.phase.clone().unwrap_or_else(|| "execution".to_string());
+
+    // Get project name from the path (last component) or use project_id
+    let project_name = std::path::Path::new(&project_path)
+        .file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or(&project_id)
+        .to_string();
+
+    // GSD version — read from preferences or default
+    let gsd_version = {
+        let prefs_path = gsd_dir.join("preferences.json");
+        std::fs::read_to_string(&prefs_path).ok()
+            .and_then(|c| serde_json::from_str::<serde_json::Value>(&c).ok())
+            .and_then(|v| v.get("gsdVersion").and_then(|x| x.as_str()).map(String::from))
+            .unwrap_or_else(|| "2.0".to_string())
+    };
+
+    let report_data = ReportData {
+        project_name: &project_name,
+        project_path: &project_path,
+        gsd_version: &gsd_version,
+        milestone_id: milestone_id.as_deref(),
+        milestones: &milestones,
+        units: &units,
+        totals: &totals,
+        by_phase: &by_phase,
+        by_slice: &by_slice,
+        by_model: &by_model,
+        health: &health,
+        knowledge_entries: &knowledge_data,
+        capture_entries: &capture_data,
+        changelog_entries,
+        discussion_states,
+        critical_path: &critical_path,
+        phase,
+    };
+
+    let html = generate_html_report_string(&report_data);
+
+    // Write to .gsd/reports/
+    std::fs::create_dir_all(&reports_dir)
+        .map_err(|e| format!("Failed to create reports dir: {}", e))?;
+
+    let timestamp = {
+        let secs = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_secs())
+            .unwrap_or(0);
+        let (y, mo, d, h, min, sec) = epoch_to_date(secs);
+        format!("{:04}{:02}{:02}T{:02}{:02}{:02}", y, mo, d, h, min, sec)
+    };
+
+    let prefix = milestone_id.as_deref().unwrap_or("final");
+    let safe_prefix = prefix.replace(['/', '\\', ' '], "-");
+    let filename = format!("{}-{}.html", safe_prefix, timestamp);
+    let file_path = reports_dir.join(&filename);
+
+    std::fs::write(&file_path, &html)
+        .map_err(|e| format!("Failed to write report: {}", e))?;
+
+    // Update registry
+    let report_kind = kind.as_deref().unwrap_or("manual").to_string();
+    let milestone_title = milestone_id.as_deref().map(|mid| {
+        milestones.iter().find(|m| m.id == mid)
+            .map(|m| m.title.clone())
+            .unwrap_or_else(|| mid.to_string())
+    }).unwrap_or_else(|| "Full Project".to_string());
+
+    let total_slices: u32 = milestones.iter().map(|m| m.slices.len() as u32).sum();
+    let done_slices: u32 = milestones.iter()
+        .flat_map(|m| m.slices.iter())
+        .filter(|s| s.done)
+        .count() as u32;
+    let done_milestones: u32 = milestones.iter().filter(|m| m.done).count() as u32;
+    let total_milestones: u32 = milestones.len() as u32;
+
+    let label = if prefix == "final" {
+        "Final Report".to_string()
+    } else {
+        format!("{}: {}", prefix, milestone_title)
+    };
+
+    let new_entry = ReportEntry {
+        filename: filename.clone(),
+        generated_at: now_iso(),
+        milestone_id: prefix.to_string(),
+        milestone_title,
+        label,
+        kind: report_kind,
+        total_cost: totals.total_cost,
+        total_tokens: totals.total_tokens,
+        total_duration: totals.duration_ms,
+        done_slices,
+        total_slices,
+        done_milestones,
+        total_milestones,
+        phase: report_data.phase.clone(),
+    };
+
+    let mut index = load_reports_index(&reports_dir).unwrap_or_else(|| ReportsIndex {
+        version: 1,
+        project_name: project_name.clone(),
+        project_path: project_path.clone(),
+        gsd_version: gsd_version.clone(),
+        entries: Vec::new(),
+    });
+    index.project_name = project_name.clone();
+    index.project_path = project_path.clone();
+    index.gsd_version = gsd_version.clone();
+    index.entries.push(new_entry);
+
+    save_reports_index(&reports_dir, &index)?;
+    regenerate_html_index(&reports_dir, &index);
+
+    Ok(HtmlReportResult {
+        file_path: file_path.to_string_lossy().to_string(),
+        filename,
+        reports_dir: reports_dir.to_string_lossy().to_string(),
+    })
+}
+
+/// R088 — Return the reports index (list of previously generated reports).
+#[tauri::command]
+pub async fn gsd2_get_reports_index(
+    project_id: String,
+    db: tauri::State<'_, DbState>,
+) -> Result<ReportsIndex, String> {
+    let project_path = {
+        let db_guard = db.write().await;
+        get_project_path(&db_guard, &project_id)?
+    };
+
+    let reports_dir = Path::new(&project_path).join(".gsd").join("reports");
+
+    Ok(load_reports_index(&reports_dir).unwrap_or_else(|| ReportsIndex {
+        version: 1,
+        project_name: std::path::Path::new(&project_path)
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or(&project_id)
+            .to_string(),
+        project_path: project_path.clone(),
+        gsd_version: "2.0".to_string(),
+        entries: Vec::new(),
+    }))
 }

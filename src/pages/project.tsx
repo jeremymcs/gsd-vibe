@@ -42,6 +42,7 @@ import {
   ForensicsPanel,
   SkillHealthPanel,
   KnowledgeCapturesPanel,
+  Gsd2ReportsTab,
 } from "@/components/project";
 import { TerminalTabs } from "@/components/terminal";
 import { watchProjectFiles } from "@/lib/tauri";
@@ -283,6 +284,8 @@ function ViewRenderer({
       return <SkillHealthPanel projectId={projectId} projectPath={projectPath} />;
     case 'gsd2-knowledge-captures':
       return <KnowledgeCapturesPanel projectId={projectId} projectPath={projectPath} />;
+    case 'gsd2-reports':
+      return <Gsd2ReportsTab projectId={projectId} projectPath={projectPath} />;
 
     // GSD-1 views
     case 'gsd-plans':

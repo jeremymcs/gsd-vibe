@@ -605,3 +605,39 @@ When implementing stagger-in entrance animations on list items, always cap the d
 ### view crossfade requires key={activeView} on wrapper div, not ViewRenderer
 
 For smooth view crossfades on project navigation: place `key={activeView}` on the wrapper div (the one with `animate-fade-in`), not on the `ViewRenderer` component. React remounts the keyed div on every view change, restarting the fade-in keyframe. The terminal view must be OUTSIDE this wrapper (always-mounted via CSS hide/show) to preserve xterm.js sessions.
+
+### HTML-generating Rust code requires r##"..."## raw strings — not r#"..."#
+
+Any Rust raw string template that contains HTML `href="#section"` attributes or JavaScript `querySelector('.toc a[href="#"+id]')` patterns contains the `"#` sequence (double-quote followed by hash), which prematurely terminates `r#"..."#` single-hash raw string delimiters. **Always use `r##"..."##` double-hash delimiters** for HTML/CSS/JS template constants in gsd2.rs. Using single-hash delimiters causes a compile error that only appears when the affected string is evaluated, not where the raw string literal begins — the error message points to an unexpected token far from the actual problem.
+
+### section_html() helper pattern: section IDs appear as string args, not template attributes
+
+The `generate_html_report_string` function delegates to a `section_html(id: &str, title: &str, body: &str) -> String` helper that wraps content in `<section id="...">` tags. Because the ID is a runtime argument rather than a hard-coded attribute, `grep 'section id=.summary'` won't find it. The correct audit grep is: `grep -o 'section_html("[a-z]*"' gsd2.rs | sort -u`. This pattern is cleaner (avoids repeating the boilerplate per section) but requires a non-obvious grep to enumerate all sections during verification.
+
+### epoch_to_date() via Howard Hinnant's calendar algorithm for timestamp formatting without chrono
+
+When needing to format Unix epoch milliseconds as human-readable dates in gsd2.rs without adding the chrono crate: the Howard Hinnant calendar algorithm converts epoch-seconds to (year, month, day) in ~15 lines of integer arithmetic. Divide epoch_ms by 1000 to get seconds, apply the algorithm, then extract hour/min/sec from `seconds % 86400`. This is the established pattern in gsd2.rs (function: `fn epoch_to_date(epoch_ms: i64) -> (i32, u32, u32, u32, u32, u32)`).
+
+### VisualizerMilestone2.status uses 'done' not 'complete' — check Rust struct field names when porting
+
+When porting visualizer components from gsd-2 web (TypeScript) to VibeFlow (Rust+TS), milestone terminal state in VibeFlow's Rust backend is serialized as the string `"done"`, not `"complete"`. All status comparisons in frontend components must use `status === 'done'` not `status === 'complete'`. Similarly, slice and task status use `"done"` as the terminal state. This mismatch is a common source of status indicators rendering incorrectly in ported code.
+
+### Kahn's BFS for critical path: verify by_phase is exposed in VisualizerData2
+
+The `gsd2_get_visualizer_data` Rust command returned `by_phase` via `let _ = by_phase_raw` in the initial S01 implementation (discarding the value). S02 T01 caught this and added `by_phase: Vec<PhaseAggregate>` to the VisualizerData2 struct and exposed it in the command return. When expanding large structs, always grep for `let _ =` assignments after implementation — they silently drop computed values that may be needed downstream.
+
+### cargo test returning "0 tests" is expected for Tauri binary crates
+
+Running `cargo test --manifest-path src-tauri/Cargo.toml` on a Tauri app returns `0 passed; 0 failed` because Tauri app tests require the full Tauri runtime context. This is not a test regression — the correct build verification is `cargo build` (exits 0) + `pnpm build` (exits 0 with zero TypeScript errors). Unit tests for Tauri commands are typically run via integration test harness, not standard cargo test.
+
+### Large milestone scope risks partial delivery — cap to ~3-5 slices per execution cycle
+
+M008 targeted 9 slices. Only 3 were executed. The data layer (S01) and two major surfaces (S02, S03) were completed in one cycle. Six slices representing interactive features (chat, files, command panels, dashboard, onboarding, integration) were planned but not executed. For future milestones, cap scope to what can realistically be completed: a foundation slice + 2-3 surface slices is a sustainable cycle. Use explicit phase milestones (e.g., "Feature Parity — Data Layer", "Feature Parity — Interactive Surfaces") instead of one large milestone covering the full scope.
+
+### Backend-first sequencing eliminates frontend blockers
+
+S01 (10 Rust commands) was completed before S02 (visualizer) and S03 (reports). As a result, S02 and S03 had no backend blockers — all required data was available via typed Tauri invoke calls. This backend-first sequencing pattern should be maintained: build all data commands in one slice, then build UI slices that consume them in parallel without waiting for each other.
+
+### by_phase field ordering in VisualizerData2 — expose before by_slice for logical grouping
+
+When adding fields to VisualizerData2 struct, place `by_phase` before `by_slice` in the struct definition. Phase-level aggregation is a higher-level summary than slice-level; this ordering matches the logical hierarchy and is how the Metrics tab displays data (phase breakdown above slice table).

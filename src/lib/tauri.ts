@@ -1312,7 +1312,9 @@ export interface HeadlessSnapshot {
   cost: number;
 }
 
-// Visualizer types (Phase 4)
+// Visualizer types (Phase 4 + expanded VisualizerData2 for R085)
+
+// Backward-compatible node types (used by gsd2-visualizer-tab.tsx)
 export interface VisualizerNode {
   id: string;
   title: string;
@@ -1333,11 +1335,155 @@ export interface TimelineEntry {
   cost: number;
 }
 
+// Rich task node
+export interface VisualizerTask2 {
+  id: string;
+  title: string;
+  done: boolean;
+  status: 'done' | 'active' | 'pending';
+  estimate: string | null;
+  on_critical_path: boolean;
+  slack: number;
+}
+
+// Rich slice node
+export interface SliceVerification2 {
+  slice_id: string;
+  verification_text: string;
+}
+
+export interface FileModified2 {
+  path: string;
+  description: string;
+}
+
+export interface ChangelogEntry2 {
+  slice_id: string;
+  one_liner: string;
+  completed_at: string | null;
+  files_modified: FileModified2[];
+}
+
+export interface VisualizerSlice2 {
+  id: string;
+  title: string;
+  done: boolean;
+  status: 'done' | 'active' | 'pending';
+  risk: string | null;
+  dependencies: string[];
+  tasks: VisualizerTask2[];
+  verification: SliceVerification2 | null;
+  changelog: ChangelogEntry2[];
+}
+
+// Rich milestone node
+export interface VisualizerMilestone2 {
+  id: string;
+  title: string;
+  done: boolean;
+  status: 'done' | 'active' | 'pending';
+  dependencies: string[];
+  slices: VisualizerSlice2[];
+  discussion_state: 'discussed' | 'draft' | 'undiscussed';
+  cost: number;
+}
+
+// Critical path
+export interface SlackEntry {
+  id: string;
+  slack: number;
+}
+
+export interface CriticalPathInfo {
+  path: string[];
+  slack_map: SlackEntry[];
+}
+
+// Agent activity
+export interface CurrentUnit {
+  unit_type: string;
+  unit_id: string;
+  started_at: string | null;
+  elapsed_ms: number;
+}
+
+export interface AgentActivityInfo {
+  is_active: boolean;
+  pid: number | null;
+  current_unit: CurrentUnit | null;
+  completed_units: number;
+  total_slices: number;
+}
+
+// Knowledge / Captures / Health / Stats
+export interface KnowledgeInfo2 {
+  exists: boolean;
+  entry_count: number;
+}
+
+export interface CapturesInfo2 {
+  exists: boolean;
+  pending_count: number;
+}
+
+export interface HealthInfo2 {
+  active_milestone_id: string | null;
+  active_slice_id: string | null;
+  active_task_id: string | null;
+  milestones_done: number;
+  milestones_total: number;
+  slices_done: number;
+  slices_total: number;
+  tasks_done: number;
+  tasks_total: number;
+}
+
+export interface VisualizerStats2 {
+  milestones_missing_summary: number;
+  slices_missing_summary: number;
+  recent_changelog: ChangelogEntry2[];
+}
+
+/// Full VisualizerData — the expanded shape returned by gsd2_get_visualizer_data (R085).
+/// Includes backward-compatible fields (tree, cost_by_milestone, cost_by_model, timeline)
+/// alongside new expanded fields.
 export interface VisualizerData {
+  // Rich milestone tree (new)
+  milestones: VisualizerMilestone2[];
+
+  // Backward-compatible aliases
   tree: VisualizerNode[];
   cost_by_milestone: CostByKey[];
   cost_by_model: CostByKey[];
   timeline: TimelineEntry[];
+
+  // Critical path
+  critical_path: CriticalPathInfo;
+
+  // Agent activity
+  agent_activity: AgentActivityInfo;
+
+  // Cost aggregations (reuse T02 types)
+  by_phase: PhaseAggregate[];
+  by_slice: { slice_id: string; units: number; cost: number; tokens: number; duration_ms: number }[];
+  by_model: { model: string; units: number; cost: number; tokens: number }[];
+  units: {
+    unit_type: string; id: string; model: string; started_at: number; finished_at: number;
+    cost: number; input_tokens: number; output_tokens: number; cache_read_tokens: number;
+    cache_write_tokens: number; total_tokens: number; tool_calls: number;
+    tier: string | null; model_downgraded: boolean;
+  }[];
+  totals: { units: number; total_cost: number; total_tokens: number; duration_ms: number; tool_calls: number };
+
+  // Knowledge / Captures
+  knowledge: KnowledgeInfo2;
+  captures: CapturesInfo2;
+
+  // Health summary
+  health: HealthInfo2;
+
+  // Stats
+  stats: VisualizerStats2;
 }
 
 // GSD-2 Headless
@@ -1597,3 +1743,205 @@ export const gsd2ResolveCapture = (
     resolution,
     rationale,
   });
+
+// ---- Inspect (R079) ----
+export interface InspectData {
+  schema_version: string | null;
+  decision_count: number;
+  requirement_count: number;
+  recent_decisions: string[];
+  recent_requirements: string[];
+  decisions_file_exists: boolean;
+  requirements_file_exists: boolean;
+}
+
+// ---- Steer (R080) ----
+export interface SteerData {
+  content: string;
+  exists: boolean;
+}
+
+// ---- Undo (R081) ----
+export interface UndoInfo {
+  last_unit_type: string | null;
+  last_unit_id: string | null;
+  last_unit_cost: number;
+  completed_units_count: number;
+  file_exists: boolean;
+}
+
+// ---- Recovery (R084) ----
+export interface RecoveryInfo {
+  lock_exists: boolean;
+  pid: number | null;
+  started_at: string | null;
+  unit_type: string | null;
+  unit_id: string | null;
+  unit_started_at: string | null;
+  is_process_alive: boolean;
+  suggested_action: string;
+  session_file: string | null;
+}
+
+export const gsd2GetInspect = (projectId: string) =>
+  invoke<InspectData>('gsd2_get_inspect', { projectId });
+
+export const gsd2GetSteerContent = (projectId: string) =>
+  invoke<SteerData>('gsd2_get_steer_content', { projectId });
+
+export const gsd2SetSteerContent = (projectId: string, content: string) =>
+  invoke<void>('gsd2_set_steer_content', { projectId, content });
+
+export const gsd2GetUndoInfo = (projectId: string) =>
+  invoke<UndoInfo>('gsd2_get_undo_info', { projectId });
+
+export const gsd2GetRecoveryInfo = (projectId: string) =>
+  invoke<RecoveryInfo>('gsd2_get_recovery_info', { projectId });
+
+// ---- History / Metrics (R078) ----
+export interface UnitRecord {
+  unit_type: string;
+  id: string;
+  model: string;
+  started_at: number;
+  finished_at: number;
+  cost: number;
+  input_tokens: number;
+  output_tokens: number;
+  cache_read_tokens: number;
+  cache_write_tokens: number;
+  total_tokens: number;
+  tool_calls: number;
+  tier: string | null;
+  model_downgraded: boolean;
+}
+
+export interface ProjectTotals {
+  units: number;
+  total_cost: number;
+  total_tokens: number;
+  duration_ms: number;
+  tool_calls: number;
+}
+
+export interface PhaseAggregate {
+  phase: string;
+  units: number;
+  cost: number;
+  tokens: number;
+  duration_ms: number;
+}
+
+export interface SliceAggregate {
+  slice_id: string;
+  units: number;
+  cost: number;
+  tokens: number;
+  duration_ms: number;
+}
+
+export interface ModelAggregate {
+  model: string;
+  units: number;
+  cost: number;
+  tokens: number;
+}
+
+export interface HistoryData {
+  units: UnitRecord[];
+  totals: ProjectTotals;
+  by_phase: PhaseAggregate[];
+  by_slice: SliceAggregate[];
+  by_model: ModelAggregate[];
+}
+
+export const gsd2GetHistory = (projectId: string) =>
+  invoke<HistoryData>('gsd2_get_history', { projectId });
+
+// ---- Hooks (R082) ----
+export interface HookEntry {
+  name: string;
+  hook_type: string;
+  triggers: string[];
+  action: string | null;
+  artifact: string | null;
+  max_cycles: number | null;
+}
+
+export interface HooksData {
+  hooks: HookEntry[];
+  preferences_exists: boolean;
+}
+
+export const gsd2GetHooks = (projectId: string) =>
+  invoke<HooksData>('gsd2_get_hooks', { projectId });
+
+// ---- Git Summary (R083) ----
+export interface GitCommitEntry {
+  hash: string;
+  message: string;
+  author: string;
+  date: string;
+}
+
+export interface GitSummaryData {
+  branch: string | null;
+  is_dirty: boolean;
+  staged_count: number;
+  unstaged_count: number;
+  untracked_count: number;
+  recent_commits: GitCommitEntry[];
+  ahead: number;
+  behind: number;
+  has_git: boolean;
+}
+
+export const gsd2GetGitSummary = (projectId: string) =>
+  invoke<GitSummaryData>('gsd2_get_git_summary', { projectId });
+
+// ---- Export (R086) ----
+export interface ExportData {
+  content: string;
+  format: string;
+}
+
+export const gsd2ExportProgress = (projectId: string) =>
+  invoke<ExportData>('gsd2_export_progress', { projectId });
+
+// ---- HTML Reports (R087, R088) ----
+export interface ReportEntry {
+  filename: string;
+  generated_at: string;
+  milestone_id: string;
+  milestone_title: string;
+  label: string;
+  kind: string;
+  total_cost: number;
+  total_tokens: number;
+  total_duration: number;
+  done_slices: number;
+  total_slices: number;
+  done_milestones: number;
+  total_milestones: number;
+  phase: string;
+}
+
+export interface ReportsIndex {
+  version: number;
+  project_name: string;
+  project_path: string;
+  gsd_version: string;
+  entries: ReportEntry[];
+}
+
+export interface HtmlReportResult {
+  file_path: string;
+  filename: string;
+  reports_dir: string;
+}
+
+export const gsd2GenerateHtmlReport = (projectId: string) =>
+  invoke<HtmlReportResult>('gsd2_generate_html_report', { projectId });
+
+export const gsd2GetReportsIndex = (projectId: string) =>
+  invoke<ReportsIndex>('gsd2_get_reports_index', { projectId });

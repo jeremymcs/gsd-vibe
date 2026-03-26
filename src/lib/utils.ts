@@ -110,3 +110,22 @@ export function truncatePath(path: string, maxLength: number = 40): string {
 
   return `${start}/.../${end}`;
 }
+
+export function formatDuration(ms: number): string {
+  if (ms <= 0) return "\u2014";
+  if (ms < 1000) return `${ms}ms`;
+  const totalSecs = Math.floor(ms / 1000);
+  if (ms < 60000) return `${totalSecs}s`;
+  const m = Math.floor(totalSecs / 60);
+  const s = totalSecs % 60;
+  if (ms < 3600000) return `${m}m ${s}s`;
+  const h = Math.floor(m / 60);
+  const rem = m % 60;
+  return `${h}h ${rem}m`;
+}
+
+export function formatTokenCount(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
+  return n.toLocaleString();
+}

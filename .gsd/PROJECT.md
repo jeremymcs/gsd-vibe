@@ -2,26 +2,38 @@
 
 ## What This Is
 
-GSD VibeFlow is a native Tauri desktop application for managing Claude Code projects. It provides project management, terminal sessions (with tmux support), knowledge base browsing, GSD workflow integration, git operations, and more. Built with Tauri 2.x (Rust backend + React 18 frontend).
+GSD VibeFlow is a native desktop application for managing Claude Code / GSD-2 projects. Built with Tauri 2.x (Rust backend + React frontend), it provides project management, terminal sessions (with tmux support), knowledge base browsing, GSD workflow integration, git operations, and more. It aims to be the desktop-native equivalent of the gsd-2 web app (`~/Github/gsd-2/web/`), providing full feature parity with that Next.js application while leveraging Tauri's native capabilities.
 
 ## Core Value
 
-VibeFlow is the definitive native GUI for gsd-2 — a complete desktop replacement for gsd-2's web dashboard, with full interactive parity (visibility AND command execution) powered by the headless PTY bridge.
+A single native desktop app that gives full visibility and control over GSD-2 managed projects — visualizer, chat mode, reports, diagnostics, and all /gsd command surfaces — without requiring the gsd-2 web server to be running.
 
 ## Current State
 
-- **M005 COMPLETE.** Main branch has: Full M001+M002+M003+M004+M005 product. Light theme works across all views (32 CSS tokens, dark: variants on all palette colors). Consistent three-state pattern (skeleton/error/success) on all 12 data-fetching views. Toast feedback on all 18 user-facing mutations. Four CSS animation systems (shimmer skeleton, stagger-in lists, card hover lift, view crossfade) — all respecting prefers-reduced-motion. ARIA landmarks, focus-visible rings, aria-current markers on sidebar nav. Zero build warnings (frontend + backend): `pnpm build` 0 errors/0 chunk warnings, `cargo check --lib` 0 warnings. 146/146 tests pass. vendor-markdown chunk reduced from 1,282 KB to 362 KB via selective highlight.js imports. R040–R050 validated (10 requirements). App feels polished and ready to ship.
-- **M007 IN PROGRESS.** Complete visual redesign — stripping the "gamer dashboard" aesthetic (cyan glows, gradient backgrounds, elevated shadow cards) and replacing with a Linear-inspired design language: warm neutral grays, flat surfaces with 1px borders, restrained cyan accent, tighter typography, minimal motion.
+M008 (GSD-2 Feature Parity) partially completed — 3 of 9 slices delivered. The app now has:
+
+- **39+ Rust `gsd2_*` backend commands**: All 10 new M008 commands implemented (inspect, steer read/write, undo, recovery, history, hooks, git summary, export progress, expanded visualizer data, HTML report generation, reports index). All registered in `lib.rs`.
+- **Full 7-tab visualizer** (`gsd2-visualizer-tab.tsx`, 1,280 lines): Progress, Dependencies, Metrics, Timeline, Agent, Changes, Export tabs. Complete data shape with critical path (Kahn's BFS), agent activity, changelog entries, by-phase metrics.
+- **HTML report generator**: `gsd2_generate_html_report` produces 12-section self-contained HTML (inlined CSS/JS, SVG DAGs). Reports tab accessible from GSD sidebar section.
+- **Full TypeScript coverage**: 30+ new interfaces in `tauri.ts`, 11 new TanStack Query hooks in `queries.ts`, 9 new query key factories.
+- **Prior functionality**: health, headless, worktrees, milestones, slices, tasks, diagnostics, knowledge/captures, session browsing, onboarding wizard, settings. Linear-inspired flat design (M007).
+
+**Remaining gaps (M008 S04–S09 not executed):**
+- Chat mode (PTY parser, message renderer, /gsd command bar) — S04
+- Files view, activity feed, roadmap view, dual terminal — S05
+- Command panels (history, hooks, inspect, steer, undo, export, git, recovery) — S06, but all backend commands are ready
+- Dashboard metrics enhancements, status bar, file-watcher live updates — S07
+- Onboarding wizard extensions — S08
+- End-to-end integration verification — S09
 
 ## Architecture / Key Patterns
 
-- **Tauri 2.x IPC** — Frontend calls `invoke<T>("command_name", { args })` via `@tauri-apps/api`. Backend exposes `#[tauri::command]` functions with `State<Arc<DbPool>>`.
-- **TanStack Query** — All data fetching through query hooks in `lib/queries.ts` with cache/polling/invalidation. Keys in `lib/query-keys.ts`.
-- **SQLite (WAL mode)** — DbPool with 1 writer + 4 readers, round-robin distribution. Schema migrations on startup.
-- **Styling** — Tailwind CSS + shadcn/ui, HSL CSS variables, dark mode via class strategy. Design tokens in globals.css.
-- **PTY sessions** — `portable-pty` crate with optional tmux integration.
-- **View routing** — URL `?view=<id>` persists active view; ViewProps interface is the base contract for all view components.
-- **Path alias** — `@/*` maps to `./src/*`.
+- **Two-process model:** React frontend communicates with Rust backend via Tauri `invoke()` IPC
+- **Data layer:** Rust commands read `.gsd/` files directly. TanStack Query hooks in `lib/queries.ts` wrap invocations with caching/polling. Query keys in `lib/query-keys.ts`.
+- **Nav-rail views:** `src/lib/project-views.ts` defines all views. `ViewRenderer` in `project.tsx` switches between them. Each view is a dedicated component.
+- **File watcher:** `use-gsd-file-watcher.ts` detects `.gsd/` changes and can invalidate query caches.
+- **Styling:** Tailwind CSS + shadcn/ui. HSL CSS variables. Linear-inspired flat design (M007). Both dark and light themes.
+- **Path alias:** `@/*` maps to `./src/*`
 
 ## Capability Contract
 
@@ -29,9 +41,7 @@ See `.gsd/REQUIREMENTS.md` for the explicit capability contract, requirement sta
 
 ## Milestone Sequence
 
-- [x] M001-xgxgc1: Core Navigation & Daily-Driver Views — NavRail, dashboard, chat, power mode, command surface, roadmap/files/activity views
-- [x] M002-45qrht: Diagnostics, Visualizer & Settings Surfaces — 7-tab visualizer, doctor/forensics/skill-health diagnostics, knowledge & captures, settings/prefs/model-routing/budget
-- [x] M003-k8v2px: Onboarding, Session Management & Utilities — Onboarding wizard, session browser, export/import, update banner, undo, cleanup/maintenance
-- [x] M004: Branch Reconciliation & Integration Verification — Merge diverged worktree branches, close settings gap, verify full wiring (225 tests, 40 gsd2 commands)
-- [x] M005: End-to-End Polish — Light theme, consistent state patterns, micro-interactions, accessibility, bundle optimization, Rust cleanup
-- [ ] M007: Visual Redesign — Linear-inspired retheme: warm neutral grays, flat surfaces, restrained accent, tighter typography, minimal motion
+- [x] M005: End-to-End Polish
+- [x] M007: Visual Redesign — Linear-Inspired Retheme
+- [~] M008: GSD-2 Feature Parity — 3/9 slices complete (S01 backend commands, S02 7-tab visualizer, S03 HTML reports). S04–S09 (chat mode, files, command panels, dashboard, onboarding, integration) remain for next cycle.
+- [ ] M009: GSD-2 Feature Parity (Phase 2) — Execute S04–S09: chat mode, files view, command panels, dashboard, onboarding extensions, integration verification

@@ -67,6 +67,7 @@ export const projectViews: ProjectView[] = [
   { id: 'gsd2-forensics', label: 'Forensics', icon: Search, section: 'Diagnostics', gsd2Only: true },
   { id: 'gsd2-skill-health', label: 'Skill Health', icon: Brain, section: 'Diagnostics', gsd2Only: true },
   { id: 'gsd2-knowledge-captures', label: 'Knowledge', icon: BookOpen, section: 'Diagnostics', gsd2Only: true },
+  { id: 'gsd2-reports', label: 'Reports', icon: FileText, section: 'GSD', gsd2Only: true },
 
   // --- GSD-1 ---
   { id: 'gsd-plans', label: 'Plans', icon: FileText, section: 'GSD', gsd1Only: true },

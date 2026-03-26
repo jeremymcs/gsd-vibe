@@ -1371,3 +1371,113 @@ export const useGsd2ResolveCapture = () => {
     },
   });
 };
+
+// ---- Inspect (R079) ----
+export const useGsd2Inspect = (projectId: string) =>
+  useQuery({
+    queryKey: queryKeys.gsd2Inspect(projectId),
+    queryFn: () => api.gsd2GetInspect(projectId),
+    enabled: !!projectId,
+    staleTime: 30_000,
+  });
+
+// ---- Steer (R080) ----
+export const useGsd2SteerContent = (projectId: string) =>
+  useQuery({
+    queryKey: queryKeys.gsd2SteerContent(projectId),
+    queryFn: () => api.gsd2GetSteerContent(projectId),
+    enabled: !!projectId,
+    staleTime: 30_000,
+  });
+
+export const useGsd2SetSteerContent = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ projectId, content }: { projectId: string; content: string }) =>
+      api.gsd2SetSteerContent(projectId, content),
+    onSuccess: (_data, { projectId }) => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.gsd2SteerContent(projectId) });
+    },
+    onError: (error) => {
+      toast.error('Failed to save steer content', { description: getErrorMessage(error) });
+    },
+  });
+};
+
+// ---- Undo (R081) ----
+export const useGsd2UndoInfo = (projectId: string) =>
+  useQuery({
+    queryKey: queryKeys.gsd2UndoInfo(projectId),
+    queryFn: () => api.gsd2GetUndoInfo(projectId),
+    enabled: !!projectId,
+    staleTime: 30_000,
+  });
+
+// ---- Recovery (R084) ----
+export const useGsd2RecoveryInfo = (projectId: string) =>
+  useQuery({
+    queryKey: queryKeys.gsd2RecoveryInfo(projectId),
+    queryFn: () => api.gsd2GetRecoveryInfo(projectId),
+    enabled: !!projectId,
+    staleTime: 30_000,
+  });
+
+// ---- History / Metrics (R078) ----
+export const useGsd2History = (projectId: string) =>
+  useQuery({
+    queryKey: queryKeys.gsd2History(projectId),
+    queryFn: () => api.gsd2GetHistory(projectId),
+    enabled: !!projectId,
+    staleTime: 30_000,
+  });
+
+// ---- Hooks (R082) ----
+export const useGsd2Hooks = (projectId: string) =>
+  useQuery({
+    queryKey: queryKeys.gsd2Hooks(projectId),
+    queryFn: () => api.gsd2GetHooks(projectId),
+    enabled: !!projectId,
+    staleTime: 30_000,
+  });
+
+// ---- Git Summary (R083) ----
+export const useGsd2GitSummary = (projectId: string) =>
+  useQuery({
+    queryKey: queryKeys.gsd2GitSummary(projectId),
+    queryFn: () => api.gsd2GetGitSummary(projectId),
+    enabled: !!projectId,
+    staleTime: 30_000,
+  });
+
+// ---- Export (R086) ----
+export const useGsd2ExportProgress = () =>
+  useMutation({
+    mutationFn: ({ projectId }: { projectId: string }) =>
+      api.gsd2ExportProgress(projectId),
+    onError: (error) => {
+      toast.error('Failed to export progress', { description: getErrorMessage(error) });
+    },
+  });
+
+// ---- HTML Reports (R087, R088) ----
+export const useGsd2ReportsIndex = (projectId: string) =>
+  useQuery({
+    queryKey: queryKeys.gsd2ReportsIndex(projectId),
+    queryFn: () => api.gsd2GetReportsIndex(projectId),
+    enabled: !!projectId,
+    staleTime: 30_000,
+  });
+
+export const useGsd2GenerateHtmlReport = (projectId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.gsd2GenerateHtmlReport(projectId),
+    onSuccess: (result) => {
+      toast.success('Report generated', { description: result.filename });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.gsd2ReportsIndex(projectId) });
+    },
+    onError: (error) => {
+      toast.error('Failed to generate report', { description: getErrorMessage(error) });
+    },
+  });
+};
