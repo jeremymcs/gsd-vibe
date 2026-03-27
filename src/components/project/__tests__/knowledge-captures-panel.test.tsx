@@ -274,7 +274,7 @@ describe("KnowledgeCapturesPanel", () => {
     expect(mutateFn).toHaveBeenCalledOnce();
     expect(mutateFn).toHaveBeenCalledWith({
       projectId: "proj-test-123",
-      captureId: "CAP-001",
+      captureId: "CAP-002",
       classification: "quick-task",
       resolution: "Classified as quick-task",
       rationale: "",

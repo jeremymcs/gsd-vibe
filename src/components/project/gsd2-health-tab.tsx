@@ -1,20 +1,23 @@
 // GSD VibeFlow - GSD-2 Health Tab Component
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
-import { Activity, AlertCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Activity, AlertCircle, FileText, CheckCircle2, XCircle, Plus, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useGsd2Health } from '@/lib/queries';
 import { formatCost } from '@/lib/utils';
+import { readProjectFile, writeProjectFile } from '@/lib/tauri';
 
 interface Gsd2HealthTabProps {
   projectId: string;
   projectPath: string;
 }
 
-export function Gsd2HealthTab({ projectId }: Gsd2HealthTabProps) {
+export function Gsd2HealthTab({ projectId, projectPath }: Gsd2HealthTabProps) {
   const { data: health, isLoading, isError } = useGsd2Health(projectId);
 
   if (isLoading) {
@@ -69,6 +72,7 @@ export function Gsd2HealthTab({ projectId }: Gsd2HealthTabProps) {
     : null;
 
   return (
+    <div className="space-y-4">
     <Card>
       <CardHeader className="pb-3">
         <CardTitle className="text-sm font-semibold flex items-center gap-2">
@@ -167,6 +171,162 @@ export function Gsd2HealthTab({ projectId }: Gsd2HealthTabProps) {
             <div className="text-muted-foreground">Tasks</div>
           </div>
         </div>
+      </CardContent>
+    </Card>
+    <Gsd2ProjectFilesCard projectPath={projectPath} />
+    </div>
+  );
+}
+
+// ─── Required GSD-2 files with default content ────────────────────────────────
+
+const GSD_REQUIRED_FILES: { filename: string; description: string; defaultContent: string }[] = [
+  {
+    filename: 'PROJECT.md',
+    description: 'Living project description',
+    defaultContent: `# Project\n\n## What This Is\n\n<!-- Describe the project here -->\n\n## Current State\n\n<!-- What is the current state of the project? -->\n\n## Architecture / Key Patterns\n\n<!-- Key architectural patterns and decisions -->\n`,
+  },
+  {
+    filename: 'DECISIONS.md',
+    description: 'Architectural decision register',
+    defaultContent: `# Decisions\n\nAppend-only register of architectural and pattern decisions.\n\n| ID | Decision | Choice | Rationale | Made By | Revisable |\n|---|---|---|---|---|---|\n`,
+  },
+  {
+    filename: 'REQUIREMENTS.md',
+    description: 'Requirement contract',
+    defaultContent: `# Requirements\n\nExplicit capability and coverage contract for the project.\n\n## Active\n\n<!-- Add requirements here -->\n\n## Validated\n\n<!-- Requirements with proof of implementation -->\n`,
+  },
+  {
+    filename: 'STATE.md',
+    description: 'Current project state (system-managed)',
+    defaultContent: `# GSD State\n\n**Active Milestone:** None\n**Phase:** idle\n`,
+  },
+  {
+    filename: 'KNOWLEDGE.md',
+    description: 'Project-specific rules and lessons',
+    defaultContent: `# Project Knowledge\n\nAppend-only register of project-specific rules, patterns, and lessons learned.\n`,
+  },
+];
+
+interface FileStatus {
+  filename: string;
+  exists: boolean | null; // null = checking
+}
+
+function Gsd2ProjectFilesCard({ projectPath }: { projectPath: string }) {
+  const gsdPath = `${projectPath}/.gsd`;
+  const [fileStatuses, setFileStatuses] = useState<FileStatus[]>(
+    GSD_REQUIRED_FILES.map((f) => ({ filename: f.filename, exists: null }))
+  );
+  const [creating, setCreating] = useState<string | null>(null);
+  const [created, setCreated] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    // Check each file's existence by attempting to read it
+    GSD_REQUIRED_FILES.forEach(({ filename }) => {
+      readProjectFile(gsdPath, filename)
+        .then(() => {
+          setFileStatuses((prev) =>
+            prev.map((s) => s.filename === filename ? { ...s, exists: true } : s)
+          );
+        })
+        .catch(() => {
+          setFileStatuses((prev) =>
+            prev.map((s) => s.filename === filename ? { ...s, exists: false } : s)
+          );
+        });
+    });
+  }, [gsdPath]);
+
+  const createFile = async (filename: string) => {
+    const def = GSD_REQUIRED_FILES.find((f) => f.filename === filename);
+    if (!def) return;
+    setCreating(filename);
+    try {
+      await writeProjectFile(gsdPath, filename, def.defaultContent);
+      setFileStatuses((prev) =>
+        prev.map((s) => s.filename === filename ? { ...s, exists: true } : s)
+      );
+      setCreated((prev) => new Set(prev).add(filename));
+    } catch (e) {
+      console.error('Failed to create', filename, e);
+    } finally {
+      setCreating(null);
+    }
+  };
+
+  const createAll = async () => {
+    const missing = fileStatuses.filter((s) => s.exists === false);
+    for (const { filename } of missing) {
+      await createFile(filename);
+    }
+  };
+
+  const missingCount = fileStatuses.filter((s) => s.exists === false).length;
+  const checking = fileStatuses.some((s) => s.exists === null);
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-sm font-semibold flex items-center gap-2">
+            <FileText className="h-4 w-4" /> Required Files
+          </CardTitle>
+          {!checking && missingCount > 0 && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 text-xs gap-1.5"
+              disabled={creating !== null}
+              onClick={createAll}
+            >
+              {creating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3 w-3" />}
+              Create all ({missingCount})
+            </Button>
+          )}
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        {fileStatuses.map(({ filename, exists }) => {
+          const def = GSD_REQUIRED_FILES.find((f) => f.filename === filename)!;
+          const isCreating = creating === filename;
+          const wasCreated = created.has(filename);
+
+          return (
+            <div key={filename} className="flex items-center gap-2 text-xs">
+              {exists === null ? (
+                <Loader2 className="h-3.5 w-3.5 text-muted-foreground animate-spin shrink-0" />
+              ) : exists ? (
+                <CheckCircle2 className="h-3.5 w-3.5 text-status-success shrink-0" />
+              ) : (
+                <XCircle className="h-3.5 w-3.5 text-status-error shrink-0" />
+              )}
+              <span className={`font-mono flex-1 ${exists === false ? 'text-status-error' : 'text-foreground'}`}>
+                .gsd/{filename}
+              </span>
+              <span className="text-muted-foreground/60 truncate max-w-[120px]">{def.description}</span>
+              {exists === false && !isCreating && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-6 text-[10px] px-2 gap-1 shrink-0"
+                  onClick={() => createFile(filename)}
+                >
+                  <Plus className="h-2.5 w-2.5" /> Create
+                </Button>
+              )}
+              {isCreating && <Loader2 className="h-3 w-3 animate-spin shrink-0 text-muted-foreground" />}
+              {wasCreated && exists && (
+                <span className="text-[10px] text-status-success shrink-0">created</span>
+              )}
+            </div>
+          );
+        })}
+        {!checking && missingCount === 0 && (
+          <p className="text-xs text-status-success flex items-center gap-1.5">
+            <CheckCircle2 className="h-3.5 w-3.5" /> All required files present
+          </p>
+        )}
       </CardContent>
     </Card>
   );

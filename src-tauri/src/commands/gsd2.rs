@@ -447,14 +447,19 @@ pub fn get_health_from_dir(project_path: &str) -> Gsd2Health {
 fn parse_roadmap_slices(content: &str) -> Vec<Gsd2Slice> {
     let mut slices = Vec::new();
 
-    // Find the "## Slices" section (case-insensitive)
+    // Find a slices section: "## Slices", "## Slice Overview" (GSD-pi table format), etc.
     let lower = content.to_lowercase();
     let section_start = lower
         .lines()
         .enumerate()
         .find_map(|(i, line)| {
             let t = line.trim();
-            if t == "## slices" || t.starts_with("## slices ") || t.starts_with("## slices\t") {
+            if t == "## slices"
+                || t.starts_with("## slices ")
+                || t.starts_with("## slices\t")
+                || t == "## slice overview"
+                || t.starts_with("## slice overview ")
+            {
                 Some(i)
             } else {
                 None
@@ -468,7 +473,6 @@ fn parse_roadmap_slices(content: &str) -> Vec<Gsd2Slice> {
 
     let lines: Vec<&str> = content.lines().collect();
 
-    // Regex-like parsing: match `- [ ] **ID: Title** rest`
     // We avoid the regex crate — use manual string parsing.
     for line in &lines[start_line..] {
         let trimmed = line.trim();
@@ -478,16 +482,83 @@ fn parse_roadmap_slices(content: &str) -> Vec<Gsd2Slice> {
             break;
         }
 
-        // Match: `- [ ] **ID: Title** rest` or `- [x] ...`
-        if let Some(slice) = parse_checkbox_item(trimmed, true) {
-            slices.push(Gsd2Slice {
-                id: slice.0,
-                title: slice.1,
-                done: slice.2,
-                risk: slice.3,
-                dependencies: slice.4,
-                tasks: Vec::new(),
-            });
+        // Format A: checkbox list  `- [ ] **S01: Title** `risk:low` `depends:[]``
+        if trimmed.starts_with("- [") {
+            if let Some(slice) = parse_checkbox_item(trimmed, true) {
+                slices.push(Gsd2Slice {
+                    id: slice.0,
+                    title: slice.1,
+                    done: slice.2,
+                    risk: slice.3,
+                    dependencies: slice.4,
+                    tasks: Vec::new(),
+                });
+            }
+            continue;
+        }
+
+        // Format B: GSD-pi markdown table row
+        // `| S01 | Enhanced Dashboard | medium | — | ✅ | After this text |`
+        if trimmed.starts_with('|') {
+            let cols: Vec<&str> = trimmed.split('|').map(|c| c.trim()).collect();
+            // Need at least 6 pipe-delimited fields: |empty|ID|Title|Risk|Depends|Done|...
+            if cols.len() < 6 {
+                continue;
+            }
+            let id = cols[1].trim();
+            let title = cols[2].trim();
+            let risk_raw = cols[3].trim();
+            let depends_raw = cols[4].trim();
+            let done_raw = cols[5].trim();
+
+            // Skip table header/separator rows
+            if id.eq_ignore_ascii_case("id")
+                || id.eq_ignore_ascii_case("slice")
+                || id.starts_with('-')
+                || id.is_empty()
+            {
+                continue;
+            }
+            // Must look like a slice ID: S followed by one or more digits
+            let is_slice_id = id.starts_with('S')
+                && id.len() >= 2
+                && id[1..].chars().next().map_or(false, |c| c.is_ascii_digit());
+            if !is_slice_id {
+                continue;
+            }
+
+            let done = done_raw.contains('\u{2705}')  // ✅
+                || done_raw.contains("[x]")
+                || done_raw.eq_ignore_ascii_case("done")
+                || done_raw.eq_ignore_ascii_case("yes");
+
+            let risk = if risk_raw.is_empty() || risk_raw == "\u{2014}" || risk_raw == "-" {
+                None
+            } else {
+                Some(risk_raw.to_lowercase())
+            };
+
+            let dependencies: Vec<String> =
+                if depends_raw.is_empty() || depends_raw == "\u{2014}" || depends_raw == "-" {
+                    Vec::new()
+                } else {
+                    depends_raw
+                        .split(',')
+                        .map(|s| s.trim().to_string())
+                        .filter(|s| !s.is_empty())
+                        .collect()
+                };
+
+            if !title.is_empty() {
+                slices.push(Gsd2Slice {
+                    id: id.to_string(),
+                    title: title.to_string(),
+                    done,
+                    risk,
+                    dependencies,
+                    tasks: Vec::new(),
+                });
+            }
         }
     }
 
@@ -691,8 +762,8 @@ fn milestone_id_from_dir_name(name: &str) -> String {
 }
 
 /// Walk the `.gsd/milestones/` directory and return all milestones sorted by ID.
-/// Slices are populated from ROADMAP.md; tasks within slices are NOT populated here
-/// (tasks require a separate PLAN.md per slice).
+/// Slices are populated from ROADMAP.md (both checkbox and table formats).
+/// A milestone without a ROADMAP.md is marked done if a MILESTONE-SUMMARY.md exists.
 pub fn list_milestones_from_dir(milestones_dir: &Path) -> Vec<Gsd2Milestone> {
     let read_dir = match std::fs::read_dir(milestones_dir) {
         Ok(r) => r,
@@ -709,36 +780,49 @@ pub fn list_milestones_from_dir(milestones_dir: &Path) -> Vec<Gsd2Milestone> {
         let id = milestone_id_from_dir_name(&dir_name);
         let milestone_dir = entry.path();
 
-        // Try to find a ROADMAP.md (three-tier resolution)
-        let slices = if let Some(roadmap_file) = resolve_file_by_id(&milestone_dir, &id, "ROADMAP")
-        {
-            let roadmap_path = milestone_dir.join(&roadmap_file);
-            match std::fs::read_to_string(&roadmap_path) {
-                Ok(content) => parse_roadmap_slices(&content),
-                Err(_) => Vec::new(),
-            }
-        } else {
-            Vec::new()
-        };
+        // Read ROADMAP.md once (avoids double filesystem read)
+        let roadmap_content: Option<String> =
+            resolve_file_by_id(&milestone_dir, &id, "ROADMAP")
+                .and_then(|f| std::fs::read_to_string(milestone_dir.join(&f)).ok());
 
-        // Get title from ROADMAP.md frontmatter or use dir_name
-        let title = if let Some(roadmap_file) = resolve_file_by_id(&milestone_dir, &id, "ROADMAP")
-        {
-            let roadmap_path = milestone_dir.join(&roadmap_file);
-            std::fs::read_to_string(&roadmap_path)
-                .ok()
-                .and_then(|content| {
-                    let (fm, _) = parse_frontmatter(&content);
-                    fm.get("milestone")
-                        .or_else(|| fm.get("title"))
-                        .cloned()
-                })
-                .unwrap_or_else(|| dir_name.clone())
-        } else {
-            dir_name.clone()
-        };
+        // Parse slices from ROADMAP.md (handles both checkbox and table formats)
+        let slices = roadmap_content
+            .as_deref()
+            .map(parse_roadmap_slices)
+            .unwrap_or_default();
 
-        let done = !slices.is_empty() && slices.iter().all(|s| s.done);
+        // Extract title: ROADMAP.md H1 heading ("# ID: Title") takes priority,
+        // then frontmatter "milestone"/"title" keys, then dir_name fallback.
+        let title = roadmap_content
+            .as_deref()
+            .and_then(|c| {
+                // Try frontmatter first
+                let (fm, _) = parse_frontmatter(c);
+                fm.get("milestone").or_else(|| fm.get("title")).cloned()
+                    // Then H1: "# M010: Feature Maximization..."
+                    .or_else(|| {
+                        c.lines().find(|l| l.trim().starts_with("# ")).map(|l| {
+                            let heading = l.trim()[2..].trim();
+                            // Strip leading "ID: " prefix (handles double-ID case too)
+                            let prefix = format!("{}: ", id);
+                            let mut rem = heading;
+                            while rem.starts_with(prefix.as_str()) {
+                                rem = &rem[prefix.len()..];
+                            }
+                            if rem.is_empty() || rem == id { heading.to_string() } else { rem.to_string() }
+                        })
+                    })
+            })
+            .unwrap_or_else(|| dir_name.clone());
+
+        // A milestone is done if:
+        // a) All its slices are done (ROADMAP exists and all [x]/✅), OR
+        // b) A {id}-SUMMARY.md / MILESTONE-SUMMARY.md file exists (older milestones)
+        let has_milestone_summary = resolve_file_by_id(&milestone_dir, &id, "SUMMARY").is_some()
+            || resolve_file_by_id(&milestone_dir, &id, "MILESTONE-SUMMARY").is_some();
+
+        let done = has_milestone_summary
+            || (!slices.is_empty() && slices.iter().all(|s| s.done));
 
         milestones.push(Gsd2Milestone {
             id,
@@ -786,25 +870,41 @@ pub fn walk_milestones_with_tasks(milestones_dir: &Path) -> Vec<Gsd2Milestone> {
     milestones
 }
 
-/// Resolve the content of a slice's PLAN.md (nested or flat layout).
+/// Resolve the content of a slice's PLAN.md.
+/// Checks three layouts:
+/// 1. milestone_dir/S01[-desc]/S01-PLAN.md        (worktree nested)
+/// 2. milestone_dir/slices/S01/S01-PLAN.md         (GSD-pi standard)
+/// 3. milestone_dir/S01-PLAN.md                    (flat legacy)
 fn resolve_slice_plan_content(
     milestone_dir: &Path,
     _milestone_id: &str,
     slice_id: &str,
 ) -> Option<String> {
-    // Try nested: milestone_dir/S01[-DESCRIPTOR]/S01-PLAN.md
+    // Layout 1: milestone_dir/S01[-desc]/
     if let Some(slice_sub) = resolve_dir_by_id(milestone_dir, slice_id) {
         let nested = milestone_dir.join(&slice_sub);
         if let Some(plan_file) = resolve_file_by_id(&nested, slice_id, "PLAN") {
-            if let Ok(content) = std::fs::read_to_string(nested.join(&plan_file)) {
-                return Some(content);
+            if let Ok(c) = std::fs::read_to_string(nested.join(&plan_file)) {
+                return Some(c);
             }
         }
     }
-    // Try flat: milestone_dir/S01-PLAN.md
+    // Layout 2: milestone_dir/slices/S01/
+    let slices_subdir = milestone_dir.join("slices");
+    if slices_subdir.is_dir() {
+        if let Some(slice_sub) = resolve_dir_by_id(&slices_subdir, slice_id) {
+            let nested = slices_subdir.join(&slice_sub);
+            if let Some(plan_file) = resolve_file_by_id(&nested, slice_id, "PLAN") {
+                if let Ok(c) = std::fs::read_to_string(nested.join(&plan_file)) {
+                    return Some(c);
+                }
+            }
+        }
+    }
+    // Layout 3: flat milestone_dir/S01-PLAN.md
     if let Some(plan_file) = resolve_file_by_id(milestone_dir, slice_id, "PLAN") {
-        if let Ok(content) = std::fs::read_to_string(milestone_dir.join(&plan_file)) {
-            return Some(content);
+        if let Ok(c) = std::fs::read_to_string(milestone_dir.join(&plan_file)) {
+            return Some(c);
         }
     }
     None

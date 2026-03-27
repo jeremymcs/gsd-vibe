@@ -94,7 +94,7 @@ export function GsdMilestonesTab({ projectId }: GsdMilestonesTabProps) {
           {completedCount} completed
         </Badge>
         {currentMilestone && (
-          <Badge variant="subtle-cyan">
+          <Badge variant="secondary">
             Current: {currentMilestone}
           </Badge>
         )}
@@ -124,7 +124,7 @@ export function GsdMilestonesTab({ projectId }: GsdMilestonesTabProps) {
                 <Card
                   className={cn(
                     'flex-1',
-                    isCurrent && 'ring-1 ring-gsd-cyan/40'
+                    isCurrent && 'ring-1 ring-primary/30'
                   )}
                 >
                   <CardContent className="p-4">
@@ -135,7 +135,7 @@ export function GsdMilestonesTab({ projectId }: GsdMilestonesTabProps) {
                             {milestone.name}
                           </h3>
                           {isCurrent && (
-                            <Badge variant="subtle-cyan" size="sm">
+                            <Badge variant="secondary" size="sm">
                               current
                             </Badge>
                           )}

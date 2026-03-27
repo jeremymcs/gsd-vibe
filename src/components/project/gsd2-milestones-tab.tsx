@@ -58,7 +58,7 @@ function SliceTasksSection({ projectId, milestoneId, sliceId }: SliceTasksSectio
 
   return (
     <div className="space-y-0.5">
-      {slice.tasks.map((task) => {
+      {[...slice.tasks].sort((a, b) => a.id.localeCompare(b.id)).map((task) => {
         const taskStatus = task.done ? 'done' : 'pending';
         return (
           <div key={task.id} className="flex items-center gap-2 py-1.5 px-3">
@@ -117,7 +117,7 @@ function MilestoneSlices({
 
   return (
     <div className="space-y-0.5 mt-0.5">
-      {milestone.slices.map((s) => {
+      {[...milestone.slices].sort((a, b) => a.id.localeCompare(b.id)).map((s) => {
         const doneCount = s.tasks.filter((t) => t.done).length;
         const totalCount = s.tasks.length;
         const sliceStatus = getStatus(s.done, derivedState?.active_slice_id ?? null, s.id);

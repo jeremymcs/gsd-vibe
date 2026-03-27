@@ -277,10 +277,16 @@ export function FileBrowser({ projectId, projectPath }: FileBrowserProps) {
   const folders = fileTree?.folders;
   const filteredFolders = useMemo(() => {
     if (!folders) return [];
-    if (!debouncedSearch.trim()) return folders;
+    const sorted = [...folders]
+      .sort((a, b) => a.display_name.localeCompare(b.display_name))
+      .map((folder) => ({
+        ...folder,
+        files: [...folder.files].sort((a, b) => a.display_name.localeCompare(b.display_name)),
+      }));
+    if (!debouncedSearch.trim()) return sorted;
 
     const query = debouncedSearch.toLowerCase();
-    return folders
+    return sorted
       .map((folder) => ({
         ...folder,
         files: folder.files.filter(

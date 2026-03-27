@@ -38,7 +38,7 @@ export function ProjectsPage() {
       // Status filter
       if (statusFilter !== "all" && p.status !== statusFilter) return false;
       // Type filter
-      if (typeFilter !== "all" && getProjectType(p.tech_stack) !== typeFilter)
+      if (typeFilter !== "all" && getProjectType(p.tech_stack, p.gsd_version) !== typeFilter)
         return false;
       // Search filter (includes description)
       if (searchQuery) {
@@ -167,7 +167,8 @@ export function ProjectsPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Types</SelectItem>
-                  <SelectItem value="gsd">GSD</SelectItem>
+                  <SelectItem value="gsd2">GSD-2</SelectItem>
+                  <SelectItem value="gsd1">GSD-1</SelectItem>
                   <SelectItem value="bare">Bare</SelectItem>
                 </SelectContent>
               </Select>

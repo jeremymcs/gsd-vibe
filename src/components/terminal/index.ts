@@ -5,5 +5,6 @@ export { TerminalView, type TerminalViewRef } from "./terminal-view";
 export { TerminalPageHeader } from "./terminal-page-header";
 export { InteractiveTerminal, clearTerminalCache, type InteractiveTerminalRef } from "./interactive-terminal";
 export { TerminalTabs } from "./terminal-tabs";
+export { ShellView } from "./shell-view";
 export { GlobalTerminals } from "./global-terminals";
 export { BroadcastIndicator } from "./broadcast-indicator";

@@ -235,6 +235,182 @@ This file is the explicit capability and coverage contract for the project.
 - Validation: unmapped
 - Notes: New views should include basic render tests
 
+### R112 — Enhanced GSD-2 Dashboard — full project pulse view
+- Class: core-capability
+- Status: active
+- Description: Transform the 139-line metric-only dashboard into a full project pulse landing view with 6+ widget sections: current unit, live metrics, slice progress, activity feed, git status, health summary.
+- Why it matters: The dashboard is the landing view — it must show the full project pulse at a glance, surpassing gsd-2 web parity
+- Source: user
+- Primary owning slice: M010/S01
+- Supporting slices: none
+- Validation: unmapped
+- Notes: Combines best of gsd-2 web dashboard with VibeFlow's existing overview widgets
+
+### R113 — Dashboard: current unit + slice task progress
+- Class: core-capability
+- Status: active
+- Description: Dashboard shows the current active unit (milestone/slice/task), slice progress bar with percentage, and task checklist with done/active/pending status icons.
+- Why it matters: Users need to see at a glance what's happening during auto-mode execution
+- Source: user
+- Primary owning slice: M010/S01
+- Supporting slices: none
+- Validation: unmapped
+- Notes: Uses existing VisualizerData2 milestones tree for task/slice data
+
+### R114 — Dashboard: live cost/tokens/duration metrics
+- Class: core-capability
+- Status: active
+- Description: Top-level metric cards showing total cost, tokens used, units executed, and elapsed duration. Values formatted with existing formatCost/formatTokenCount/formatDuration utilities.
+- Why it matters: Cost and token visibility is the primary operational awareness metric during auto-mode
+- Source: user
+- Primary owning slice: M010/S01
+- Supporting slices: none
+- Validation: unmapped
+- Notes: Data from useGsd2History hook (already exists)
+
+### R115 — Dashboard: phase + model cost breakdowns
+- Class: core-capability
+- Status: active
+- Description: Phase breakdown (execution/completion/planning/research/reassessment) with horizontal bar charts. Top 5 models by cost with token counts.
+- Why it matters: Phase and model breakdowns reveal where cost is concentrated
+- Source: user
+- Primary owning slice: M010/S01
+- Supporting slices: none
+- Validation: unmapped
+- Notes: Already implemented in current dashboard — carried forward and refined
+
+### R116 — Dashboard: activity feed with typed events
+- Class: core-capability
+- Status: active
+- Description: Recent activity section showing execution events with typed indicators (success, error, system), timestamps, and scrollable history.
+- Why it matters: Activity feed provides chronological narrative of what happened during execution
+- Source: user
+- Primary owning slice: M010/S01
+- Supporting slices: none
+- Validation: unmapped
+- Notes: VibeFlow has ActivityFeed component in project overview — integrate into dashboard
+
+### R117 — Dashboard: git status + health summary widgets
+- Class: core-capability
+- Status: active
+- Description: Git status widget showing current branch, clean/dirty state, ahead/behind counts. Health summary showing doctor pass/fail counts and last check time.
+- Why it matters: Git and health context eliminates the need to switch views for basic project status
+- Source: user
+- Primary owning slice: M010/S01
+- Supporting slices: none
+- Validation: unmapped
+- Notes: Uses existing gsd2_get_git_summary and gsd2_get_health commands
+
+### R118 — Fix markdown rendering in titles/one-liners
+- Class: quality-attribute
+- Status: active
+- Description: Strip or render raw markdown formatting (**bold**, `backtick`, etc.) in text that comes from the Rust backend. No raw markdown visible in dashboard, visualizer, changelog, or any view that displays titles or summaries.
+- Why it matters: Raw markdown markup showing as literal text looks broken and unprofessional
+- Source: user
+- Primary owning slice: M010/S02
+- Supporting slices: none
+- Validation: unmapped
+- Notes: Affects changelog one-liners, milestone titles, slice titles, task titles across visualizer and dashboard
+
+### R119 — Fix one_liner parsing from SUMMARY.md
+- Class: quality-attribute
+- Status: active
+- Description: When SUMMARY.md frontmatter lacks a one_liner key, extract the one-liner from the bold line after the heading in the body text (the established GSD format). Strip markdown bold markers from the extracted text.
+- Why it matters: GSD auto-mode writes one-liners as bold body lines, not frontmatter keys — the current parser returns empty strings for these
+- Source: user
+- Primary owning slice: M010/S02
+- Supporting slices: none
+- Validation: unmapped
+- Notes: Rust parse_frontmatter reads fm.get("one_liner") which returns None for auto-mode summaries
+
+### R120 — +New Project wizard with template selection
+- Class: core-capability
+- Status: active
+- Description: Replace the current import-only project wizard with a full creation flow. User selects a language/framework starter template and optionally a GSD planning template, names the project, picks a parent directory, and gets a fully scaffolded project.
+- Why it matters: Project creation from templates is a core workflow that currently requires manual setup outside the app
+- Source: user
+- Primary owning slice: M010/S03
+- Supporting slices: none
+- Validation: unmapped
+- Notes: Rust backend already has create_new_project + finalize_project_creation commands (registered but no TS wrappers)
+
+### R121 — 10+ language/framework starter templates bundled in app
+- Class: core-capability
+- Status: active
+- Description: Bundled templates for React/Vite/TS, Next.js, Node.js API (Express), Rust CLI, Rust Axum API, Python (FastAPI), Python CLI, Go, Svelte, Tauri, plus a Blank template. Each creates real project scaffolds with proper configs.
+- Why it matters: Templates must produce projects that feel like a senior engineer set them up — not hello-world toys
+- Source: user
+- Primary owning slice: M010/S03
+- Supporting slices: none
+- Validation: unmapped
+- Notes: Templates bundled in app binary via Rust include_str! or equivalent. No network required.
+
+### R122 — GSD planning templates pre-seed .gsd/ with milestone blueprints
+- Class: core-capability
+- Status: active
+- Description: Optional GSD planning layer that seeds .gsd/ directory with PROJECT.md, REQUIREMENTS.md, and a CONTEXT-DRAFT.md with milestone blueprints appropriate for the project archetype (web app, CLI tool, API, library).
+- Why it matters: Pre-seeded planning structure saves users from starting from blank every time
+- Source: user
+- Primary owning slice: M010/S03
+- Supporting slices: none
+- Validation: unmapped
+- Notes: Templates are starting points — user runs /gsd to refine and plan milestones
+
+### R123 — Template scaffolding creates real project configs
+- Class: quality-attribute
+- Status: active
+- Description: Each language template includes proper configuration: tsconfig/Cargo.toml/pyproject.toml, .gitignore, README.md, test setup, linter config, and basic project structure. Not hello-world.
+- Why it matters: Toy scaffolds with a single index.ts feel cheap — real configs establish a professional starting point
+- Source: user
+- Primary owning slice: M010/S03
+- Supporting slices: none
+- Validation: unmapped
+- Notes: Each template should produce a project that passes its own lint/build/test on first run
+
+### R124 — Wire TypeScript invoke wrappers for project creation commands
+- Class: core-capability
+- Status: active
+- Description: Add TypeScript invoke wrappers in tauri.ts for create_new_project, finalize_project_creation, and check_project_path. Add TanStack Query mutation hooks in queries.ts.
+- Why it matters: The Rust commands are registered but have no frontend wiring — the wizard can't call them
+- Source: inferred
+- Primary owning slice: M010/S03
+- Supporting slices: none
+- Validation: unmapped
+- Notes: check_project_path already has a TS wrapper — verify and add the missing ones
+
+### R125 — File watcher → GSD-2 query cache invalidation
+- Class: core-capability
+- Status: active
+- Description: Extend use-gsd-file-watcher.ts to invalidate GSD-2 query keys (history, visualizer, health, inspect, undoInfo, gitSummary, recoveryInfo, hooks) when gsd2-specific file changes are detected.
+- Why it matters: Without targeted cache invalidation, GSD-2 views show stale data during auto-mode until manual refresh
+- Source: inferred
+- Primary owning slice: M010/S04
+- Supporting slices: none
+- Validation: unmapped
+- Notes: Currently only handles GSD-1 change types (gsd_state, gsd_todo, gsd_phase, etc.)
+
+### R126 — Empty states audit — every list/data view shows meaningful empty state
+- Class: quality-attribute
+- Status: active
+- Description: Audit all list and data views. Every view that can show an empty dataset must display a contextual message with an icon and guidance, using the ViewEmpty pattern from shared/loading-states.tsx.
+- Why it matters: Empty views look broken without contextual messages — especially for new projects
+- Source: user
+- Primary owning slice: M010/S04
+- Supporting slices: none
+- Validation: unmapped
+- Notes: Carried forward from R043 (M005). ViewSkeleton/ViewError exist in shared/loading-states.tsx but ViewEmpty needs verification.
+
+### R127 — Build and tests pass after all changes
+- Class: operability
+- Status: active
+- Description: pnpm build exits 0 with zero TypeScript errors. pnpm test passes all 146+ existing tests. cargo check --lib passes. No regressions from new code.
+- Why it matters: A feature expansion that breaks compilation or tests is not shippable
+- Source: inferred
+- Primary owning slice: M010/S04
+- Supporting slices: none
+- Validation: unmapped
+- Notes: New components should include basic render tests where appropriate
+
 ## Validated
 
 ### R001 — Untitled
@@ -618,9 +794,9 @@ This file is the explicit capability and coverage contract for the project.
 | R072 | differentiator | deferred | none | none | unmapped |
 | R073 | quality-attribute | out-of-scope | none | none | n/a |
 | R074 | constraint | out-of-scope | none | none | n/a |
-| R075 | core-capability | active | M008/S02 | M008/S01 | unmapped |
-| R076 | core-capability | active | M008/S04 | M008/S01 | unmapped |
-| R077 | core-capability | active | M008/S05 | none | unmapped |
+| R075 | core-capability | validated | M008/S02 | M008/S01 | S02 (M008) delivers complete 7-tab visualizer rewrite (198→1280 lines). All tabs implemented: Progress, Dependencies, Metrics, Timeline, Agent, Changes, Export. pnpm build exits 0, cargo build exits 0. 7 TabsContent elements confirmed by grep. Zero bare color tokens. |
+| R076 | core-capability | validated | M006/S01 | M008/S01 | Gsd2ChatTab renders ChatMessage[] from onPtyOutput via PtyChatParser; /gsd dispatch via ptyWrite; TUI overlays for select/text/password prompts; /gsd command bar with top actions + overflow menu. pnpm build exits 0. |
+| R077 | core-capability | validated | M006/S02 | none | Gsd2FilesTab wraps existing FileBrowser with project/.gsd/ root toggle (key= remount). pnpm build exits 0. |
 | R078 | core-capability | validated | M008/S01 | none | gsd2_get_history command parses .gsd/metrics.json with camelCase fields (startedAt, finishedAt, toolCalls, cacheRead, cacheWrite, inputTokens, outputTokens, totalTokens, modelDowngraded). Returns aggregated ProjectTotals, by-phase aggregates (research, planning, execution, completion, reassessment), by-slice aggregates keyed on M### milestone prefix, by-model aggregates sorted by cost desc. Verified: cargo build + pnpm build pass, TypeScript types match Rust output, invoke wrapper in tauri.ts, query hook in queries.ts. Task T02 complete. |
 | R079 | core-capability | validated | M008/S01 | none | gsd2_get_inspect command reads .gsd/STATE.md for schema version (via frontmatter), scans DECISIONS.md and REQUIREMENTS.md counting table rows matching pattern (D/R + digits + " |"). Extracts last 5 matching entries as recent_decisions/recent_requirements. Verified: cargo build + pnpm build pass, TypeScript types match Rust output, invoke wrapper in tauri.ts, query hook in queries.ts. Task T01 complete. |
 | R080 | core-capability | validated | M008/S01 | none | gsd2_get_steer_content command reads .gsd/OVERRIDES.md, returns content + exists flag. gsd2_set_steer_content command atomically writes OVERRIDES.md using tmp file + rename pattern. Verified: cargo build + pnpm build pass, TypeScript types match Rust output, invoke wrappers in tauri.ts, query hook + useMutation in queries.ts with cache invalidation on write. Task T01 complete. |
@@ -632,20 +808,193 @@ This file is the explicit capability and coverage contract for the project.
 | R086 | core-capability | validated | M008/S01 | none | gsd2_export_progress command reuses parse_metrics_json and walk_milestones_with_tasks helpers. Generates markdown export with project header, summary stats table (totals: units, cost, tokens, duration, tool_calls), milestone progress table, phase breakdown table, model breakdown table. Format returned as "markdown". Verified: cargo build + pnpm build pass, TypeScript types match Rust output, useMutation hook in queries.ts (on-demand, not polled). Task T02 complete. |
 | R087 | core-capability | validated | M008/S03 | M008/S01 | cargo build passes; all 12 section IDs confirmed (blockers, captures, changelog, depgraph, discussion, health, knowledge, metrics, progress, stats, summary, timeline) via section_html() arg grep; pnpm build zero TS errors; command registered in lib.rs; frontend Reports tab wired. Token breakdown uses estimated proportions — deferred fix. |
 | R088 | core-capability | validated | M008/S03 | none | gsd2_get_reports_index registered in lib.rs; generate command writes/updates reports.json and regenerates index.html; useGsd2ReportsIndex hook queries registry; reports table renders index data in UI. |
-| R089 | core-capability | active | M008/S06 | M008/S01 | unmapped |
-| R090 | core-capability | active | M008/S07 | M008/S01, M008/S02 | unmapped |
-| R091 | core-capability | active | M008/S07 | none | unmapped |
-| R092 | core-capability | active | M008/S05 | none | unmapped |
-| R093 | core-capability | active | M008/S05 | none | unmapped |
-| R094 | core-capability | active | M008/S07 | none | unmapped |
-| R095 | quality-attribute | active | M008/S08 | none | unmapped |
-| R096 | quality-attribute | active | M008/S05 | none | unmapped |
-| R097 | operability | active | M008/S09 | none | unmapped |
+| R089 | core-capability | validated | M006/S03 | M008/S01 | 8 command panel views wired in nav-rail: history, hooks, inspect, steer, undo, export, git, recovery — all backed by M008/S01 Rust commands. pnpm build exits 0. |
+| R090 | core-capability | validated | M006/S04 | M008/S01, M008/S02 | Gsd2DashboardView renders total cost, tokens, units, duration, phase breakdown, model breakdown from useGsd2History. pnpm build exits 0. |
+| R091 | core-capability | validated | M006/S04 | none | Gsd2StatusBar renders at bottom of project layout for GSD-2 projects, shows idle/active state with live elapsed time ticker. pnpm build exits 0. |
+| R092 | core-capability | validated | M006/S02 | none | File tree browser via Gsd2FilesTab (wraps FileBrowser with project/.gsd/ toggle). pnpm build exits 0. |
+| R093 | core-capability | validated | M006/S02 | none | Gsd2DualTerminalTab delivers split-pane dual PTY terminal via react-resizable-panels + two InteractiveTerminal instances. pnpm build exits 0. |
+| R094 | core-capability | active | M006/S03 | none | Steer/inspect/undo panels delivered via R089. Specific sub-requirements need re-evaluation against delivered panels. |
+| R095 | quality-attribute | active | none | none | Panel quality requirements — delivered panels follow loading/error/empty state patterns. Needs UAT verification with real project. |
+| R096 | quality-attribute | validated | M006/S04 | none | use-gsd-file-watcher.ts extended to invalidate all gsd2 query keys (history, inspect, recoveryInfo, undoInfo, gitSummary, visualizer, health, milestones) on gsd2:file-changed events. pnpm build exits 0. |
+| R097 | operability | validated | M006/S06 | none | cargo build exits 0, pnpm build exits 0, all 14 new gsd2-* views confirmed in project-views.ts and ViewRenderer. |
 | R098 | differentiator | deferred | none | none | unmapped |
+
+### R099 — Refined cool-blue color palette for dark mode (hero experience)
+- Class: core-capability
+- Status: active
+- Description: Recalibrate all 31 CSS custom properties in the .dark block. Keep the 220° cool-blue hue foundation but refine values for contrast, surface differentiation, and professional calm. Dark mode is the hero experience.
+- Why it matters: The color foundation drives the entire visual feel — refinement of the existing cool-blue palette to feel calmer and more intentional
+- Source: user
+- Primary owning slice: M009/S01
+- Supporting slices: none
+- Validation: unmapped
+- Notes: Keep 220° hue, refine lightness/saturation values. Status colors recalibrated for cool-blue backgrounds.
+
+### R100 — Refined cool-blue color palette for light mode (equal verification)
+- Class: core-capability
+- Status: active
+- Description: Recalibrate all 31 CSS custom properties in the .light block. Light mode gets equal verification attention — not just dark-mode-inverted.
+- Why it matters: Both themes must look correct and intentional, not just "one is primary and the other is flipped"
+- Source: user
+- Primary owning slice: M009/S01
+- Supporting slices: none
+- Validation: unmapped
+- Notes: Light mode contrast must pass WCAG AA for status colors on white/near-white backgrounds.
+
+### R101 — Cyan accent restricted to interactive highlights only
+- Class: core-capability
+- Status: active
+- Description: Cyan (--gsd-cyan, --primary, --ring) appears only on focus rings, active nav indicators, links, and interactive highlights. Removed from all decorative backgrounds, badge tinting, and non-interactive surfaces.
+- Why it matters: Restraining the accent to interactive-only use eliminates the "gamer dashboard" feel while preserving brand identity
+- Source: user
+- Primary owning slice: M009/S01
+- Supporting slices: M009/S03
+- Validation: unmapped
+- Notes: 12 files currently reference gsd-cyan. Badge subtle-cyan variant (4 files) needs migration to outline or secondary.
+
+### R102 — Sidebar flattened — duplicate views merged
+- Class: core-capability
+- Status: active
+- Description: Core Files + GSD Files merged into one view with project/gsd root toggle. Core Knowledge + GSD Knowledge/Captures merged into one view. Overview + GSD Dashboard unified into one adaptive landing page.
+- Why it matters: Three duplicate view pairs create confusion and waste sidebar space
+- Source: user
+- Primary owning slice: M009/S02
+- Supporting slices: none
+- Validation: unmapped
+- Notes: Files merge is straightforward (GSD Files already wraps FileBrowser). Knowledge merge and Overview+Dashboard merge are more complex.
+
+### R103 — Sidebar reduced from 16 to ~12 items for GSD-2 projects
+- Class: core-capability
+- Status: active
+- Description: GSD-2 project sidebar item count reduced from 16 to approximately 12 through view merging and restructuring.
+- Why it matters: 16 sidebar items plus 5 tab-groups nesting 26 total views is overwhelming — linear products keep navigation tight
+- Source: user
+- Primary owning slice: M009/S02
+- Supporting slices: none
+- Validation: unmapped
+- Notes: Target ~12 items. Exact count depends on final merge decisions.
+
+### R104 — Navigation recedes, content takes precedence
+- Class: quality-attribute
+- Status: active
+- Description: Sidebar is visually dimmer than content area. Active indicator is restrained. Section headers and inactive items recede. The eye naturally goes to the content pane, not the sidebar.
+- Why it matters: Linear's core principle — navigation supports orientation but shouldn't compete with the work area
+- Source: user
+- Primary owning slice: M009/S02
+- Supporting slices: M009/S01
+- Validation: unmapped
+- Notes: Current sidebar already has the right structure (thin left-edge active indicator, text-only items) but needs color refinement.
+
+### R105 — GSD-1 views retained and styled in new skin
+- Class: core-capability
+- Status: active
+- Description: All 8 GSD-1 views (Plans, Context, Todos, Validation, UAT, Verification, Milestones, Debug) remain functional and are styled consistently with the new palette.
+- Why it matters: Some projects still use GSD-1 planning — these views must not become broken or visually inconsistent
+- Source: user
+- Primary owning slice: M009/S03
+- Supporting slices: M009/S01
+- Validation: unmapped
+- Notes: GSD-1 views use standard Card/Badge/Button primitives — palette update in S01 handles most of the work.
+
+### R106 — Component primitive cleanup — dead variants removed, styling tightened
+- Class: quality-attribute
+- Status: active
+- Description: Remove badge subtle-cyan variant, clean unused imports/references, tighten outline button border (2px → 1px), remove any remaining stale styling from prior milestones.
+- Why it matters: Dead variants and stale styles accumulate and confuse contributors
+- Source: user
+- Primary owning slice: M009/S03
+- Supporting slices: none
+- Validation: unmapped
+- Notes: Badge subtle-cyan used in 4 files — needs migration first. Button success/warning variants stay (used in 11 files).
+
+### R107 — Anti-gamer constraint enforced across all views
+- Class: quality-attribute
+- Status: active
+- Description: No glows, neon accents, gradient overlays, or elevation drama in any view. Every surface passes the "calm and professional" test.
+- Why it matters: The explicit negative constraint from D038 — the app should never feel like a gamer dashboard
+- Source: user
+- Primary owning slice: M009/S01
+- Supporting slices: M009/S03, M009/S04
+- Validation: unmapped
+- Notes: Extends D038. Verification is visual inspection across all views.
+
+### R108 — E2E visual verification of every view in dark mode
+- Class: quality-attribute
+- Status: active
+- Description: Every nav-rail view verified in dark mode. No invisible text, no broken contrast, no unreadable status colors, no stale styling artifacts.
+- Why it matters: A redesign that looks correct in some views but broken in others is worse than no redesign
+- Source: user
+- Primary owning slice: M009/S04
+- Supporting slices: none
+- Validation: unmapped
+- Notes: ~20+ views need verification including all GSD-1 and GSD-2 views.
+
+### R109 — E2E visual verification of every view in light mode
+- Class: quality-attribute
+- Status: active
+- Description: Every nav-rail view verified in light mode. No invisible text, no broken contrast, no unreadable status colors, no stale styling artifacts.
+- Why it matters: Light mode gets equal attention — not just a dark mode inversion
+- Source: user
+- Primary owning slice: M009/S04
+- Supporting slices: none
+- Validation: unmapped
+- Notes: Light mode status colors on white backgrounds are the highest-risk area.
+
+### R110 — Dead code cleanup
+- Class: quality-attribute
+- Status: active
+- Description: Remove orphan references, unused imports, stale variant consumers across the component tree. Clean up any references left by view merging.
+- Why it matters: Dead code from accumulated milestones creates noise and confusion
+- Source: user
+- Primary owning slice: M009/S03
+- Supporting slices: M009/S02
+- Validation: unmapped
+- Notes: Codebase-tab.tsx is future scope (stays). Focus on imports, variant references, and merged-away component references.
+
+### R111 — Build and tests pass after all changes
+- Class: operability
+- Status: active
+- Description: pnpm build exits 0 with zero TypeScript errors. pnpm test passes all existing tests. No regressions from redesign work.
+- Why it matters: A visual redesign that breaks compilation or tests is not shippable
+- Source: inferred
+- Primary owning slice: M009/S04
+- Supporting slices: none
+- Validation: unmapped
+- Notes: Badge variant renames could affect test assertions. View merging changes import paths.
+
+| R099 | core-capability | active | M009/S01 | none | unmapped |
+| R100 | core-capability | active | M009/S01 | none | unmapped |
+| R101 | core-capability | active | M009/S01 | M009/S03 | unmapped |
+| R102 | core-capability | active | M009/S02 | none | unmapped |
+| R103 | core-capability | active | M009/S02 | none | unmapped |
+| R104 | quality-attribute | active | M009/S02 | M009/S01 | unmapped |
+| R105 | core-capability | active | M009/S03 | M009/S01 | unmapped |
+| R106 | quality-attribute | active | M009/S03 | none | unmapped |
+| R107 | quality-attribute | active | M009/S01 | M009/S03, M009/S04 | unmapped |
+| R108 | quality-attribute | active | M009/S04 | none | unmapped |
+| R109 | quality-attribute | active | M009/S04 | none | unmapped |
+| R110 | quality-attribute | active | M009/S03 | M009/S02 | unmapped |
+| R111 | operability | active | M009/S04 | none | unmapped |
+| R112 | core-capability | active | M010/S01 | none | unmapped |
+| R113 | core-capability | active | M010/S01 | none | unmapped |
+| R114 | core-capability | active | M010/S01 | none | unmapped |
+| R115 | core-capability | active | M010/S01 | none | unmapped |
+| R116 | core-capability | active | M010/S01 | none | unmapped |
+| R117 | core-capability | active | M010/S01 | none | unmapped |
+| R118 | quality-attribute | active | M010/S02 | none | unmapped |
+| R119 | quality-attribute | active | M010/S02 | none | unmapped |
+| R120 | core-capability | active | M010/S03 | none | unmapped |
+| R121 | core-capability | active | M010/S03 | none | unmapped |
+| R122 | core-capability | active | M010/S03 | none | unmapped |
+| R123 | quality-attribute | active | M010/S03 | none | unmapped |
+| R124 | core-capability | active | M010/S03 | none | unmapped |
+| R125 | core-capability | active | M010/S04 | none | unmapped |
+| R126 | quality-attribute | active | M010/S04 | none | unmapped |
+| R127 | operability | active | M010/S04 | none | unmapped |
 
 ## Coverage Summary
 
-- Active requirements: 21
-- Mapped to slices: 21
-- Validated: 26 (R001, R040, R041, R042, R044, R045, R046, R047, R048, R049, R050, R061, R066, R068, R069, R078, R079, R080, R081, R082, R083, R084, R085, R086, R087, R088)
+- Active requirements: 50
+- Mapped to slices: 50
+- Validated: 26
 - Unmapped active requirements: 0

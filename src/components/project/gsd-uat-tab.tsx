@@ -78,14 +78,14 @@ function resultBadgeVariant(result: string): 'success' | 'error' | 'warning' | '
 
 function severityVariant(
   severity: string,
-): 'error' | 'warning' | 'secondary' | 'subtle-cyan' {
+): 'error' | 'warning' | 'secondary' {
   switch (severity) {
     case 'blocker':
       return 'error';
     case 'major':
       return 'warning';
     case 'cosmetic':
-      return 'subtle-cyan';
+      return 'secondary';
     default:
       return 'secondary';
   }

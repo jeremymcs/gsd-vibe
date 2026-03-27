@@ -103,7 +103,7 @@ export function useGsdFileWatcher(
 
     listen<GsdFileChangedPayload>('gsd2:file-changed', (event) => {
       if (event.payload.project_path !== projectPath) return;
-      // Immediately invalidate GSD-2 reactive queries (no debounce — dedicated key)
+      // Invalidate all GSD-2 reactive queries on any .gsd/ file change
       void queryClient.invalidateQueries({ queryKey: queryKeys.gsd2Health(projectId) });
       void queryClient.invalidateQueries({ queryKey: queryKeys.gsd2Worktrees(projectId) });
       void queryClient.invalidateQueries({ queryKey: queryKeys.gsd2VisualizerData(projectId) });
@@ -111,6 +111,12 @@ export function useGsdFileWatcher(
       void queryClient.invalidateQueries({ queryKey: queryKeys.gsd2DerivedState(projectId) });
       void queryClient.invalidateQueries({ queryKey: ['gsd2', 'milestone', projectId] });
       void queryClient.invalidateQueries({ queryKey: ['gsd2', 'slice', projectId] });
+      // M008/S01 + M006 queries — invalidate on metrics, state, and milestone changes
+      void queryClient.invalidateQueries({ queryKey: ['gsd2', 'history', projectId] });
+      void queryClient.invalidateQueries({ queryKey: ['gsd2', 'inspect', projectId] });
+      void queryClient.invalidateQueries({ queryKey: ['gsd2', 'recoveryInfo', projectId] });
+      void queryClient.invalidateQueries({ queryKey: ['gsd2', 'undoInfo', projectId] });
+      void queryClient.invalidateQueries({ queryKey: ['gsd2', 'gitSummary', projectId] });
     }).then((fn) => {
       unlisten2 = fn;
     });

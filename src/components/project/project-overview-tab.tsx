@@ -2,6 +2,7 @@
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { ActivityFeed } from '@/components/project';
 import { QuickActionsBar } from './quick-actions-bar';
 import { GitStatusWidget } from './git-status-widget';
@@ -11,6 +12,7 @@ import { VisionCard } from './vision-card';
 import { RoadmapProgressCard } from './roadmap-progress-card';
 import type { Project } from '@/lib/tauri';
 import { useGsdState, useGsdTodos, useGsdConfig, useGsdSync } from '@/lib/queries';
+import { formatRelativeTime } from '@/lib/utils';
 import {
   CheckSquare,
   AlertTriangle,
@@ -19,6 +21,13 @@ import {
   Gauge,
   Timer,
   GitBranch,
+  FolderOpen,
+  Calendar,
+  Code2,
+  Database,
+  Package,
+  TestTube,
+  Layers,
 } from 'lucide-react';
 
 interface ProjectOverviewTabProps {
@@ -44,78 +53,111 @@ export function ProjectOverviewTab({
         hasPlanning={isGsd1}
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* GSD State — primary card for GSD-1 projects */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* ── GSD-1 cards ── */}
         {isGsd1 && <GsdStateCard projectId={project.id} />}
-
-        {/* Roadmap Progress — phase completion from ROADMAP.md */}
         {isGsd1 && <RoadmapProgressCard projectId={project.id} />}
-
-        {/* Vision (PROJECT.md) */}
         {isGsd1 && <VisionCard projectPath={project.path} />}
-
-        {/* Requirements Coverage (REQUIREMENTS.md) */}
         {isGsd1 && <RequirementsCard projectId={project.id} />}
 
-        {/* Git Status */}
+        {/* ── always-present cards ── */}
         <GitStatusWidget projectPath={project.path} />
-
-        {/* Dependency Alerts */}
         <DependencyAlertsCard projectId={project.id} projectPath={project.path} />
-
-        {/* Activity Feed */}
         <ActivityFeed projectId={project.id} limit={15} />
 
-        {/* Project Details */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Project Details</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div>
-                <p className="text-sm text-muted-foreground">Status</p>
-                <p className="font-medium capitalize">{project.status}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Framework</p>
-                <p className="font-medium">{project.tech_stack?.framework || '—'}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Language</p>
-                <p className="font-medium">{project.tech_stack?.language || '—'}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Package Manager</p>
-                <p className="font-medium">{project.tech_stack?.package_manager || '—'}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Database</p>
-                <p className="font-medium">{project.tech_stack?.database || '—'}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Test Framework</p>
-                <p className="font-medium">{project.tech_stack?.test_framework || '—'}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">GSD Planning</p>
-                <p className="font-medium">{project.tech_stack?.has_planning ? 'Yes' : 'No'}</p>
-              </div>
-            </div>
-            {project.description && (
-              <div className="mt-4 pt-4 border-t">
-                <p className="text-sm text-muted-foreground mb-1">Description</p>
-                <p className="text-sm">{project.description}</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        {/* ── Project snapshot card ── */}
+        <ProjectSnapshotCard project={project} />
       </div>
     </div>
   );
 }
 
-// --- GSD State Card ---
+// ── Project Snapshot Card ───────────────────────────────────────────────────
+// Rich at-a-glance card replacing the old "Project Details" table.
+
+function ProjectSnapshotCard({ project }: { project: Project }) {
+  const ts = project.tech_stack;
+  // roadmap_progress only exists on ProjectWithStats, not Project — omit progress bar here
+
+  const stackItems = [
+    ts?.language && { icon: <Code2 className="h-3.5 w-3.5" />, label: 'Language', value: ts.language },
+    ts?.framework && { icon: <Layers className="h-3.5 w-3.5" />, label: 'Framework', value: ts.framework },
+    ts?.package_manager && { icon: <Package className="h-3.5 w-3.5" />, label: 'Package manager', value: ts.package_manager },
+    ts?.database && { icon: <Database className="h-3.5 w-3.5" />, label: 'Database', value: ts.database },
+    ts?.test_framework && { icon: <TestTube className="h-3.5 w-3.5" />, label: 'Test framework', value: ts.test_framework },
+  ].filter(Boolean) as { icon: React.ReactNode; label: string; value: string }[];
+
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="flex items-center gap-2 text-sm">
+          <FolderOpen className="h-4 w-4 text-muted-foreground" />
+          Project Snapshot
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {/* Status + GSD version badges */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <Badge variant="secondary" className="capitalize">{project.status}</Badge>
+          {project.gsd_version && (
+            <Badge variant="outline" className="text-[10px]">
+              {project.gsd_version === 'gsd2' ? 'GSD-2' : project.gsd_version === 'gsd1' ? 'GSD-1' : project.gsd_version}
+            </Badge>
+          )}
+          {project.is_favorite && (
+            <Badge variant="outline" className="text-[10px] text-gsd-cyan border-gsd-cyan/30">
+              ★ Favorite
+            </Badge>
+          )}
+        </div>
+
+        {/* Description */}
+        {project.description && (
+          <p className="text-sm text-muted-foreground">{project.description}</p>
+        )}
+
+        {/* Roadmap progress — only if overview receives ProjectWithStats in future */}
+
+        {/* Tech stack grid */}
+        {stackItems.length > 0 && (
+          <div className="border-t pt-3 grid grid-cols-2 gap-x-4 gap-y-2">
+            {stackItems.map((item) => (
+              <div key={item.label} className="flex items-center gap-1.5">
+                <span className="text-muted-foreground shrink-0">{item.icon}</span>
+                <div className="min-w-0">
+                  <p className="text-[10px] text-muted-foreground/70 leading-none">{item.label}</p>
+                  <p className="text-xs font-medium truncate">{item.value}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Timestamps */}
+        <div className="border-t pt-3 flex flex-col gap-1">
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-muted-foreground flex items-center gap-1">
+              <Calendar className="h-3 w-3" />
+              Added
+            </span>
+            <span className="text-muted-foreground tabular-nums">
+              {formatRelativeTime(project.created_at)}
+            </span>
+          </div>
+        </div>
+
+        {/* Path */}
+        <div className="border-t pt-2">
+          <p className="text-[10px] text-muted-foreground/60 font-mono truncate" title={project.path}>
+            {project.path}
+          </p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ── GSD State Card ──────────────────────────────────────────────────────────
 
 function GsdStateCard({ projectId }: { projectId: string }) {
   const { data: state } = useGsdState(projectId);

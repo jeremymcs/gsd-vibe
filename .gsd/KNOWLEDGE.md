@@ -641,3 +641,36 @@ S01 (10 Rust commands) was completed before S02 (visualizer) and S03 (reports). 
 ### by_phase field ordering in VisualizerData2 — expose before by_slice for logical grouping
 
 When adding fields to VisualizerData2 struct, place `by_phase` before `by_slice` in the struct definition. Phase-level aggregation is a higher-level summary than slice-level; this ordering matches the logical hierarchy and is how the Metrics tab displays data (phase breakdown above slice table).
+
+## M006 Cross-Cutting Lessons: Interactive Surfaces
+
+### Parser-in-useRef pattern for PTY-to-React streaming
+
+When subscribing a stateful parser (like PtyChatParser) to a PTY event stream:
+1. Create the parser once in `useRef` (not useState — avoids re-renders on creation)
+2. Subscribe `parser.onMessage((msg) => setMessages(prev => updateOrAppend(prev, msg)))` in the same effect
+3. Wire to `onPtyOutput(sessionId, (event) => parser.feed(decode(event.data)))` in `useEffect([sessionId])`
+4. Call `parser.reset()` and `setMessages([])` when sessionId changes (new session)
+5. Unlisten on cleanup
+
+This is the canonical pattern for any PTY-to-React streaming component. The `updateOrAppend` helper matches by message ID for streaming updates vs new message detection.
+
+### FileBrowser wrapper pattern: key= for root switch
+
+When building a view that needs to show a different directory in an existing file browser (e.g., project root vs .gsd/), wrap the existing component and pass `key={activePath}`. This forces React to unmount/remount the component on path change, resetting its internal state (selected file, scroll position, etc.) cleanly. No need to modify the existing component.
+
+### All command panels in one file with shared helpers
+
+When building many similar panels (8 in this case), put them all in one file with shared PanelWrapper, PanelLoading, PanelError, PanelEmpty components. Each panel is then ~30-50 lines of data-rendering code. This avoids 8-file proliferation and makes the shared UI contract obvious.
+
+### Local setInterval + useState for live elapsed time
+
+For a status bar or live counter that must update every 1 second without over-fetching: compute elapsed from a start timestamp using a local `setInterval` + `useState`. The interval runs on its own 1s tick, completely decoupled from TanStack Query's polling interval. Pattern: `useEffect([startMs]) → setInterval(tick, 1000) → clearInterval cleanup`.
+
+### DualTerminalTab: InteractiveTerminal directly, not global terminal context
+
+Two side-by-side terminal panels for a "split terminal" view should use InteractiveTerminal directly (not the global terminal context/registry). The global context is for the main project terminal tabs that persist across navigation. Split-view sessions are ephemeral and independent — they don't need broadcast mode, persistence across view navigation, or the tmux reconnect infrastructure.
+
+### Always grep the actual codebase before assuming prior art exists
+
+S05 was planned to "extend the existing onboarding wizard" but no wizard existed. The M003 wizard in KNOWLEDGE.md referred to the gsd-2 CLI project, not VibeFlow. Always run `grep -rn 'feature-name'` in the actual target codebase before writing a plan that extends existing code.

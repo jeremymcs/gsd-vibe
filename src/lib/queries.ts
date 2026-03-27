@@ -302,6 +302,18 @@ export const useToggleFavorite = () => {
   });
 };
 
+export const useRefreshProjectDescription = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ projectId, projectPath }: { projectId: string; projectPath: string }) =>
+      api.refreshProjectDescription(projectId, projectPath),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.projectsWithStats() });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.projects() });
+    },
+  });
+};
+
 export const useImportProjectEnhanced = () => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -877,9 +889,9 @@ export const useDependencyStatus = (projectId: string, projectPath: string) =>
     queryKey: queryKeys.dependencyStatus(projectId),
     queryFn: () => api.getDependencyStatus(projectId, projectPath),
     enabled: !!projectId && !!projectPath,
-    staleTime: 60 * 60 * 1000, // 1 hour data freshness
-    refetchInterval: 15 * 60 * 1000, // Auto-poll every 15 minutes
-    refetchOnWindowFocus: true,
+    staleTime: 15 * 60 * 1000,  // fresh for 15 min (matches Rust DB cache window)
+    gcTime: 2 * 60 * 60 * 1000, // keep in memory for 2 hours so navigating away and back is instant
+    refetchOnWindowFocus: false,  // Rust cache handles freshness — no need to re-audit on focus
   });
 
 // Knowledge Graph

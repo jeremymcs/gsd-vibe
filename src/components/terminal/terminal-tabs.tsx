@@ -10,17 +10,11 @@ import { useTerminalContext } from "@/contexts/terminal-context";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
   Tooltip,
   TooltipTrigger,
   TooltipContent,
 } from "@/components/ui/tooltip";
-import { Plus, X, Terminal, ChevronDown, Play, Minus, Zap, Columns2, Radio, Code } from "lucide-react";
+import { Plus, X, Terminal, Minus, Columns2, Radio, Code } from "lucide-react";
 import { SnippetsPanel } from "./snippets-panel";
 import { EnvironmentIndicator } from "./environment-indicator";
 import { useHotkeys } from "react-hotkeys-hook";
@@ -88,8 +82,8 @@ export function TerminalTabs({ projectId, workingDirectory, className, headerSlo
   }, [editingTabId]);
 
   // Handle adding a tab
-  const handleAddTab = useCallback((type: "shell" | "claude" | "yolo") => {
-    addTab(projectId, type);
+  const handleAddTab = useCallback(() => {
+    addTab(projectId, "shell");
   }, [projectId, addTab]);
 
   // Handle closing a tab
@@ -229,33 +223,16 @@ export function TerminalTabs({ projectId, workingDirectory, className, headerSlo
           </div>
         ))}
 
-        {/* Add tab dropdown */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 px-2 text-muted-foreground hover:text-foreground"
-            >
-              <Plus className="h-4 w-4" />
-              <ChevronDown className="h-3 w-3 ml-1" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start">
-            <DropdownMenuItem onClick={() => handleAddTab("shell")}>
-              <Terminal className="h-4 w-4 mr-2" />
-              New Shell
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleAddTab("claude")}>
-              <Play className="h-4 w-4 mr-2" />
-              Run Claude
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleAddTab("yolo")}>
-              <Zap className="h-4 w-4 mr-2 text-yellow-500" />
-              Claude YOLO
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {/* Add tab button */}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+          onClick={handleAddTab}
+          title="New shell tab"
+        >
+          <Plus className="h-4 w-4" />
+        </Button>
 
         {/* Split terminal toggle */}
         {activeTabId && (

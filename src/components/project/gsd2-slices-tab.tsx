@@ -58,7 +58,7 @@ function SliceTasksSection({ projectId, milestoneId, sliceId }: SliceTasksSectio
 
   return (
     <div className="space-y-0.5">
-      {slice.tasks.map((task) => {
+      {[...slice.tasks].sort((a, b) => a.id.localeCompare(b.id)).map((task) => {
         const taskStatus = task.done ? 'done' : 'pending';
         return (
           <div key={task.id} className="flex items-center gap-2 py-1.5 px-3">
@@ -102,7 +102,7 @@ function MilestoneSlicesSection({
   const { data: fullMilestone, isLoading } = useGsd2Milestone(projectId, milestoneId, true);
 
   // Use full milestone slices if available (have task arrays); fall back to summary slices
-  const displaySlices = fullMilestone?.slices ?? slices;
+  const displaySlices = [...(fullMilestone?.slices ?? slices)].sort((a, b) => a.id.localeCompare(b.id));
 
   return (
     <div className="space-y-0.5 mt-0.5">

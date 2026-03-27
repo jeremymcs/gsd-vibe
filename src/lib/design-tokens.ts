@@ -107,9 +107,9 @@ export function getStatusClasses(status: Status) {
 }
 
 /**
- * Project type derived from TechStack flags
+ * Project type derived from TechStack flags + GSD version
  */
-export type ProjectType = "gsd" | "bare";
+export type ProjectType = "gsd2" | "gsd1" | "bare";
 
 /**
  * Project type display metadata
@@ -118,28 +118,40 @@ export const projectTypeConfig: Record<
   ProjectType,
   { label: string; classes: string; tooltip: string }
 > = {
-  gsd: {
-    label: "GSD",
+  gsd2: {
+    label: "GSD-2",
     classes:
-      "bg-secondary text-secondary-foreground border-border",
-    tooltip: "GSD project (.planning/)",
+      "bg-blue-500/10 text-blue-400 border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/30",
+    tooltip: "GSD-2 project (.gsd/ — milestone-based agent workflow)",
+  },
+  gsd1: {
+    label: "GSD-1",
+    classes:
+      "bg-violet-500/10 text-violet-400 border-violet-500/30 dark:bg-violet-500/10 dark:text-violet-400 dark:border-violet-500/30",
+    tooltip: "GSD-1 project (.planning/ — phase-based workflow)",
   },
   bare: {
     label: "Bare",
     classes: "bg-muted text-muted-foreground border-muted",
-    tooltip: "No project framework detected",
+    tooltip: "No GSD workflow detected",
   },
 };
 
 /**
- * Derive project type from TechStack flags
+ * Derive project type from TechStack flags + optional gsd_version string.
+ * If .gsd/ exists → gsd2. If .planning/ exists (and no .gsd/) → gsd1. Otherwise → bare.
  */
-export function getProjectType(techStack: {
-  has_planning: boolean;
-} | null | undefined): ProjectType {
+export function getProjectType(
+  techStack: { has_planning: boolean } | null | undefined,
+  gsdVersion?: string | null,
+): ProjectType {
   if (!techStack) return "bare";
-  if (techStack.has_planning) return "gsd";
-  return "bare";
+  if (!techStack.has_planning) return "bare";
+  // gsd_version is the authoritative signal set at import time
+  if (gsdVersion === "gsd2") return "gsd2";
+  if (gsdVersion === "gsd1") return "gsd1";
+  // Fallback: has_planning with no version → treat as gsd1 (legacy import)
+  return "gsd1";
 }
 
 /**

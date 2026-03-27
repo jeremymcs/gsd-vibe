@@ -395,6 +395,8 @@ export const detectTechStack = (path: string) => invoke<TechStack>("detect_tech_
 export const readProjectFile = (path: string, filename: string) =>
   invoke<string>("read_project_file", { path, filename });
 export const readProjectDocs = (path: string) => invoke<ProjectDocs | null>("read_project_docs", { path });
+export const refreshProjectDescription = (projectId: string, projectPath: string) =>
+  invoke<string | null>("refresh_project_description", { projectId, projectPath });
 export const pickFolder = () => invoke<string | null>("pick_folder");
 
 // Enhanced Import

@@ -275,14 +275,14 @@ export function MainLayout({ children }: MainLayoutProps) {
                               : "gap-3 px-3 py-1.5",
                             isActive
                               ? "text-foreground"
-                              : "text-muted-foreground/70 hover:text-foreground hover:bg-muted/50"
+                              : "text-muted-foreground/50 hover:text-muted-foreground hover:bg-muted/30"
                           )}
                         >
                           {isActive && !sidebarCollapsed && (
-                            <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-4 rounded-full bg-gsd-cyan" />
+                            <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-4 rounded-full bg-primary/80" />
                           )}
                           {isActive && sidebarCollapsed && (
-                            <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-gsd-cyan" />
+                            <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary/80" />
                           )}
                           <Icon className="h-[18px] w-[18px] flex-shrink-0" />
                           {!sidebarCollapsed && (

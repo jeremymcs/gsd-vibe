@@ -137,6 +137,7 @@ pub fn run() {
             commands::filesystem::get_scanner_summary,
             commands::filesystem::read_project_file,
             commands::filesystem::read_project_docs,
+            commands::filesystem::refresh_project_description,
             commands::filesystem::pick_folder,
             commands::filesystem::list_knowledge_files,
             commands::filesystem::list_code_files,

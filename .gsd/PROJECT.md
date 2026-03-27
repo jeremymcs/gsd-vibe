@@ -10,29 +10,20 @@ A single native desktop app that gives full visibility and control over GSD-2 ma
 
 ## Current State
 
-M008 (GSD-2 Feature Parity) partially completed — 3 of 9 slices delivered. The app now has:
+Full GSD-2 feature parity across data and UI layers is complete (M008 + M006). The app has 40 Rust backend commands, a 7-tab visualizer (1,280 lines), HTML report generator, chat mode with PTY parsing (790-line parser), 15 sidebar views for GSD-2 projects with 5 tab-groups nesting ~26 total views, persistent status bar, file watcher, and all prior functionality (health, headless, worktrees, milestones, slices, tasks, diagnostics, knowledge/captures, session browsing, settings).
 
-- **39+ Rust `gsd2_*` backend commands**: All 10 new M008 commands implemented (inspect, steer read/write, undo, recovery, history, hooks, git summary, export progress, expanded visualizer data, HTML report generation, reports index). All registered in `lib.rs`.
-- **Full 7-tab visualizer** (`gsd2-visualizer-tab.tsx`, 1,280 lines): Progress, Dependencies, Metrics, Timeline, Agent, Changes, Export tabs. Complete data shape with critical path (Kahn's BFS), agent activity, changelog entries, by-phase metrics.
-- **HTML report generator**: `gsd2_generate_html_report` produces 12-section self-contained HTML (inlined CSS/JS, SVG DAGs). Reports tab accessible from GSD sidebar section.
-- **Full TypeScript coverage**: 30+ new interfaces in `tauri.ts`, 11 new TanStack Query hooks in `queries.ts`, 9 new query key factories.
-- **Prior functionality**: health, headless, worktrees, milestones, slices, tasks, diagnostics, knowledge/captures, session browsing, onboarding wizard, settings. Linear-inspired flat design (M007).
+Visual redesign complete (M009): cool-blue 220° palette, desaturated status colors, flat single-variant cards, thin-border sidebar with text-only nav, tightened animations, dead CSS cleanup. Both dark and light themes calibrated.
 
-**Remaining gaps (M008 S04–S09 not executed):**
-- Chat mode (PTY parser, message renderer, /gsd command bar) — S04
-- Files view, activity feed, roadmap view, dual terminal — S05
-- Command panels (history, hooks, inspect, steer, undo, export, git, recovery) — S06, but all backend commands are ready
-- Dashboard metrics enhancements, status bar, file-watcher live updates — S07
-- Onboarding wizard extensions — S08
-- End-to-end integration verification — S09
+The dashboard view is minimal (139 lines — cost/tokens/duration/phase/model only). The "+Add Project" button only imports existing folders — no project creation with templates. Raw markdown shows in changelog one-liners and some titles. File watcher handles GSD-1 change types but not GSD-2 query invalidation.
 
 ## Architecture / Key Patterns
 
 - **Two-process model:** React frontend communicates with Rust backend via Tauri `invoke()` IPC
 - **Data layer:** Rust commands read `.gsd/` files directly. TanStack Query hooks in `lib/queries.ts` wrap invocations with caching/polling. Query keys in `lib/query-keys.ts`.
 - **Nav-rail views:** `src/lib/project-views.ts` defines all views. `ViewRenderer` in `project.tsx` switches between them. Each view is a dedicated component.
-- **File watcher:** `use-gsd-file-watcher.ts` detects `.gsd/` changes and can invalidate query caches.
-- **Styling:** Tailwind CSS + shadcn/ui. HSL CSS variables. Linear-inspired flat design (M007). Both dark and light themes.
+- **Tab groups:** 5 group containers (`gsd2-tab-groups.tsx`) nest related sub-views: Progress (visualizer/dashboard/roadmap/activity), Planning (milestones/slices/tasks), Metrics (history/export/reports), Commands (inspect/steer/hooks/undo/git/recovery), Diagnostics (doctor/forensics/skills/knowledge).
+- **File watcher:** `use-gsd-file-watcher.ts` detects `.gsd/` changes and invalidates query caches.
+- **Styling:** Tailwind CSS + shadcn/ui. HSL CSS variables (31 custom properties across `.dark` and `.light` blocks). Cool-blue 220° hue foundation. 6px (0.375rem) border radius globally.
 - **Path alias:** `@/*` maps to `./src/*`
 
 ## Capability Contract
@@ -43,5 +34,7 @@ See `.gsd/REQUIREMENTS.md` for the explicit capability contract, requirement sta
 
 - [x] M005: End-to-End Polish
 - [x] M007: Visual Redesign — Linear-Inspired Retheme
-- [~] M008: GSD-2 Feature Parity — 3/9 slices complete (S01 backend commands, S02 7-tab visualizer, S03 HTML reports). S04–S09 (chat mode, files, command panels, dashboard, onboarding, integration) remain for next cycle.
-- [ ] M009: GSD-2 Feature Parity (Phase 2) — Execute S04–S09: chat mode, files view, command panels, dashboard, onboarding extensions, integration verification
+- [x] M008: GSD-2 Feature Parity (Data Layer)
+- [x] M006: GSD-2 Feature Parity (Interactive Surfaces)
+- [x] M009: Visual Redesign & Navigation Overhaul
+- [ ] M010: Feature Maximization — Dashboard, Templates & Rendering Fixes
