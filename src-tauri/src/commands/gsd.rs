@@ -1,4 +1,4 @@
-// GSD VibeFlow - GSD (Get Stuff Done) Commands
+// GSD Vibe - GSD (Get Stuff Done) Commands
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 //
 // Native .planning/ file parsing and CRUD for GSD projects

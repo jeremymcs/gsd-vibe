@@ -1,4 +1,4 @@
-// GSD VibeFlow - Notification Commands
+// GSD Vibe - Notification Commands
 // Bell icon + dropdown notification center
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

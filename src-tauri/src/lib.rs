@@ -1,4 +1,4 @@
-// GSD VibeFlow - Library Root (Tauri app setup, command registration, event listeners)
+// GSD Vibe - Library Root (Tauri app setup, command registration, event listeners)
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 mod commands;
@@ -114,7 +114,7 @@ pub fn run() {
             let watcher_manager = commands::watcher::WatcherManager::new();
             app.manage(Arc::new(Mutex::new(watcher_manager)));
 
-            tracing::info!("GSD VibeFlow initialized");
+            tracing::info!("GSD Vibe initialized");
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -322,7 +322,7 @@ pub fn run() {
             commands::secrets::has_secret,
         ])
         .run(tauri::generate_context!())
-        .expect("error while running GSD VibeFlow");
+        .expect("error while running GSD Vibe");
 }
 
 #[cfg(test)]

@@ -1,4 +1,4 @@
-// GSD VibeFlow - Security Utilities
+// GSD Vibe - Security Utilities
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 use std::path::{Component, Path, PathBuf};

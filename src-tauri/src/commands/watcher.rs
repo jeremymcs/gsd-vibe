@@ -1,4 +1,4 @@
-// GSD VibeFlow - File Watcher Commands
+// GSD Vibe - File Watcher Commands
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 use notify_debouncer_mini::{new_debouncer, DebouncedEventKind};

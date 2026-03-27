@@ -1,4 +1,4 @@
-// GSD VibeFlow - Settings Commands
+// GSD Vibe - Settings Commands
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 use crate::models::Settings;

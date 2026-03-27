@@ -1,4 +1,4 @@
-// GSD VibeFlow - Data Models
+// GSD Vibe - Data Models
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 use serde::{Deserialize, Serialize};

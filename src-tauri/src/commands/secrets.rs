@@ -1,11 +1,11 @@
-// GSD VibeFlow - OS Keychain Secret Management Commands
+// GSD Vibe - OS Keychain Secret Management Commands
 // Provides secure API key storage via the native OS keychain (macOS Keychain, Windows Credential Manager, Linux Secret Service)
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 use keyring::Entry;
 use serde::{Deserialize, Serialize};
 
-/// Default service name for all GSD VibeFlow keychain entries
+/// Default service name for all GSD Vibe keychain entries
 const DEFAULT_SERVICE: &str = "io.gsd.vibeflow";
 
 /// Known/predefined secret key names that the UI offers as presets
