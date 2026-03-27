@@ -1,4 +1,4 @@
-// GSD VibeFlow - Project Row (dashboard list item)
+// GSD Vibe - Project Row (dashboard list item)
 // Compact row with GSD-2 health metrics and progress
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

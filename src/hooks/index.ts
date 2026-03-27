@@ -1,4 +1,4 @@
-// GSD VibeFlow - Hooks Barrel Export
+// GSD Vibe - Hooks Barrel Export
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 export * from './use-close-warning';

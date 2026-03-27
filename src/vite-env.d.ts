@@ -1,4 +1,4 @@
-// GSD VibeFlow - Vite Environment Type Definitions
+// GSD Vibe - Vite Environment Type Definitions
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 /// <reference types="vite/client" />

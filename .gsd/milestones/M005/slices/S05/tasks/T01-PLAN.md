@@ -130,7 +130,7 @@ Replace the full `highlight.js` import in `file-browser.tsx` with `highlight.js/
 - [ ] `sol: 'solidity'` entry removed
 - [ ] `highlightAuto` call replaced with `return code`
 - [ ] CSS import (`highlight.js/styles/github-dark.css`) unchanged
-- [ ] File header preserved: `// GSD VibeFlow - File Browser Component` + copyright
+- [ ] File header preserved: `// GSD Vibe - File Browser Component` + copyright
 
 ## Observability Impact
 

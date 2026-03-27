@@ -20,7 +20,7 @@ The design follows the reference implementation in `gsd2-health-tab.tsx` and the
 
 1. Create `src/components/shared/loading-states.tsx` with the file header convention:
    ```
-   // GSD VibeFlow - Shared Loading State Primitives
+   // GSD Vibe - Shared Loading State Primitives
    // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
    ```
 

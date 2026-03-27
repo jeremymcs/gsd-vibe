@@ -1,4 +1,4 @@
-// GSD VibeFlow - Dashboard Page
+// GSD Vibe - Dashboard Page
 // Rich project grid — all GSD projects at a glance
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

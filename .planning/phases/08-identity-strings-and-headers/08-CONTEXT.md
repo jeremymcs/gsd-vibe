@@ -6,7 +6,7 @@
 <domain>
 ## Phase Boundary
 
-Rename the app from "Track Your Shit" to "GSD VibeFlow" everywhere: metadata files, user-facing UI strings, and all source file headers. No visual identity changes (those are Phase 9). No new features or UI components.
+Rename the app from "Track Your Shit" to "GSD Vibe" everywhere: metadata files, user-facing UI strings, and all source file headers. No visual identity changes (those are Phase 9). No new features or UI components.
 
 After this phase, a codebase-wide search for "Track Your Shit" returns zero results across all committed files.
 
@@ -39,7 +39,7 @@ After this phase, a codebase-wide search for "Track Your Shit" returns zero resu
 
 ### Source File Headers
 - Pattern to replace: `// Track Your Shit - [purpose]`
-- New pattern: `// GSD VibeFlow - [purpose]`
+- New pattern: `// GSD Vibe - [purpose]`
 - Copyright line stays the same: `// Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>`
 - Scope: all `.rs` files (28 files) and all `.ts`/`.tsx` files (149 files)
 

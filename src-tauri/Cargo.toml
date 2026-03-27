@@ -1,10 +1,10 @@
-# GSD VibeFlow - Rust Backend Configuration
+# GSD Vibe - Rust Backend Configuration
 # Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 [package]
 name = "gsd-vibeflow"
 version = "0.1.1"
-description = "GSD VibeFlow - Desktop app for managing Claude Code projects"
+description = "GSD Vibe - Desktop app for managing Claude Code projects"
 authors = ["Jeremy McSpadden <jeremy@fluxlabs.net>"]
 edition = "2021"
 license = "MIT"

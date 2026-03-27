@@ -1,4 +1,4 @@
-// GSD VibeFlow - Notification Bell Component
+// GSD Vibe - Notification Bell Component
 // Bell icon with unread badge and popover panel
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

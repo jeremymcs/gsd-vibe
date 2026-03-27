@@ -1,4 +1,4 @@
-// GSD VibeFlow - Test Setup
+// GSD Vibe - Test Setup
 // Global test configuration and mocks
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

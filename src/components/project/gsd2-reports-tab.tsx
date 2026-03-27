@@ -1,4 +1,4 @@
-// GSD VibeFlow - GSD-2 HTML Reports Tab Component
+// GSD Vibe - GSD-2 HTML Reports Tab Component
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { FileText, ExternalLink, Loader2 } from 'lucide-react';

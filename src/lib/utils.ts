@@ -1,4 +1,4 @@
-// GSD VibeFlow - Utility Functions
+// GSD Vibe - Utility Functions
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { type ClassValue, clsx } from "clsx";

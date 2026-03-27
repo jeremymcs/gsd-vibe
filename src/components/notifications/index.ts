@@ -1,4 +1,4 @@
-// GSD VibeFlow - Notifications Components
+// GSD Vibe - Notifications Components
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 export { NotificationBell } from './notification-bell';

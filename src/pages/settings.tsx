@@ -1,4 +1,4 @@
-// GSD VibeFlow - Settings Page
+// GSD Vibe - Settings Page
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { useState, useEffect } from "react";
@@ -69,7 +69,7 @@ export function SettingsPage() {
       {/* Header */}
       <PageHeader
         title="Settings"
-        description="Configure GSD VibeFlow preferences"
+        description="Configure GSD Vibe preferences"
         icon={<SettingsIcon className="h-6 w-6 text-muted-foreground" />}
         actions={
           hasChanges ? (
@@ -125,7 +125,7 @@ export function SettingsPage() {
                 <div>
                   <Label htmlFor="settings-start-login" className="text-sm font-medium">Start on login</Label>
                   <p className="text-xs text-muted-foreground">
-                    Launch GSD VibeFlow when you log in
+                    Launch GSD Vibe when you log in
                   </p>
                 </div>
                 <Switch

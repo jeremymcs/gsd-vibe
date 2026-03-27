@@ -1,4 +1,4 @@
-// GSD VibeFlow - Query Key Factory Tests
+// GSD Vibe - Query Key Factory Tests
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { describe, it, expect } from "vitest";

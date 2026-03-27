@@ -1,4 +1,4 @@
-// GSD VibeFlow - Notification Item Component
+// GSD Vibe - Notification Item Component
 // Single notification row with icon, title, message, and timestamp
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

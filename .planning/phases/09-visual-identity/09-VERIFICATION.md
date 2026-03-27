@@ -63,7 +63,7 @@ score: 8/8 must-haves verified
 | ----------- | ----------- | --------------------------------------------------------------------------- | --------- | -------------------------------------------------------------------------------------- |
 | VISL-01     | 09-01       | Color palette migrated to gsd.build brand (black background, white text, cyan accent) | SATISFIED | `--background: 0 0% 0%`, `--gsd-cyan: 189 94% 50%`, zero old brand-* tokens remaining |
 | VISL-02     | 09-02       | New app icon created and applied for all target sizes (macOS, Windows, Linux) | SATISFIED | All 7 icon formats present and correctly sized; GSD logomark verified in SVG source   |
-| VISL-03     | 09-01       | Splash/loading screen updated with GSD VibeFlow branding (if splash exists)  | SATISFIED | No splash screen exists in this project (no splash config in tauri.conf.json, no splash source files); conditional requirement is vacuously met |
+| VISL-03     | 09-01       | Splash/loading screen updated with GSD Vibe branding (if splash exists)  | SATISFIED | No splash screen exists in this project (no splash config in tauri.conf.json, no splash source files); conditional requirement is vacuously met |
 | VISL-04     | 09-01       | CSS design token names updated to remove old brand references                | SATISFIED | Zero occurrences of `brand-blue`, `brand-purple`, `brand-yellow`, `brand-cyan` in all of `src/`; `--gsd-cyan` token established |
 
 All four requirement IDs from PLAN frontmatter (VISL-01, VISL-02, VISL-03, VISL-04) are accounted for with no orphaned requirements.

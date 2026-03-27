@@ -41,7 +41,7 @@ metrics:
 
 # Phase 08 Plan 02: Identity Strings and Headers Summary
 
-Replace all user-facing "Track Your Shit" strings with "GSD VibeFlow" across UI components, test files, Rust doc comments, documentation, root HTML, and the marketing website.
+Replace all user-facing "Track Your Shit" strings with "GSD Vibe" across UI components, test files, Rust doc comments, documentation, root HTML, and the marketing website.
 
 ## What Was Built
 
@@ -52,7 +52,7 @@ All 15 files listed in the plan were updated. After both tasks, a grep for "Trac
 ### Task 1: Replace all UI strings, page title, and Rust doc comments (commit: c2b319d)
 
 Updated 12 files:
-- `index.html` page title: `<title>GSD VibeFlow</title>`
+- `index.html` page title: `<title>GSD Vibe</title>`
 - `src/components/layout/main-layout.tsx` sidebar header text
 - `src/components/settings/theme-customization.tsx` CardDescription
 - `src/components/settings/export-data-dialog.tsx` export description
@@ -68,7 +68,7 @@ Updated 12 files:
 ### Task 2: Update README.md, CLAUDE.md, and website/index.html (commit: 4b78f4f)
 
 Updated 3 files:
-- `README.md`: title `# GSD VibeFlow`, header comment updated; zero remaining legacy name references
+- `README.md`: title `# GSD Vibe`, header comment updated; zero remaining legacy name references
 - `CLAUDE.md`: project overview and file header convention example updated; `track-your-shit.db` filename preserved
 - `website/index.html`: all 9 occurrences replaced — comment, `<title>`, OG title, nav brand, hero h1 (two-line), dashboard alt text, body text, project-detail alt text, features section, CTA heading, footer copyright
 
@@ -89,7 +89,7 @@ Tests: `pnpm test` shows 128 passing. 4 pre-existing failures in `main-layout.te
 
 ### Out-of-Scope Discoveries
 
-The website/index.html `<title>` tag (line 8) already contained a partial update: `Track Your Shit - The Official GSD VibeFlow Desktop App`. Both halves of the title were updated to produce the clean `GSD VibeFlow - The Official Desktop App`. This was handled inline per Rule 1.
+The website/index.html `<title>` tag (line 8) already contained a partial update: `Track Your Shit - The Official GSD Vibe Desktop App`. Both halves of the title were updated to produce the clean `GSD Vibe - The Official Desktop App`. This was handled inline per Rule 1.
 
 No architectural changes required. Plan executed as specified.
 

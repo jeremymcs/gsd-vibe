@@ -1,4 +1,4 @@
-// GSD VibeFlow - Import Existing Project Dialog
+// GSD Vibe - Import Existing Project Dialog
 // Import an existing codebase into GSD
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
@@ -183,7 +183,7 @@ export function ImportProjectDialog({
             {step === "select" && "Select a folder containing your existing project."}
             {step === "detecting" && "Detecting project type and structure..."}
             {step === "configure" && "Review detected project details."}
-            {step === "importing" && "Importing project into GSD VibeFlow..."}
+            {step === "importing" && "Importing project into GSD Vibe..."}
             {step === "complete" && "Project imported successfully."}
             {step === "error" && "Failed to import project."}
           </DialogDescription>

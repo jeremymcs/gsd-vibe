@@ -54,7 +54,7 @@ None — discussion stayed within phase scope.
 |----|-------------|-----------------|
 | VISL-01 | Color palette migrated to gsd.build brand (black background, white text, cyan accent) | Exact token values documented; 88 usages across 33 files identified; replacement values specified in UI-SPEC |
 | VISL-02 | New app icon created and applied for all target sizes (macOS, Windows, Linux) | Current SVG identified (blue/purple clipboard); replacement spec documented; `rsvg-convert` and `convert` available on machine for PNG generation |
-| VISL-03 | Splash/loading screen updated with GSD VibeFlow branding (if splash exists) | No splash screen exists; satisfied by `backgroundColor: "#000000"` in `tauri.conf.json` — single-line edit |
+| VISL-03 | Splash/loading screen updated with GSD Vibe branding (if splash exists) | No splash screen exists; satisfied by `backgroundColor: "#000000"` in `tauri.conf.json` — single-line edit |
 | VISL-04 | CSS design token names updated to remove old brand references | 4 tokens to rename/delete; Tailwind config `brand.*` map and 3 box shadow utilities also need updating; `theme-customization.tsx` and `theme-provider.tsx` require updates to remove accent presets |
 </phase_requirements>
 
@@ -328,7 +328,7 @@ Verified from direct source inspection:
   --input: 0 0% 8%;
   --ring: 189 94% 43%;
 
-  /* GSD VibeFlow Brand Color */
+  /* GSD Vibe Brand Color */
   --gsd-cyan: 189 94% 50%;
 
   /* Status Colors - Semantic (Dark - higher contrast) */
@@ -365,7 +365,7 @@ gsd: {
 ```json
 // Source: src-tauri/tauri.conf.json — add to app.windows[0]
 {
-  "title": "GSD VibeFlow",
+  "title": "GSD Vibe",
   "width": 1200,
   "height": 800,
   "minWidth": 900,

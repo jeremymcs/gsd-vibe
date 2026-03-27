@@ -1,4 +1,4 @@
-// GSD VibeFlow - Terminal Page (Unified)
+// GSD Vibe - Terminal Page (Unified)
 // Interactive shell with PTY access + execution output viewer
 // Supports both full mode (/terminal route) and compact mode (persistent bottom panel)
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>

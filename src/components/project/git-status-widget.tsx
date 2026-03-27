@@ -1,4 +1,4 @@
-// GSD VibeFlow - Git Status Widget (OV-01)
+// GSD Vibe - Git Status Widget (OV-01)
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { useState } from 'react';

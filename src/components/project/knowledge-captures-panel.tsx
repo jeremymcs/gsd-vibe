@@ -1,4 +1,4 @@
-// GSD VibeFlow - Knowledge & Captures Panel Component
+// GSD Vibe - Knowledge & Captures Panel Component
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { useState } from "react";

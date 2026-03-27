@@ -1,4 +1,4 @@
-// GSD VibeFlow - React Query Hooks
+// GSD Vibe - React Query Hooks
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";

@@ -1,4 +1,4 @@
-// GSD VibeFlow - Headless Session Hook
+// GSD Vibe - Headless Session Hook
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { useState, useRef, useCallback, useEffect } from 'react';

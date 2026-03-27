@@ -1,4 +1,4 @@
-// GSD VibeFlow - GSD-2 Command Panels
+// GSD Vibe - GSD-2 Command Panels
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { useState } from 'react';

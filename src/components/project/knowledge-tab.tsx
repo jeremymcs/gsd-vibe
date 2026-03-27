@@ -1,4 +1,4 @@
-// GSD VibeFlow - Knowledge Tab Component
+// GSD Vibe - Knowledge Tab Component
 // Knowledge viewer with Research sub-tab for .planning/research/ files
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

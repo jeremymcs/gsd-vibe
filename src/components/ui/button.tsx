@@ -1,4 +1,4 @@
-// GSD VibeFlow - Button Component
+// GSD Vibe - Button Component
 // Enhanced with brand gradients and improved states
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

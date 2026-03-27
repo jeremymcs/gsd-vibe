@@ -1,4 +1,4 @@
-// GSD VibeFlow - Terminal Search Bar Component
+// GSD Vibe - Terminal Search Bar Component
 // Overlay search bar for xterm.js terminals using SearchAddon
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

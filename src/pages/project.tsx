@@ -1,4 +1,4 @@
-// GSD VibeFlow - Project Page
+// GSD Vibe - Project Page
 // Sidebar-driven views — no more nested tabs
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
@@ -224,7 +224,7 @@ export function ProjectPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Remove Project?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will remove <span className="font-semibold">{project.name}</span> from GSD VibeFlow.
+              This will remove <span className="font-semibold">{project.name}</span> from GSD Vibe.
               <br /><br />
               <span className="text-foreground">Your project files will NOT be deleted.</span> The project folder at{" "}
               <code className="text-xs bg-muted px-1 py-0.5 rounded">{truncatePath(projectPath, 50)}</code>{" "}

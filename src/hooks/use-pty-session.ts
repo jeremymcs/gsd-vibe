@@ -1,4 +1,4 @@
-// GSD VibeFlow - PTY Session Hook
+// GSD Vibe - PTY Session Hook
 // React hook for managing PTY session state and events
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

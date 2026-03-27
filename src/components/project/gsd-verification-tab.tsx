@@ -1,4 +1,4 @@
-// GSD VibeFlow - GSD Verification Tab
+// GSD Vibe - GSD Verification Tab
 // Phase verification dashboard for GSD projects
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

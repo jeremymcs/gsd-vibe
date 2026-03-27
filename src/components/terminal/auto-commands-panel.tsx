@@ -1,4 +1,4 @@
-// GSD VibeFlow - Auto Commands Panel
+// GSD Vibe - Auto Commands Panel
 // Panel for managing pre/post execution auto-commands
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

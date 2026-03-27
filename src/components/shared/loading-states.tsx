@@ -1,4 +1,4 @@
-// GSD VibeFlow - Shared Loading State Primitives
+// GSD Vibe - Shared Loading State Primitives
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { type ReactNode } from "react";

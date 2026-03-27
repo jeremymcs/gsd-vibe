@@ -1,4 +1,4 @@
-// GSD VibeFlow - Terminal Components
+// GSD Vibe - Terminal Components
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 export { TerminalView, type TerminalViewRef } from "./terminal-view";

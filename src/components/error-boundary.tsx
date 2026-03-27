@@ -1,4 +1,4 @@
-// GSD VibeFlow - Error Boundary Component
+// GSD Vibe - Error Boundary Component
 // Catches React runtime errors to prevent white-screen crashes
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

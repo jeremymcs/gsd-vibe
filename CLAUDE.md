@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-GSD VibeFlow is a native desktop application for managing Claude Code projects. It provides project management, terminal sessions (with tmux support), knowledge base browsing, GSD workflow integration, git operations, and more. Built with Tauri 2.x (Rust backend + React frontend).
+GSD Vibe is a native desktop application for managing Claude Code projects. It provides project management, terminal sessions (with tmux support), knowledge base browsing, GSD workflow integration, git operations, and more. Built with Tauri 2.x (Rust backend + React frontend).
 
 ## Development Commands
 
@@ -75,7 +75,7 @@ pnpm format:check
 
 All files must include:
 ```
-// GSD VibeFlow - [File Purpose]
+// GSD Vibe - [File Purpose]
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 ```
 

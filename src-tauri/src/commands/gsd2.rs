@@ -365,11 +365,11 @@ fn parse_gsd2_state_md(content: &str) -> Gsd2StateParsed {
     }
 }
 
-/// Split a "ID — Title" or "ID - Title" string into (id, title) parts.
+/// Split a "ID: Title", "ID — Title", or "ID - Title" string into (id, title) parts.
 /// Returns (full_string, None) if no separator is found.
+/// Priority: `: ` first (GSD-pi STATE.md format), then ` — `, then ` - `.
 fn split_id_and_title(value: &str) -> (String, Option<String>) {
-    // Try em-dash separator first, then ASCII dash
-    for sep in [" — ", " - "] {
+    for sep in [": ", " — ", " - "] {
         if let Some(pos) = value.find(sep) {
             let id = value[..pos].trim().to_string();
             let title = value[pos + sep.len()..].trim().to_string();
@@ -447,19 +447,14 @@ pub fn get_health_from_dir(project_path: &str) -> Gsd2Health {
 fn parse_roadmap_slices(content: &str) -> Vec<Gsd2Slice> {
     let mut slices = Vec::new();
 
-    // Find a slices section: "## Slices", "## Slice Overview" (GSD-pi table format), etc.
+    // Find the "## Slices" section (case-insensitive)
     let lower = content.to_lowercase();
     let section_start = lower
         .lines()
         .enumerate()
         .find_map(|(i, line)| {
             let t = line.trim();
-            if t == "## slices"
-                || t.starts_with("## slices ")
-                || t.starts_with("## slices\t")
-                || t == "## slice overview"
-                || t.starts_with("## slice overview ")
-            {
+            if t == "## slices" || t.starts_with("## slices ") || t.starts_with("## slices\t") {
                 Some(i)
             } else {
                 None
@@ -473,6 +468,7 @@ fn parse_roadmap_slices(content: &str) -> Vec<Gsd2Slice> {
 
     let lines: Vec<&str> = content.lines().collect();
 
+    // Regex-like parsing: match `- [ ] **ID: Title** rest`
     // We avoid the regex crate — use manual string parsing.
     for line in &lines[start_line..] {
         let trimmed = line.trim();
@@ -482,83 +478,16 @@ fn parse_roadmap_slices(content: &str) -> Vec<Gsd2Slice> {
             break;
         }
 
-        // Format A: checkbox list  `- [ ] **S01: Title** `risk:low` `depends:[]``
-        if trimmed.starts_with("- [") {
-            if let Some(slice) = parse_checkbox_item(trimmed, true) {
-                slices.push(Gsd2Slice {
-                    id: slice.0,
-                    title: slice.1,
-                    done: slice.2,
-                    risk: slice.3,
-                    dependencies: slice.4,
-                    tasks: Vec::new(),
-                });
-            }
-            continue;
-        }
-
-        // Format B: GSD-pi markdown table row
-        // `| S01 | Enhanced Dashboard | medium | — | ✅ | After this text |`
-        if trimmed.starts_with('|') {
-            let cols: Vec<&str> = trimmed.split('|').map(|c| c.trim()).collect();
-            // Need at least 6 pipe-delimited fields: |empty|ID|Title|Risk|Depends|Done|...
-            if cols.len() < 6 {
-                continue;
-            }
-            let id = cols[1].trim();
-            let title = cols[2].trim();
-            let risk_raw = cols[3].trim();
-            let depends_raw = cols[4].trim();
-            let done_raw = cols[5].trim();
-
-            // Skip table header/separator rows
-            if id.eq_ignore_ascii_case("id")
-                || id.eq_ignore_ascii_case("slice")
-                || id.starts_with('-')
-                || id.is_empty()
-            {
-                continue;
-            }
-            // Must look like a slice ID: S followed by one or more digits
-            let is_slice_id = id.starts_with('S')
-                && id.len() >= 2
-                && id[1..].chars().next().map_or(false, |c| c.is_ascii_digit());
-            if !is_slice_id {
-                continue;
-            }
-
-            let done = done_raw.contains('\u{2705}')  // ✅
-                || done_raw.contains("[x]")
-                || done_raw.eq_ignore_ascii_case("done")
-                || done_raw.eq_ignore_ascii_case("yes");
-
-            let risk = if risk_raw.is_empty() || risk_raw == "\u{2014}" || risk_raw == "-" {
-                None
-            } else {
-                Some(risk_raw.to_lowercase())
-            };
-
-            let dependencies: Vec<String> =
-                if depends_raw.is_empty() || depends_raw == "\u{2014}" || depends_raw == "-" {
-                    Vec::new()
-                } else {
-                    depends_raw
-                        .split(',')
-                        .map(|s| s.trim().to_string())
-                        .filter(|s| !s.is_empty())
-                        .collect()
-                };
-
-            if !title.is_empty() {
-                slices.push(Gsd2Slice {
-                    id: id.to_string(),
-                    title: title.to_string(),
-                    done,
-                    risk,
-                    dependencies,
-                    tasks: Vec::new(),
-                });
-            }
+        // Match: `- [ ] **ID: Title** rest` or `- [x] ...`
+        if let Some(slice) = parse_checkbox_item(trimmed, true) {
+            slices.push(Gsd2Slice {
+                id: slice.0,
+                title: slice.1,
+                done: slice.2,
+                risk: slice.3,
+                dependencies: slice.4,
+                tasks: Vec::new(),
+            });
         }
     }
 
@@ -762,8 +691,8 @@ fn milestone_id_from_dir_name(name: &str) -> String {
 }
 
 /// Walk the `.gsd/milestones/` directory and return all milestones sorted by ID.
-/// Slices are populated from ROADMAP.md (both checkbox and table formats).
-/// A milestone without a ROADMAP.md is marked done if a MILESTONE-SUMMARY.md exists.
+/// Slices are populated from ROADMAP.md; tasks within slices are NOT populated here
+/// (tasks require a separate PLAN.md per slice).
 pub fn list_milestones_from_dir(milestones_dir: &Path) -> Vec<Gsd2Milestone> {
     let read_dir = match std::fs::read_dir(milestones_dir) {
         Ok(r) => r,
@@ -780,49 +709,37 @@ pub fn list_milestones_from_dir(milestones_dir: &Path) -> Vec<Gsd2Milestone> {
         let id = milestone_id_from_dir_name(&dir_name);
         let milestone_dir = entry.path();
 
-        // Read ROADMAP.md once (avoids double filesystem read)
-        let roadmap_content: Option<String> =
-            resolve_file_by_id(&milestone_dir, &id, "ROADMAP")
-                .and_then(|f| std::fs::read_to_string(milestone_dir.join(&f)).ok());
+        // Try to find a ROADMAP.md (three-tier resolution)
+        let slices = if let Some(roadmap_file) = resolve_file_by_id(&milestone_dir, &id, "ROADMAP")
+        {
+            let roadmap_path = milestone_dir.join(&roadmap_file);
+            match std::fs::read_to_string(&roadmap_path) {
+                Ok(content) => parse_roadmap_slices(&content),
+                Err(_) => Vec::new(),
+            }
+        } else {
+            Vec::new()
+        };
 
-        // Parse slices from ROADMAP.md (handles both checkbox and table formats)
-        let slices = roadmap_content
-            .as_deref()
-            .map(parse_roadmap_slices)
-            .unwrap_or_default();
+        // Get title from ROADMAP.md frontmatter or use dir_name
+        let title = if let Some(roadmap_file) = resolve_file_by_id(&milestone_dir, &id, "ROADMAP")
+        {
+            let roadmap_path = milestone_dir.join(&roadmap_file);
+            std::fs::read_to_string(&roadmap_path)
+                .ok()
+                .and_then(|content| {
+                    let (fm, _body) = parse_frontmatter(&content);
+                    fm.get("milestone")
+                        .or_else(|| fm.get("title"))
+                        .cloned()
+                        .or_else(|| extract_title_from_h1(&content, &id))
+                })
+                .unwrap_or_else(|| dir_name.clone())
+        } else {
+            dir_name.clone()
+        };
 
-        // Extract title: ROADMAP.md H1 heading ("# ID: Title") takes priority,
-        // then frontmatter "milestone"/"title" keys, then dir_name fallback.
-        let title = roadmap_content
-            .as_deref()
-            .and_then(|c| {
-                // Try frontmatter first
-                let (fm, _) = parse_frontmatter(c);
-                fm.get("milestone").or_else(|| fm.get("title")).cloned()
-                    // Then H1: "# M010: Feature Maximization..."
-                    .or_else(|| {
-                        c.lines().find(|l| l.trim().starts_with("# ")).map(|l| {
-                            let heading = l.trim()[2..].trim();
-                            // Strip leading "ID: " prefix (handles double-ID case too)
-                            let prefix = format!("{}: ", id);
-                            let mut rem = heading;
-                            while rem.starts_with(prefix.as_str()) {
-                                rem = &rem[prefix.len()..];
-                            }
-                            if rem.is_empty() || rem == id { heading.to_string() } else { rem.to_string() }
-                        })
-                    })
-            })
-            .unwrap_or_else(|| dir_name.clone());
-
-        // A milestone is done if:
-        // a) All its slices are done (ROADMAP exists and all [x]/✅), OR
-        // b) A {id}-SUMMARY.md / MILESTONE-SUMMARY.md file exists (older milestones)
-        let has_milestone_summary = resolve_file_by_id(&milestone_dir, &id, "SUMMARY").is_some()
-            || resolve_file_by_id(&milestone_dir, &id, "MILESTONE-SUMMARY").is_some();
-
-        let done = has_milestone_summary
-            || (!slices.is_empty() && slices.iter().all(|s| s.done));
+        let done = !slices.is_empty() && slices.iter().all(|s| s.done);
 
         milestones.push(Gsd2Milestone {
             id,
@@ -870,41 +787,25 @@ pub fn walk_milestones_with_tasks(milestones_dir: &Path) -> Vec<Gsd2Milestone> {
     milestones
 }
 
-/// Resolve the content of a slice's PLAN.md.
-/// Checks three layouts:
-/// 1. milestone_dir/S01[-desc]/S01-PLAN.md        (worktree nested)
-/// 2. milestone_dir/slices/S01/S01-PLAN.md         (GSD-pi standard)
-/// 3. milestone_dir/S01-PLAN.md                    (flat legacy)
+/// Resolve the content of a slice's PLAN.md (nested or flat layout).
 fn resolve_slice_plan_content(
     milestone_dir: &Path,
     _milestone_id: &str,
     slice_id: &str,
 ) -> Option<String> {
-    // Layout 1: milestone_dir/S01[-desc]/
+    // Try nested: milestone_dir/S01[-DESCRIPTOR]/S01-PLAN.md
     if let Some(slice_sub) = resolve_dir_by_id(milestone_dir, slice_id) {
         let nested = milestone_dir.join(&slice_sub);
         if let Some(plan_file) = resolve_file_by_id(&nested, slice_id, "PLAN") {
-            if let Ok(c) = std::fs::read_to_string(nested.join(&plan_file)) {
-                return Some(c);
+            if let Ok(content) = std::fs::read_to_string(nested.join(&plan_file)) {
+                return Some(content);
             }
         }
     }
-    // Layout 2: milestone_dir/slices/S01/
-    let slices_subdir = milestone_dir.join("slices");
-    if slices_subdir.is_dir() {
-        if let Some(slice_sub) = resolve_dir_by_id(&slices_subdir, slice_id) {
-            let nested = slices_subdir.join(&slice_sub);
-            if let Some(plan_file) = resolve_file_by_id(&nested, slice_id, "PLAN") {
-                if let Ok(c) = std::fs::read_to_string(nested.join(&plan_file)) {
-                    return Some(c);
-                }
-            }
-        }
-    }
-    // Layout 3: flat milestone_dir/S01-PLAN.md
+    // Try flat: milestone_dir/S01-PLAN.md
     if let Some(plan_file) = resolve_file_by_id(milestone_dir, slice_id, "PLAN") {
-        if let Ok(c) = std::fs::read_to_string(milestone_dir.join(&plan_file)) {
-            return Some(c);
+        if let Ok(content) = std::fs::read_to_string(milestone_dir.join(&plan_file)) {
+            return Some(content);
         }
     }
     None
@@ -1038,6 +939,7 @@ pub async fn gsd2_get_milestone(
         .get("milestone")
         .or_else(|| fm.get("title"))
         .cloned()
+        .or_else(|| extract_title_from_h1(&content, &milestone_id))
         .unwrap_or_else(|| dir_name.clone());
 
     let dependencies: Vec<String> = fm
@@ -3113,6 +3015,68 @@ fn compute_critical_path(nodes: &[(String, Vec<String>)]) -> CriticalPathInfo {
 }
 
 // ============================================================
+// Markdown utility helpers
+// ============================================================
+
+/// Strip inline markdown formatting (`**`, `*`, backticks, `__`) from a string.
+/// No regex — pure `.replace()` chaining. Safe to call on any string.
+pub fn strip_markdown_inline(s: &str) -> String {
+    s.replace("**", "")
+        .replace("__", "")
+        .replace('*', "")
+        .replace('`', "")
+}
+
+/// Scan `body` for the first `**bold line**` that appears after the H1 heading,
+/// skipping blank lines between the H1 and the bold line.
+/// Returns the stripped text, or an empty string if none is found.
+pub fn extract_one_liner_from_body(body: &str) -> String {
+    let mut past_h1 = false;
+    for line in body.lines() {
+        let trimmed = line.trim();
+        if !past_h1 {
+            if trimmed.starts_with("# ") {
+                past_h1 = true;
+            }
+            continue;
+        }
+        // Skip blank lines after H1
+        if trimmed.is_empty() {
+            continue;
+        }
+        // A bold-only line: starts and ends with **
+        if trimmed.starts_with("**") && trimmed.ends_with("**") && trimmed.len() > 4 {
+            return strip_markdown_inline(trimmed);
+        }
+        // Stop at next heading or non-bold content
+        break;
+    }
+    String::new()
+}
+
+/// Parse the first H1 heading in `content` and extract the title by stripping the
+/// `# ID: ` prefix (handles double-prefix like `# M010: M010: Title`).
+/// Returns `None` if there is no H1 or if the H1 doesn't start with `# {milestone_id}:`.
+pub fn extract_title_from_h1(content: &str, milestone_id: &str) -> Option<String> {
+    for line in content.lines() {
+        if line.starts_with("# ") {
+            let mut title = line.trim_start_matches("# ").trim().to_string();
+            // Strip repeated "ID: " prefixes (handles double-prefix edge case)
+            let prefix = format!("{}: ", milestone_id);
+            while title.starts_with(&prefix) {
+                title = title[prefix.len()..].trim().to_string();
+            }
+            // Only return if the H1 had content after stripping
+            if !title.is_empty() {
+                return Some(title);
+            }
+            return None;
+        }
+    }
+    None
+}
+
+// ============================================================
 // Changelog helper
 // ============================================================
 
@@ -3122,7 +3086,15 @@ fn load_slice_changelog(slice_dir: &Path, slice_id: &str) -> Option<ChangelogEnt
     let content = std::fs::read_to_string(&summary_file).ok()?;
     let (fm, body) = parse_frontmatter(&content);
 
-    let one_liner = fm.get("one_liner").cloned().unwrap_or_default();
+    let one_liner = {
+        let raw = fm.get("one_liner").cloned().unwrap_or_default();
+        if raw.is_empty() {
+            // GSD auto-mode writes the one_liner as a **bold body line** after the H1
+            strip_markdown_inline(&extract_one_liner_from_body(&body))
+        } else {
+            raw
+        }
+    };
     let completed_at = fm.get("completed_at").cloned();
 
     // Parse files_modified section from the body
@@ -5365,6 +5337,113 @@ mod tests {
         assert_eq!(progress.tasks_done, 0);
         assert_eq!(progress.tasks_total, 0);
         let _ = fs::remove_dir_all(&dir);
+    }
+
+    // ---- split_id_and_title (colon format) ----
+
+    #[test]
+    fn split_id_and_title_handles_colon_format() {
+        // GSD-pi STATE.md format: "ID: Title"
+        let (id, title) = split_id_and_title("S02: Encoding & Rendering Fixes");
+        assert_eq!(id, "S02");
+        assert_eq!(title, Some("Encoding & Rendering Fixes".to_string()));
+
+        // Colon format with milestone ID
+        let (id2, title2) = split_id_and_title("M010: Some Milestone Title");
+        assert_eq!(id2, "M010");
+        assert_eq!(title2, Some("Some Milestone Title".to_string()));
+
+        // Mixed: colon wins over em-dash because `: ` is tried first
+        let (id3, title3) = split_id_and_title("M010: Title — Subtitle");
+        assert_eq!(id3, "M010");
+        assert_eq!(title3, Some("Title — Subtitle".to_string()));
+
+        // Legacy em-dash format still works
+        let (id4, title4) = split_id_and_title("M005 — Legacy Title");
+        assert_eq!(id4, "M005");
+        assert_eq!(title4, Some("Legacy Title".to_string()));
+
+        // No separator: returns full string
+        let (id5, title5) = split_id_and_title("M005");
+        assert_eq!(id5, "M005");
+        assert_eq!(title5, None);
+    }
+
+    // ---- extract_one_liner_from_body ----
+
+    #[test]
+    fn extract_one_liner_from_body_finds_bold_line() {
+        // Bold line immediately after H1
+        let body = "# T01: Some Task\n**Added new endpoint for user login**\n\nMore text.";
+        assert_eq!(
+            extract_one_liner_from_body(body),
+            "Added new endpoint for user login"
+        );
+
+        // Bold line with blank lines between H1 and bold
+        let body2 = "# T01: Some Task\n\n\n**Bold line after blanks**\n\nMore text.";
+        assert_eq!(
+            extract_one_liner_from_body(body2),
+            "Bold line after blanks"
+        );
+
+        // No bold line — non-bold content stops the scan
+        let body3 = "# T01: Some Task\n\nRegular paragraph.\n\n**Not reached**";
+        assert_eq!(extract_one_liner_from_body(body3), "");
+
+        // No H1 at all — returns empty
+        let body4 = "## Section\n**Bold**\n";
+        assert_eq!(extract_one_liner_from_body(body4), "");
+    }
+
+    // ---- extract_title_from_h1 ----
+
+    #[test]
+    fn extract_title_from_h1_strips_id_prefix() {
+        // Normal case: "# M010: Some Milestone Title"
+        let content = "# M010: Some Milestone Title\n\n## Slices\n";
+        assert_eq!(
+            extract_title_from_h1(content, "M010"),
+            Some("Some Milestone Title".to_string())
+        );
+
+        // Double-ID prefix: "# M010: M010: Title"
+        let content2 = "# M010: M010: Encoding & Rendering Fixes\n\n## Slices\n";
+        assert_eq!(
+            extract_title_from_h1(content2, "M010"),
+            Some("Encoding & Rendering Fixes".to_string())
+        );
+
+        // No H1 in content
+        let content3 = "## Slices\n- [ ] **S01: Something**\n";
+        assert_eq!(extract_title_from_h1(content3, "M010"), None);
+
+        // H1 that doesn't start with this milestone's prefix — still returns the full heading text
+        let content4 = "# Unrelated Heading\n\n## Slices\n";
+        assert_eq!(
+            extract_title_from_h1(content4, "M010"),
+            Some("Unrelated Heading".to_string())
+        );
+    }
+
+    // ---- strip_markdown_inline ----
+
+    #[test]
+    fn strip_markdown_inline_removes_formatting() {
+        assert_eq!(strip_markdown_inline("**bold**"), "bold");
+        assert_eq!(strip_markdown_inline("*italic*"), "italic");
+        assert_eq!(strip_markdown_inline("`code`"), "code");
+        assert_eq!(strip_markdown_inline("__underline__"), "underline");
+
+        // Nested / combined
+        assert_eq!(strip_markdown_inline("**`nested`**"), "nested");
+        assert_eq!(strip_markdown_inline("__*both*__"), "both");
+
+        // Plain text is unchanged
+        assert_eq!(strip_markdown_inline("plain text"), "plain text");
+
+        // Empty string
+        assert_eq!(strip_markdown_inline(""), "");
     }
 }
 

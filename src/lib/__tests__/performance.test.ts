@@ -1,4 +1,4 @@
-// GSD VibeFlow - Performance Monitoring Tests
+// GSD Vibe - Performance Monitoring Tests
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";

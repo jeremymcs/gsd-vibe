@@ -1,4 +1,4 @@
-// GSD VibeFlow - Diagnostics Panel Components
+// GSD Vibe - Diagnostics Panel Components
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import {

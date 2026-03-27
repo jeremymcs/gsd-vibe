@@ -1,7 +1,7 @@
 ---
 gsd_state_version: 1.0
 milestone: v1.1
-milestone_name: GSD VibeFlow Rebrand
+milestone_name: GSD Vibe Rebrand
 status: archived
 stopped_at: Milestone complete — archived 2026-03-21
 last_updated: "2026-03-21T20:49:40.512Z"

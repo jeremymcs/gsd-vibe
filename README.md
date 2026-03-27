@@ -1,5 +1,5 @@
-# GSD VibeFlow
-<!-- GSD VibeFlow - Project README -->
+# GSD Vibe
+<!-- GSD Vibe - Project README -->
 <!-- Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net> -->
 
 A native desktop application for managing Claude Code projects with project management, terminal sessions (tmux support), knowledge base browsing, GSD workflow integration, git operations, and more.

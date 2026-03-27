@@ -1,9 +1,9 @@
-# Roadmap: GSD VibeFlow
+# Roadmap: GSD Vibe
 
 ## Milestones
 
 - ✅ **v1.0 GSD-2 Integration** — Phases 1-7 (shipped 2026-03-21)
-- ✅ **v1.1 GSD VibeFlow Rebrand** — Phases 8-10 (shipped 2026-03-21)
+- ✅ **v1.1 GSD Vibe Rebrand** — Phases 8-10 (shipped 2026-03-21)
 
 ## Phases
 
@@ -15,7 +15,7 @@ Full details: `.planning/milestones/v1.0-ROADMAP.md`
 </details>
 
 <details>
-<summary>✅ v1.1 GSD VibeFlow Rebrand (Phases 8-10) — SHIPPED 2026-03-21</summary>
+<summary>✅ v1.1 GSD Vibe Rebrand (Phases 8-10) — SHIPPED 2026-03-21</summary>
 
 Full details: `.planning/milestones/v1.1-ROADMAP.md`
 

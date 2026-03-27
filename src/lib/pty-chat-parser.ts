@@ -1,4 +1,4 @@
-// GSD VibeFlow - PTY Chat Parser
+// GSD Vibe - PTY Chat Parser
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 /**

@@ -1,4 +1,4 @@
-// GSD VibeFlow - Main Entry Point
+// GSD Vibe - Main Entry Point
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import React from "react";

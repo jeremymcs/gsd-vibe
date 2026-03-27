@@ -1,8 +1,8 @@
-# GSD VibeFlow
+# GSD Vibe
 
 ## What This Is
 
-GSD VibeFlow is a native desktop application for managing Claude Code / GSD-2 projects. Built with Tauri 2.x (Rust backend + React frontend), it provides project management, terminal sessions (with tmux support), knowledge base browsing, GSD workflow integration, git operations, and more. It aims to be the desktop-native equivalent of the gsd-2 web app (`~/Github/gsd-2/web/`), providing full feature parity with that Next.js application while leveraging Tauri's native capabilities.
+GSD Vibe is a native desktop application for managing Claude Code / GSD-2 projects. Built with Tauri 2.x (Rust backend + React frontend), it provides project management, terminal sessions (with tmux support), knowledge base browsing, GSD workflow integration, git operations, and more. It aims to be the desktop-native equivalent of the gsd-2 web app (`~/Github/gsd-2/web/`), providing full feature parity with that Next.js application while leveraging Tauri's native capabilities.
 
 ## Core Value
 

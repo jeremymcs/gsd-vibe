@@ -1,4 +1,4 @@
-// GSD VibeFlow - Dashboard Status Bar
+// GSD Vibe - Dashboard Status Bar
 // Aggregate stats across all projects: counts, GSD-2 totals, active sessions
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

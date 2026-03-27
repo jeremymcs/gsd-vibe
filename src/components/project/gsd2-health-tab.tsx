@@ -1,4 +1,4 @@
-// GSD VibeFlow - GSD-2 Health Tab Component
+// GSD Vibe - GSD-2 Health Tab Component
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { useState, useEffect } from 'react';

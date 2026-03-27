@@ -1,4 +1,4 @@
-// GSD VibeFlow - Headless Tab Component
+// GSD Vibe - Headless Tab Component
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { useRef, useEffect } from 'react';

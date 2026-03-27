@@ -1,4 +1,4 @@
-# GSD VibeFlow - Project Knowledge
+# GSD Vibe - Project Knowledge
 
 ## Worktree / node_modules Gotcha
 

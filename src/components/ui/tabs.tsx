@@ -1,4 +1,4 @@
-// GSD VibeFlow - Tabs Component
+// GSD Vibe - Tabs Component
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import * as React from "react";

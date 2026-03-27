@@ -1,4 +1,4 @@
-// GSD VibeFlow - Visualizer Tab Component
+// GSD Vibe - Visualizer Tab Component
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { useState, useEffect, useCallback } from 'react';

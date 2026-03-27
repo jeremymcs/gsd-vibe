@@ -1,4 +1,4 @@
-// GSD VibeFlow - GSD-2 Dashboard View
+// GSD Vibe - GSD-2 Dashboard View
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { LayoutDashboard } from 'lucide-react';

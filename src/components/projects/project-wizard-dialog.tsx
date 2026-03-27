@@ -1,4 +1,4 @@
-// GSD VibeFlow - Project Wizard Entry Dialog
+// GSD Vibe - Project Wizard Entry Dialog
 // Thin wrapper — immediately opens the import dialog
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

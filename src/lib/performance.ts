@@ -1,4 +1,4 @@
-// GSD VibeFlow - Frontend Performance Monitoring
+// GSD Vibe - Frontend Performance Monitoring
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { logFrontendEvent } from "./tauri";

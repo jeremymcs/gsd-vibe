@@ -1,4 +1,4 @@
-// GSD VibeFlow - Shared Navigation Configuration
+// GSD Vibe - Shared Navigation Configuration
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import {

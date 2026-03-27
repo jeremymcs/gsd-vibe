@@ -1,4 +1,4 @@
-// GSD VibeFlow - Main Layout Component
+// GSD Vibe - Main Layout Component
 // Context-aware sidebar: global nav or project-scoped nav
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

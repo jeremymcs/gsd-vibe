@@ -1,4 +1,4 @@
-// GSD VibeFlow - GSD-2 Activity Tab
+// GSD Vibe - GSD-2 Activity Tab
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { Activity } from 'lucide-react';

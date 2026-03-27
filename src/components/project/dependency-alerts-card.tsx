@@ -1,4 +1,4 @@
-// GSD VibeFlow - Dependency Alerts Card
+// GSD Vibe - Dependency Alerts Card
 // Compact card showing project dependency status (outdated/vulnerable)
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

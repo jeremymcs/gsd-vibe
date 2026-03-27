@@ -1,4 +1,4 @@
-// GSD VibeFlow - GSD-2 Tab Group Views
+// GSD Vibe - GSD-2 Tab Group Views
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 //
 // Five tab-group containers that each embed multiple related views as sub-tabs.

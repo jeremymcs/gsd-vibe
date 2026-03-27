@@ -1,4 +1,4 @@
-// GSD VibeFlow - Log Viewer Page
+// GSD Vibe - Log Viewer Page
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";

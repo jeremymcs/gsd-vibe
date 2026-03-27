@@ -7,12 +7,12 @@ tags: [tauri, cargo, rebrand, identity, keychain]
 # Dependency graph
 requires: []
 provides:
-  - "tauri.conf.json declares productName=GSD VibeFlow, identifier=io.gsd.vibeflow, window title=GSD VibeFlow"
+  - "tauri.conf.json declares productName=GSD Vibe, identifier=io.gsd.vibeflow, window title=GSD Vibe"
   - "package.json name=gsd-vibeflow, description updated"
   - "Cargo.toml package name=gsd-vibeflow, lib name=gsd_vibeflow_lib"
-  - "capabilities/default.json description updated to GSD VibeFlow"
+  - "capabilities/default.json description updated to GSD Vibe"
   - "secrets.rs DEFAULT_SERVICE=io.gsd.vibeflow"
-  - "lib.rs init log and panic strings say GSD VibeFlow"
+  - "lib.rs init log and panic strings say GSD Vibe"
 affects: [09-visual-identity, 10-dead-code-and-quality]
 
 # Tech tracking
@@ -32,11 +32,11 @@ key-files:
     - src-tauri/src/lib.rs
 
 key-decisions:
-  - "All config/metadata files updated to GSD VibeFlow; file headers deferred to plan 08-03 as planned"
+  - "All config/metadata files updated to GSD Vibe; file headers deferred to plan 08-03 as planned"
   - "Doc comment example in secrets.rs updated alongside functional DEFAULT_SERVICE constant (auto-fix Rule 1)"
 
 patterns-established:
-  - "Identity pattern: productName/identifier/title/service all use GSD VibeFlow / io.gsd.vibeflow"
+  - "Identity pattern: productName/identifier/title/service all use GSD Vibe / io.gsd.vibeflow"
 
 requirements-completed: [IDNT-01, IDNT-02, IDNT-04]
 
@@ -47,7 +47,7 @@ completed: 2026-03-21
 
 # Phase 8 Plan 01: Identity Strings and Headers — Metadata Update Summary
 
-**Rebranded all config and metadata files from "Track Your Shit / net.fluxlabs.track-your-shit" to "GSD VibeFlow / io.gsd.vibeflow" across Tauri, Node, Rust, and keychain service.**
+**Rebranded all config and metadata files from "Track Your Shit / net.fluxlabs.track-your-shit" to "GSD Vibe / io.gsd.vibeflow" across Tauri, Node, Rust, and keychain service.**
 
 ## Performance
 
@@ -58,9 +58,9 @@ completed: 2026-03-21
 - **Files modified:** 6
 
 ## Accomplishments
-- All four metadata config files declare new GSD VibeFlow identity with io.gsd.vibeflow bundle identifier
+- All four metadata config files declare new GSD Vibe identity with io.gsd.vibeflow bundle identifier
 - Keychain service name updated to new bundle identifier, ensuring new keychain entries use correct namespace
-- Rust runtime init log and panic message updated to GSD VibeFlow
+- Rust runtime init log and panic message updated to GSD Vibe
 - Frontend build (`pnpm build`) passes cleanly with renamed package
 
 ## Task Commits

@@ -1,4 +1,4 @@
-// GSD VibeFlow - Terminal Context
+// GSD Vibe - Terminal Context
 // Global state for persistent terminal sessions across navigation
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

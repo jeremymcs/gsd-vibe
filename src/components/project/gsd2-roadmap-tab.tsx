@@ -1,4 +1,4 @@
-// GSD VibeFlow - GSD-2 Roadmap Tab
+// GSD Vibe - GSD-2 Roadmap Tab
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { useState } from 'react';

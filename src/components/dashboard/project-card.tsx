@@ -1,4 +1,4 @@
-// GSD VibeFlow - Project Card (dashboard grid item)
+// GSD Vibe - Project Card (dashboard grid item)
 // Rich card with GSD-2 health metrics, progress, git, and activity
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

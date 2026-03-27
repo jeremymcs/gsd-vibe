@@ -1,8 +1,8 @@
-# GSD VibeFlow
+# GSD Vibe
 
 ## What This Is
 
-GSD VibeFlow is a native desktop app (Tauri 2.x / Rust + React) for managing Claude Code projects powered by GSD. It supports both GSD-1 (`.planning/` directory) and GSD-2 (`.gsd/` directory) projects, detected per-project at import time. GSD-2 projects surface a health widget, worktrees panel, headless session control, visualizer, and reactive Milestones/Slices/Tasks tabs — all updating within 2 seconds of `.gsd/` file changes.
+GSD Vibe is a native desktop app (Tauri 2.x / Rust + React) for managing Claude Code projects powered by GSD. It supports both GSD-1 (`.planning/` directory) and GSD-2 (`.gsd/` directory) projects, detected per-project at import time. GSD-2 projects surface a health widget, worktrees panel, headless session control, visualizer, and reactive Milestones/Slices/Tasks tabs — all updating within 2 seconds of `.gsd/` file changes.
 
 ## Core Value
 
@@ -10,14 +10,14 @@ Per-project version detection drives everything — the app correctly identifies
 
 ## Current State
 
-**v1.1 shipped 2026-03-21.** GSD VibeFlow rebrand complete across all 3 phases, 8 plans.
+**v1.1 shipped 2026-03-21.** GSD Vibe rebrand complete across all 3 phases, 8 plans.
 
-- Full rename: all metadata, strings, headers, and bundle identifier read "GSD VibeFlow"
+- Full rename: all metadata, strings, headers, and bundle identifier read "GSD Vibe"
 - New visual identity: black/white/cyan (gsd.build), GSD logomark icon in all platform formats
 - Dead code audit complete: 13 unused Rust commands removed, 2 dead React components deleted, 1,810+ lines removed
 - 130/130 tests passing, build clean
 
-**Shipped milestones:** v1.0 (GSD-2 Integration) · v1.1 (GSD VibeFlow Rebrand)
+**Shipped milestones:** v1.0 (GSD-2 Integration) · v1.1 (GSD Vibe Rebrand)
 
 **Tech debt carried forward:**
 - IDNT-03 — About dialog not built (deferred)
@@ -47,10 +47,10 @@ Run `/gsd:new-milestone` to define v1.2 goals and requirements.
 
 ### Completed — v1.1
 
-- [x] Rename app from "Track Your Shit" to "GSD VibeFlow" in all metadata — Validated Phase 8
-- [x] Replace all "Track Your Shit" UI strings with "GSD VibeFlow" — Validated Phase 8
+- [x] Rename app from "Track Your Shit" to "GSD Vibe" in all metadata — Validated Phase 8
+- [x] Replace all "Track Your Shit" UI strings with "GSD Vibe" — Validated Phase 8
 - [x] Update visual identity: color palette to gsd.build (black/white/cyan), new app icon — Validated Phase 9
-- [x] Update all file headers to "GSD VibeFlow - [purpose]" — Validated Phase 8 (178+ files)
+- [x] Update all file headers to "GSD Vibe - [purpose]" — Validated Phase 8 (178+ files)
 - [x] Audit and remove dead code: 13 Rust commands, 2 React components, 1,810+ lines — Validated Phase 10
 - [x] Fix pre-existing test failures (4 tests) — Validated Phase 10
 
@@ -76,7 +76,7 @@ Run `/gsd:new-milestone` to define v1.2 goals and requirements.
 - **Tech Stack**: Tauri 2.x, Rust backend, React 18 + TypeScript frontend — no framework changes
 - **Compatibility**: GSD-1 projects (.planning/) must continue working without modification
 - **IPC Pattern**: New features follow existing invoke<T>() pattern from lib/tauri.ts
-- **No GSD-2 dependency**: GSD VibeFlow reads files directly (Rust fs), does not import gsd-2 npm package
+- **No GSD-2 dependency**: GSD Vibe reads files directly (Rust fs), does not import gsd-2 npm package
 - **Brand Alignment**: Visual identity must match gsd.build (black bg, white text, cyan accent)
 
 ## Key Decisions

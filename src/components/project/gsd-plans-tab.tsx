@@ -1,4 +1,4 @@
-// GSD VibeFlow - GSD Plans & Execution Tab
+// GSD Vibe - GSD Plans & Execution Tab
 // Plan files grouped by phase with summary integration and split-view
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

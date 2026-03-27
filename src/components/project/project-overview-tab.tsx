@@ -1,4 +1,4 @@
-// GSD VibeFlow - Project Overview Tab Component
+// GSD Vibe - Project Overview Tab Component
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

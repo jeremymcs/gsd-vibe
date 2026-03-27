@@ -1,4 +1,4 @@
-// GSD VibeFlow - Projects Page
+// GSD Vibe - Projects Page
 // Dedicated project management with search and filtering
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
