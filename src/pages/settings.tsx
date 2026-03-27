@@ -270,7 +270,7 @@ export function SettingsPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="text-sm text-muted-foreground">
-                Database: <code className="bg-muted px-1.5 py-0.5 rounded text-xs">~/Library/Application Support/net.fluxlabs.track-your-shit/track-your-shit.db</code>
+                Database: <code className="bg-muted px-1.5 py-0.5 rounded text-xs">~/Library/Application Support/io.gsd.vibeflow/gsd-vibe.db</code>
               </div>
               <div className="flex gap-2 flex-wrap">
                 <Button variant="outline" onClick={() => setShowExportDialog(true)}>
@@ -303,11 +303,11 @@ export function SettingsPage() {
                           setFormData(defaults);
                           setHasChanges(false);
                           setShowResetConfirm(false);
-                          localStorage.removeItem('track-your-shit-theme');
-                          localStorage.removeItem('track-your-shit-accent');
-                          localStorage.removeItem('track-your-shit-density');
-                          localStorage.removeItem('track-your-shit-font-scale');
-                          localStorage.removeItem('track-your-shit-font-family');
+                          localStorage.removeItem('gsd-vibe-theme');
+                          localStorage.removeItem('gsd-vibe-accent');
+                          localStorage.removeItem('gsd-vibe-density');
+                          localStorage.removeItem('gsd-vibe-font-scale');
+                          localStorage.removeItem('gsd-vibe-font-family');
                         }).catch(() => { /* toast via onError */ });
                       }}
                       disabled={resetSettings.isPending}

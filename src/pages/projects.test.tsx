@@ -45,7 +45,7 @@ const mockProjects: ProjectWithStats[] = [
   {
     id: "1",
     name: "GSD Vibe",
-    path: "/users/test/track-your-shit",
+    path: "/users/test/gsd-vibe",
     description: "Mission control for projects",
     tech_stack: {
       framework: "React",

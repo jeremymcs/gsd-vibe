@@ -1208,7 +1208,7 @@ export const gsdGetRoadmapProgress = (projectId: string): Promise<GsdRoadmapProg
 // ============================================================
 
 /** Default keychain service name */
-export const KEYCHAIN_SERVICE = "net.fluxlabs.track-your-shit";
+export const KEYCHAIN_SERVICE = "net.fluxlabs.gsd-vibe";
 
 /** Store a secret in the OS keychain */
 export const setSecret = (service: string, key: string, value: string) =>
