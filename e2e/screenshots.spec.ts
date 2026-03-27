@@ -1,4 +1,4 @@
-// Track Your Shit - Automated Screenshot Capture for Website
+// GSD Vibe - Automated Screenshot Capture for Website
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { test, expect } from '@playwright/test';
@@ -276,7 +276,7 @@ const MOCK_APP_LOGS = [
   { id: 'log-005', level: 'ERROR', target: 'commands::git', message: 'Git push failed: remote rejected (pre-receive hook declined)', source: 'backend', project_id: 'proj-002', metadata: null, created_at: '2026-02-20T14:20:00' },
   { id: 'log-006', level: 'INFO', target: 'db::pool', message: 'Database connection pool initialized: 1 writer, 4 readers', source: 'backend', project_id: null, metadata: null, created_at: '2026-02-20T14:00:00' },
   { id: 'log-007', level: 'DEBUG', target: 'watcher::fs', message: 'File watcher started for /Users/dev/projects/saas-dashboard/.planning', source: 'backend', project_id: 'proj-001', metadata: null, created_at: '2026-02-20T14:00:00' },
-  { id: 'log-008', level: 'INFO', target: 'app::startup', message: 'Track Your Shit v0.1.0 started successfully', source: 'backend', project_id: null, metadata: null, created_at: '2026-02-20T14:00:00' },
+  { id: 'log-008', level: 'INFO', target: 'app::startup', message: 'GSD Vibe v0.1.0 started successfully', source: 'backend', project_id: null, metadata: null, created_at: '2026-02-20T14:00:00' },
 ];
 
 const MOCK_LOG_STATS = {

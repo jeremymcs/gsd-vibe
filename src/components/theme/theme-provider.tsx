@@ -13,11 +13,11 @@ import {
 } from "@/hooks/use-theme";
 import { getSettings, updateSettings, Settings } from "@/lib/tauri";
 
-const THEME_KEY = "track-your-shit-theme";
-const ACCENT_KEY = "track-your-shit-accent";
-const DENSITY_KEY = "track-your-shit-density";
-const FONT_SCALE_KEY = "track-your-shit-font-scale";
-const FONT_FAMILY_KEY = "track-your-shit-font-family";
+const THEME_KEY = "gsd-vibe-theme";
+const ACCENT_KEY = "gsd-vibe-accent";
+const DENSITY_KEY = "gsd-vibe-density";
+const FONT_SCALE_KEY = "gsd-vibe-font-scale";
+const FONT_FAMILY_KEY = "gsd-vibe-font-family";
 
 const ACCENT_CLASSES: Record<AccentColor, string> = {
   default: "",

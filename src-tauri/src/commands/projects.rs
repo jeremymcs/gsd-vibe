@@ -408,10 +408,10 @@ pub async fn import_project_enhanced(
             // Find the conversion script - check multiple locations
             // 1. Development: relative to the Cargo manifest (../../scripts/ from src-tauri)
             // 2. Production: bundled in app resources
-            // CARGO_MANIFEST_DIR = .../track-your-shit/src-tauri
+            // CARGO_MANIFEST_DIR = .../gsd-vibe/src-tauri
             let manifest_dir = env!("CARGO_MANIFEST_DIR");
             let script_path = std::path::Path::new(manifest_dir)
-                .parent() // track-your-shit/
+                .parent() // gsd-vibe/
                 .unwrap_or(std::path::Path::new("."))
                 .join("scripts")
                 .join("gsd-convert.mjs");

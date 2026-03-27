@@ -1,4 +1,4 @@
-// Track Your Shit - Vite Configuration
+// GSD Vibe - Vite Configuration
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 /// <reference types="vitest" />

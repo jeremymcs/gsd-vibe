@@ -272,7 +272,7 @@ pub async fn export_data(
         "csv"
     };
     let default_name = format!(
-        "track-your-shit-export-{}.{}",
+        "gsd-vibe-export-{}.{}",
         chrono::Utc::now().format("%Y%m%d-%H%M%S"),
         extension
     );

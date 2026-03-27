@@ -1,4 +1,4 @@
-// Track Your Shit - E2E Projects Page Tests
+// GSD Vibe - E2E Projects Page Tests
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { test, expect } from '@playwright/test';
@@ -17,13 +17,13 @@ test.describe('Projects Page', () => {
     await page.goto('/projects');
     
     // Wait for app branding to load
-    await expect(page.getByText('Track Your Shit')).toBeVisible();
+    await expect(page.getByText('GSD Vibe')).toBeVisible();
   });
 
   test('should render projects page without crashing', async ({ page }) => {
     // Verify page loaded successfully
     await expect(page).toHaveURL('/projects');
-    await expect(page.getByText('Track Your Shit')).toBeVisible();
+    await expect(page.getByText('GSD Vibe')).toBeVisible();
   });
 
   test('should have page heading', async ({ page }) => {
@@ -193,7 +193,7 @@ test.describe('Projects Page', () => {
     await searchInput.clear();
     
     // Page should still be functional
-    await expect(page.getByText('Track Your Shit')).toBeVisible();
+    await expect(page.getByText('GSD Vibe')).toBeVisible();
   });
 
   test('should maintain search state during interactions', async ({ page }) => {
@@ -217,8 +217,8 @@ test.describe('Projects Page', () => {
   });
 
   test('should be responsive and scrollable', async ({ page }) => {
-    // Check layout doesn't break - verify Track Your Shit branding has dimensions
-    const branding = page.getByText('Track Your Shit');
+    // Check layout doesn't break - verify GSD Vibe branding has dimensions
+    const branding = page.getByText('GSD Vibe');
     const box = await branding.boundingBox();
     
     expect(box).not.toBeNull();
@@ -237,7 +237,7 @@ test.describe('Projects Page', () => {
     await searchInput.fill('test');
     
     // Page should still be responsive
-    await expect(page.getByText('Track Your Shit')).toBeVisible();
+    await expect(page.getByText('GSD Vibe')).toBeVisible();
     await expect(searchInput).toHaveValue('test');
   });
 
@@ -248,6 +248,6 @@ test.describe('Projects Page', () => {
     
     await dashboardButton.click();
     await expect(page).toHaveURL('/');
-    await expect(page.getByText('Track Your Shit')).toBeVisible();
+    await expect(page.getByText('GSD Vibe')).toBeVisible();
   });
 });

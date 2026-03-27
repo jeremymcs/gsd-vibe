@@ -1,10 +1,10 @@
-// Track Your Shit - Playwright E2E Test Configuration
+// GSD Vibe - Playwright E2E Test Configuration
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * Playwright configuration for Track Your Shit E2E tests
+ * Playwright configuration for GSD Vibe E2E tests
  * 
  * Note: These tests run against the Vite dev server (web layer only).
  * Full Tauri E2E testing with native APIs requires tauri-driver and will

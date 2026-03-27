@@ -1,4 +1,4 @@
-// Track Your Shit - E2E Navigation Tests
+// GSD Vibe - E2E Navigation Tests
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { test, expect } from '@playwright/test';
@@ -15,8 +15,8 @@ test.describe('Navigation', () => {
     // Navigate to the app before each test
     await page.goto('/');
     
-    // Wait for the app to load - check for Track Your Shit branding
-    await expect(page.getByText('Track Your Shit')).toBeVisible();
+    // Wait for the app to load - check for GSD Vibe branding
+    await expect(page.getByText('GSD Vibe')).toBeVisible();
   });
 
   test('should load dashboard as default route', async ({ page }) => {
@@ -39,7 +39,7 @@ test.describe('Navigation', () => {
     await expect(page).toHaveURL('/projects');
     
     // Wait for page content to load
-    await expect(page.getByText('Track Your Shit')).toBeVisible();
+    await expect(page.getByText('GSD Vibe')).toBeVisible();
   });
 
   test('should navigate to Settings page', async ({ page }) => {
@@ -52,7 +52,7 @@ test.describe('Navigation', () => {
     await expect(page).toHaveURL('/settings');
     
     // Wait for page content to load
-    await expect(page.getByText('Track Your Shit')).toBeVisible();
+    await expect(page.getByText('GSD Vibe')).toBeVisible();
   });
 
   test('should navigate to Analytics page', async ({ page }) => {
@@ -65,7 +65,7 @@ test.describe('Navigation', () => {
     await expect(page).toHaveURL('/analytics');
     
     // Wait for page content to load
-    await expect(page.getByText('Track Your Shit')).toBeVisible();
+    await expect(page.getByText('GSD Vibe')).toBeVisible();
   });
 
   test('should have functional sidebar navigation', async ({ page }) => {
@@ -81,7 +81,7 @@ test.describe('Navigation', () => {
       await expect(button).toBeVisible();
       await button.click();
       await expect(page).toHaveURL(route.path);
-      await expect(page.getByText('Track Your Shit')).toBeVisible();
+      await expect(page.getByText('GSD Vibe')).toBeVisible();
       
       // Small delay for state updates
       await page.waitForTimeout(100);
@@ -115,12 +115,12 @@ test.describe('Navigation', () => {
     // Navigate directly to a route via URL
     await page.goto('/settings');
     await expect(page).toHaveURL('/settings');
-    await expect(page.getByText('Track Your Shit')).toBeVisible();
+    await expect(page.getByText('GSD Vibe')).toBeVisible();
     
     // Navigate to another route
     await page.goto('/projects');
     await expect(page).toHaveURL('/projects');
-    await expect(page.getByText('Track Your Shit')).toBeVisible();
+    await expect(page.getByText('GSD Vibe')).toBeVisible();
   });
 
   test('should maintain navigation state after page interactions', async ({ page }) => {
@@ -144,6 +144,6 @@ test.describe('Navigation', () => {
     await expect(page).toHaveURL('/projects');
     
     // Verify we're still on a functional page
-    await expect(page.getByText('Track Your Shit')).toBeVisible();
+    await expect(page.getByText('GSD Vibe')).toBeVisible();
   });
 });

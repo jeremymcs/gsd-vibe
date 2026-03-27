@@ -202,7 +202,7 @@ export function MainLayout({ children }: MainLayoutProps) {
                 <div className="flex flex-col items-center gap-1 w-full pt-3">
                   <img src="/gsd-logo.svg" alt="GSD" className="h-8 w-full max-w-[160px] object-contain" />
                   <span className="text-[13px] font-semibold tracking-[0.2em] uppercase text-muted-foreground/70">
-                    VibeFlow
+                    GSD Vibe
                   </span>
                 </div>
               )}
