@@ -320,6 +320,10 @@ pub fn run() {
             commands::secrets::list_secret_keys,
             commands::secrets::get_predefined_secret_keys,
             commands::secrets::has_secret,
+            // Template commands
+            commands::templates::list_project_templates,
+            commands::templates::list_gsd_planning_templates,
+            commands::templates::scaffold_project,
         ])
         .run(tauri::generate_context!())
         .expect("error while running GSD Vibe");

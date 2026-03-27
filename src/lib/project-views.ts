@@ -23,8 +23,9 @@ import {
   ClipboardCheck,
   ShieldCheck,
   Bug,
-  MessagesSquare,
-  History,
+  Layers,
+  Brain,
+  BookOpen,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -55,18 +56,19 @@ export const projectViews: ProjectView[] = [
   { id: 'envvars', label: 'Env Vars', icon: Key, section: 'Core' },
 
   // --- GSD-2 ---
-  // --- GSD-2 standalones ---
-  { id: 'gsd2-health',    label: 'Health',    icon: Activity,       section: 'GSD', gsd2Only: true },
-  { id: 'gsd2-headless',  label: 'Headless',  icon: Play,           section: 'GSD', gsd2Only: true },
-  { id: 'gsd2-chat',      label: 'Chat',      icon: MessagesSquare, section: 'GSD', gsd2Only: true },
-  { id: 'gsd2-worktrees', label: 'Worktrees', icon: GitBranch,      section: 'GSD', gsd2Only: true },
-
-  // --- GSD-2 groups ---
-  { id: 'gsd2-group-progress',    label: 'Progress',    icon: BarChart3,    section: 'GSD',         gsd2Only: true },
-  { id: 'gsd2-group-planning',    label: 'Planning',    icon: Flag,         section: 'GSD',         gsd2Only: true },
-  { id: 'gsd2-group-metrics',     label: 'Metrics',     icon: History,      section: 'GSD',         gsd2Only: true },
-  { id: 'gsd2-group-commands',    label: 'Commands',    icon: Search,       section: 'GSD',         gsd2Only: true },
-  { id: 'gsd2-group-diagnostics', label: 'Diagnostics', icon: Stethoscope,  section: 'Diagnostics', gsd2Only: true },
+{ id: 'gsd2-dashboard', label: 'Dashboard', icon: LayoutDashboard, section: 'GSD', gsd2Only: true },
+  { id: 'gsd2-health', label: 'Health', icon: Activity, section: 'GSD', gsd2Only: true },
+  { id: 'gsd2-headless', label: 'Headless', icon: Play, section: 'GSD', gsd2Only: true },
+  { id: 'gsd2-worktrees', label: 'Worktrees', icon: GitBranch, section: 'GSD', gsd2Only: true },
+  { id: 'gsd2-visualizer', label: 'Visualizer', icon: BarChart3, section: 'GSD', gsd2Only: true },
+  { id: 'gsd2-milestones', label: 'Milestones', icon: Flag, section: 'GSD', gsd2Only: true },
+  { id: 'gsd2-slices', label: 'Slices', icon: Layers, section: 'GSD', gsd2Only: true },
+  { id: 'gsd2-tasks', label: 'Tasks', icon: CheckSquare, section: 'GSD', gsd2Only: true },
+  { id: 'gsd2-doctor', label: 'Doctor', icon: Stethoscope, section: 'Diagnostics', gsd2Only: true },
+  { id: 'gsd2-forensics', label: 'Forensics', icon: Search, section: 'Diagnostics', gsd2Only: true },
+  { id: 'gsd2-skill-health', label: 'Skill Health', icon: Brain, section: 'Diagnostics', gsd2Only: true },
+  { id: 'gsd2-knowledge-captures', label: 'Knowledge', icon: BookOpen, section: 'Diagnostics', gsd2Only: true },
+  { id: 'gsd2-reports', label: 'Reports', icon: FileText, section: 'GSD', gsd2Only: true },
 
   // --- GSD-1 ---
   { id: 'gsd-plans', label: 'Plans', icon: FileText, section: 'GSD', gsd1Only: true },
@@ -118,7 +120,7 @@ const TAB_TO_VIEW: Record<string, string> = {
   knowledge: 'knowledge',
   shell: 'shell',
   envvars: 'envvars',
-  gsd: 'gsd2-health', // default GSD landing — caller should pick gsd1 vs gsd2
+  gsd: 'gsd2-dashboard', // default GSD landing — caller should pick gsd1 vs gsd2
 };
 
 export function resolveViewFromTab(tab: string | null, ctx: ProjectViewContext): string {
@@ -130,7 +132,7 @@ export function resolveViewFromTab(tab: string | null, ctx: ProjectViewContext):
 
   // Legacy ?tab= mapping
   if (tab === 'gsd') {
-    return ctx.isGsd2 ? 'gsd2-health' : ctx.isGsd1 ? 'gsd-plans' : 'overview';
+    return ctx.isGsd2 ? 'gsd2-dashboard' : ctx.isGsd1 ? 'gsd-plans' : 'overview';
   }
 
   return TAB_TO_VIEW[tab] ?? 'overview';

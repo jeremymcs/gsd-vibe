@@ -6,6 +6,7 @@ import { open } from '@tauri-apps/plugin-shell';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ViewEmpty } from '@/components/shared/loading-states';
 import { useGsd2ReportsIndex, useGsd2GenerateHtmlReport } from '@/lib/queries';
 import { formatCost } from '@/lib/utils';
 import type { ReportEntry } from '@/lib/tauri';
@@ -121,6 +122,16 @@ export function Gsd2ReportsTab({ projectId, projectPath: _projectPath }: Gsd2Rep
 
   const entries = index?.entries ?? [];
 
+  if (entries.length === 0) {
+    return (
+      <ViewEmpty
+        icon={<FileText className="h-8 w-8" />}
+        message="No reports yet"
+        description='Click "Generate Report" to create one'
+      />
+    );
+  }
+
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -150,12 +161,7 @@ export function Gsd2ReportsTab({ projectId, projectPath: _projectPath }: Gsd2Rep
         </div>
       </CardHeader>
       <CardContent>
-        {entries.length === 0 ? (
-          <div className="py-8 text-center text-sm text-muted-foreground">
-            No reports yet — click "Generate Report" to create one.
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
+        <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border/60">
@@ -179,7 +185,6 @@ export function Gsd2ReportsTab({ projectId, projectPath: _projectPath }: Gsd2Rep
               </tbody>
             </table>
           </div>
-        )}
       </CardContent>
     </Card>
   );

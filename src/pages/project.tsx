@@ -36,6 +36,16 @@ import {
   Gsd2HeadlessTab,
   Gsd2ChatTab,
   Gsd2StatusBar,
+  Gsd2VisualizerTab,
+  Gsd2MilestonesTab,
+  Gsd2SlicesTab,
+  Gsd2TasksTab,
+  DoctorPanel,
+  ForensicsPanel,
+  SkillHealthPanel,
+  KnowledgeCapturesPanel,
+  Gsd2ReportsTab,
+  Gsd2DashboardView,
   // Tab groups
   Gsd2ProgressGroup,
   Gsd2PlanningGroup,
@@ -279,6 +289,8 @@ function ViewRenderer({
       return <EnvVarsTab projectId={projectId} projectPath={projectPath} />;
 
     // GSD-2 views
+    case 'gsd2-dashboard':
+      return <Gsd2DashboardView projectId={projectId} projectPath={projectPath} />;
     case 'gsd2-health':
       return <Gsd2HealthTab projectId={projectId} projectPath={projectPath} />;
     case 'gsd2-headless':
@@ -287,6 +299,24 @@ function ViewRenderer({
       return <Gsd2ChatTab projectId={projectId} projectPath={projectPath} session={headlessSession} />;
     case 'gsd2-worktrees':
       return <Gsd2WorktreesTab projectId={projectId} projectPath={projectPath} />;
+    case 'gsd2-visualizer':
+      return <Gsd2VisualizerTab projectId={projectId} projectPath={projectPath} />;
+    case 'gsd2-milestones':
+      return <Gsd2MilestonesTab projectId={projectId} projectPath={projectPath} />;
+    case 'gsd2-slices':
+      return <Gsd2SlicesTab projectId={projectId} projectPath={projectPath} />;
+    case 'gsd2-tasks':
+      return <Gsd2TasksTab projectId={projectId} projectPath={projectPath} />;
+    case 'gsd2-reports':
+      return <Gsd2ReportsTab projectId={projectId} projectPath={projectPath} />;
+    case 'gsd2-doctor':
+      return <DoctorPanel projectId={projectId} projectPath={projectPath} />;
+    case 'gsd2-forensics':
+      return <ForensicsPanel projectId={projectId} projectPath={projectPath} />;
+    case 'gsd2-skill-health':
+      return <SkillHealthPanel projectId={projectId} projectPath={projectPath} />;
+    case 'gsd2-knowledge-captures':
+      return <KnowledgeCapturesPanel projectId={projectId} projectPath={projectPath} />;
 
     // GSD-2 tab groups
     case 'gsd2-group-progress':

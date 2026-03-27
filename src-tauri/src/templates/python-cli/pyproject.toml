@@ -1,0 +1,17 @@
+[project]
+name = "{{project_name}}"
+version = "0.1.0"
+description = "A Python CLI tool"
+requires-python = ">=3.11"
+dependencies = [
+    "click>=8.1.0",
+    "rich>=13.0.0",
+]
+
+[project.scripts]
+{{project_name}} = "{{project_name}}.cli:main"
+
+[tool.uv.dev-dependencies]
+dev = [
+    "pytest>=8.0.0",
+]

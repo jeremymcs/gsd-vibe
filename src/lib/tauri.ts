@@ -1947,3 +1947,50 @@ export const gsd2GenerateHtmlReport = (projectId: string) =>
 
 export const gsd2GetReportsIndex = (projectId: string) =>
   invoke<ReportsIndex>('gsd2_get_reports_index', { projectId });
+
+// ============================================================
+// Project Template Types + Invoke Wrappers (S03 - New Project Wizard)
+// ============================================================
+
+export interface ProjectTemplate {
+  id: string;
+  name: string;
+  description: string;
+  language: string;
+  category: string;
+  archetype: string;
+  tags: string[];
+}
+
+export interface GsdPlanningTemplate {
+  id: string;
+  name: string;
+  description: string;
+  archetype: string;
+}
+
+export interface ScaffoldOptions {
+  templateId: string;
+  projectName: string;
+  parentDirectory: string;
+  gsdPlanningTemplate?: string;
+  gitInit: boolean;
+}
+
+export interface ScaffoldResult {
+  projectPath: string;
+  projectName: string;
+  templateId: string;
+  filesCreated: string[];
+  gsdSeeded: boolean;
+  gitInitialized: boolean;
+}
+
+export const listProjectTemplates = () =>
+  invoke<ProjectTemplate[]>('list_project_templates');
+
+export const listGsdPlanningTemplates = () =>
+  invoke<GsdPlanningTemplate[]>('list_gsd_planning_templates');
+
+export const scaffoldProject = (options: ScaffoldOptions) =>
+  invoke<ScaffoldResult>('scaffold_project', { options });

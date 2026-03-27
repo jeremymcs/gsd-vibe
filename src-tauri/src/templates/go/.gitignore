@@ -1,0 +1,9 @@
+# Binaries
+{{project_name}}
+*.exe
+
+# Go
+vendor/
+
+.env
+.DS_Store

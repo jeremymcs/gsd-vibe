@@ -508,6 +508,10 @@ Custom animation classes defined only in globals.css will work for the specific 
 
 The fade-in crossfade on project view navigation works by placing `key={activeView}` on the wrapper div (the one with `animate-fade-in`). This forces React to unmount/remount the div on every view switch, restarting the keyframe. Placing `key` on the ViewRenderer component itself doesn't work because ViewRenderer has no animation class. The terminal view must remain OUTSIDE this keyed wrapper (always mounted via CSS hide/show) to preserve xterm.js sessions.
 
+## Worktree Vite build may fail on pre-existing terminal/index.ts ShellView gap
+
+The git worktree at `gsd-vibe/.gsd/worktrees/M010` has a `terminal/index.ts` that is missing `export { ShellView } from "./shell-view"`. Running `vite build --config worktrees/M010/vite.config.ts` fails with `"ShellView" is not exported by ".gsd/worktrees/M010/src/components/terminal/index.ts"` on `src/pages/project.tsx`. This is a **pre-existing worktree gap** — the main repo's `terminal/index.ts` has the export. Fix: add `export { ShellView } from "./shell-view";` to the worktree's `src/components/terminal/index.ts`. Until fixed, use `tsc --noEmit -p worktrees/M010/tsconfig.json` (via main repo binaries) as the authoritative type-correctness check — it passes clean.
+
 ## S04: Component Sweep Pattern — Icon Tint Removal at Scale
 
 When systematically removing decorative icon colors across dozens of files (dashboard, projects, project/ components):

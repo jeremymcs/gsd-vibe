@@ -111,12 +111,13 @@ export function useGsdFileWatcher(
       void queryClient.invalidateQueries({ queryKey: queryKeys.gsd2DerivedState(projectId) });
       void queryClient.invalidateQueries({ queryKey: ['gsd2', 'milestone', projectId] });
       void queryClient.invalidateQueries({ queryKey: ['gsd2', 'slice', projectId] });
-      // M008/S01 + M006 queries — invalidate on metrics, state, and milestone changes
-      void queryClient.invalidateQueries({ queryKey: ['gsd2', 'history', projectId] });
-      void queryClient.invalidateQueries({ queryKey: ['gsd2', 'inspect', projectId] });
-      void queryClient.invalidateQueries({ queryKey: ['gsd2', 'recoveryInfo', projectId] });
-      void queryClient.invalidateQueries({ queryKey: ['gsd2', 'undoInfo', projectId] });
-      void queryClient.invalidateQueries({ queryKey: ['gsd2', 'gitSummary', projectId] });
+void queryClient.invalidateQueries({ queryKey: queryKeys.gsd2History(projectId) });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.gsd2GitSummary(projectId) });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.gsd2Inspect(projectId) });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.gsd2UndoInfo(projectId) });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.gsd2RecoveryInfo(projectId) });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.gsd2Hooks(projectId) });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.gsd2ReportsIndex(projectId) });
     }).then((fn) => {
       unlisten2 = fn;
     });

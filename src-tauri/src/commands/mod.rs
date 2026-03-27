@@ -17,5 +17,6 @@ pub mod search;
 pub mod secrets;
 pub mod settings;
 pub mod snippets;
+pub mod templates;
 pub mod terminal;
 pub mod watcher;

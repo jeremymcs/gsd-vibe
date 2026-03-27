@@ -2,10 +2,11 @@
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { useState } from 'react';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Layers } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ViewEmpty } from '@/components/shared/loading-states';
 import {
   useGsd2Milestones,
   useGsd2Milestone,
@@ -216,13 +217,11 @@ export function Gsd2SlicesTab({ projectId }: Gsd2SlicesTabProps) {
 
   if (!milestones || milestones.length === 0 || totalSlices === 0) {
     return (
-      <Card>
-        <CardContent className="py-8 text-center">
-          <p className="text-sm text-muted-foreground">
-            No slices yet — run a GSD-2 session to get started
-          </p>
-        </CardContent>
-      </Card>
+      <ViewEmpty
+        icon={<Layers className="h-8 w-8" />}
+        message="No slices yet"
+        description="Run a GSD-2 session to get started"
+      />
     );
   }
 

@@ -5,6 +5,7 @@ import { Activity } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ViewEmpty } from '@/components/shared/loading-states';
 import { useGsd2History } from '@/lib/queries';
 import { formatCost, formatTokenCount, formatDuration } from '@/lib/utils';
 
@@ -60,10 +61,11 @@ export function Gsd2ActivityTab({ projectId }: Gsd2ActivityTabProps) {
 
   if (!totals || units.length === 0) {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-3 text-center p-8">
-        <Activity className="h-10 w-10 text-muted-foreground/40" />
-        <p className="text-sm text-muted-foreground">No unit history yet.</p>
-      </div>
+      <ViewEmpty
+        icon={<Activity className="h-8 w-8" />}
+        message="No unit history yet"
+        description="Activity will appear here after a GSD-2 session runs"
+      />
     );
   }
 

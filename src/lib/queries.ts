@@ -1493,3 +1493,22 @@ export const useGsd2GenerateHtmlReport = (projectId: string) => {
     },
   });
 };
+
+// ============================================================
+// Project Template Hooks (S03 - New Project Wizard)
+// staleTime: Infinity — templates are compiled into the binary, never change at runtime
+// ============================================================
+
+export const useProjectTemplates = () =>
+  useQuery({
+    queryKey: ['projectTemplates'],
+    queryFn: () => api.listProjectTemplates(),
+    staleTime: Infinity,
+  });
+
+export const useGsdPlanningTemplates = () =>
+  useQuery({
+    queryKey: ['gsdPlanningTemplates'],
+    queryFn: () => api.listGsdPlanningTemplates(),
+    staleTime: Infinity,
+  });

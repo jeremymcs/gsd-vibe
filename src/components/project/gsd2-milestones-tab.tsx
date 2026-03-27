@@ -2,10 +2,11 @@
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { useState } from 'react';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Map } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ViewEmpty } from '@/components/shared/loading-states';
 import {
   useGsd2Milestones,
   useGsd2Milestone,
@@ -217,13 +218,11 @@ export function Gsd2MilestonesTab({ projectId }: Gsd2MilestonesTabProps) {
 
   if (!milestones || milestones.length === 0) {
     return (
-      <Card>
-        <CardContent className="py-8 text-center">
-          <p className="text-sm text-muted-foreground">
-            No milestones yet — run a GSD-2 session to get started
-          </p>
-        </CardContent>
-      </Card>
+      <ViewEmpty
+        icon={<Map className="h-8 w-8" />}
+        message="No milestones yet"
+        description="Run a GSD-2 session to get started"
+      />
     );
   }
 

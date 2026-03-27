@@ -4,6 +4,8 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { CircleDot } from 'lucide-react';
+import { ViewEmpty } from '@/components/shared/loading-states';
 import {
   useGsd2Milestones,
   useGsd2Milestone,
@@ -166,13 +168,11 @@ function ActiveMilestoneTasks({
 
   if (activeSlices.length === 0) {
     return (
-      <Card>
-        <CardContent className="py-8 text-center">
-          <p className="text-sm text-muted-foreground">
-            No active or pending tasks — all done, or no GSD-2 session has run yet
-          </p>
-        </CardContent>
-      </Card>
+      <ViewEmpty
+        icon={<CircleDot className="h-8 w-8" />}
+        message="No active or pending tasks"
+        description="All done, or no GSD-2 session has run yet"
+      />
     );
   }
 
@@ -228,13 +228,11 @@ export function Gsd2TasksTab({ projectId }: Gsd2TasksTabProps) {
 
   if (!milestones || milestones.length === 0) {
     return (
-      <Card>
-        <CardContent className="py-8 text-center">
-          <p className="text-sm text-muted-foreground">
-            No active or pending tasks — all done, or no GSD-2 session has run yet
-          </p>
-        </CardContent>
-      </Card>
+      <ViewEmpty
+        icon={<CircleDot className="h-8 w-8" />}
+        message="No active or pending tasks"
+        description="All done, or no GSD-2 session has run yet"
+      />
     );
   }
 
@@ -243,13 +241,11 @@ export function Gsd2TasksTab({ projectId }: Gsd2TasksTabProps) {
 
   if (!activeMilestoneId) {
     return (
-      <Card>
-        <CardContent className="py-8 text-center">
-          <p className="text-sm text-muted-foreground">
-            No active or pending tasks — all done, or no GSD-2 session has run yet
-          </p>
-        </CardContent>
-      </Card>
+      <ViewEmpty
+        icon={<CircleDot className="h-8 w-8" />}
+        message="No active or pending tasks"
+        description="All done, or no GSD-2 session has run yet"
+      />
     );
   }
 
