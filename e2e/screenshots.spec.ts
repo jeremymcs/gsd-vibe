@@ -30,7 +30,7 @@ const MOCK_PROJECTS = [
     config: null,
     status: 'active',
     is_favorite: true,
-    gsd_version: '2',
+    gsd_version: 'gsd2',
     created_at: '2026-01-15T10:00:00',
     updated_at: '2026-02-20T14:30:00',
   },
@@ -53,7 +53,7 @@ const MOCK_PROJECTS = [
     config: null,
     status: 'active',
     is_favorite: true,
-    gsd_version: '2',
+    gsd_version: 'gsd1',
     created_at: '2026-01-20T09:00:00',
     updated_at: '2026-02-19T16:45:00',
   },
@@ -76,7 +76,7 @@ const MOCK_PROJECTS = [
     config: null,
     status: 'active',
     is_favorite: false,
-    gsd_version: '2',
+    gsd_version: 'gsd2',
     created_at: '2026-02-01T11:00:00',
     updated_at: '2026-02-18T09:15:00',
   },
@@ -99,7 +99,7 @@ const MOCK_PROJECTS = [
     config: null,
     status: 'active',
     is_favorite: false,
-    gsd_version: '2',
+    gsd_version: 'gsd2',
     created_at: '2026-02-05T08:30:00',
     updated_at: '2026-02-17T11:20:00',
   },
@@ -122,7 +122,7 @@ const MOCK_PROJECTS = [
     config: null,
     status: 'active',
     is_favorite: true,
-    gsd_version: '2',
+    gsd_version: 'gsd2',
     created_at: '2026-01-28T13:00:00',
     updated_at: '2026-02-20T10:00:00',
   },
@@ -730,8 +730,9 @@ function buildMockScript(): string {
 
 test.describe('Website Screenshots', () => {
   test.use({
-    viewport: { width: 1440, height: 900 },
+    viewport: { width: 1920, height: 1080 },
     colorScheme: 'dark',
+    deviceScaleFactor: 2,
   });
 
   test.beforeEach(async ({ page }) => {
@@ -840,9 +841,9 @@ test.describe('Website Screenshots', () => {
     });
   });
 
-  // GSD-1 sub-tabs (click-based approach for GSD-1 projects)
+  // GSD-1 views (using proj-002 which has gsd_version: 'gsd1')
   test('Project Detail - GSD Plans', async ({ page }) => {
-    await page.goto('/projects/proj-001?view=gsd-plans');
+    await page.goto('/projects/proj-002?view=gsd-plans');
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(3000);
     await page.screenshot({
@@ -852,15 +853,9 @@ test.describe('Website Screenshots', () => {
   });
 
   test('Project Detail - GSD Context', async ({ page }) => {
-    await page.goto('/projects/proj-001?view=gsd-context');
+    await page.goto('/projects/proj-002?view=gsd-context');
     await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(2000);
-    // Click the Context sub-tab if it exists as a secondary navigation element
-    const contextTab = page.getByRole('button', { name: 'Context', exact: true });
-    if (await contextTab.count() > 0) {
-      await contextTab.first().click();
-      await page.waitForTimeout(2000);
-    }
+    await page.waitForTimeout(3000);
     await page.screenshot({
       path: path.join(SCREENSHOT_DIR, 'gsd-context.png'),
       fullPage: false,
@@ -868,14 +863,9 @@ test.describe('Website Screenshots', () => {
   });
 
   test('Project Detail - GSD Todos', async ({ page }) => {
-    await page.goto('/projects/proj-001?view=gsd-todos');
+    await page.goto('/projects/proj-002?view=gsd-todos');
     await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(2000);
-    const todosTab = page.getByLabel('GSD').getByRole('button', { name: 'Todos' });
-    if (await todosTab.count() > 0) {
-      await todosTab.click();
-      await page.waitForTimeout(2000);
-    }
+    await page.waitForTimeout(3000);
     await page.screenshot({
       path: path.join(SCREENSHOT_DIR, 'gsd-todos.png'),
       fullPage: false,
@@ -883,14 +873,9 @@ test.describe('Website Screenshots', () => {
   });
 
   test('Project Detail - GSD Validation', async ({ page }) => {
-    await page.goto('/projects/proj-001?view=gsd-validation');
+    await page.goto('/projects/proj-002?view=gsd-validation');
     await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(2000);
-    const validationTab = page.locator('button', { hasText: 'Validation' });
-    if (await validationTab.count() > 0) {
-      await validationTab.click();
-      await page.waitForTimeout(2000);
-    }
+    await page.waitForTimeout(3000);
     await page.screenshot({
       path: path.join(SCREENSHOT_DIR, 'gsd-validation.png'),
       fullPage: false,
@@ -898,14 +883,9 @@ test.describe('Website Screenshots', () => {
   });
 
   test('Project Detail - GSD UAT', async ({ page }) => {
-    await page.goto('/projects/proj-001?view=gsd-uat');
+    await page.goto('/projects/proj-002?view=gsd-uat');
     await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(2000);
-    const uatTab = page.locator('button', { hasText: 'UAT' });
-    if (await uatTab.count() > 0) {
-      await uatTab.click();
-      await page.waitForTimeout(2000);
-    }
+    await page.waitForTimeout(3000);
     await page.screenshot({
       path: path.join(SCREENSHOT_DIR, 'gsd-uat.png'),
       fullPage: false,
@@ -913,14 +893,9 @@ test.describe('Website Screenshots', () => {
   });
 
   test('Project Detail - GSD Milestones', async ({ page }) => {
-    await page.goto('/projects/proj-001?view=gsd-milestones');
+    await page.goto('/projects/proj-002?view=gsd-milestones');
     await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(2000);
-    const milestonesTab = page.locator('button', { hasText: 'Milestones' });
-    if (await milestonesTab.count() > 0) {
-      await milestonesTab.click();
-      await page.waitForTimeout(2000);
-    }
+    await page.waitForTimeout(3000);
     await page.screenshot({
       path: path.join(SCREENSHOT_DIR, 'gsd-milestones.png'),
       fullPage: false,
@@ -928,14 +903,9 @@ test.describe('Website Screenshots', () => {
   });
 
   test('Project Detail - GSD Debug', async ({ page }) => {
-    await page.goto('/projects/proj-001?view=gsd-debug');
+    await page.goto('/projects/proj-002?view=gsd-debug');
     await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(2000);
-    const debugTab = page.locator('button', { hasText: 'Debug' });
-    if (await debugTab.count() > 0) {
-      await debugTab.click();
-      await page.waitForTimeout(2000);
-    }
+    await page.waitForTimeout(3000);
     await page.screenshot({
       path: path.join(SCREENSHOT_DIR, 'gsd-debug.png'),
       fullPage: false,
