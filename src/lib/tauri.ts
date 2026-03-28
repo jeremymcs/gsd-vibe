@@ -1498,6 +1498,12 @@ export const gsd2HeadlessGetSession = (projectId: string) =>
 export const gsd2HeadlessUnregister = (sessionId: string) =>
   invoke<void>('gsd2_headless_unregister', { sessionId });
 
+export const gsd2CheckAutoLock = (projectId: string) =>
+  invoke<number | null>('gsd2_check_auto_lock', { projectId });
+
+export const gsd2ForceClearAutoLock = (projectId: string) =>
+  invoke<void>('gsd2_force_clear_auto_lock', { projectId });
+
 export const gsd2HeadlessStart = (projectId: string) =>
   invoke<string>('gsd2_headless_start', { projectId });
 
@@ -2054,13 +2060,43 @@ export interface GsdModelEntry {
 export const gsd2ListModels = (search?: string) =>
   invoke<GsdModelEntry[]>('gsd2_list_models', { search });
 
-// ---- Missing gsd2 wrappers ----
 export interface GsdSessionEntry {
-  raw: string;
+  id: string;
+  filename: string;
+  timestamp: string;
+  name: string | null;
+  first_message: string | null;
+  message_count: number;
+  user_message_count: number;
+  assistant_message_count: number;
+}
+
+export interface GsdSessionMessage {
+  role: string;
+  text: string;
+  timestamp: string;
+}
+
+export interface GsdSessionDetail {
+  id: string;
+  filename: string;
+  timestamp: string;
+  name: string | null;
+  messages: GsdSessionMessage[];
+  cwd: string | null;
 }
 
 export const gsd2ListSessions = (projectId: string) =>
   invoke<GsdSessionEntry[]>('gsd2_list_sessions', { projectId });
+
+export const gsd2GetSessionDetail = (projectId: string, filename: string) =>
+  invoke<GsdSessionDetail>('gsd2_get_session_detail', { projectId, filename });
+
+export const gsd2RenameSession = (projectId: string, filename: string, newName: string) =>
+  invoke<void>('gsd2_rename_session', { projectId, filename, newName });
+
+export const gsd2DeleteSession = (projectId: string, filename: string) =>
+  invoke<void>('gsd2_delete_session', { projectId, filename });
 
 export const gsd2MergeWorktree = (projectId: string, worktreeName: string) =>
   invoke<string>('gsd2_merge_worktree', { projectId, worktreeName });

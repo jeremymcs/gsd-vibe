@@ -170,7 +170,7 @@ export const TerminalView = forwardRef<TerminalViewRef, TerminalViewProps>(
           brightCyan: "#a4ffff",
           brightWhite: "#ffffff",
         },
-        fontFamily: '"JetBrains Mono Variable", "JetBrains Mono", Menlo, Monaco, "Courier New", monospace',
+        fontFamily: '"SF Mono", Menlo, "Cascadia Mono", Consolas, "Liberation Mono", "Courier New", monospace',
         fontSize,
         lineHeight,
         scrollback: 10000,

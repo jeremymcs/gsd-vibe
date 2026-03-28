@@ -21,27 +21,40 @@ type DbState = Arc<crate::db::DbPool>;
 // ============================================================
 
 /// Remove stale auto.lock and paused-session.json files for a project if the PID inside them is dead.
+/// If the PID is alive but not a gsd process (PID reuse), the lock is removed as stale.
+/// If the PID is alive AND is a gsd process, the lock is left in place — the caller
+/// should use `gsd2_check_auto_lock` to surface this to the user.
 /// Checks `.gsd/auto.lock`, `.gsd/runtime/auto.lock`, and `.gsd/runtime/paused-session.json`.
 fn clean_stale_auto_lock(project_path: &str, project_id: &str) {
     let gsd_dir = std::path::Path::new(project_path).join(".gsd");
 
-    // Helper: check if a PID from a JSON file is dead
-    let pid_is_dead = |content: &str| -> bool {
-        if let Ok(parsed) = serde_json::from_str::<serde_json::Value>(content) {
-            parsed
-                .get("pid")
-                .and_then(|v| v.as_u64())
-                .map(|pid| {
-                    std::process::Command::new("kill")
-                        .args(["-0", &pid.to_string()])
-                        .output()
-                        .map(|o| !o.status.success())
-                        .unwrap_or(true)
-                })
-                .unwrap_or(false)
-        } else {
-            false
-        }
+    // Helper: check if a PID is dead (kill -0 fails)
+    let pid_is_dead = |pid: u64| -> bool {
+        std::process::Command::new("kill")
+            .args(["-0", &pid.to_string()])
+            .output()
+            .map(|o| !o.status.success())
+            .unwrap_or(true)
+    };
+
+    // Helper: extract PID from lock file JSON content
+    let extract_pid = |content: &str| -> Option<u64> {
+        serde_json::from_str::<serde_json::Value>(content)
+            .ok()
+            .and_then(|v| v.get("pid").and_then(|p| p.as_u64()))
+    };
+
+    // Helper: check if a PID is a gsd/pi process
+    let is_gsd_process = |pid: u64| -> bool {
+        std::process::Command::new("ps")
+            .args(["-p", &pid.to_string(), "-o", "command="])
+            .output()
+            .map(|o| {
+                let cmd = String::from_utf8_lossy(&o.stdout);
+                let cmd_lower = cmd.to_lowercase();
+                cmd_lower.contains("gsd") || cmd_lower.contains("/pi ") || cmd_lower.contains("/pi\n")
+            })
+            .unwrap_or(false)
     };
 
     // Clean auto.lock files
@@ -54,13 +67,26 @@ fn clean_stale_auto_lock(project_path: &str, project_id: &str) {
             continue;
         }
         if let Ok(content) = std::fs::read_to_string(lock_path) {
-            if pid_is_dead(&content) {
-                let _ = std::fs::remove_file(lock_path);
-                tracing::info!(
-                    "Removed stale {} for project {}",
-                    lock_path.display(),
-                    project_id
-                );
+            if let Some(pid) = extract_pid(&content) {
+                if pid_is_dead(pid) {
+                    let _ = std::fs::remove_file(lock_path);
+                    tracing::info!(
+                        "Removed stale {} (dead PID {}) for project {}",
+                        lock_path.display(),
+                        pid,
+                        project_id
+                    );
+                } else if !is_gsd_process(pid) {
+                    // PID is alive but NOT a gsd process — PID was reused by OS, lock is stale
+                    let _ = std::fs::remove_file(lock_path);
+                    tracing::info!(
+                        "Removed stale {} (PID {} reused by non-gsd process) for project {}",
+                        lock_path.display(),
+                        pid,
+                        project_id
+                    );
+                }
+                // If PID is alive AND is a gsd process, leave it — it's a real session
             }
         }
     }
@@ -93,11 +119,22 @@ fn clean_stale_auto_lock(project_path: &str, project_id: &str) {
                 let lock_file = entry.path().join("auto.lock");
                 if lock_file.exists() {
                     if let Ok(content) = std::fs::read_to_string(&lock_file) {
-                        if pid_is_dead(&content) {
-                            let _ = std::fs::remove_file(&lock_file);
-                            // Also remove the parallel lock dir for this milestone
-                            let plock_dir = entry.path().to_string_lossy().to_string() + ".lock";
-                            let _ = std::fs::remove_dir_all(&plock_dir);
+                        if let Some(pid) = extract_pid(&content) {
+                            if pid_is_dead(pid) {
+                                let _ = std::fs::remove_file(&lock_file);
+                                // Also remove the parallel lock dir for this milestone
+                                let plock_dir = entry.path().to_string_lossy().to_string() + ".lock";
+                                let _ = std::fs::remove_dir_all(&plock_dir);
+                            } else if is_gsd_process(pid) {
+                                let _ = std::process::Command::new("kill").args([&pid.to_string()]).output();
+                                std::thread::sleep(std::time::Duration::from_millis(200));
+                                if !pid_is_dead(pid) {
+                                    let _ = std::process::Command::new("kill").args(["-9", &pid.to_string()]).output();
+                                }
+                                let _ = std::fs::remove_file(&lock_file);
+                                let plock_dir = entry.path().to_string_lossy().to_string() + ".lock";
+                                let _ = std::fs::remove_dir_all(&plock_dir);
+                            }
                         }
                     }
                 }
@@ -1544,6 +1581,94 @@ pub async fn gsd2_headless_unregister(
 ) -> Result<(), String> {
     let mut reg = registry.lock().await;
     reg.unregister(&session_id);
+    Ok(())
+}
+
+/// Check if a project has a live auto.lock held by a real gsd process.
+/// Returns the PID if locked, null if clear.
+#[tauri::command]
+pub async fn gsd2_check_auto_lock(
+    project_id: String,
+    db: tauri::State<'_, DbState>,
+) -> Result<Option<u64>, String> {
+    let project_path = {
+        let db_guard = db.write().await;
+        get_project_path(&db_guard, &project_id)?
+    };
+    let gsd_dir = std::path::Path::new(&project_path).join(".gsd");
+    let lock_paths = [
+        gsd_dir.join("auto.lock"),
+        gsd_dir.join("runtime").join("auto.lock"),
+    ];
+    for lock_path in &lock_paths {
+        if let Ok(content) = std::fs::read_to_string(lock_path) {
+            if let Ok(parsed) = serde_json::from_str::<serde_json::Value>(&content) {
+                if let Some(pid) = parsed.get("pid").and_then(|v| v.as_u64()) {
+                    // Check if alive
+                    let alive = std::process::Command::new("kill")
+                        .args(["-0", &pid.to_string()])
+                        .output()
+                        .map(|o| o.status.success())
+                        .unwrap_or(false);
+                    if alive {
+                        return Ok(Some(pid));
+                    }
+                }
+            }
+        }
+    }
+    Ok(None)
+}
+
+/// Force-clear the auto.lock for a project, killing the holding PID if it's a gsd process.
+#[tauri::command]
+pub async fn gsd2_force_clear_auto_lock(
+    project_id: String,
+    db: tauri::State<'_, DbState>,
+) -> Result<(), String> {
+    let project_path = {
+        let db_guard = db.write().await;
+        get_project_path(&db_guard, &project_id)?
+    };
+    let gsd_dir = std::path::Path::new(&project_path).join(".gsd");
+    let lock_paths = [
+        gsd_dir.join("auto.lock"),
+        gsd_dir.join("runtime").join("auto.lock"),
+    ];
+    for lock_path in &lock_paths {
+        if let Ok(content) = std::fs::read_to_string(&lock_path) {
+            if let Ok(parsed) = serde_json::from_str::<serde_json::Value>(&content) {
+                if let Some(pid) = parsed.get("pid").and_then(|v| v.as_u64()) {
+                    let alive = std::process::Command::new("kill")
+                        .args(["-0", &pid.to_string()])
+                        .output()
+                        .map(|o| o.status.success())
+                        .unwrap_or(false);
+                    if alive {
+                        // Kill it
+                        let _ = std::process::Command::new("kill").args([&pid.to_string()]).output();
+                        std::thread::sleep(std::time::Duration::from_millis(300));
+                        // Force kill if still alive
+                        let still_alive = std::process::Command::new("kill")
+                            .args(["-0", &pid.to_string()])
+                            .output()
+                            .map(|o| o.status.success())
+                            .unwrap_or(false);
+                        if still_alive {
+                            let _ = std::process::Command::new("kill").args(["-9", &pid.to_string()]).output();
+                        }
+                    }
+                }
+            }
+            let _ = std::fs::remove_file(&lock_path);
+        }
+    }
+    // Also clean paused-session.json
+    let paused = gsd_dir.join("runtime").join("paused-session.json");
+    if paused.exists() {
+        let _ = std::fs::remove_file(&paused);
+    }
+    tracing::info!("Force-cleared auto.lock for project {}", project_id);
     Ok(())
 }
 
@@ -3872,12 +3997,158 @@ pub async fn gsd2_doctor(
     })
 }
 
+// ─── Session JSONL parsing ────────────────────────────────────────────────────
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GsdSessionEntry {
-    pub raw: String,
+    pub id: String,
+    pub filename: String,
+    pub timestamp: String,
+    pub name: Option<String>,
+    pub first_message: Option<String>,
+    pub message_count: u32,
+    pub user_message_count: u32,
+    pub assistant_message_count: u32,
 }
 
-/// List past GSD sessions for a project by running `gsd sessions`.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GsdSessionMessage {
+    pub role: String,
+    pub text: String,
+    pub timestamp: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GsdSessionDetail {
+    pub id: String,
+    pub filename: String,
+    pub timestamp: String,
+    pub name: Option<String>,
+    pub messages: Vec<GsdSessionMessage>,
+    pub cwd: Option<String>,
+}
+
+/// Derive the session directory name from a project path.
+/// Strips leading `/`, replaces `/`, `\`, `:` with `-`, wraps in `--`.
+fn derive_session_dir_name(path: &str) -> String {
+    let stripped = path.strip_prefix('/').unwrap_or(path);
+    let replaced = stripped
+        .replace('/', "-")
+        .replace('\\', "-")
+        .replace(':', "-");
+    format!("--{}--", replaced)
+}
+
+/// Get the sessions directory for a project path.
+fn get_sessions_dir(project_path: &str) -> Option<std::path::PathBuf> {
+    let home = dirs::home_dir()?;
+    let dir_name = derive_session_dir_name(project_path);
+    let sessions_dir = home.join(".gsd").join("sessions").join(dir_name);
+    if sessions_dir.is_dir() {
+        Some(sessions_dir)
+    } else {
+        None
+    }
+}
+
+/// Parse a single JSONL session file into a GsdSessionEntry (summary).
+fn parse_session_summary(filepath: &std::path::Path) -> Option<GsdSessionEntry> {
+    let filename = filepath.file_name()?.to_str()?.to_string();
+    let content = std::fs::read_to_string(filepath).ok()?;
+
+    let mut session_id = String::new();
+    let mut timestamp = String::new();
+    let mut name: Option<String> = None;
+    let mut first_message: Option<String> = None;
+    let mut message_count: u32 = 0;
+    let mut user_message_count: u32 = 0;
+    let mut assistant_message_count: u32 = 0;
+
+    for line in content.lines() {
+        let line = line.trim();
+        if line.is_empty() { continue; }
+        let v: serde_json::Value = match serde_json::from_str(line) {
+            Ok(v) => v,
+            Err(_) => continue,
+        };
+
+        match v.get("type").and_then(|t| t.as_str()) {
+            Some("session") => {
+                session_id = v.get("id").and_then(|i| i.as_str()).unwrap_or("").to_string();
+                timestamp = v.get("timestamp").and_then(|t| t.as_str()).unwrap_or("").to_string();
+            }
+            Some("session_info") => {
+                // Last session_info wins (append semantics)
+                if let Some(n) = v.get("name").and_then(|n| n.as_str()) {
+                    name = Some(n.to_string());
+                }
+            }
+            Some("message") => {
+                if let Some(msg) = v.get("message") {
+                    let role = msg.get("role").and_then(|r| r.as_str()).unwrap_or("");
+                    message_count += 1;
+                    match role {
+                        "user" => {
+                            user_message_count += 1;
+                            if first_message.is_none() {
+                                first_message = extract_message_text(msg);
+                            }
+                        }
+                        "assistant" => {
+                            assistant_message_count += 1;
+                        }
+                        _ => {}
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+
+    if session_id.is_empty() {
+        return None;
+    }
+
+    // Truncate first_message preview to 120 chars
+    if let Some(ref mut fm) = first_message {
+        if fm.len() > 120 {
+            fm.truncate(120);
+            fm.push_str("…");
+        }
+    }
+
+    Some(GsdSessionEntry {
+        id: session_id,
+        filename,
+        timestamp,
+        name,
+        first_message,
+        message_count,
+        user_message_count,
+        assistant_message_count,
+    })
+}
+
+/// Extract the text content from a message object.
+/// Content can be a string or an array of content blocks.
+fn extract_message_text(msg: &serde_json::Value) -> Option<String> {
+    let content = msg.get("content")?;
+    if let Some(s) = content.as_str() {
+        return Some(s.to_string());
+    }
+    if let Some(arr) = content.as_array() {
+        for item in arr {
+            if item.get("type").and_then(|t| t.as_str()) == Some("text") {
+                if let Some(text) = item.get("text").and_then(|t| t.as_str()) {
+                    return Some(text.to_string());
+                }
+            }
+        }
+    }
+    None
+}
+
+/// List past GSD sessions for a project by parsing JSONL files directly.
 #[tauri::command]
 pub async fn gsd2_list_sessions(
     db: tauri::State<'_, DbState>,
@@ -3888,28 +4159,169 @@ pub async fn gsd2_list_sessions(
         get_project_path(&db_guard, &project_id)?
     };
 
-    let output = std::process::Command::new("gsd")
-        .arg("sessions")
-        .current_dir(&project_path)
-        .output()
-        .map_err(|e| format!("Failed to run gsd sessions: {}", e))?;
+    let sessions_dir = match get_sessions_dir(&project_path) {
+        Some(d) => d,
+        None => return Ok(Vec::new()),
+    };
 
-    let stdout = String::from_utf8_lossy(&output.stdout);
-
-    if stdout.contains("No sessions found") {
-        return Ok(Vec::new());
-    }
-
-    let entries: Vec<GsdSessionEntry> = stdout
-        .lines()
-        .filter(|line| {
-            let t = line.trim();
-            !t.is_empty() && !t.contains("Loading sessions")
+    let mut entries: Vec<GsdSessionEntry> = std::fs::read_dir(&sessions_dir)
+        .map_err(|e| format!("Failed to read sessions dir: {}", e))?
+        .filter_map(|e| e.ok())
+        .filter(|e| {
+            e.path().extension().and_then(|ext| ext.to_str()) == Some("jsonl")
         })
-        .map(|line| GsdSessionEntry { raw: line.to_string() })
+        .filter_map(|e| parse_session_summary(&e.path()))
         .collect();
 
+    // Sort by timestamp descending (newest first)
+    entries.sort_by(|a, b| b.timestamp.cmp(&a.timestamp));
+
     Ok(entries)
+}
+
+/// Get full session detail (all messages) for a specific session file.
+#[tauri::command]
+pub async fn gsd2_get_session_detail(
+    db: tauri::State<'_, DbState>,
+    project_id: String,
+    filename: String,
+) -> Result<GsdSessionDetail, String> {
+    let project_path = {
+        let db_guard = db.write().await;
+        get_project_path(&db_guard, &project_id)?
+    };
+
+    let sessions_dir = get_sessions_dir(&project_path)
+        .ok_or_else(|| "Sessions directory not found".to_string())?;
+
+    let filepath = sessions_dir.join(&filename);
+    if !filepath.exists() {
+        return Err(format!("Session file not found: {}", filename));
+    }
+
+    let content = std::fs::read_to_string(&filepath)
+        .map_err(|e| format!("Failed to read session file: {}", e))?;
+
+    let mut session_id = String::new();
+    let mut timestamp = String::new();
+    let mut cwd: Option<String> = None;
+    let mut name: Option<String> = None;
+    let mut messages: Vec<GsdSessionMessage> = Vec::new();
+
+    for line in content.lines() {
+        let line = line.trim();
+        if line.is_empty() { continue; }
+        let v: serde_json::Value = match serde_json::from_str(line) {
+            Ok(v) => v,
+            Err(_) => continue,
+        };
+
+        match v.get("type").and_then(|t| t.as_str()) {
+            Some("session") => {
+                session_id = v.get("id").and_then(|i| i.as_str()).unwrap_or("").to_string();
+                timestamp = v.get("timestamp").and_then(|t| t.as_str()).unwrap_or("").to_string();
+                cwd = v.get("cwd").and_then(|c| c.as_str()).map(|s| s.to_string());
+            }
+            Some("session_info") => {
+                if let Some(n) = v.get("name").and_then(|n| n.as_str()) {
+                    name = Some(n.to_string());
+                }
+            }
+            Some("message") => {
+                let msg_timestamp = v.get("timestamp")
+                    .and_then(|t| t.as_str())
+                    .unwrap_or("")
+                    .to_string();
+                if let Some(msg) = v.get("message") {
+                    let role = msg.get("role").and_then(|r| r.as_str()).unwrap_or("").to_string();
+                    if role == "user" || role == "assistant" {
+                        if let Some(text) = extract_message_text(msg) {
+                            messages.push(GsdSessionMessage {
+                                role,
+                                text,
+                                timestamp: msg_timestamp,
+                            });
+                        }
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+
+    Ok(GsdSessionDetail {
+        id: session_id,
+        filename,
+        timestamp,
+        name,
+        messages,
+        cwd,
+    })
+}
+
+/// Rename a session by appending a session_info line to the JSONL file.
+#[tauri::command]
+pub async fn gsd2_rename_session(
+    db: tauri::State<'_, DbState>,
+    project_id: String,
+    filename: String,
+    new_name: String,
+) -> Result<(), String> {
+    let project_path = {
+        let db_guard = db.write().await;
+        get_project_path(&db_guard, &project_id)?
+    };
+
+    let sessions_dir = get_sessions_dir(&project_path)
+        .ok_or_else(|| "Sessions directory not found".to_string())?;
+
+    let filepath = sessions_dir.join(&filename);
+    if !filepath.exists() {
+        return Err(format!("Session file not found: {}", filename));
+    }
+
+    // Append semantics — last session_info wins
+    let info_line = serde_json::json!({
+        "type": "session_info",
+        "name": new_name,
+    });
+
+    use std::io::Write;
+    let mut file = std::fs::OpenOptions::new()
+        .append(true)
+        .open(&filepath)
+        .map_err(|e| format!("Failed to open session file: {}", e))?;
+
+    writeln!(file, "{}", serde_json::to_string(&info_line).unwrap())
+        .map_err(|e| format!("Failed to write session info: {}", e))?;
+
+    Ok(())
+}
+
+/// Delete a session JSONL file.
+#[tauri::command]
+pub async fn gsd2_delete_session(
+    db: tauri::State<'_, DbState>,
+    project_id: String,
+    filename: String,
+) -> Result<(), String> {
+    let project_path = {
+        let db_guard = db.write().await;
+        get_project_path(&db_guard, &project_id)?
+    };
+
+    let sessions_dir = get_sessions_dir(&project_path)
+        .ok_or_else(|| "Sessions directory not found".to_string())?;
+
+    let filepath = sessions_dir.join(&filename);
+    if !filepath.exists() {
+        return Err(format!("Session file not found: {}", filename));
+    }
+
+    std::fs::remove_file(&filepath)
+        .map_err(|e| format!("Failed to delete session: {}", e))?;
+
+    Ok(())
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

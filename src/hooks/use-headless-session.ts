@@ -82,6 +82,8 @@ export function useHeadlessSession(projectId: string): UseHeadlessSessionReturn 
   // Strip ANSI/VT escape sequences from a string — matches pty-chat-parser's stripAnsi.
   const stripAnsi = (str: string): string => {
     let s = str;
+    // Charset designators: ESC ( X, ESC ) X, ESC * X, ESC + X (3-char sequences)
+    s = s.replace(/\x1b[()*.+][A-Z0-9<>]/gi, '');
     // OSC: \x1b] ... (\x07 or \x1b\)
     s = s.replace(/\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)/g, '');
     // DCS / PM / APC: \x1bP, \x1b^, \x1b_ ... \x1b\

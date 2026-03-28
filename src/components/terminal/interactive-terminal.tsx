@@ -109,6 +109,8 @@ export interface InteractiveTerminalProps {
   isBroadcasting?: boolean;
   /** SH-05: Callback to write to all broadcast terminals */
   onBroadcastWrite?: (data: string) => void;
+  /** If true, suppress all keyboard input — output only */
+  readOnly?: boolean;
 }
 
 /**
@@ -135,12 +137,13 @@ export const InteractiveTerminal = forwardRef<InteractiveTerminalRef, Interactiv
       onExit,
       onError,
       className,
-      fontSize = 14,
+      fontSize = 12,
       lineHeight = 1.2,
       autoConnect = true,
       visible = true,
       isBroadcasting = false,
       onBroadcastWrite,
+      readOnly = false,
     },
     ref
   ) {
@@ -386,7 +389,7 @@ export const InteractiveTerminal = forwardRef<InteractiveTerminalRef, Interactiv
             brightCyan: "#a4ffff",
             brightWhite: "#ffffff",
           },
-          fontFamily: '"JetBrains Mono Variable", "JetBrains Mono", Menlo, Monaco, "Courier New", monospace',
+          fontFamily: '"SF Mono", Menlo, "Cascadia Mono", Consolas, "Liberation Mono", "Courier New", monospace',
           fontSize,
           lineHeight,
           scrollback: 10000,
@@ -465,6 +468,7 @@ export const InteractiveTerminal = forwardRef<InteractiveTerminalRef, Interactiv
       // Both paths: Update indirection maps with current React refs
       if (key) {
         terminalInputWriters.set(key, (data: string) => {
+          if (readOnly) return; // suppress all keyboard input
           if (broadcastWriteRef.current) {
             broadcastWriteRef.current(data);
           } else {
@@ -476,6 +480,7 @@ export const InteractiveTerminal = forwardRef<InteractiveTerminalRef, Interactiv
             setShowSearch(true);
             return false;
           }
+          if (readOnly) return false; // block all other keys
           return true;
         });
       }

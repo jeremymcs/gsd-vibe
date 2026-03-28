@@ -77,7 +77,7 @@ export function MainLayout({ children }: MainLayoutProps) {
   const activeView = searchParams.get('view') ?? searchParams.get('tab') ?? '';
   const isProjectShellView = isProjectRoute && activeView === 'shell';
 
-  const { shellPanelCollapsed, setShellPanelCollapsed } = useTerminalContext();
+  const { shellPanelCollapsed, setShellPanelCollapsed, headlessRunning } = useTerminalContext();
   const { data: unreadCount } = useUnreadNotificationCount();
   const { data: projectsWithStats } = useProjectsWithStats();
 
@@ -189,21 +189,49 @@ export function MainLayout({ children }: MainLayoutProps) {
             // ── Global logo ──
             <div
               className={cn(
-                "h-20 flex items-start border-b border-border/40",
-                sidebarCollapsed ? "px-3 justify-center" : "px-5"
+                "h-24 flex items-center border-b border-border/40 transition-all duration-300",
+                sidebarCollapsed ? "px-0 justify-center" : "px-6"
               )}
             >
               {sidebarCollapsed ? (
-                <div className="flex flex-col items-center gap-0.5">
-                  <span className="text-[10px] font-bold text-foreground font-mono leading-none">GSD</span>
-                  <span className="text-[8px] font-semibold text-muted-foreground/60 tracking-widest uppercase leading-none">VF</span>
+                <div 
+                  className="relative cursor-pointer flex items-center justify-center w-full h-full" 
+                  onClick={() => navigate("/")}
+                >
+                  {/* Miniature version of the Shard V for collapsed state */}
+                  <svg viewBox="0 0 512 512" className="w-9 h-9 drop-shadow-sm">
+                    <defs>
+                      <linearGradient id="shard-light-mini" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#22d3ee" />
+                        <stop offset="100%" stop-color="#0ea5e9" />
+                      </linearGradient>
+                      <linearGradient id="shard-shadow-mini" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#0891b2" />
+                        <stop offset="100%" stop-color="#075985" />
+                      </linearGradient>
+                    </defs>
+                    <path d="M 256 415 L 116 105 L 196 105 L 256 265 Z" fill="url(#shard-shadow-mini)" />
+                    <path d="M 256 415 L 396 105 L 316 105 L 256 265 Z" fill="url(#shard-light-mini)" />
+                  </svg>
                 </div>
               ) : (
-                <div className="flex flex-col items-center gap-1 w-full pt-3">
-                  <img src="/gsd-logo.svg" alt="GSD" className="h-8 w-full max-w-[160px] object-contain" />
-                  <span className="text-[13px] font-semibold tracking-[0.2em] uppercase text-muted-foreground/70">
-                    GSD Vibe
-                  </span>
+                <div 
+                  className="flex flex-col items-center gap-1 w-full cursor-pointer"
+                  onClick={() => navigate("/")}
+                >
+                  <img 
+                    src="/gsd-logo.svg" 
+                    alt="Vibe" 
+                    className="h-10 w-full max-w-[120px] object-contain drop-shadow-sm" 
+                  />
+                  <div className="flex flex-col items-center text-center">
+                    <span className="text-[16px] font-bold tracking-[0.3em] uppercase text-foreground/90">
+                      Vibe
+                    </span>
+                    <span className="text-[9px] font-medium tracking-[0.4em] uppercase text-muted-foreground/40 -mt-0.5 whitespace-nowrap">
+                      GSD Ecosystem
+                    </span>
+                  </div>
                 </div>
               )}
             </div>
@@ -291,6 +319,10 @@ export function MainLayout({ children }: MainLayoutProps) {
                               {/* GSD status dot on Health view */}
                               {view.id === 'gsd2-health' && gsdStatusColor && (
                                 <span className={cn('ml-auto w-2 h-2 rounded-full flex-shrink-0', gsdStatusColor)} />
+                              )}
+                              {/* Blinking green dot when headless session is running */}
+                              {view.id === 'gsd2-headless' && headlessRunning && (
+                                <span className="ml-auto w-2 h-2 rounded-full flex-shrink-0 bg-green-500 animate-pulse" />
                               )}
                             </>
                           )}

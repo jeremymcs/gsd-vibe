@@ -28,9 +28,11 @@ interface TerminalTabsProps {
   className?: string;
   /** Optional content to render at the start of the tab bar (e.g., project selector) */
   headerSlot?: ReactNode;
+  /** Initial tab type when no tabs exist (default: "shell") */
+  initialTabType?: "shell" | "claude" | "yolo" | "gsd";
 }
 
-export function TerminalTabs({ projectId, workingDirectory, className, headerSlot }: TerminalTabsProps) {
+export function TerminalTabs({ projectId, workingDirectory, className, headerSlot, initialTabType = "shell" }: TerminalTabsProps) {
   const {
     getProjectTerminals,
     addTab,
@@ -69,9 +71,9 @@ export function TerminalTabs({ projectId, workingDirectory, className, headerSlo
   useEffect(() => {
     if (tabs.length === 0 && isRestored && !initialTabCreatedRef.current.has(projectId)) {
       initialTabCreatedRef.current.add(projectId);
-      addTab(projectId, "shell");
+      addTab(projectId, initialTabType);
     }
-  }, [tabs.length, projectId, addTab, isRestored]);
+  }, [tabs.length, projectId, addTab, isRestored, initialTabType]);
 
   // Focus input when editing starts
   useEffect(() => {
@@ -223,6 +225,9 @@ export function TerminalTabs({ projectId, workingDirectory, className, headerSlo
           </div>
         ))}
 
+        {/* Spacer — push action buttons to the right */}
+        <div className="flex-1" />
+
         {/* Add tab button */}
         <Button
           variant="ghost"
@@ -295,40 +300,6 @@ export function TerminalTabs({ projectId, workingDirectory, className, headerSlo
             {broadcastMode ? "Disable broadcast mode" : "Enable broadcast mode"}
           </TooltipContent>
         </Tooltip>
-
-        {/* Spacer */}
-        <div className="flex-1" />
-
-        {/* Environment indicator */}
-        <EnvironmentIndicator workingDirectory={workingDirectory} />
-
-        {/* Separator between env indicator and font controls */}
-        <div className="w-px h-4 bg-border/30 mx-1" />
-
-        {/* Font size controls */}
-        <div className="flex items-center gap-1 text-muted-foreground">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-6 w-6 p-0"
-            onClick={() => setTerminalFontSize(terminalFontSize - 1)}
-            title="Decrease font size"
-          >
-            <Minus className="h-3 w-3" />
-          </Button>
-          <span className="text-[11px] font-mono w-6 text-center select-none">
-            {terminalFontSize}
-          </span>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-6 w-6 p-0"
-            onClick={() => setTerminalFontSize(terminalFontSize + 1)}
-            title="Increase font size"
-          >
-            <Plus className="h-3 w-3" />
-          </Button>
-        </div>
       </div>
 
       {/* Terminal content */}
@@ -343,6 +314,40 @@ export function TerminalTabs({ projectId, workingDirectory, className, headerSlo
             onClose={() => setShowSnippets(false)}
           />
         )}
+      </div>
+
+      {/* Bottom status bar */}
+      <div className="flex items-center gap-1 bg-muted/30 border-t border-border/50 px-2 py-0.5 flex-shrink-0">
+        {/* Environment indicator */}
+        <EnvironmentIndicator workingDirectory={workingDirectory} />
+
+        {/* Spacer */}
+        <div className="flex-1" />
+
+        {/* Font size controls */}
+        <div className="flex items-center gap-1 text-muted-foreground">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-5 w-5 p-0"
+            onClick={() => setTerminalFontSize(terminalFontSize - 1)}
+            title="Decrease font size"
+          >
+            <Minus className="h-3 w-3" />
+          </Button>
+          <span className="text-[10px] font-mono w-5 text-center select-none tabular-nums">
+            {terminalFontSize}
+          </span>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-5 w-5 p-0"
+            onClick={() => setTerminalFontSize(terminalFontSize + 1)}
+            title="Increase font size"
+          >
+            <Plus className="h-3 w-3" />
+          </Button>
+        </div>
       </div>
     </div>
   );

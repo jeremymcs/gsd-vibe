@@ -1690,6 +1690,46 @@ export const useGsd2Sessions = (projectId: string, enabled = true) =>
     retry: false,
   });
 
+export const useGsd2SessionDetail = (projectId: string, filename: string, enabled = true) =>
+  useQuery({
+    queryKey: queryKeys.gsd2SessionDetail(projectId, filename),
+    queryFn: () => api.gsd2GetSessionDetail(projectId, filename),
+    enabled: enabled && !!projectId && !!filename,
+    staleTime: 60 * 1000,
+    retry: false,
+  });
+
+export const useGsd2RenameSession = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (vars: { projectId: string; filename: string; newName: string }) =>
+      api.gsd2RenameSession(vars.projectId, vars.filename, vars.newName),
+    onSuccess: (_data, vars) => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.gsd2Sessions(vars.projectId) });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.gsd2SessionDetail(vars.projectId, vars.filename) });
+      toast.success('Session renamed');
+    },
+    onError: (error: Error) => {
+      toast.error('Failed to rename session', { description: getErrorMessage(error) });
+    },
+  });
+};
+
+export const useGsd2DeleteSession = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (vars: { projectId: string; filename: string }) =>
+      api.gsd2DeleteSession(vars.projectId, vars.filename),
+    onSuccess: (_data, vars) => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.gsd2Sessions(vars.projectId) });
+      toast.success('Session deleted');
+    },
+    onError: (error: Error) => {
+      toast.error('Failed to delete session', { description: getErrorMessage(error) });
+    },
+  });
+};
+
 export const useGsd2MergeWorktree = () => {
   const queryClient = useQueryClient();
   return useMutation({
