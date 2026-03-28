@@ -38,12 +38,7 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: ${{ matrix.target }}
-
-      # Universal macOS build requires both ARM and Intel targets
-      - name: Add x86_64 target for universal build
-        if: matrix.target == 'universal-apple-darwin'
-        run: rustup target add x86_64-apple-darwin aarch64-apple-darwin
+          targets: ${{ matrix.target != 'universal-apple-darwin' && matrix.target || 'aarch64-apple-darwin,x86_64-apple-darwin' }}
 
       - name: Rust cache
         uses: swatinem/rust-cache@v2
