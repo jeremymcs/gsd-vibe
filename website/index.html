@@ -1116,6 +1116,235 @@
     </div>
   </section>
 
+  <!-- Prerequisites Section -->
+  <section id="prerequisites" class="py-24 lg:py-32 border-t border-white/[0.08]">
+    <div class="max-w-5xl mx-auto px-6">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl md:text-5xl font-black text-white mb-4">Getting Started</h2>
+        <p class="text-lg text-slate-400 max-w-2xl mx-auto">GSD Vibe manages projects powered by the GSD workflow. Works with Claude Code, Gemini CLI, and OpenCode. Follow these steps to get started.</p>
+      </div>
+
+      <!-- Step 1: Platform Dependencies -->
+      <div class="mb-16">
+        <div class="flex items-center gap-3 mb-6">
+          <span class="flex items-center justify-center w-8 h-8 rounded-full bg-brand-500 text-black text-sm font-bold shrink-0">1</span>
+          <h3 class="text-xl font-bold text-white">Install Platform Dependencies</h3>
+        </div>
+        <div class="grid lg:grid-cols-3 gap-6">
+
+          <!-- macOS -->
+          <div class="p-6 rounded-xl bg-white/[0.04] border border-white/[0.1]">
+            <div class="flex items-center gap-3 mb-4">
+              <svg class="w-6 h-6 text-slate-300" fill="currentColor" viewBox="0 0 24 24"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+              <h4 class="text-lg font-bold text-white">macOS</h4>
+            </div>
+            <div class="space-y-3 font-mono text-sm">
+              <div class="rounded-lg bg-black/40 border border-white/[0.08] p-3">
+                <div class="text-slate-500 text-xs mb-1"># Install Homebrew (if needed)</div>
+                <div class="text-slate-300 break-all text-xs">/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"</div>
+              </div>
+              <div class="rounded-lg bg-black/40 border border-white/[0.08] p-3">
+                <div class="text-slate-500 text-xs mb-1"># Install Node.js, Git, and tmux</div>
+                <div class="text-slate-300">brew install node git tmux</div>
+              </div>
+            </div>
+            <div class="mt-4 space-y-1.5">
+              <div class="flex items-center gap-2 text-sm text-slate-400">
+                <svg class="w-3.5 h-3.5 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                Node.js 22+ (includes npm)
+              </div>
+              <div class="flex items-center gap-2 text-sm text-slate-400">
+                <svg class="w-3.5 h-3.5 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                Git for project tracking
+              </div>
+              <div class="flex items-center gap-2 text-sm text-slate-400">
+                <svg class="w-3.5 h-3.5 text-slate-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                tmux optional (persistent terminal sessions)
+              </div>
+            </div>
+          </div>
+
+          <!-- Windows -->
+          <div class="p-6 rounded-xl bg-white/[0.04] border border-white/[0.1]">
+            <div class="flex items-center gap-3 mb-4">
+              <svg class="w-6 h-6 text-slate-300" fill="currentColor" viewBox="0 0 24 24"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/></svg>
+              <h4 class="text-lg font-bold text-white">Windows</h4>
+            </div>
+            <div class="space-y-3 font-mono text-sm">
+              <div class="rounded-lg bg-black/40 border border-white/[0.08] p-3">
+                <div class="text-slate-500 text-xs mb-1"># Option A: Install via winget (PowerShell)</div>
+                <div class="text-slate-300">winget install OpenJS.NodeJS.LTS</div>
+                <div class="text-slate-300">winget install Git.Git</div>
+              </div>
+              <div class="rounded-lg bg-black/40 border border-white/[0.08] p-3">
+                <div class="text-slate-500 text-xs mb-1"># Option B: Download installers directly</div>
+                <div class="text-slate-400 text-xs">Node.js &rarr; <span class="text-brand-400">nodejs.org</span></div>
+                <div class="text-slate-400 text-xs">Git &rarr; <span class="text-brand-400">git-scm.com</span></div>
+              </div>
+            </div>
+            <div class="mt-4 space-y-1.5">
+              <div class="flex items-center gap-2 text-sm text-slate-400">
+                <svg class="w-3.5 h-3.5 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                Node.js 22+ (includes npm)
+              </div>
+              <div class="flex items-center gap-2 text-sm text-slate-400">
+                <svg class="w-3.5 h-3.5 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                Git for project tracking
+              </div>
+              <div class="flex items-center gap-2 text-sm text-slate-400">
+                <svg class="w-3.5 h-3.5 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                WebView2 (pre-installed on Windows 10+)
+              </div>
+              <div class="flex items-center gap-2 text-sm text-slate-400">
+                <svg class="w-3.5 h-3.5 text-yellow-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                Restart terminal after installing Node.js
+              </div>
+            </div>
+          </div>
+
+          <!-- Linux -->
+          <div class="p-6 rounded-xl bg-white/[0.04] border border-white/[0.1]">
+            <div class="flex items-center gap-3 mb-4">
+              <svg class="w-6 h-6 text-slate-300" fill="currentColor" viewBox="0 0 24 24"><path d="M12.504 0c-.155 0-.315.008-.48.021-4.226.333-3.105 4.807-3.17 6.298-.076 1.092-.3 1.953-1.05 3.02-.885 1.051-2.127 2.75-2.716 4.521-.278.832-.41 1.684-.287 2.489a.424.424 0 00-.11.135c-.26.268-.45.6-.663.839-.199.199-.485.267-.797.4-.313.136-.658.269-.864.68-.09.189-.136.394-.132.602 0 .199.027.4.055.536.058.399.116.728.04.97-.249.68-.28 1.145-.106 1.484.174.334.535.47.94.601.81.2 1.91.135 2.774.6.926.466 1.866.67 2.616.47.526-.116.97-.464 1.208-.946.587-.003 1.23-.269 2.26-.334.699-.058 1.574.267 2.577.2a1.56 1.56 0 00.114.333l.003.003c.391.778 1.113 1.368 1.884 1.43.868.07 1.723-.26 2.456-.594.733-.34 1.455-.78 2.28-.67.566.075 1.268-.281 1.583-.672.318-.401.395-.96.326-1.532-.135-1.08-.588-1.963-1.33-2.43a2.13 2.13 0 01-.78-.794c-.16-.136-.36-.271-.52-.44-.19-.203-.28-.608-.373-.755l-.064-.064c-.108.023-.265.07-.27.267 0 .133.06.267.1.4.04.132.06.27.06.399 0 .1-.019.135-.04.202-.132 0-.267-.066-.4-.2-.268-.07-.4-.335-.6-.268-.168.136-.2.468-.066.601.266.268.668.535.867.67.466.334.862.662 1.26.865l.001.001c.063.039.18.142.26.26.131.2.196.465.254.733.06.268.08.535.086.732a2.17 2.17 0 01-.065.466 4.46 4.46 0 01-.4.333c-.133.067-.267.135-.33.267a.631.631 0 00-.135.333c0 .066 0 .133.067.2.133.2.333.333.533.333.267.067.467 0 .667-.133s.4-.267.533-.467c.2-.333.267-.667.267-1.066.067-.534-.066-1-.133-1.534v-.066c.2-.534.133-1.134-.133-1.534a1.74 1.74 0 00-.534-.6c-.067-.133-.2-.2-.2-.333a7.457 7.457 0 00-.066-.934c-.067-.333-.134-.733-.267-1.066-.267-.6-.667-1.134-1.2-1.467-.467-.333-.667-.667-1-1.066-.333-.4-.733-.867-.933-1.4-.267-.6-.4-1.267-.534-1.934-.067-.4-.2-.667-.333-1.066-.2-.667-.467-1.267-.467-2-.133-1.334.267-2.667 1-3.534.533-.6 1.267-1 2.067-1.134.8-.133 1.733 0 2.467.467.333.2.733.467.933.733.4.467.533.934.667 1.534.133.534.333 1.2.733 1.534.267.2.533.333.8.4.267.067.533.067.733.133.2.067.333.2.533.333.267.2.4.534.533.867.067.333.133.733.067 1.067a3.65 3.65 0 01-.267.933c-.333.667-.733 1.334-1.133 1.934-.4.667-.8 1.267-1.133 1.934-.4.6-.667 1.267-.8 2-.133.533-.2 1.133-.133 1.667.067.467.2.867.533 1.2.333.333.733.533 1.2.6.4.067.867 0 1.267-.133.4-.133.733-.333 1.067-.467.933-.467 1.733-1.133 2.533-1.8.267-.267.534-.534.734-.8.2-.267.4-.534.533-.867.133-.4.2-.8.2-1.2 0-.534-.067-1.067-.267-1.534-.4-1.066-1.2-1.866-2.133-2.4-.534-.333-.867-.733-1.134-1.2a13.8 13.8 0 01-.666-1.4c-.2-.467-.4-.934-.6-1.334-.2-.4-.467-.733-.867-.933a8.33 8.33 0 00-1.8-.534c-.6-.133-1.2-.2-1.734-.333A8.565 8.565 0 0012.504 0z"/></svg>
+              <h4 class="text-lg font-bold text-white">Linux</h4>
+            </div>
+            <div class="space-y-3 font-mono text-sm">
+              <div class="rounded-lg bg-black/40 border border-white/[0.08] p-3 overflow-x-auto">
+                <div class="text-slate-500 text-xs mb-1"># Ubuntu / Debian</div>
+                <div class="text-slate-300 text-xs whitespace-nowrap">curl -fsSL https://deb.nodesource.com/setup_22.x \</div>
+                <div class="text-slate-300 text-xs whitespace-nowrap">&nbsp;&nbsp;| sudo -E bash -</div>
+                <div class="text-slate-300 text-xs">sudo apt install -y nodejs git tmux \</div>
+                <div class="text-slate-300 text-xs">&nbsp;&nbsp;libwebkit2gtk-4.1-0</div>
+              </div>
+              <div class="rounded-lg bg-black/40 border border-white/[0.08] p-3">
+                <div class="text-slate-500 text-xs mb-1"># Fedora / RHEL</div>
+                <div class="text-slate-300 text-xs">sudo dnf install -y nodejs npm git tmux</div>
+                <div class="text-slate-300 text-xs">sudo dnf install -y webkit2gtk4.1</div>
+              </div>
+            </div>
+            <div class="mt-4 space-y-1.5">
+              <div class="flex items-center gap-2 text-sm text-slate-400">
+                <svg class="w-3.5 h-3.5 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                Node.js 22+ (includes npm)
+              </div>
+              <div class="flex items-center gap-2 text-sm text-slate-400">
+                <svg class="w-3.5 h-3.5 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                WebKitGTK 4.1 (Tauri runtime)
+              </div>
+              <div class="flex items-center gap-2 text-sm text-slate-400">
+                <svg class="w-3.5 h-3.5 text-slate-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                tmux optional (persistent terminal sessions)
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Step 2: Install an AI Coding Tool -->
+      <div class="mb-16">
+        <div class="flex items-center gap-3 mb-6">
+          <span class="flex items-center justify-center w-8 h-8 rounded-full bg-brand-500 text-black text-sm font-bold shrink-0">2</span>
+          <h3 class="text-xl font-bold text-white">Install an AI Coding Tool</h3>
+        </div>
+        <div class="max-w-3xl mx-auto">
+          <p class="text-sm text-slate-400 mb-4">GSD works with multiple AI coding tools. Install at least one globally with npm (included with Node.js from Step 1).</p>
+          <div class="grid sm:grid-cols-3 gap-4">
+            <div class="rounded-xl bg-white/[0.04] border border-brand-500/30 p-5 relative">
+              <span class="absolute -top-3 left-4 px-2 py-0.5 rounded-full bg-brand-500 text-black text-xs font-bold">Recommended</span>
+              <h4 class="text-sm font-bold text-white mb-3">Claude Code</h4>
+              <div class="rounded-lg bg-black/40 border border-white/[0.08] p-3 font-mono text-xs">
+                <div class="flex items-center justify-between gap-2">
+                  <code class="text-emerald-400">npm i -g @anthropic-ai/claude-code</code>
+                  <button onclick="navigator.clipboard.writeText('npm install -g @anthropic-ai/claude-code')" class="text-slate-500 hover:text-white transition-colors shrink-0" title="Copy">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                  </button>
+                </div>
+              </div>
+              <p class="text-xs text-slate-500 mt-2">Anthropic API key or Claude Pro/Max</p>
+            </div>
+            <div class="rounded-xl bg-white/[0.04] border border-white/[0.1] p-5">
+              <h4 class="text-sm font-bold text-white mb-3">Gemini CLI</h4>
+              <div class="rounded-lg bg-black/40 border border-white/[0.08] p-3 font-mono text-xs">
+                <div class="flex items-center justify-between gap-2">
+                  <code class="text-slate-300">npm i -g @google/gemini-cli</code>
+                  <button onclick="navigator.clipboard.writeText('npm install -g @google/gemini-cli')" class="text-slate-500 hover:text-white transition-colors shrink-0" title="Copy">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                  </button>
+                </div>
+              </div>
+              <p class="text-xs text-slate-500 mt-2">Google AI API key</p>
+            </div>
+            <div class="rounded-xl bg-white/[0.04] border border-white/[0.1] p-5">
+              <h4 class="text-sm font-bold text-white mb-3">OpenCode</h4>
+              <div class="rounded-lg bg-black/40 border border-white/[0.08] p-3 font-mono text-xs">
+                <div class="flex items-center justify-between gap-2">
+                  <code class="text-slate-300">npx opencode@latest</code>
+                  <button onclick="navigator.clipboard.writeText('npx opencode@latest')" class="text-slate-500 hover:text-white transition-colors shrink-0" title="Copy">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                  </button>
+                </div>
+              </div>
+              <p class="text-xs text-slate-500 mt-2">Multi-provider support</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Install GSD CLI -->
+      <div class="mb-16">
+        <div class="flex items-center gap-3 mb-6">
+          <span class="flex items-center justify-center w-8 h-8 rounded-full bg-brand-500 text-black text-sm font-bold shrink-0">3</span>
+          <h3 class="text-xl font-bold text-white">Install GSD CLI</h3>
+        </div>
+        <div class="grid sm:grid-cols-2 gap-6 max-w-3xl mx-auto">
+          <!-- GSD v2 (Recommended) -->
+          <div class="p-6 rounded-xl bg-white/[0.04] border border-brand-500/30 relative">
+            <span class="absolute -top-3 left-4 px-2 py-0.5 rounded-full bg-brand-500 text-black text-xs font-bold">Recommended</span>
+            <h4 class="text-lg font-bold text-white mb-2">GSD v2</h4>
+            <p class="text-sm text-slate-400 mb-4">Latest version with milestone workflows, parallel agents, and advanced planning.</p>
+            <div class="rounded-lg bg-black/40 border border-white/[0.08] p-4 font-mono text-sm">
+              <div class="flex items-center justify-between gap-2">
+                <code class="text-emerald-400">npm install -g gsd-pi@latest</code>
+                <button onclick="navigator.clipboard.writeText('npm install -g gsd-pi@latest')" class="text-slate-500 hover:text-white transition-colors shrink-0" title="Copy">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                </button>
+              </div>
+            </div>
+            <div class="text-xs text-slate-500 mt-2">v2.58.0</div>
+          </div>
+
+          <!-- GSD v1 -->
+          <div class="p-6 rounded-xl bg-white/[0.04] border border-white/[0.1]">
+            <h4 class="text-lg font-bold text-white mb-2">GSD v1</h4>
+            <p class="text-sm text-slate-400 mb-4">Original version. Stable and battle-tested for single-phase workflows.</p>
+            <div class="rounded-lg bg-black/40 border border-white/[0.08] p-4 font-mono text-sm">
+              <div class="flex items-center justify-between gap-2">
+                <code class="text-slate-300">npm i -g get-shit-done-cc@latest</code>
+                <button onclick="navigator.clipboard.writeText('npm i -g get-shit-done-cc@latest')" class="text-slate-500 hover:text-white transition-colors shrink-0" title="Copy">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                </button>
+              </div>
+            </div>
+            <div class="text-xs text-slate-500 mt-2">v1.30.0</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4: Download GSD Vibe -->
+      <div>
+        <div class="flex items-center gap-3 mb-6">
+          <span class="flex items-center justify-center w-8 h-8 rounded-full bg-brand-500 text-black text-sm font-bold shrink-0">4</span>
+          <h3 class="text-xl font-bold text-white">Download GSD Vibe</h3>
+        </div>
+        <div class="max-w-3xl mx-auto text-center">
+          <p class="text-sm text-slate-400 mb-4">Grab the desktop app for your platform from the <a href="#download" class="text-brand-400 hover:text-brand-300 underline underline-offset-2">download section above</a>, import your projects, and start building.</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
   <!-- Footer -->
   <footer class="border-t border-white/[0.08] py-12">
     <div class="max-w-7xl mx-auto px-6">
