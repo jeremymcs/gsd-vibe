@@ -1,4 +1,4 @@
-// GSD Vibe - GSD-2 Worktrees Tab Component
+// GSD VibeFlow - GSD-2 Worktrees Tab Component
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { useState } from 'react';
@@ -10,8 +10,6 @@ import {
   FilePlus,
   FilePenLine,
   FileMinus,
-  GitMerge,
-  Trash,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -28,9 +26,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { useGsd2Worktrees, useGsd2WorktreeDiff, useGsd2RemoveWorktree, useGsd2MergeWorktree, useGsd2CleanWorktrees } from '@/lib/queries';
+import { useGsd2Worktrees, useGsd2WorktreeDiff, useGsd2RemoveWorktree } from '@/lib/queries';
 import type { WorktreeInfo } from '@/lib/tauri';
-import { toast } from 'sonner';
 
 interface Gsd2WorktreesTabProps {
   projectId: string;
@@ -131,12 +128,9 @@ function WorktreeDiffSection({ projectId, worktreeName }: WorktreeDiffSectionPro
 export function Gsd2WorktreesTab({ projectId }: Gsd2WorktreesTabProps) {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [removeTarget, setRemoveTarget] = useState<WorktreeInfo | null>(null);
-  const [mergeTarget, setMergeTarget] = useState<WorktreeInfo | null>(null);
 
   const { data: worktrees, isLoading, isError } = useGsd2Worktrees(projectId);
   const removeMutation = useGsd2RemoveWorktree();
-  const mergeMutation = useGsd2MergeWorktree();
-  const cleanMutation = useGsd2CleanWorktrees();
 
   const toggleRow = (name: string) => {
     setExpandedRows((prev) => {
@@ -149,43 +143,9 @@ export function Gsd2WorktreesTab({ projectId }: Gsd2WorktreesTabProps) {
 
   const confirmRemove = () => {
     if (!removeTarget) return;
-    removeMutation.mutate({ projectId, worktreeName: removeTarget.name }, {
-      onSuccess: () => {
-        toast.success(`Worktree ${removeTarget.name} removed`);
-      },
-      onError: (error) => {
-        toast.error(`Failed to remove worktree: ${error}`);
-      },
-    });
+    removeMutation.mutate({ projectId, worktreeName: removeTarget.name });
     setRemoveTarget(null);
   };
-
-  const confirmMerge = () => {
-    if (!mergeTarget) return;
-    mergeMutation.mutate({ projectId, worktreeName: mergeTarget.name }, {
-      onSuccess: (result) => {
-        toast.success(result || `Worktree ${mergeTarget.name} merged successfully`);
-      },
-      onError: (error) => {
-        toast.error(`Failed to merge worktree: ${error}`);
-      },
-    });
-    setMergeTarget(null);
-  };
-
-  const handleCleanStale = () => {
-    cleanMutation.mutate(projectId, {
-      onSuccess: (result) => {
-        toast.success(result || 'Stale worktrees cleaned');
-      },
-      onError: (error) => {
-        toast.error(`Failed to clean stale worktrees: ${error}`);
-      },
-    });
-  };
-
-  // Check if there are any stale worktrees
-  const hasStaleWorktrees = worktrees?.some(wt => !wt.exists) ?? false;
 
   if (isLoading) {
     return (
@@ -243,22 +203,6 @@ export function Gsd2WorktreesTab({ projectId }: Gsd2WorktreesTabProps) {
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-semibold flex items-center gap-2">
             <GitBranch className="h-4 w-4" /> Worktrees
-            {hasStaleWorktrees && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleCleanStale}
-                disabled={cleanMutation.isPending}
-                className="ml-auto"
-              >
-                {cleanMutation.isPending ? (
-                  <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                ) : (
-                  <Trash className="h-3 w-3 mr-1" />
-                )}
-                Clean Stale
-              </Button>
-            )}
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
@@ -299,23 +243,6 @@ export function Gsd2WorktreesTab({ projectId }: Gsd2WorktreesTabProps) {
                     <span className="text-muted-foreground"> · </span>
                     <span className="text-status-error">{wt.removed_count} removed</span>
                   </span>
-                  {wt.name !== 'main' && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setMergeTarget(wt);
-                      }}
-                      disabled={mergeMutation.isPending}
-                    >
-                      {mergeMutation.isPending ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      ) : (
-                        <GitMerge className="h-3.5 w-3.5" />
-                      )}
-                    </Button>
-                  )}
                   <Button
                     variant="destructive"
                     size="sm"
@@ -368,23 +295,6 @@ export function Gsd2WorktreesTab({ projectId }: Gsd2WorktreesTabProps) {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Remove
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <AlertDialog open={!!mergeTarget} onOpenChange={(open) => !open && setMergeTarget(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Merge {mergeTarget?.name}?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will squash-merge the worktree branch {mergeTarget?.branch} back into main and remove the worktree.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmMerge}>
-              Merge
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

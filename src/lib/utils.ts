@@ -1,4 +1,4 @@
-// GSD Vibe - Utility Functions
+// GSD VibeFlow - Utility Functions
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { type ClassValue, clsx } from "clsx";
@@ -13,7 +13,7 @@ export function formatCost(cost: number): string {
     style: "currency",
     currency: "USD",
     minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    maximumFractionDigits: 4,
   }).format(cost);
 }
 
@@ -128,24 +128,4 @@ export function formatTokenCount(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
   if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
   return n.toLocaleString();
-}
-
-/** Strip HTML comments, HTML tags, and inline markdown from a description string.
- *  Applied at display time for stale DB values; the Rust parser also cleans at write time.
- *  Returns null if the cleaned string is empty. */
-export function cleanDescription(raw: string | null | undefined): string | null {
-  if (!raw) return null;
-  let s = raw;
-  // Remove HTML comments
-  s = s.replace(/<!--[\s\S]*?-->/g, '');
-  // Remove HTML tags  
-  s = s.replace(/<[^>]+>/g, '');
-  // Remove markdown bold/italic markers (**text**, __text__, *text*, _text_)
-  s = s.replace(/\*\*|__/g, '').replace(/(?<![\w])[*_](?![\w])|(?<=[\w])[*_](?![\w])|(?<![\w])[*_](?=[\w])/g, '');
-  // Remove standalone * and _ that remain (simpler fallback)
-  s = s.replace(/\*+|_+/g, ' ');
-  // Remove inline code backticks
-  s = s.replace(/`/g, '');
-  s = s.replace(/\s+/g, ' ').trim();
-  return s.length > 0 ? s : null;
 }

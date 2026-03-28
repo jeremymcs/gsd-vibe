@@ -1,4 +1,4 @@
-// GSD Vibe - Notification Panel Component
+// GSD VibeFlow - Notification Panel Component
 // Scrollable list of notifications with actions
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

@@ -1,4 +1,4 @@
-// GSD Vibe - Projects Page Tests
+// GSD VibeFlow - Projects Page Tests
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
@@ -44,8 +44,8 @@ vi.mock("@/lib/design-tokens", () => ({
 const mockProjects: ProjectWithStats[] = [
   {
     id: "1",
-    name: "GSD Vibe",
-    path: "/users/test/gsd-vibe",
+    name: "GSD VibeFlow",
+    path: "/users/test/track-your-shit",
     description: "Mission control for projects",
     tech_stack: {
       framework: "React",
@@ -148,7 +148,7 @@ describe("ProjectsPage", () => {
 
     render(<ProjectsPage />);
 
-    expect(screen.getByText("GSD Vibe")).toBeInTheDocument();
+    expect(screen.getByText("GSD VibeFlow")).toBeInTheDocument();
     expect(screen.getByText("Test Project")).toBeInTheDocument();
     expect(screen.getByText("Archived Project")).toBeInTheDocument();
   });

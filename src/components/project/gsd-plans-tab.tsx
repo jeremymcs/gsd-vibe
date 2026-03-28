@@ -1,4 +1,4 @@
-// GSD Vibe - GSD Plans & Execution Tab
+// GSD VibeFlow - GSD Plans & Execution Tab
 // Plan files grouped by phase with summary integration and split-view
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
@@ -23,7 +23,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useGsdPlans, useGsdSummaries, useGsdPhaseResearchList } from '@/lib/queries';
 import { ViewError } from '@/components/shared/loading-states';
 import { cn } from '@/lib/utils';
-import { groupPlansByPhase } from '@/lib/gsd-plan-utils';
 import type { GsdPlan, GsdSummary, GsdPhaseResearch, GsdSummaryDecision } from '@/lib/tauri';
 
 interface GsdPlansTabProps {
@@ -79,7 +78,12 @@ export function GsdPlansTab({ projectId }: GsdPlansTabProps) {
   }
 
   // Group plans by phase
-  const phaseGroups = groupPlansByPhase(plans ?? []);
+  const phaseGroups = new Map<number, GsdPlan[]>();
+  for (const plan of plans ?? []) {
+    const existing = phaseGroups.get(plan.phase_number) ?? [];
+    existing.push(plan);
+    phaseGroups.set(plan.phase_number, existing);
+  }
 
   const totalPlans = (plans ?? []).length;
   const completedPlans = (plans ?? []).filter((p) =>

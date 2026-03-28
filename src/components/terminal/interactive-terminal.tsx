@@ -1,4 +1,4 @@
-// GSD Vibe - Interactive Terminal Component
+// GSD VibeFlow - Interactive Terminal Component
 // Full PTY-backed terminal with bidirectional I/O
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
@@ -109,8 +109,6 @@ export interface InteractiveTerminalProps {
   isBroadcasting?: boolean;
   /** SH-05: Callback to write to all broadcast terminals */
   onBroadcastWrite?: (data: string) => void;
-  /** If true, suppress all keyboard input — output only */
-  readOnly?: boolean;
 }
 
 /**
@@ -137,13 +135,12 @@ export const InteractiveTerminal = forwardRef<InteractiveTerminalRef, Interactiv
       onExit,
       onError,
       className,
-      fontSize = 12,
+      fontSize = 14,
       lineHeight = 1.2,
       autoConnect = true,
       visible = true,
       isBroadcasting = false,
       onBroadcastWrite,
-      readOnly = false,
     },
     ref
   ) {
@@ -389,7 +386,7 @@ export const InteractiveTerminal = forwardRef<InteractiveTerminalRef, Interactiv
             brightCyan: "#a4ffff",
             brightWhite: "#ffffff",
           },
-          fontFamily: '"SF Mono", Menlo, "Cascadia Mono", Consolas, "Liberation Mono", "Courier New", monospace',
+          fontFamily: '"JetBrains Mono Variable", "JetBrains Mono", Menlo, Monaco, "Courier New", monospace',
           fontSize,
           lineHeight,
           scrollback: 10000,
@@ -468,7 +465,6 @@ export const InteractiveTerminal = forwardRef<InteractiveTerminalRef, Interactiv
       // Both paths: Update indirection maps with current React refs
       if (key) {
         terminalInputWriters.set(key, (data: string) => {
-          if (readOnly) return; // suppress all keyboard input
           if (broadcastWriteRef.current) {
             broadcastWriteRef.current(data);
           } else {
@@ -480,7 +476,6 @@ export const InteractiveTerminal = forwardRef<InteractiveTerminalRef, Interactiv
             setShowSearch(true);
             return false;
           }
-          if (readOnly) return false; // block all other keys
           return true;
         });
       }

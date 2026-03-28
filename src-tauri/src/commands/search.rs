@@ -1,4 +1,4 @@
-// GSD Vibe - Global Search Command (FTS5-accelerated)
+// GSD VibeFlow - Global Search Command (FTS5-accelerated)
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 use crate::models::{

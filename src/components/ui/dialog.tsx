@@ -1,4 +1,4 @@
-// GSD Vibe - Dialog Component
+// GSD VibeFlow - Dialog Component
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import * as React from "react";

@@ -1,4 +1,4 @@
-// GSD Vibe - File Browser Component
+// GSD VibeFlow - File Browser Component
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import 'highlight.js/styles/github-dark.css';
@@ -277,16 +277,10 @@ export function FileBrowser({ projectId, projectPath }: FileBrowserProps) {
   const folders = fileTree?.folders;
   const filteredFolders = useMemo(() => {
     if (!folders) return [];
-    const sorted = [...folders]
-      .sort((a, b) => a.display_name.localeCompare(b.display_name))
-      .map((folder) => ({
-        ...folder,
-        files: [...folder.files].sort((a, b) => a.display_name.localeCompare(b.display_name)),
-      }));
-    if (!debouncedSearch.trim()) return sorted;
+    if (!debouncedSearch.trim()) return folders;
 
     const query = debouncedSearch.toLowerCase();
-    return sorted
+    return folders
       .map((folder) => ({
         ...folder,
         files: folder.files.filter(

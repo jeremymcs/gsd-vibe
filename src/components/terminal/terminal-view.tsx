@@ -1,4 +1,4 @@
-// GSD Vibe - Terminal View Component
+// GSD VibeFlow - Terminal View Component
 // xterm.js terminal emulator wrapper with smart scroll behavior
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
@@ -170,7 +170,7 @@ export const TerminalView = forwardRef<TerminalViewRef, TerminalViewProps>(
           brightCyan: "#a4ffff",
           brightWhite: "#ffffff",
         },
-        fontFamily: '"SF Mono", Menlo, "Cascadia Mono", Consolas, "Liberation Mono", "Courier New", monospace',
+        fontFamily: '"JetBrains Mono Variable", "JetBrains Mono", Menlo, Monaco, "Courier New", monospace',
         fontSize,
         lineHeight,
         scrollback: 10000,

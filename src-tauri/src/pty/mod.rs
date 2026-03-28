@@ -1,4 +1,4 @@
-// GSD Vibe - Terminal Manager Module
+// GSD VibeFlow - Terminal Manager Module
 // Manages pseudo-terminal sessions with optional tmux persistence
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
@@ -31,7 +31,7 @@ pub struct PtyErrorEvent {
     pub error: String,
 }
 
-/// Info about a tmux session managed by GSD Vibe
+/// Info about a tmux session managed by GSD VibeFlow
 #[derive(Clone, serde::Serialize, serde::Deserialize)]
 pub struct TmuxSessionInfo {
     pub name: String,
@@ -206,7 +206,7 @@ impl TerminalManager {
         Ok(String::from_utf8_lossy(&output.stdout).trim().to_string())
     }
 
-    /// List all GSD Vibe tmux sessions (prefixed with `ct-`)
+    /// List all GSD VibeFlow tmux sessions (prefixed with `ct-`)
     pub fn list_ct_sessions() -> Vec<TmuxSessionInfo> {
         let output = std::process::Command::new("tmux")
             .args([

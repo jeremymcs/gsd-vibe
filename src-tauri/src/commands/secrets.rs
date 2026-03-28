@@ -1,11 +1,11 @@
-// GSD Vibe - OS Keychain Secret Management Commands
+// GSD VibeFlow - OS Keychain Secret Management Commands
 // Provides secure API key storage via the native OS keychain (macOS Keychain, Windows Credential Manager, Linux Secret Service)
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 use keyring::Entry;
 use serde::{Deserialize, Serialize};
 
-/// Default service name for all GSD Vibe keychain entries
+/// Default service name for all GSD VibeFlow keychain entries
 const DEFAULT_SERVICE: &str = "io.gsd.vibeflow";
 
 /// Known/predefined secret key names that the UI offers as presets
@@ -21,7 +21,7 @@ const PREDEFINED_KEYS: &[&str] = &[
 /// In-memory index of stored secret keys, since the keyring crate
 /// does not provide a "list all" API. We persist this index alongside
 /// the secrets themselves using a special meta-key.
-const KEY_INDEX_ENTRY: &str = "__gsd_vibe_key_index__";
+const KEY_INDEX_ENTRY: &str = "__track_your_shit_key_index__";
 
 /// Serializable key index stored as a JSON array in the keychain
 #[derive(Debug, Serialize, Deserialize, Default)]

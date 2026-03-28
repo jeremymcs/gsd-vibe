@@ -1,4 +1,4 @@
-// GSD Vibe - Popover Component
+// GSD VibeFlow - Popover Component
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import * as React from 'react';

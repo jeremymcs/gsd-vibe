@@ -1,4 +1,4 @@
-// GSD Vibe - Import Existing Project Dialog
+// GSD VibeFlow - Import Existing Project Dialog
 // Import an existing codebase into GSD
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
@@ -29,9 +29,8 @@ import {
   Server,
   AlertTriangle,
 } from "lucide-react";
-import { exists } from "@tauri-apps/plugin-fs";
 import { useImportProjectEnhanced } from "@/lib/queries";
-import { pickFolder, detectTechStack } from "@/lib/tauri";
+import { pickFolder } from "@/lib/tauri";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -48,8 +47,6 @@ interface DetectedProject {
   name: string;
   type: "web" | "api" | "cli" | "library" | "unknown";
   hasPlanning: boolean;
-  hasGsd: boolean;
-  hasGsdPlanning: boolean;
 }
 
 const PROJECT_TYPE_INFO = {
@@ -108,22 +105,15 @@ export function ImportProjectDialog({
         // Extract name from path
         const name = selectedPath.split("/").pop() || "Unknown";
 
-        // Real detection: check for .gsd/ and .planning/ directories
-        const [techStack, hasGsd] = await Promise.all([
-          detectTechStack(selectedPath).catch(() => null),
-          exists(selectedPath + "/.gsd").catch(() => false),
-        ]);
-
-        const hasGsdPlanning = techStack?.has_planning ?? false;
+        // Simulated detection - in real implementation would scan the folder
         const type = "web";
+        const hasPlanning = false;
 
         setDetectedProject({
           path: selectedPath,
           name,
           type,
-          hasPlanning: hasGsdPlanning || hasGsd,
-          hasGsd,
-          hasGsdPlanning,
+          hasPlanning,
         });
         setStep("configure");
       }
@@ -193,7 +183,7 @@ export function ImportProjectDialog({
             {step === "select" && "Select a folder containing your existing project."}
             {step === "detecting" && "Detecting project type and structure..."}
             {step === "configure" && "Review detected project details."}
-            {step === "importing" && "Importing project into GSD Vibe..."}
+            {step === "importing" && "Importing project into GSD VibeFlow..."}
             {step === "complete" && "Project imported successfully."}
             {step === "error" && "Failed to import project."}
           </DialogDescription>
@@ -257,49 +247,41 @@ export function ImportProjectDialog({
               </span>
             </div>
 
-            {/* Existing GSD configuration badges */}
+            {/* Existing state */}
             <div className="space-y-2">
               <Label>Existing Configuration</Label>
-              <div className="flex gap-3">
-                {/* GSD v2 badge */}
+              <div className="flex gap-4">
                 <div
                   className={cn(
-                    "flex items-center gap-2 text-sm px-3 py-2 rounded-lg border font-medium",
-                    detectedProject.hasGsd
+                    "flex items-center gap-2 text-sm px-3 py-2 rounded-lg border",
+                    detectedProject.hasPlanning
                       ? "bg-status-success/10 border-status-success/30 text-status-success"
-                      : "bg-muted text-muted-foreground border-transparent"
+                      : "bg-muted text-muted-foreground"
                   )}
                 >
-                  {detectedProject.hasGsd ? (
+                  {detectedProject.hasPlanning ? (
                     <CheckCircle className="h-4 w-4" />
                   ) : (
-                    <AlertCircle className="h-4 w-4 opacity-40" />
+                    <AlertCircle className="h-4 w-4" />
                   )}
-                  GSD v2
+                  GSD
                 </div>
-
-                {/* GSD v1 (.planning/) badge */}
                 <div
                   className={cn(
-                    "flex items-center gap-2 text-sm px-3 py-2 rounded-lg border font-medium",
-                    detectedProject.hasGsdPlanning
+                    "flex items-center gap-2 text-sm px-3 py-2 rounded-lg border",
+                    detectedProject.hasPlanning
                       ? "bg-status-warning/10 border-status-warning/30 text-status-warning"
-                      : "bg-muted text-muted-foreground border-transparent"
+                      : "bg-muted text-muted-foreground"
                   )}
                 >
-                  {detectedProject.hasGsdPlanning ? (
+                  {detectedProject.hasPlanning ? (
                     <AlertTriangle className="h-4 w-4" />
                   ) : (
-                    <AlertCircle className="h-4 w-4 opacity-40" />
+                    <AlertCircle className="h-4 w-4" />
                   )}
-                  GSD v1 (.planning/)
+                  GSD (.planning/)
                 </div>
               </div>
-              {detectedProject.hasGsdPlanning && !detectedProject.hasGsd && (
-                <p className="text-xs text-muted-foreground">
-                  Legacy .planning/ directory detected — will be available for conversion after import.
-                </p>
-              )}
             </div>
 
             {/* Auto-sync option */}
@@ -374,31 +356,17 @@ export function ImportProjectDialog({
             </>
           )}
 
-          {step === "detecting" && (
-            <Button variant="outline" onClick={() => setStep("select")}>
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back
-            </Button>
-          )}
-
           {step === "importing" && (
-            <>
-              <Button variant="outline" onClick={() => setStep("configure")}>
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back
-              </Button>
-              <Button disabled>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Importing...
-              </Button>
-            </>
+            <Button disabled>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Importing...
+            </Button>
           )}
 
           {step === "complete" && (
             <>
-              <Button variant="outline" onClick={() => resetDialog()}>
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Import Another
+              <Button variant="outline" onClick={() => handleOpenChange(false)}>
+                Close
               </Button>
               <Button onClick={handleViewProject}>
                 View Project
@@ -408,11 +376,10 @@ export function ImportProjectDialog({
 
           {step === "error" && (
             <>
-              <Button variant="outline" onClick={() => setStep("configure")}>
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back
+              <Button variant="outline" onClick={() => handleOpenChange(false)}>
+                Close
               </Button>
-              <Button onClick={() => void handleImport()}>Try Again</Button>
+              <Button onClick={() => setStep("select")}>Try Again</Button>
             </>
           )}
         </DialogFooter>

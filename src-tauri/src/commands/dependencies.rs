@@ -1,4 +1,4 @@
-// GSD Vibe - Dependency Status Commands
+// GSD VibeFlow - Dependency Status Commands
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 use crate::models::DependencyStatus;

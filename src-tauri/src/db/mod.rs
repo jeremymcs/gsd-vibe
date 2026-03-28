@@ -1,4 +1,4 @@
-// GSD Vibe - Database Module (SQLite connection pool, schema, migrations, PRAGMA tuning)
+// GSD VibeFlow - Database Module (SQLite connection pool, schema, migrations, PRAGMA tuning)
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 //
 // Architecture: Read/Write connection separation for concurrent access.
@@ -758,25 +758,6 @@ impl Database {
                 )?;
             }
             self.record_migration("add_gsd_version_to_projects")?;
-        }
-
-        if !self.migration_applied("add_headless_sessions_table") {
-            tracing::info!("Running migration: Adding headless_sessions table");
-            self.conn.execute_batch(
-                "CREATE TABLE IF NOT EXISTS headless_sessions (
-                    id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
-                    project_id TEXT NOT NULL,
-                    started_at INTEGER NOT NULL,
-                    completed_at INTEGER,
-                    status TEXT NOT NULL DEFAULT 'complete',
-                    logs_json TEXT NOT NULL DEFAULT '[]',
-                    messages_json TEXT NOT NULL DEFAULT '[]',
-                    last_snapshot_json TEXT
-                );
-                CREATE INDEX IF NOT EXISTS idx_headless_sessions_project
-                    ON headless_sessions(project_id, started_at DESC);",
-            )?;
-            self.record_migration("add_headless_sessions_table")?;
         }
 
         tracing::info!("Database migrations complete");

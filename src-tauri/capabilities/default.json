@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Default permissions for GSD Vibe",
+  "description": "Default permissions for GSD VibeFlow",
   "windows": ["main"],
   "permissions": [
     "core:default",

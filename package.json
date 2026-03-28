@@ -1,7 +1,7 @@
 {
-  "name": "gsd-vibe",
+  "name": "gsd-vibeflow",
   "version": "0.1.1",
-  "description": "GSD Vibe - Desktop app for managing Claude Code projects",
+  "description": "GSD VibeFlow - Desktop app for managing Claude Code projects",
   "author": "Jeremy McSpadden <jeremy@fluxlabs.net>",
   "license": "MIT",
   "type": "module",

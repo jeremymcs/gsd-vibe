@@ -1,4 +1,4 @@
-// GSD Vibe - Knowledge Gaps Detection (KN-09)
+// GSD VibeFlow - Knowledge Gaps Detection (KN-09)
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 export interface ExpectedFile {

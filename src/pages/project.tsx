@@ -1,4 +1,4 @@
-// GSD Vibe - Project Page
+// GSD VibeFlow - Project Page
 // Sidebar-driven views — no more nested tabs
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   ProjectHeader,
-  UnifiedLandingView,
+  ProjectOverviewTab,
   FileBrowser,
   GsdPlansTab,
   GsdTodosTab,
@@ -33,23 +33,19 @@ import {
   EnvVarsTab,
   Gsd2HealthTab,
   Gsd2WorktreesTab,
-  Gsd2StatusBar,
+  Gsd2HeadlessTab,
+  Gsd2VisualizerTab,
+  Gsd2MilestonesTab,
+  Gsd2SlicesTab,
+  Gsd2TasksTab,
   DoctorPanel,
   ForensicsPanel,
   SkillHealthPanel,
   KnowledgeCapturesPanel,
-  Gsd2PreferencesTab,
-  Gsd2SessionBrowser,
-  GitView,
-  // Tab groups
-  Gsd2ProgressGroup,
-  Gsd2PlanningGroup,
-  Gsd2MetricsGroup,
-  Gsd2CommandsGroup,
-  Gsd2DiagnosticsGroup,
+  Gsd2ReportsTab,
+  Gsd2DashboardView,
 } from "@/components/project";
-import { Gsd2SessionTab } from "@/components/project/gsd2-session-tab";
-import { ShellView } from "@/components/terminal";
+import { TerminalTabs } from "@/components/terminal";
 import { watchProjectFiles } from "@/lib/tauri";
 import { useGsdFileWatcher } from "@/hooks/use-gsd-file-watcher";
 import { useHeadlessSession } from "@/hooks/use-headless-session";
@@ -109,7 +105,7 @@ export function ProjectPage() {
   useGsdFileWatcher(id!, project?.path ?? '', showGsdTab, handleGsdSync);
 
   // Headless session state — lifted to page level so logs survive view navigation
-  const headlessSession = useHeadlessSession(id ?? '');
+  const headlessSession = useHeadlessSession();
 
   // Start file watcher for GSD projects on mount
   useEffect(() => {
@@ -185,52 +181,34 @@ export function ProjectPage() {
       <div className="flex-1 min-h-0 overflow-hidden">
         {/* Shell is always mounted (CSS hidden) to preserve xterm.js sessions */}
         <div className={activeView === 'shell' ? 'h-full flex flex-col' : 'hidden'}>
-          <ShellView
+          <TerminalTabs
             projectId={projectId}
-            projectPath={projectPath}
+            workingDirectory={projectPath}
             className="flex-1 min-h-0"
           />
         </div>
 
         {/* All other views render conditionally */}
-        {activeView !== 'shell' && (() => {
-          // Tab-group views and full-height views need h-full with no padding/scroll wrapper
-          const isFullHeight = activeView.startsWith('gsd2-group-') || activeView === 'gsd2-headless' || activeView === 'git' || activeView === 'gsd2-sessions';
-          return isFullHeight ? (
-            <div key={activeView} className="h-full overflow-hidden animate-fade-in">
-              <ViewRenderer
-                activeView={activeView}
-                project={project}
-                isGsd2={isGsd2}
-                isGsd1={isGsd1}
-                headlessSession={headlessSession}
-                onOpenShell={() => void navigate(`/projects/${projectId}?view=shell`)}
-              />
-            </div>
-          ) : (
-            <div key={activeView} className="h-full overflow-y-auto p-6 animate-fade-in">
-              <ViewRenderer
-                activeView={activeView}
-                project={project}
-                isGsd2={isGsd2}
-                isGsd1={isGsd1}
-                headlessSession={headlessSession}
-                onOpenShell={() => void navigate(`/projects/${projectId}?view=shell`)}
-              />
-            </div>
-          );
-        })()}
+        {activeView !== 'shell' && (
+          <div key={activeView} className="h-full overflow-y-auto p-6 animate-fade-in">
+            <ViewRenderer
+              activeView={activeView}
+              project={project}
+              isGsd2={isGsd2}
+              isGsd1={isGsd1}
+              headlessSession={headlessSession}
+              onOpenShell={() => void navigate(`/projects/${projectId}?view=shell`)}
+            />
+          </div>
+        )}
       </div>
-
-      {/* GSD-2 status bar — persistent at bottom of project layout */}
-      {isGsd2 && <Gsd2StatusBar projectId={projectId} />}
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Remove Project?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will remove <span className="font-semibold">{project.name}</span> from GSD Vibe.
+              This will remove <span className="font-semibold">{project.name}</span> from GSD VibeFlow.
               <br /><br />
               <span className="text-foreground">Your project files will NOT be deleted.</span> The project folder at{" "}
               <code className="text-xs bg-muted px-1 py-0.5 rounded">{truncatePath(projectPath, 50)}</code>{" "}
@@ -274,7 +252,7 @@ function ViewRenderer({
   switch (activeView) {
     // Core views
     case 'overview':
-      return <UnifiedLandingView projectId={projectId} projectPath={projectPath} onOpenShell={onOpenShell} />;
+      return <ProjectOverviewTab project={project} onOpenShell={onOpenShell} />;
     case 'files':
       return <FileBrowser projectId={projectId} projectPath={projectPath} />;
     case 'dependencies':
@@ -283,40 +261,34 @@ function ViewRenderer({
       return <KnowledgeTab projectId={projectId} />;
     case 'envvars':
       return <EnvVarsTab projectId={projectId} projectPath={projectPath} />;
-    case 'git':
-      return <GitView projectId={projectId} projectPath={projectPath} />;
 
     // GSD-2 views
+    case 'gsd2-dashboard':
+      return <Gsd2DashboardView projectId={projectId} projectPath={projectPath} />;
     case 'gsd2-health':
       return <Gsd2HealthTab projectId={projectId} projectPath={projectPath} />;
     case 'gsd2-headless':
-      return <Gsd2SessionTab projectId={projectId} projectPath={projectPath} session={headlessSession} />;
+      return <Gsd2HeadlessTab projectId={projectId} projectPath={projectPath} session={headlessSession} />;
     case 'gsd2-worktrees':
       return <Gsd2WorktreesTab projectId={projectId} projectPath={projectPath} />;
-    case 'gsd2-sessions':
-      return <Gsd2SessionBrowser projectId={projectId} projectPath={projectPath} />;
-    case 'gsd2-preferences':
-      return <Gsd2PreferencesTab projectId={projectId} projectPath={projectPath} />;
-    case 'gsd2-knowledge-captures':
-      return <KnowledgeCapturesPanel projectId={projectId} projectPath={projectPath} />;
+    case 'gsd2-visualizer':
+      return <Gsd2VisualizerTab projectId={projectId} projectPath={projectPath} />;
+    case 'gsd2-milestones':
+      return <Gsd2MilestonesTab projectId={projectId} projectPath={projectPath} />;
+    case 'gsd2-slices':
+      return <Gsd2SlicesTab projectId={projectId} projectPath={projectPath} />;
+    case 'gsd2-tasks':
+      return <Gsd2TasksTab projectId={projectId} projectPath={projectPath} />;
     case 'gsd2-doctor':
       return <DoctorPanel projectId={projectId} projectPath={projectPath} />;
     case 'gsd2-forensics':
       return <ForensicsPanel projectId={projectId} projectPath={projectPath} />;
     case 'gsd2-skill-health':
       return <SkillHealthPanel projectId={projectId} projectPath={projectPath} />;
-
-    // GSD-2 tab groups
-    case 'gsd2-group-progress':
-      return <Gsd2ProgressGroup projectId={projectId} projectPath={projectPath} />;
-    case 'gsd2-group-planning':
-      return <Gsd2PlanningGroup projectId={projectId} projectPath={projectPath} />;
-    case 'gsd2-group-metrics':
-      return <Gsd2MetricsGroup projectId={projectId} projectPath={projectPath} />;
-    case 'gsd2-group-commands':
-      return <Gsd2CommandsGroup projectId={projectId} projectPath={projectPath} />;
-    case 'gsd2-group-diagnostics':
-      return <Gsd2DiagnosticsGroup projectId={projectId} projectPath={projectPath} />;
+    case 'gsd2-knowledge-captures':
+      return <KnowledgeCapturesPanel projectId={projectId} projectPath={projectPath} />;
+    case 'gsd2-reports':
+      return <Gsd2ReportsTab projectId={projectId} projectPath={projectPath} />;
 
     // GSD-1 views
     case 'gsd-plans':
@@ -337,6 +309,6 @@ function ViewRenderer({
       return <GsdDebugTab projectId={projectId} />;
 
     default:
-      return <UnifiedLandingView projectId={projectId} projectPath={projectPath} onOpenShell={onOpenShell} />;
+      return <ProjectOverviewTab project={project} onOpenShell={onOpenShell} />;
   }
 }

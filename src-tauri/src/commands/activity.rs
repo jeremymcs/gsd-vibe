@@ -1,4 +1,4 @@
-// GSD Vibe - Activity Commands
+// GSD VibeFlow - Activity Commands
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 use crate::models::ActivityEntry;

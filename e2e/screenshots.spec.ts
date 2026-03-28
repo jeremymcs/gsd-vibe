@@ -1,4 +1,4 @@
-// GSD Vibe - Automated Screenshot Capture for Website
+// Track Your Shit - Automated Screenshot Capture for Website
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { test, expect } from '@playwright/test';
@@ -30,7 +30,6 @@ const MOCK_PROJECTS = [
     config: null,
     status: 'active',
     is_favorite: true,
-    gsd_version: 'gsd2',
     created_at: '2026-01-15T10:00:00',
     updated_at: '2026-02-20T14:30:00',
   },
@@ -53,7 +52,6 @@ const MOCK_PROJECTS = [
     config: null,
     status: 'active',
     is_favorite: true,
-    gsd_version: 'gsd1',
     created_at: '2026-01-20T09:00:00',
     updated_at: '2026-02-19T16:45:00',
   },
@@ -76,7 +74,6 @@ const MOCK_PROJECTS = [
     config: null,
     status: 'active',
     is_favorite: false,
-    gsd_version: 'gsd2',
     created_at: '2026-02-01T11:00:00',
     updated_at: '2026-02-18T09:15:00',
   },
@@ -99,7 +96,6 @@ const MOCK_PROJECTS = [
     config: null,
     status: 'active',
     is_favorite: false,
-    gsd_version: 'gsd2',
     created_at: '2026-02-05T08:30:00',
     updated_at: '2026-02-17T11:20:00',
   },
@@ -122,7 +118,6 @@ const MOCK_PROJECTS = [
     config: null,
     status: 'active',
     is_favorite: true,
-    gsd_version: 'gsd2',
     created_at: '2026-01-28T13:00:00',
     updated_at: '2026-02-20T10:00:00',
   },
@@ -145,7 +140,6 @@ const MOCK_PROJECTS = [
     config: null,
     status: 'archived',
     is_favorite: false,
-    gsd_version: null,
     created_at: '2025-12-10T10:00:00',
     updated_at: '2026-01-30T15:00:00',
   },
@@ -154,7 +148,6 @@ const MOCK_PROJECTS = [
 const MOCK_PROJECTS_WITH_STATS = MOCK_PROJECTS.map((p, i) => ({
   ...p,
   total_cost: [42.50, 28.75, 15.20, 8.90, 35.60, 52.30][i],
-  gsd_version: p.gsd_version,
   roadmap_progress: p.tech_stack.has_planning
     ? {
         total_phases: p.tech_stack.gsd_phase_count!,
@@ -169,13 +162,13 @@ const MOCK_PROJECTS_WITH_STATS = MOCK_PROJECTS.map((p, i) => ({
 
 const MOCK_SETTINGS = {
   theme: 'dark',
-  start_on_login: true,
-  default_cost_limit: 75.0,
+  start_on_login: false,
+  default_cost_limit: 50.0,
   notifications_enabled: true,
   notify_on_complete: true,
   notify_on_error: true,
-  notify_cost_threshold: 50.0,
-  accent_color: 'cyan',
+  notify_cost_threshold: 25.0,
+  accent_color: 'blue',
   ui_density: 'comfortable',
   font_size_scale: 'medium',
   font_family: 'system',
@@ -184,7 +177,7 @@ const MOCK_SETTINGS = {
   notify_on_phase_complete: true,
   notify_on_cost_warning: true,
   debug_logging: false,
-  use_tmux: true,
+  use_tmux: false,
 };
 
 const MOCK_NOTIFICATIONS = [
@@ -283,7 +276,7 @@ const MOCK_APP_LOGS = [
   { id: 'log-005', level: 'ERROR', target: 'commands::git', message: 'Git push failed: remote rejected (pre-receive hook declined)', source: 'backend', project_id: 'proj-002', metadata: null, created_at: '2026-02-20T14:20:00' },
   { id: 'log-006', level: 'INFO', target: 'db::pool', message: 'Database connection pool initialized: 1 writer, 4 readers', source: 'backend', project_id: null, metadata: null, created_at: '2026-02-20T14:00:00' },
   { id: 'log-007', level: 'DEBUG', target: 'watcher::fs', message: 'File watcher started for /Users/dev/projects/saas-dashboard/.planning', source: 'backend', project_id: 'proj-001', metadata: null, created_at: '2026-02-20T14:00:00' },
-  { id: 'log-008', level: 'INFO', target: 'app::startup', message: 'GSD Vibe v0.1.0 started successfully', source: 'backend', project_id: null, metadata: null, created_at: '2026-02-20T14:00:00' },
+  { id: 'log-008', level: 'INFO', target: 'app::startup', message: 'Track Your Shit v0.1.0 started successfully', source: 'backend', project_id: null, metadata: null, created_at: '2026-02-20T14:00:00' },
 ];
 
 const MOCK_LOG_STATS = {
@@ -505,86 +498,19 @@ function buildMockScript(): string {
           ]},
         ], total_files: 7 };
         case 'list_code_files': return { folders: [
-          { name: 'src/app', display_name: 'src/app', files: [
-            { relative_path: 'src/app/layout.tsx', display_name: 'layout.tsx', folder: 'src/app', size_bytes: 1200 },
-            { relative_path: 'src/app/page.tsx', display_name: 'page.tsx', folder: 'src/app', size_bytes: 2400 },
-            { relative_path: 'src/app/globals.css', display_name: 'globals.css', folder: 'src/app', size_bytes: 850 },
-          ]},
-          { name: 'src/app/dashboard', display_name: 'src/app/dashboard', files: [
-            { relative_path: 'src/app/dashboard/page.tsx', display_name: 'page.tsx', folder: 'src/app/dashboard', size_bytes: 4800 },
-            { relative_path: 'src/app/dashboard/loading.tsx', display_name: 'loading.tsx', folder: 'src/app/dashboard', size_bytes: 420 },
-          ]},
-          { name: 'src/app/billing', display_name: 'src/app/billing', files: [
-            { relative_path: 'src/app/billing/page.tsx', display_name: 'page.tsx', folder: 'src/app/billing', size_bytes: 3600 },
-            { relative_path: 'src/app/billing/checkout.tsx', display_name: 'checkout.tsx', folder: 'src/app/billing', size_bytes: 2800 },
-          ]},
-          { name: 'src/components', display_name: 'src/components', files: [
-            { relative_path: 'src/components/metrics-card.tsx', display_name: 'metrics-card.tsx', folder: 'src/components', size_bytes: 1850 },
-            { relative_path: 'src/components/sidebar.tsx', display_name: 'sidebar.tsx', folder: 'src/components', size_bytes: 3200 },
-            { relative_path: 'src/components/chart.tsx', display_name: 'chart.tsx', folder: 'src/components', size_bytes: 2400 },
-            { relative_path: 'src/components/data-table.tsx', display_name: 'data-table.tsx', folder: 'src/components', size_bytes: 4100 },
-          ]},
-          { name: 'src/lib', display_name: 'src/lib', files: [
-            { relative_path: 'src/lib/auth.ts', display_name: 'auth.ts', folder: 'src/lib', size_bytes: 1800 },
-            { relative_path: 'src/lib/stripe.ts', display_name: 'stripe.ts', folder: 'src/lib', size_bytes: 2200 },
-            { relative_path: 'src/lib/db.ts', display_name: 'db.ts', folder: 'src/lib', size_bytes: 960 },
-            { relative_path: 'src/lib/utils.ts', display_name: 'utils.ts', folder: 'src/lib', size_bytes: 540 },
-          ]},
-          { name: 'src/hooks', display_name: 'src/hooks', files: [
-            { relative_path: 'src/hooks/use-metrics.ts', display_name: 'use-metrics.ts', folder: 'src/hooks', size_bytes: 1400 },
-            { relative_path: 'src/hooks/use-auth.ts', display_name: 'use-auth.ts', folder: 'src/hooks', size_bytes: 1100 },
-          ]},
-          { name: 'src/ws', display_name: 'src/ws', files: [
-            { relative_path: 'src/ws/server.ts', display_name: 'server.ts', folder: 'src/ws', size_bytes: 3400 },
-            { relative_path: 'src/ws/client.ts', display_name: 'client.ts', folder: 'src/ws', size_bytes: 2600 },
+          { name: 'src', display_name: 'src', files: [
+            { relative_path: 'src/app/layout.tsx', display_name: 'layout.tsx', folder: 'src', size_bytes: 1200 },
+            { relative_path: 'src/app/page.tsx', display_name: 'page.tsx', folder: 'src', size_bytes: 2400 },
+            { relative_path: 'src/app/dashboard/page.tsx', display_name: 'dashboard/page.tsx', folder: 'src', size_bytes: 4800 },
+            { relative_path: 'src/lib/auth.ts', display_name: 'lib/auth.ts', folder: 'src', size_bytes: 1800 },
+            { relative_path: 'src/lib/stripe.ts', display_name: 'lib/stripe.ts', folder: 'src', size_bytes: 2200 },
           ]},
           { name: 'tests', display_name: 'tests', files: [
             { relative_path: 'tests/dashboard.test.tsx', display_name: 'dashboard.test.tsx', folder: 'tests', size_bytes: 3200 },
             { relative_path: 'tests/auth.test.ts', display_name: 'auth.test.ts', folder: 'tests', size_bytes: 2800 },
             { relative_path: 'tests/billing.test.ts', display_name: 'billing.test.ts', folder: 'tests', size_bytes: 3600 },
-            { relative_path: 'tests/ws.test.ts', display_name: 'ws.test.ts', folder: 'tests', size_bytes: 2100 },
           ]},
-          { name: '.', display_name: 'Root', files: [
-            { relative_path: 'package.json', display_name: 'package.json', folder: '.', size_bytes: 1800 },
-            { relative_path: 'tsconfig.json', display_name: 'tsconfig.json', folder: '.', size_bytes: 620 },
-            { relative_path: 'next.config.js', display_name: 'next.config.js', folder: '.', size_bytes: 480 },
-            { relative_path: 'tailwind.config.ts', display_name: 'tailwind.config.ts', folder: '.', size_bytes: 1200 },
-            { relative_path: '.env.example', display_name: '.env.example', folder: '.', size_bytes: 320 },
-          ]},
-        ], total_files: 28 };
-        case 'read_project_file': return \`import { NextResponse } from "next/server";
-import Stripe from "stripe";
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2024-06-20",
-});
-
-export async function POST(req: Request) {
-  const { priceId, customerId } = await req.json();
-
-  try {
-    const session = await stripe.checkout.sessions.create({
-      customer: customerId,
-      line_items: [{ price: priceId, quantity: 1 }],
-      mode: "subscription",
-      success_url: \\\`\\\${process.env.NEXT_PUBLIC_URL}/billing?success=true\\\`,
-      cancel_url: \\\`\\\${process.env.NEXT_PUBLIC_URL}/billing?canceled=true\\\`,
-      subscription_data: {
-        trial_period_days: 14,
-        metadata: { customerId },
-      },
-    });
-
-    return NextResponse.json({ url: session.url });
-  } catch (err) {
-    console.error("Checkout error:", err);
-    return NextResponse.json(
-      { error: "Failed to create checkout session" },
-      { status: 500 }
-    );
-  }
-}
-\`;
+        ], total_files: 8 };
         case 'search_knowledge_files': return [];
         case 'get_scanner_summary': return { available: false, overall_grade: null, scan_date: null, categories: [], reports: [], total_gaps: null, total_recommendations: null, overall_score: null, analysis_mode: null, project_phase: null, high_priority_actions: [], source: null };
         case 'get_dependency_status': return { package_manager: 'pnpm', outdated_count: 8, vulnerable_count: 2, details: { outdated: { react: { current: '18.2.0', wanted: '18.3.1', latest: '19.0.0' }, typescript: { current: '5.3.3', wanted: '5.4.5', latest: '5.6.2' }, next: { current: '14.1.0', wanted: '14.2.3', latest: '15.0.0' }, prisma: { current: '5.8.1', wanted: '5.10.2', latest: '5.10.2' }, tailwindcss: { current: '3.4.0', wanted: '3.4.4', latest: '4.0.0' }, recharts: { current: '2.10.3', wanted: '2.12.0', latest: '2.12.0' }, '@stripe/stripe-js': { current: '2.4.0', wanted: '2.5.0', latest: '3.0.0' }, 'socket.io': { current: '4.7.2', wanted: '4.7.5', latest: '4.7.5' } }, audit: { 'lodash.merge': { severity: 'high', title: 'Prototype Pollution', url: 'https://github.com/advisories/GHSA-1234' }, 'semver': { severity: 'moderate', title: 'ReDoS vulnerability', url: 'https://github.com/advisories/GHSA-5678' } } }, checked_at: '2026-02-20T14:00:00' };
@@ -606,171 +532,6 @@ export async function POST(req: Request) {
         case 'list_secret_keys': return ['ANTHROPIC_API_KEY', 'OPENAI_API_KEY', 'STRIPE_SECRET_KEY'];
         case 'get_predefined_secret_keys': return ['ANTHROPIC_API_KEY', 'OPENAI_API_KEY', 'GITHUB_TOKEN', 'STRIPE_SECRET_KEY', 'DATABASE_URL'];
         case 'has_secret': return true;
-        case 'list_project_templates': return [
-          { id: 'blank', name: 'Blank Project', description: 'Empty project with no scaffolding', category: 'General', command: null },
-          { id: 'react-vite', name: 'React + Vite', description: 'React 18 with Vite, TypeScript, and Tailwind CSS', category: 'Frontend', command: 'pnpm create vite' },
-          { id: 'nextjs', name: 'Next.js', description: 'Next.js 14 with App Router and TypeScript', category: 'Frontend', command: 'npx create-next-app' },
-          { id: 'fastapi', name: 'Python FastAPI', description: 'FastAPI with uvicorn, SQLAlchemy, and pytest', category: 'Backend', command: 'pip install fastapi' },
-          { id: 'rust-axum', name: 'Rust Axum', description: 'Axum web framework with Tokio runtime', category: 'Backend', command: 'cargo init' },
-        ];
-        case 'list_gsd_planning_templates': return [];
-
-        // GSD-2 commands
-        case 'gsd2_get_health': return {
-          budget_spent: 42.50,
-          budget_ceiling: 100.0,
-          active_milestone_id: 'M001',
-          active_milestone_title: 'v1.0 - Core Platform',
-          active_slice_id: 'S003',
-          active_slice_title: 'Real-time WebSocket Layer',
-          active_task_id: 'T012',
-          active_task_title: 'Configure WebSocket server',
-          phase: 'execution',
-          blocker: null,
-          next_action: 'Execute plan 6.1',
-          milestones_done: 0,
-          milestones_total: 3,
-          slices_done: 5,
-          slices_total: 8,
-          tasks_done: 21,
-          tasks_total: 29,
-          env_error_count: 0,
-          env_warning_count: 2,
-        };
-        case 'gsd2_list_worktrees': return [
-          { name: 'feature-billing', branch: 'worktree-feature-billing', path: '/Users/dev/.claude/worktrees/feature-billing', exists: true, added_count: 3, modified_count: 5, removed_count: 1 },
-          { name: 'fix-auth', branch: 'worktree-fix-auth', path: '/Users/dev/.claude/worktrees/fix-auth', exists: true, added_count: 1, modified_count: 2, removed_count: 0 },
-        ];
-        case 'gsd2_get_worktree_diff': return { added: ['src/billing/stripe.ts'], modified: ['src/api/routes.ts'], removed: [], added_count: 1, modified_count: 1, removed_count: 0 };
-        case 'gsd2_headless_query': return { state: 'executing', next: 'Complete slice S003 task T012', cost: 4.20 };
-        case 'gsd2_headless_get_session': return 'session-abc-123';
-        case 'gsd2_get_visualizer_data': return {
-          milestones: [
-            {
-              id: 'M001', title: 'v1.0 - Core Platform', done: false, status: 'active',
-              dependencies: [], discussion_state: 'discussed', cost: 42.50,
-              slices: [
-                { id: 'S001', title: 'Project Scaffolding', done: true, status: 'done', risk: null, dependencies: [],
-                  tasks: [
-                    { id: 'T001', title: 'Init Next.js project', done: true, status: 'done', estimate: '30m', on_critical_path: true, slack: 0 },
-                    { id: 'T002', title: 'Configure TypeScript', done: true, status: 'done', estimate: '15m', on_critical_path: false, slack: 2 },
-                    { id: 'T003', title: 'Set up Tailwind CSS', done: true, status: 'done', estimate: '20m', on_critical_path: false, slack: 1 },
-                  ],
-                  verification: { slice_id: 'S001', verification_text: 'Build passes, dev server starts' },
-                  changelog: [{ slice_id: 'S001', one_liner: 'Project scaffolding with Next.js 14', completed_at: '2026-01-20T11:20:00', files_modified: [{ path: 'package.json', description: 'Dependencies' }] }],
-                },
-                { id: 'S002', title: 'Dashboard Core', done: true, status: 'done', risk: null, dependencies: ['S001'],
-                  tasks: [
-                    { id: 'T004', title: 'Dashboard layout', done: true, status: 'done', estimate: '1h', on_critical_path: true, slack: 0 },
-                    { id: 'T005', title: 'Chart components', done: true, status: 'done', estimate: '2h', on_critical_path: true, slack: 0 },
-                  ],
-                  verification: { slice_id: 'S002', verification_text: 'Dashboard renders with mock data' },
-                  changelog: [{ slice_id: 'S002', one_liner: 'Dashboard with Recharts', completed_at: '2026-01-25T16:00:00', files_modified: [] }],
-                },
-                { id: 'S003', title: 'Real-time WebSocket Layer', done: false, status: 'active', risk: 'medium', dependencies: ['S002'],
-                  tasks: [
-                    { id: 'T010', title: 'WebSocket server setup', done: true, status: 'done', estimate: '1h', on_critical_path: true, slack: 0 },
-                    { id: 'T011', title: 'Client connection manager', done: false, status: 'active', estimate: '2h', on_critical_path: true, slack: 0 },
-                    { id: 'T012', title: 'Write connection tests', done: false, status: 'pending', estimate: '1h', on_critical_path: false, slack: 3 },
-                  ],
-                  verification: null, changelog: [],
-                },
-                { id: 'S004', title: 'Performance Optimization', done: false, status: 'pending', risk: null, dependencies: ['S003'],
-                  tasks: [
-                    { id: 'T013', title: 'Query optimization', done: false, status: 'pending', estimate: '2h', on_critical_path: true, slack: 0 },
-                    { id: 'T014', title: 'Cache layer', done: false, status: 'pending', estimate: '1.5h', on_critical_path: false, slack: 2 },
-                  ],
-                  verification: null, changelog: [],
-                },
-              ],
-            },
-            {
-              id: 'M002', title: 'v1.1 - Performance & Polish', done: false, status: 'pending',
-              dependencies: ['M001'], discussion_state: 'draft', cost: 0,
-              slices: [
-                { id: 'S005', title: 'Load Testing', done: false, status: 'pending', risk: null, dependencies: [],
-                  tasks: [{ id: 'T015', title: 'Set up k6 tests', done: false, status: 'pending', estimate: '2h', on_critical_path: false, slack: 0 }],
-                  verification: null, changelog: [],
-                },
-              ],
-            },
-          ],
-          tree: [
-            { id: 'M001', title: 'v1.0 - Core Platform', status: 'active', children: [
-              { id: 'S001', title: 'Scaffolding', status: 'done', children: [] },
-              { id: 'S002', title: 'Dashboard', status: 'done', children: [] },
-              { id: 'S003', title: 'WebSocket', status: 'active', children: [] },
-              { id: 'S004', title: 'Performance', status: 'pending', children: [] },
-            ]},
-          ],
-          cost_by_milestone: [{ key: 'v1.0', cost: 42.50 }, { key: 'v1.1', cost: 0 }],
-          cost_by_model: [{ key: 'claude-sonnet-4-5-20250514', cost: 28.30 }, { key: 'claude-haiku-4-5-20251001', cost: 14.20 }],
-          timeline: [
-            { id: 'S001', title: 'Project Scaffolding', entry_type: 'slice', completed_at: '2026-01-20T11:20:00', cost: 8.50 },
-            { id: 'S002', title: 'Dashboard Core', entry_type: 'slice', completed_at: '2026-01-25T16:00:00', cost: 12.80 },
-          ],
-          critical_path: { path: ['T001', 'T004', 'T005', 'T010', 'T011', 'T013'], slack_map: [{ id: 'T002', slack: 2 }, { id: 'T003', slack: 1 }, { id: 'T012', slack: 3 }, { id: 'T014', slack: 2 }] },
-          agent_activity: { is_active: true, pid: 12345, current_unit: { unit_type: 'task', unit_id: 'T011', started_at: '2026-02-20T14:00:00', elapsed_ms: 1800000 }, completed_units: 10, total_slices: 8 },
-          knowledge: { exists: true, entry_count: 24 },
-          captures: { exists: true, pending_count: 3 },
-          health: { active_milestone_id: 'M001', active_slice_id: 'S003', active_task_id: 'T011', milestones_done: 0, milestones_total: 2, slices_done: 2, slices_total: 5, tasks_done: 7, tasks_total: 15 },
-          stats: { milestones_missing_summary: 1, slices_missing_summary: 2, recent_changelog: [] },
-          by_phase: [],
-          by_slice: [{ slice_id: 'S001', units: 3, cost: 8.50, tokens: 45000, duration_ms: 4800000 }, { slice_id: 'S002', units: 5, cost: 12.80, tokens: 82000, duration_ms: 13500000 }],
-          by_model: [{ model: 'claude-sonnet-4-5-20250514', units: 6, cost: 28.30, tokens: 180000 }, { model: 'claude-haiku-4-5-20251001', units: 4, cost: 14.20, tokens: 95000 }],
-        };
-        case 'gsd2_list_milestones': return [
-          { id: 'M001', title: 'v1.0 - Core Platform', dir_name: 'M001', done: false, dependencies: [],
-            slices: [
-              { id: 'S001', title: 'Project Scaffolding', done: true, risk: null, dependencies: [],
-                tasks: [
-                  { id: 'T001', title: 'Init Next.js project', done: true, estimate: '30m', files: ['package.json'], verify: 'Build passes' },
-                  { id: 'T002', title: 'Configure TypeScript', done: true, estimate: '15m', files: ['tsconfig.json'], verify: null },
-                  { id: 'T003', title: 'Set up Tailwind CSS', done: true, estimate: '20m', files: ['tailwind.config.ts'], verify: null },
-                ],
-              },
-              { id: 'S002', title: 'Dashboard Core', done: true, risk: null, dependencies: ['S001'],
-                tasks: [
-                  { id: 'T004', title: 'Dashboard layout', done: true, estimate: '1h', files: ['src/app/dashboard/page.tsx'], verify: 'Dashboard renders' },
-                  { id: 'T005', title: 'Chart components', done: true, estimate: '2h', files: ['src/components/charts/'], verify: 'Charts show data' },
-                ],
-              },
-              { id: 'S003', title: 'Real-time WebSocket Layer', done: false, risk: 'medium', dependencies: ['S002'],
-                tasks: [
-                  { id: 'T010', title: 'WebSocket server setup', done: true, estimate: '1h', files: ['src/ws/server.ts'], verify: null },
-                  { id: 'T011', title: 'Client connection manager', done: false, estimate: '2h', files: ['src/ws/client.ts'], verify: null },
-                  { id: 'T012', title: 'Write connection tests', done: false, estimate: '1h', files: ['tests/ws.test.ts'], verify: 'All tests pass' },
-                ],
-              },
-            ],
-          },
-          { id: 'M002', title: 'v1.1 - Performance & Polish', dir_name: 'M002', done: false, dependencies: ['M001'],
-            slices: [
-              { id: 'S005', title: 'Load Testing', done: false, risk: null, dependencies: [],
-                tasks: [{ id: 'T015', title: 'Set up k6 tests', done: false, estimate: '2h', files: [], verify: null }],
-              },
-            ],
-          },
-        ];
-        case 'gsd2_derive_state': return {
-          active_milestone_id: 'M001', active_slice_id: 'S003', active_task_id: 'T011', phase: 'execution',
-          milestones_done: 0, milestones_total: 2, slices_done: 2, slices_total: 5, tasks_done: 7, tasks_total: 15,
-        };
-        case 'gsd2_get_doctor_report': return { ok: true, issues: [], summary: { total: 0, errors: 0, warnings: 0, infos: 0, fixable: 0, by_code: [] } };
-        case 'gsd2_get_forensics_report': return null;
-        case 'gsd2_get_skill_health': return null;
-        case 'gsd2_get_knowledge': return null;
-        case 'gsd2_get_captures': return null;
-        case 'gsd2_get_inspect': return null;
-        case 'gsd2_get_steer_content': return null;
-        case 'gsd2_get_undo_info': return null;
-        case 'gsd2_get_recovery_info': return null;
-        case 'gsd2_get_history': return null;
-        case 'gsd2_get_hooks': return null;
-        case 'gsd2_get_git_summary': return null;
-        case 'gsd2_export_progress': return null;
-        case 'gsd2_get_reports_index': return null;
-
         default:
           console.warn('[MOCK] Unhandled command:', cmd, args);
           return null;
@@ -797,9 +558,8 @@ export async function POST(req: Request) {
 
 test.describe('Website Screenshots', () => {
   test.use({
-    viewport: { width: 1920, height: 1080 },
+    viewport: { width: 1440, height: 900 },
     colorScheme: 'dark',
-    deviceScaleFactor: 2,
   });
 
   test.beforeEach(async ({ page }) => {
@@ -828,7 +588,7 @@ test.describe('Website Screenshots', () => {
   });
 
   test('Project Detail - overview', async ({ page }) => {
-    await page.goto('/projects/proj-001?view=overview');
+    await page.goto('/projects/proj-001');
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(3000);
     await page.screenshot({
@@ -887,9 +647,9 @@ test.describe('Website Screenshots', () => {
     });
   });
 
-  // Project sub-views (updated from ?tab= to ?view=)
+  // Project sub-tabs
   test('Project Detail - Knowledge tab', async ({ page }) => {
-    await page.goto('/projects/proj-001?view=knowledge');
+    await page.goto('/projects/proj-001?tab=knowledge');
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(3000);
     await page.screenshot({
@@ -899,36 +659,18 @@ test.describe('Website Screenshots', () => {
   });
 
   test('Project Detail - Project tab (Files)', async ({ page }) => {
-    await page.goto('/projects/proj-001?view=files');
+    await page.goto('/projects/proj-001?tab=project');
     await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(2000);
-    // Expand the src/app/billing folder
-    const billingFolder = page.getByText('src/app/billing');
-    if (await billingFolder.count() > 0) {
-      await billingFolder.click();
-      await page.waitForTimeout(500);
-    }
-    // Also expand src/lib folder
-    const libFolder = page.getByText('src/lib');
-    if (await libFolder.count() > 0) {
-      await libFolder.click();
-      await page.waitForTimeout(500);
-    }
-    // Click on checkout.tsx to open it in editor
-    const fileItem = page.getByText('checkout.tsx');
-    if (await fileItem.count() > 0) {
-      await fileItem.click();
-      await page.waitForTimeout(2000);
-    }
+    await page.waitForTimeout(3000);
     await page.screenshot({
       path: path.join(SCREENSHOT_DIR, 'project-files.png'),
       fullPage: false,
     });
   });
 
-  // GSD-1 views (using proj-002 which has gsd_version: 'gsd1')
+  // GSD sub-tabs
   test('Project Detail - GSD Plans', async ({ page }) => {
-    await page.goto('/projects/proj-002?view=gsd-plans');
+    await page.goto('/projects/proj-001?tab=gsd');
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(3000);
     await page.screenshot({
@@ -938,9 +680,15 @@ test.describe('Website Screenshots', () => {
   });
 
   test('Project Detail - GSD Context', async ({ page }) => {
-    await page.goto('/projects/proj-002?view=gsd-context');
+    await page.goto('/projects/proj-001?tab=gsd');
     await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(2000);
+    // Click the Context sub-tab
+    const contextTab = page.locator('button', { hasText: 'Context' });
+    if (await contextTab.count() > 0) {
+      await contextTab.click();
+      await page.waitForTimeout(2000);
+    }
     await page.screenshot({
       path: path.join(SCREENSHOT_DIR, 'gsd-context.png'),
       fullPage: false,
@@ -948,9 +696,14 @@ test.describe('Website Screenshots', () => {
   });
 
   test('Project Detail - GSD Todos', async ({ page }) => {
-    await page.goto('/projects/proj-002?view=gsd-todos');
+    await page.goto('/projects/proj-001?tab=gsd');
     await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(2000);
+    const todosTab = page.getByLabel('GSD').getByRole('button', { name: 'Todos' });
+    if (await todosTab.count() > 0) {
+      await todosTab.click();
+      await page.waitForTimeout(2000);
+    }
     await page.screenshot({
       path: path.join(SCREENSHOT_DIR, 'gsd-todos.png'),
       fullPage: false,
@@ -958,9 +711,14 @@ test.describe('Website Screenshots', () => {
   });
 
   test('Project Detail - GSD Validation', async ({ page }) => {
-    await page.goto('/projects/proj-002?view=gsd-validation');
+    await page.goto('/projects/proj-001?tab=gsd');
     await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(2000);
+    const validationTab = page.locator('button', { hasText: 'Validation' });
+    if (await validationTab.count() > 0) {
+      await validationTab.click();
+      await page.waitForTimeout(2000);
+    }
     await page.screenshot({
       path: path.join(SCREENSHOT_DIR, 'gsd-validation.png'),
       fullPage: false,
@@ -968,9 +726,14 @@ test.describe('Website Screenshots', () => {
   });
 
   test('Project Detail - GSD UAT', async ({ page }) => {
-    await page.goto('/projects/proj-002?view=gsd-uat');
+    await page.goto('/projects/proj-001?tab=gsd');
     await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(2000);
+    const uatTab = page.locator('button', { hasText: 'UAT' });
+    if (await uatTab.count() > 0) {
+      await uatTab.click();
+      await page.waitForTimeout(2000);
+    }
     await page.screenshot({
       path: path.join(SCREENSHOT_DIR, 'gsd-uat.png'),
       fullPage: false,
@@ -978,9 +741,14 @@ test.describe('Website Screenshots', () => {
   });
 
   test('Project Detail - GSD Milestones', async ({ page }) => {
-    await page.goto('/projects/proj-002?view=gsd-milestones');
+    await page.goto('/projects/proj-001?tab=gsd');
     await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(2000);
+    const milestonesTab = page.locator('button', { hasText: 'Milestones' });
+    if (await milestonesTab.count() > 0) {
+      await milestonesTab.click();
+      await page.waitForTimeout(2000);
+    }
     await page.screenshot({
       path: path.join(SCREENSHOT_DIR, 'gsd-milestones.png'),
       fullPage: false,
@@ -988,92 +756,16 @@ test.describe('Website Screenshots', () => {
   });
 
   test('Project Detail - GSD Debug', async ({ page }) => {
-    await page.goto('/projects/proj-002?view=gsd-debug');
+    await page.goto('/projects/proj-001?tab=gsd');
     await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(2000);
+    const debugTab = page.locator('button', { hasText: 'Debug' });
+    if (await debugTab.count() > 0) {
+      await debugTab.click();
+      await page.waitForTimeout(2000);
+    }
     await page.screenshot({
       path: path.join(SCREENSHOT_DIR, 'gsd-debug.png'),
-      fullPage: false,
-    });
-  });
-
-  // GSD-2 views (direct navigation via ?view= parameter)
-  test('Project Detail - GSD-2 Dashboard', async ({ page }) => {
-    await page.goto('/projects/proj-001?view=gsd2-dashboard');
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(3000);
-    await page.screenshot({
-      path: path.join(SCREENSHOT_DIR, 'gsd2-dashboard.png'),
-      fullPage: false,
-    });
-  });
-
-  test('Project Detail - GSD-2 Health', async ({ page }) => {
-    await page.goto('/projects/proj-001?view=gsd2-health');
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(3000);
-    await page.screenshot({
-      path: path.join(SCREENSHOT_DIR, 'gsd2-health.png'),
-      fullPage: false,
-    });
-  });
-
-  test('Project Detail - GSD-2 Visualizer', async ({ page }) => {
-    await page.goto('/projects/proj-001?view=gsd2-visualizer');
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(3000);
-    await page.screenshot({
-      path: path.join(SCREENSHOT_DIR, 'gsd2-visualizer.png'),
-      fullPage: false,
-    });
-  });
-
-  test('Project Detail - GSD-2 Milestones', async ({ page }) => {
-    await page.goto('/projects/proj-001?view=gsd2-milestones');
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(3000);
-    await page.screenshot({
-      path: path.join(SCREENSHOT_DIR, 'gsd2-milestones.png'),
-      fullPage: false,
-    });
-  });
-
-  test('Project Detail - GSD-2 Headless', async ({ page }) => {
-    await page.goto('/projects/proj-001?view=gsd2-headless');
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(3000);
-    await page.screenshot({
-      path: path.join(SCREENSHOT_DIR, 'gsd2-headless.png'),
-      fullPage: false,
-    });
-  });
-
-  test('Project Detail - GSD-2 Worktrees', async ({ page }) => {
-    await page.goto('/projects/proj-001?view=gsd2-worktrees');
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(3000);
-    await page.screenshot({
-      path: path.join(SCREENSHOT_DIR, 'gsd2-worktrees.png'),
-      fullPage: false,
-    });
-  });
-
-  test('Project Detail - GSD-2 Slices', async ({ page }) => {
-    await page.goto('/projects/proj-001?view=gsd2-slices');
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(3000);
-    await page.screenshot({
-      path: path.join(SCREENSHOT_DIR, 'gsd2-slices.png'),
-      fullPage: false,
-    });
-  });
-
-  test('Project Detail - GSD-2 Tasks', async ({ page }) => {
-    await page.goto('/projects/proj-001?view=gsd2-tasks');
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(3000);
-    await page.screenshot({
-      path: path.join(SCREENSHOT_DIR, 'gsd2-tasks.png'),
       fullPage: false,
     });
   });

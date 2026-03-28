@@ -1,4 +1,4 @@
-// GSD Vibe - Knowledge & Captures Panel Tests
+// GSD VibeFlow - Knowledge & Captures Panel Tests
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { describe, it, expect, vi, beforeEach, Mock } from "vitest";
@@ -274,7 +274,7 @@ describe("KnowledgeCapturesPanel", () => {
     expect(mutateFn).toHaveBeenCalledOnce();
     expect(mutateFn).toHaveBeenCalledWith({
       projectId: "proj-test-123",
-      captureId: "CAP-002",
+      captureId: "CAP-001",
       classification: "quick-task",
       resolution: "Classified as quick-task",
       rationale: "",

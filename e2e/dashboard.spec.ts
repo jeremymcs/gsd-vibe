@@ -1,4 +1,4 @@
-// GSD Vibe - E2E Dashboard Tests
+// Track Your Shit - E2E Dashboard Tests
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { test, expect } from '@playwright/test';
@@ -32,7 +32,7 @@ test.describe('Dashboard', () => {
 
   test('should have main layout structure', async ({ page }) => {
     // Check for main layout elements - sidebar and content area
-    await expect(page.getByText('GSD Vibe')).toBeVisible();
+    await expect(page.getByText('Track Your Shit')).toBeVisible();
     
     // Should have the Command Center heading
     const heading = page.getByRole('heading', { name: /command center/i });

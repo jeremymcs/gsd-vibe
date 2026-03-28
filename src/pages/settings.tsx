@@ -1,4 +1,4 @@
-// GSD Vibe - Settings Page
+// GSD VibeFlow - Settings Page
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { useState, useEffect } from "react";
@@ -56,7 +56,7 @@ export function SettingsPage() {
 
   if (isLoading || !formData) {
     return (
-      <div className="p-8 space-y-4">
+      <div className="p-8 max-w-3xl space-y-4">
         <SkeletonCard />
         <SkeletonCard />
         <SkeletonCard />
@@ -65,11 +65,11 @@ export function SettingsPage() {
   }
 
   return (
-    <div className="h-full overflow-auto p-8">
+    <div className="h-full overflow-auto p-8 max-w-3xl">
       {/* Header */}
       <PageHeader
         title="Settings"
-        description="Configure GSD Vibe preferences"
+        description="Configure GSD VibeFlow preferences"
         icon={<SettingsIcon className="h-6 w-6 text-muted-foreground" />}
         actions={
           hasChanges ? (
@@ -125,7 +125,7 @@ export function SettingsPage() {
                 <div>
                   <Label htmlFor="settings-start-login" className="text-sm font-medium">Start on login</Label>
                   <p className="text-xs text-muted-foreground">
-                    Launch GSD Vibe when you log in
+                    Launch GSD VibeFlow when you log in
                   </p>
                 </div>
                 <Switch
@@ -270,7 +270,7 @@ export function SettingsPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="text-sm text-muted-foreground">
-                Database: <code className="bg-muted px-1.5 py-0.5 rounded text-xs">~/Library/Application Support/io.gsd.vibeflow/gsd-vibe.db</code>
+                Database: <code className="bg-muted px-1.5 py-0.5 rounded text-xs">~/Library/Application Support/net.fluxlabs.track-your-shit/track-your-shit.db</code>
               </div>
               <div className="flex gap-2 flex-wrap">
                 <Button variant="outline" onClick={() => setShowExportDialog(true)}>
@@ -303,11 +303,11 @@ export function SettingsPage() {
                           setFormData(defaults);
                           setHasChanges(false);
                           setShowResetConfirm(false);
-                          localStorage.removeItem('gsd-vibe-theme');
-                          localStorage.removeItem('gsd-vibe-accent');
-                          localStorage.removeItem('gsd-vibe-density');
-                          localStorage.removeItem('gsd-vibe-font-scale');
-                          localStorage.removeItem('gsd-vibe-font-family');
+                          localStorage.removeItem('track-your-shit-theme');
+                          localStorage.removeItem('track-your-shit-accent');
+                          localStorage.removeItem('track-your-shit-density');
+                          localStorage.removeItem('track-your-shit-font-scale');
+                          localStorage.removeItem('track-your-shit-font-family');
                         }).catch(() => { /* toast via onError */ });
                       }}
                       disabled={resetSettings.isPending}

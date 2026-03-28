@@ -1,8 +1,8 @@
-// GSD Vibe - Main Layout Component
+// GSD VibeFlow - Main Layout Component
 // Context-aware sidebar: global nav or project-scoped nav
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
-import { ReactNode, useState, useEffect, useRef, useMemo, lazy, Suspense } from 'react';
+import { ReactNode, useState, useEffect, useMemo, lazy, Suspense } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useTerminalContext } from '@/contexts/terminal-context';
@@ -26,14 +26,14 @@ import {
 } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
 import {
+  SquareTerminal,
+  ChevronDown,
+  ChevronUp,
   PanelLeftClose,
   PanelLeftOpen,
   Search,
   FolderOpen,
   ArrowLeft,
-  SquareTerminal,
-  ChevronDown,
-  ChevronUp,
 } from 'lucide-react';
 import { modKey } from '@/hooks/use-keyboard-shortcuts';
 import { KeyboardShortcutsProvider } from './keyboard-shortcuts-provider';
@@ -75,10 +75,9 @@ export function MainLayout({ children }: MainLayoutProps) {
 
   // Determine if user is on the project shell view
   const activeView = searchParams.get('view') ?? searchParams.get('tab') ?? '';
-
   const isProjectShellView = isProjectRoute && activeView === 'shell';
 
-  const { shellPanelCollapsed, setShellPanelCollapsed, headlessRunning } = useTerminalContext();
+  const { shellPanelCollapsed, setShellPanelCollapsed } = useTerminalContext();
   const { data: unreadCount } = useUnreadNotificationCount();
   const { data: projectsWithStats } = useProjectsWithStats();
 
@@ -125,23 +124,6 @@ export function MainLayout({ children }: MainLayoutProps) {
   useEffect(() => {
     localStorage.setItem("sidebar-collapsed", String(sidebarCollapsed));
   }, [sidebarCollapsed]);
-
-  // Auto-open bottom terminal when entering Session view, restore when leaving
-  const isSessionView = isProjectRoute && activeView === 'gsd2-headless';
-  const prevCollapsedRef = useRef(shellPanelCollapsed);
-  useEffect(() => {
-    if (isSessionView && shellPanelCollapsed) {
-      prevCollapsedRef.current = true;
-      setShellPanelCollapsed(false);
-    }
-    return () => {
-      // Restore collapsed state when leaving Session view
-      if (isSessionView && prevCollapsedRef.current) {
-        setShellPanelCollapsed(true);
-        prevCollapsedRef.current = false;
-      }
-    };
-  }, [isSessionView]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Navigate to a project view
   const goToView = (viewId: string) => {
@@ -207,30 +189,23 @@ export function MainLayout({ children }: MainLayoutProps) {
             // ── Global logo ──
             <div
               className={cn(
-                "h-14 flex items-center justify-center border-b border-border/40 transition-all duration-300",
+                "h-20 flex items-start border-b border-border/40",
+                sidebarCollapsed ? "px-3 justify-center" : "px-5"
               )}
             >
-              <button
-                type="button"
-                onClick={() => navigate("/")}
-                className="cursor-pointer select-none group"
-              >
-                {sidebarCollapsed ? (
-                  <span className="text-sm font-mono font-bold text-foreground/80 group-hover:text-foreground transition-colors">
-                    gsd
+              {sidebarCollapsed ? (
+                <div className="flex flex-col items-center gap-0.5">
+                  <span className="text-[10px] font-bold text-foreground font-mono leading-none">GSD</span>
+                  <span className="text-[8px] font-semibold text-muted-foreground/60 tracking-widest uppercase leading-none">VF</span>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center gap-1 w-full pt-3">
+                  <img src="/gsd-logo.svg" alt="GSD" className="h-8 w-full max-w-[160px] object-contain" />
+                  <span className="text-[13px] font-semibold tracking-[0.2em] uppercase text-muted-foreground/70">
+                    VibeFlow
                   </span>
-                ) : (
-                  <div className="flex items-center gap-0">
-                    <span className="text-sm font-mono font-bold text-foreground/80 group-hover:text-foreground transition-colors">
-                      gsd
-                    </span>
-                    <span className="text-sm font-mono text-muted-foreground/40 mx-1">/</span>
-                    <span className="text-sm font-mono font-normal text-muted-foreground/60 group-hover:text-muted-foreground transition-colors">
-                      vibe
-                    </span>
-                  </div>
-                )}
-              </button>
+                </div>
+              )}
             </div>
           )}
 
@@ -300,14 +275,14 @@ export function MainLayout({ children }: MainLayoutProps) {
                               : "gap-3 px-3 py-1.5",
                             isActive
                               ? "text-foreground"
-                              : "text-muted-foreground/50 hover:text-muted-foreground hover:bg-muted/30"
+                              : "text-muted-foreground/70 hover:text-foreground hover:bg-muted/50"
                           )}
                         >
                           {isActive && !sidebarCollapsed && (
-                            <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-4 rounded-full bg-primary/80" />
+                            <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-4 rounded-full bg-gsd-cyan" />
                           )}
                           {isActive && sidebarCollapsed && (
-                            <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary/80" />
+                            <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-gsd-cyan" />
                           )}
                           <Icon className="h-[18px] w-[18px] flex-shrink-0" />
                           {!sidebarCollapsed && (
@@ -316,10 +291,6 @@ export function MainLayout({ children }: MainLayoutProps) {
                               {/* GSD status dot on Health view */}
                               {view.id === 'gsd2-health' && gsdStatusColor && (
                                 <span className={cn('ml-auto w-2 h-2 rounded-full flex-shrink-0', gsdStatusColor)} />
-                              )}
-                              {/* Blinking green dot when headless session is running */}
-                              {view.id === 'gsd2-headless' && headlessRunning && (
-                                <span className="ml-auto w-2 h-2 rounded-full flex-shrink-0 bg-green-500 animate-pulse" />
                               )}
                             </>
                           )}
@@ -498,7 +469,9 @@ export function MainLayout({ children }: MainLayoutProps) {
             <button
               className={cn(
                 "relative flex items-center gap-2 px-4 py-2 border-t cursor-pointer select-none flex-shrink-0 w-full transition-all duration-200 group",
-                "border-border/50 bg-muted/30 hover:bg-muted/50"
+                shellPanelCollapsed
+                  ? "border-border/50 bg-muted/30 hover:bg-muted/50"
+                  : "border-border/50 bg-muted/30 hover:bg-muted/50"
               )}
               onClick={() => setShellPanelCollapsed(!shellPanelCollapsed)}
               aria-label={shellPanelCollapsed ? "Expand shell panel" : "Collapse shell panel"}
@@ -526,12 +499,12 @@ export function MainLayout({ children }: MainLayoutProps) {
             </button>
           )}
 
-          {/* Persistent shell panel - always mounted, hidden on shell view to avoid collision */}
+          {/* Persistent shell panel - always mounted, visible based on state */}
           <div className={cn(
             "flex-shrink-0 transition-all duration-200",
             isShellRoute
               ? "flex-1"
-              : isProjectShellView || shellPanelCollapsed
+              : shellPanelCollapsed || isProjectShellView
                 ? "h-0 invisible"
                 : "h-[300px]"
           )}>

@@ -1,4 +1,4 @@
-// GSD Vibe - GSD-2 Tab Group Views
+// GSD VibeFlow - GSD-2 Tab Group Views
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 //
 // Five tab-group containers that each embed multiple related views as sub-tabs.
@@ -20,6 +20,7 @@ import { Gsd2ReportsTab } from './gsd2-reports-tab';
 import {
   Gsd2InspectPanel,
   Gsd2SteerPanel,
+  Gsd2HooksPanel,
   Gsd2UndoPanel,
   Gsd2GitPanel,
   Gsd2RecoveryPanel,
@@ -27,7 +28,6 @@ import {
 import { DoctorPanel, ForensicsPanel, SkillHealthPanel } from './diagnostics-panels';
 import { KnowledgeCapturesPanel } from './knowledge-captures-panel';
 import { Gsd2FilesTab } from './gsd2-files-tab';
-import { Gsd2HealthTab } from './gsd2-health-tab';
 
 interface GroupProps {
   projectId: string;
@@ -138,14 +138,16 @@ export function Gsd2MetricsGroup({ projectId, projectPath }: GroupProps) {
   );
 }
 
-// ─── 4. Commands Group: Inspect | Steer | Undo | Git ─────────────────────────
+// ─── 4. Commands Group: Inspect | Steer | Hooks | Undo | Git | Recovery ───────
 
 export function Gsd2CommandsGroup({ projectId, projectPath }: GroupProps) {
   const tabs = [
     { value: 'inspect',  label: 'Inspect'  },
     { value: 'steer',    label: 'Steer'    },
+    { value: 'hooks',    label: 'Hooks'    },
     { value: 'undo',     label: 'Undo'     },
     { value: 'git',      label: 'Git'      },
+    { value: 'recovery', label: 'Recovery' },
   ];
 
   return (
@@ -153,8 +155,10 @@ export function Gsd2CommandsGroup({ projectId, projectPath }: GroupProps) {
       {(tab) => {
         if (tab === 'inspect')  return <Gsd2InspectPanel  projectId={projectId} projectPath={projectPath} />;
         if (tab === 'steer')    return <Gsd2SteerPanel    projectId={projectId} projectPath={projectPath} />;
+        if (tab === 'hooks')    return <Gsd2HooksPanel    projectId={projectId} projectPath={projectPath} />;
         if (tab === 'undo')     return <Gsd2UndoPanel     projectId={projectId} projectPath={projectPath} />;
         if (tab === 'git')      return <Gsd2GitPanel      projectId={projectId} projectPath={projectPath} />;
+        if (tab === 'recovery') return <Gsd2RecoveryPanel projectId={projectId} projectPath={projectPath} />;
         return null;
       }}
     </GroupShell>
@@ -168,27 +172,23 @@ export function Gsd2FilesTerminalGroup({ projectId, projectPath }: GroupProps) {
   return <Gsd2FilesTab projectId={projectId} projectPath={projectPath} />;
 }
 
-// ─── 6. Diagnostics Group: Health | Doctor | Forensics | Skills | Knowledge | Recovery ──
+// ─── 6. Diagnostics Group: Doctor | Forensics | Skill Health | Knowledge ─────
 
 export function Gsd2DiagnosticsGroup({ projectId, projectPath }: GroupProps) {
   const tabs = [
-    { value: 'health',    label: 'Health'    },
-    { value: 'doctor',    label: 'Doctor'    },
-    { value: 'forensics', label: 'Forensics' },
-    { value: 'skills',    label: 'Skills'    },
-    { value: 'knowledge', label: 'Knowledge' },
-    { value: 'recovery',  label: 'Recovery'  },
+    { value: 'doctor',    label: 'Doctor'      },
+    { value: 'forensics', label: 'Forensics'   },
+    { value: 'skills',    label: 'Skills'      },
+    { value: 'knowledge', label: 'Knowledge'   },
   ];
 
   return (
-    <GroupShell tabs={tabs} defaultTab="health">
+    <GroupShell tabs={tabs} defaultTab="doctor">
       {(tab) => {
-        if (tab === 'health')    return <Gsd2HealthTab        projectId={projectId} projectPath={projectPath} />;
         if (tab === 'doctor')    return <DoctorPanel          projectId={projectId} projectPath={projectPath} />;
         if (tab === 'forensics') return <ForensicsPanel       projectId={projectId} projectPath={projectPath} />;
         if (tab === 'skills')    return <SkillHealthPanel     projectId={projectId} projectPath={projectPath} />;
         if (tab === 'knowledge') return <KnowledgeCapturesPanel projectId={projectId} projectPath={projectPath} />;
-        if (tab === 'recovery')  return <Gsd2RecoveryPanel   projectId={projectId} projectPath={projectPath} />;
         return null;
       }}
     </GroupShell>

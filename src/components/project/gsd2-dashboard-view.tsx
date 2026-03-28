@@ -1,4 +1,4 @@
-// GSD Vibe - GSD-2 Dashboard View
+// GSD VibeFlow - GSD-2 Dashboard View
 // Full project-pulse landing: current unit, metrics, slice progress, activity, git, health
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

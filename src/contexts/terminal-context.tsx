@@ -1,4 +1,4 @@
-// GSD Vibe - Terminal Context
+// GSD VibeFlow - Terminal Context
 // Global state for persistent terminal sessions across navigation
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
@@ -42,7 +42,7 @@ interface TerminalContextValue {
   /** Get terminals for a specific project */
   getProjectTerminals: (projectId: string) => ProjectTerminals;
   /** Add a new terminal tab to a project */
-  addTab: (projectId: string, type: "shell" | "claude" | "yolo" | "gsd") => string;
+  addTab: (projectId: string, type: "shell" | "claude" | "yolo") => string;
   /** Close a terminal tab */
   closeTab: (projectId: string, tabId: string) => void;
   /** Set the active tab for a project */
@@ -82,14 +82,6 @@ interface TerminalContextValue {
   /** Toggle the shell panel collapsed state */
   setShellPanelCollapsed: (collapsed: boolean) => void;
 
-  // Headless session persistence across view navigation
-  /** Whether a headless GSD session is currently running */
-  headlessRunning: boolean;
-  /** The PTY session ID of the running headless session */
-  headlessSessionId: string | null;
-  /** Set headless session state */
-  setHeadlessState: (running: boolean, sessionId: string | null) => void;
-
   // Split terminal (TM-04)
   /** Toggle split pane for a tab */
   toggleSplit: (projectId: string, tabId: string) => void;
@@ -118,7 +110,7 @@ const TerminalContext = createContext<TerminalContextValue | null>(null);
 
 export function TerminalProvider({ children }: { children: ReactNode }) {
   // Global terminal font size
-  const [terminalFontSize, setTerminalFontSize] = useState(12);
+  const [terminalFontSize, setTerminalFontSize] = useState(14);
   // Map of projectId -> ProjectTerminals
   const [terminals, setTerminals] = useState<Map<string, ProjectTerminals>>(new Map());
   // Map of projectId -> working directory path
@@ -134,14 +126,6 @@ export function TerminalProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     localStorage.setItem("shell-panel-collapsed", String(shellPanelCollapsed));
   }, [shellPanelCollapsed]);
-
-  // Headless session state — persists across view navigation
-  const [headlessRunning, setHeadlessRunning] = useState(false);
-  const [headlessSessionId, setHeadlessSessionId] = useState<string | null>(null);
-  const setHeadlessState = useCallback((running: boolean, sessionId: string | null) => {
-    setHeadlessRunning(running);
-    setHeadlessSessionId(sessionId);
-  }, []);
 
   // SH-05: Broadcast mode state
   const [broadcastMode, setBroadcastMode] = useState(false);
@@ -313,14 +297,13 @@ export function TerminalProvider({ children }: { children: ReactNode }) {
   }, [terminals]);
 
   // Add a new tab to a project
-  const addTab = useCallback((projectId: string, type: "shell" | "claude" | "yolo" | "gsd"): string => {
+  const addTab = useCallback((projectId: string, type: "shell" | "claude" | "yolo"): string => {
     const tabId = crypto.randomUUID();
-    const labelMap = { shell: "Shell", claude: "Claude", yolo: "Claude YOLO", gsd: "GSD" };
+    const labelMap = { shell: "Shell", claude: "Claude", yolo: "Claude YOLO" };
     const commandMap: Record<string, string | undefined> = {
       shell: undefined,
       claude: "claude",
       yolo: "claude --dangerously-skip-permissions",
-      gsd: "gsd",
     };
     const newTab: TerminalTab = {
       id: tabId,
@@ -696,10 +679,6 @@ export function TerminalProvider({ children }: { children: ReactNode }) {
     setShellProject,
     shellPanelCollapsed,
     setShellPanelCollapsed,
-    // Headless session
-    headlessRunning,
-    headlessSessionId,
-    setHeadlessState,
     // Split terminal
     toggleSplit,
     setSplitSessionId,
@@ -729,14 +708,12 @@ function commandToTabType(command: string | undefined): string {
   if (!command) return "shell";
   if (command.includes("--dangerously-skip-permissions")) return "yolo";
   if (command.includes("claude")) return "claude";
-  if (command === "gsd" || command.startsWith("gsd ")) return "gsd";
   return "shell";
 }
 
 function tabTypeToCommand(tabType: string): string | undefined {
   if (tabType === "yolo") return "claude --dangerously-skip-permissions";
   if (tabType === "claude") return "claude";
-  if (tabType === "gsd") return "gsd";
   return undefined;
 }
 

@@ -1,4 +1,4 @@
-// GSD Vibe - GSD Roadmap Progress Card
+// GSD VibeFlow - GSD Roadmap Progress Card
 // Displays ROADMAP.md phase completion data for GSD projects
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
@@ -123,13 +123,13 @@ function PhaseRow({
 }) {
   const statusColor = {
     complete: 'text-status-success',
-    in_progress: 'text-status-info',
+    in_progress: 'text-gsd-cyan',
     pending: 'text-muted-foreground',
   }[phase.status];
 
   const barColor = {
     complete: 'bg-status-success',
-    in_progress: 'bg-status-info',
+    in_progress: 'bg-gsd-cyan',
     pending: 'bg-muted',
   }[phase.status];
 
@@ -140,7 +140,7 @@ function PhaseRow({
     <div
       className={cn(
         'space-y-1 rounded-md px-2 py-1.5 transition-colors',
-        isCurrent && 'bg-primary/5 ring-1 ring-primary/20',
+        isCurrent && 'bg-gsd-cyan/8 ring-1 ring-gsd-cyan/20',
       )}
     >
       <div className="flex items-center gap-2">

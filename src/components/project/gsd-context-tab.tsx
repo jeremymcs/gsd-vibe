@@ -1,4 +1,4 @@
-// GSD Vibe - GSD Phase Context Tab
+// GSD VibeFlow - GSD Phase Context Tab
 // Shows CONTEXT.md decisions and deferred ideas per phase
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
@@ -9,7 +9,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useGsdPlans, useGsdPhaseContext } from '@/lib/queries';
 import { cn } from '@/lib/utils';
-import { getPhaseNumbers } from '@/lib/gsd-plan-utils';
 
 interface GsdContextTabProps {
   projectId: string;
@@ -19,7 +18,10 @@ export function GsdContextTab({ projectId }: GsdContextTabProps) {
   const { data: plans, isLoading: plansLoading } = useGsdPlans(projectId);
 
   // Derive the unique sorted phase numbers from the plans list.
-  const phaseNumbers: number[] = getPhaseNumbers(plans);
+  // This lets us know which phases exist without a separate API call.
+  const phaseNumbers: number[] = Array.from(
+    new Set((plans ?? []).map((p) => p.phase_number)),
+  ).sort((a, b) => a - b);
 
   const [selectedPhase, setSelectedPhase] = useState<number | null>(null);
 

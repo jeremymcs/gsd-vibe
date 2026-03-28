@@ -1,4 +1,4 @@
-// GSD Vibe - Sentry Error Tracking Integration
+// GSD VibeFlow - Sentry Error Tracking Integration
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import * as Sentry from '@sentry/react';

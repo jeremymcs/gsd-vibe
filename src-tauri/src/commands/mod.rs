@@ -1,4 +1,4 @@
-// GSD Vibe - Commands Module
+// GSD VibeFlow - Commands Module
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 pub mod activity;
@@ -6,7 +6,6 @@ pub mod data;
 pub mod dependencies;
 pub mod filesystem;
 pub mod git;
-pub mod github;
 pub mod gsd;
 pub mod gsd2;
 pub mod knowledge;

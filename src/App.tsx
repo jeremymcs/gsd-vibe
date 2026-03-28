@@ -1,4 +1,4 @@
-// GSD Vibe - Main App Component
+// GSD VibeFlow - Main App Component
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { lazy, Suspense } from "react";
@@ -26,9 +26,9 @@ const ProjectPage = lazy(() => import("./pages/project").then(m => ({ default: m
 const SettingsPage = lazy(() => import("./pages/settings").then(m => ({ default: m.SettingsPage })));
 const ShellAsTerminalPage = lazy(() => import("./pages/shell").then(m => ({ default: m.ShellPage })));
 const ProjectsPage = lazy(() => import("./pages/projects").then(m => ({ default: m.ProjectsPage })));
+const LogsPage = lazy(() => import("./pages/logs").then(m => ({ default: m.LogsPage })));
 const NotificationsPage = lazy(() => import("./pages/notifications").then(m => ({ default: m.NotificationsPage })));
 const TodosPage = lazy(() => import("./pages/todos").then(m => ({ default: m.TodosPage })));
-const GsdPreferencesPage = lazy(() => import("./pages/gsd-preferences").then(m => ({ default: m.GsdPreferencesPage })));
 
 function PageLoader() {
   return (
@@ -91,8 +91,8 @@ function App() {
                   <Route path="/settings" element={<SettingsPage />} />
                   <Route path="/terminal" element={<ShellAsTerminalPage />} />
                   <Route path="/terminal/:projectId" element={<ShellAsTerminalPage />} />
+                  <Route path="/logs" element={<LogsPage />} />
                   <Route path="/notifications" element={<NotificationsPage />} />
-                  <Route path="/gsd-preferences" element={<GsdPreferencesPage />} />
                 </Routes>
               </Suspense>
             </ErrorBoundary>

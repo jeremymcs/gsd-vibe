@@ -1,9 +1,10 @@
-// GSD Vibe - GSD-2 Milestones Tab Component
+// GSD VibeFlow - GSD-2 Milestones Tab Component
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { useState } from 'react';
 import { ChevronRight, Map } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ViewEmpty } from '@/components/shared/loading-states';
 import {
@@ -13,17 +14,26 @@ import {
   useGsd2DerivedState,
 } from '@/lib/queries';
 import type { Gsd2DerivedState } from '@/lib/tauri';
-import {
-  Gsd2StatusIcon,
-  getGsd2Status,
-  Gsd2LoadingCard,
-  Gsd2ErrorCard,
-  StatusBadge,
-} from './gsd2-shared';
 
 interface Gsd2MilestonesTabProps {
   projectId: string;
   projectPath: string;
+}
+
+function StatusIcon({ status }: { status: string }) {
+  if (status === 'done') {
+    return <span className="text-status-success">✔</span>;
+  }
+  if (status === 'active') {
+    return <span className="text-yellow-600 dark:text-yellow-500 animate-pulse">▶</span>;
+  }
+  return <span className="text-muted-foreground">○</span>;
+}
+
+function getStatus(done: boolean, activeId: string | null, id: string): 'done' | 'active' | 'pending' {
+  if (done) return 'done';
+  if (activeId && id === activeId) return 'active';
+  return 'pending';
 }
 
 interface SliceTasksSectionProps {
@@ -35,20 +45,37 @@ interface SliceTasksSectionProps {
 function SliceTasksSection({ projectId, milestoneId, sliceId }: SliceTasksSectionProps) {
   const { data: slice, isLoading, isError } = useGsd2Slice(projectId, milestoneId, sliceId, true);
 
-  if (isLoading) return <Skeleton className="h-8 w-full" />;
-  if (isError || !slice) return <p className="text-xs text-status-error">Failed to load tasks for this slice.</p>;
-  if (!slice.tasks || slice.tasks.length === 0) return <p className="text-xs text-muted-foreground py-2">No tasks in this slice</p>;
+  if (isLoading) {
+    return <Skeleton className="h-8 w-full" />;
+  }
+
+  if (isError || !slice) {
+    return <p className="text-xs text-status-error">Failed to load tasks for this slice.</p>;
+  }
+
+  if (!slice.tasks || slice.tasks.length === 0) {
+    return <p className="text-xs text-muted-foreground py-2">No tasks in this slice</p>;
+  }
 
   return (
     <div className="space-y-0.5">
-      {[...slice.tasks].sort((a, b) => a.id.localeCompare(b.id)).map((task) => {
-        const status = task.done ? 'done' : 'pending';
+      {slice.tasks.map((task) => {
+        const taskStatus = task.done ? 'done' : 'pending';
         return (
           <div key={task.id} className="flex items-center gap-2 py-1.5 px-3">
-            <Gsd2StatusIcon status={status} />
+            <StatusIcon status={taskStatus} />
             <span className="text-xs font-mono text-muted-foreground">{task.id}</span>
             <span className="text-sm">{task.title}</span>
-            <StatusBadge status={status} />
+            <Badge
+              variant="outline"
+              className={
+                taskStatus === 'done'
+                  ? 'bg-status-success/10 text-status-success border-status-success/30 ml-auto text-xs'
+                  : 'bg-status-pending/10 text-status-pending border-status-pending/30 ml-auto text-xs'
+              }
+            >
+              {taskStatus === 'done' ? 'Done' : 'Pending'}
+            </Badge>
           </div>
         );
       })}
@@ -73,15 +100,28 @@ function MilestoneSlices({
 }: MilestoneSlicesProps) {
   const { data: milestone, isLoading, isError } = useGsd2Milestone(projectId, milestoneId, true);
 
-  if (isLoading) return <Skeleton className="h-8 w-full ml-6" />;
-  if (isError || !milestone) return <p className="text-xs text-status-error ml-6">Failed to load milestone details.</p>;
-  if (!milestone.slices || milestone.slices.length === 0) return <p className="text-xs text-muted-foreground ml-6 py-2">No slices in this milestone</p>;
+  if (isLoading) {
+    return <Skeleton className="h-8 w-full ml-6" />;
+  }
+
+  if (isError || !milestone) {
+    return (
+      <p className="text-xs text-status-error ml-6">Failed to load milestone details.</p>
+    );
+  }
+
+  if (!milestone.slices || milestone.slices.length === 0) {
+    return (
+      <p className="text-xs text-muted-foreground ml-6 py-2">No slices in this milestone</p>
+    );
+  }
 
   return (
     <div className="space-y-0.5 mt-0.5">
-      {[...milestone.slices].sort((a, b) => a.id.localeCompare(b.id)).map((s) => {
+      {milestone.slices.map((s) => {
         const doneCount = s.tasks.filter((t) => t.done).length;
-        const sliceStatus = getGsd2Status(s.done, derivedState?.active_slice_id ?? null, s.id);
+        const totalCount = s.tasks.length;
+        const sliceStatus = getStatus(s.done, derivedState?.active_slice_id ?? null, s.id);
         const isExpanded = expandedSlices.has(s.id);
 
         return (
@@ -94,17 +134,30 @@ function MilestoneSlices({
                 className="h-3.5 w-3.5 transition-transform duration-200 shrink-0"
                 style={{ transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)' }}
               />
-              <Gsd2StatusIcon status={sliceStatus} />
+              <StatusIcon status={sliceStatus} />
               <span className="text-xs font-mono text-muted-foreground">{s.id}</span>
               <span className="text-sm">{s.title}</span>
               <span className="text-xs text-muted-foreground ml-auto mr-2">
-                {doneCount}/{s.tasks.length} tasks
+                {doneCount}/{totalCount} tasks
               </span>
-              <StatusBadge status={s.done ? 'done' : 'pending'} />
+              <Badge
+                variant="outline"
+                className={
+                  s.done
+                    ? 'bg-status-success/10 text-status-success border-status-success/30 text-xs'
+                    : 'bg-status-pending/10 text-status-pending border-status-pending/30 text-xs'
+                }
+              >
+                {s.done ? 'Done' : 'Pending'}
+              </Badge>
             </div>
             {isExpanded && (
               <div className="ml-12 border-l border-border/50 pl-2 py-1">
-                <SliceTasksSection projectId={projectId} milestoneId={milestoneId} sliceId={s.id} />
+                <SliceTasksSection
+                  projectId={projectId}
+                  milestoneId={milestoneId}
+                  sliceId={s.id}
+                />
               </div>
             )}
           </div>
@@ -121,18 +174,56 @@ export function Gsd2MilestonesTab({ projectId }: Gsd2MilestonesTabProps) {
   const { data: milestones, isLoading, isError } = useGsd2Milestones(projectId);
   const { data: derivedState } = useGsd2DerivedState(projectId);
 
-  const toggle = (_set: Set<string>, setFn: React.Dispatch<React.SetStateAction<Set<string>>>, id: string) => {
-    setFn((prev) => {
+  const toggleMilestone = (id: string) => {
+    setExpandedMilestones((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
   };
 
-  if (isLoading) return <Gsd2LoadingCard rows={3} />;
-  if (isError) return <Gsd2ErrorCard message="Failed to load milestones — check that the project path is accessible." />;
+  const toggleSlice = (id: string) => {
+    setExpandedSlices((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="p-4 space-y-2">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (isError) {
+    return (
+      <Card>
+        <CardContent className="py-8 text-center">
+          <p className="text-sm text-status-error">
+            Failed to load milestones — check that the project path is accessible.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   if (!milestones || milestones.length === 0) {
-    return <ViewEmpty icon={<Map className="h-8 w-8" />} message="No milestones yet" description="Run a GSD-2 session to get started" />;
+    return (
+      <ViewEmpty
+        icon={<Map className="h-8 w-8" />}
+        message="No milestones yet"
+        description="Run a GSD-2 session to get started"
+      />
+    );
   }
 
   return (
@@ -140,7 +231,11 @@ export function Gsd2MilestonesTab({ projectId }: Gsd2MilestonesTabProps) {
       <CardContent className="p-2">
         <div className="space-y-0.5">
           {milestones.map((m) => {
-            const milestoneStatus = getGsd2Status(m.done, derivedState?.active_milestone_id ?? null, m.id);
+            const milestoneStatus = getStatus(
+              m.done,
+              derivedState?.active_milestone_id ?? null,
+              m.id,
+            );
             const isExpanded = expandedMilestones.has(m.id);
             const isActive = derivedState?.active_milestone_id === m.id;
 
@@ -148,23 +243,32 @@ export function Gsd2MilestonesTab({ projectId }: Gsd2MilestonesTabProps) {
               <div key={m.id}>
                 <div
                   className={`flex items-center gap-2 py-2 px-3 rounded cursor-pointer hover:bg-muted/50 transition-colors${isActive ? ' border-l-2 border-primary' : ''}`}
-                  onClick={() => toggle(expandedMilestones, setExpandedMilestones, m.id)}
+                  onClick={() => toggleMilestone(m.id)}
                 >
                   <ChevronRight
                     className="h-4 w-4 transition-transform duration-200 shrink-0"
                     style={{ transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)' }}
                   />
-                  <Gsd2StatusIcon status={milestoneStatus} />
+                  <StatusIcon status={milestoneStatus} />
                   <span className="text-xs font-mono text-muted-foreground">{m.id}</span>
                   <span className="text-sm font-medium">{m.title}</span>
-                  <StatusBadge status={m.done ? 'done' : 'pending'} />
+                  <Badge
+                    variant="outline"
+                    className={
+                      m.done
+                        ? 'bg-status-success/10 text-status-success border-status-success/30 ml-auto text-xs'
+                        : 'bg-status-pending/10 text-status-pending border-status-pending/30 ml-auto text-xs'
+                    }
+                  >
+                    {m.done ? 'Done' : 'Pending'}
+                  </Badge>
                 </div>
                 {isExpanded && (
                   <MilestoneSlices
                     projectId={projectId}
                     milestoneId={m.id}
                     expandedSlices={expandedSlices}
-                    toggleSlice={(id) => toggle(expandedSlices, setExpandedSlices, id)}
+                    toggleSlice={toggleSlice}
                     derivedState={derivedState}
                   />
                 )}

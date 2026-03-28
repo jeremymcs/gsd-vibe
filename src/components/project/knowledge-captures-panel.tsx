@@ -1,4 +1,4 @@
-// GSD Vibe - Knowledge & Captures Panel Component
+// GSD VibeFlow - Knowledge & Captures Panel Component
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { useState } from "react";
@@ -150,7 +150,7 @@ function KnowledgeTabContent({ projectId }: { projectId: string }) {
         <>
           {data.entries.length > 0 ? (
             <div className="space-y-2">
-              {[...data.entries].sort((a, b) => a.title.localeCompare(b.title)).map((entry) => (
+              {data.entries.map((entry) => (
                 <KnowledgeEntryRow key={entry.id} entry={entry} />
               ))}
             </div>
@@ -307,7 +307,7 @@ function CapturesTabContent({ projectId }: { projectId: string }) {
         <>
           {data.entries.length > 0 ? (
             <div className="space-y-2">
-              {[...data.entries].sort((a, b) => b.timestamp.localeCompare(a.timestamp)).map((entry) => (
+              {data.entries.map((entry) => (
                 <CaptureEntryRow
                   key={entry.id}
                   entry={entry}

@@ -1,4 +1,4 @@
-// GSD Vibe - Shell View (wraps TerminalTabs with consistent font size controls)
+// GSD VibeFlow - Shell View (wraps TerminalTabs with consistent font size controls)
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { cn } from '@/lib/utils';

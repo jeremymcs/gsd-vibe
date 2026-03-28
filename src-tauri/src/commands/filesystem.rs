@@ -1,4 +1,4 @@
-// GSD Vibe - File System Commands
+// GSD VibeFlow - File System Commands
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 use crate::models::{
@@ -960,31 +960,6 @@ pub async fn read_project_docs(path: String) -> Result<Option<ProjectDocs>, Stri
     Ok(None)
 }
 
-/// Re-read project description from README.md / PROJECT.md / package.json and update the DB.
-/// Called when the stored description looks stale or malformed.
-#[tauri::command]
-pub async fn refresh_project_description(
-    db: tauri::State<'_, crate::db::DbPool>,
-    project_id: String,
-    project_path: String,
-) -> Result<Option<String>, String> {
-    let docs = read_project_docs(project_path).await?;
-    let description = docs.as_ref().and_then(|d| d.description.clone());
-
-    {
-        let db_guard = db.write().await;
-        db_guard
-            .conn()
-            .execute(
-                "UPDATE projects SET description = ?1, updated_at = datetime('now') WHERE id = ?2",
-                rusqlite::params![description, project_id],
-            )
-            .map_err(|e| format!("Failed to update description: {}", e))?;
-    }
-
-    Ok(description)
-}
-
 /// Parse PROJECT.md for goal/description
 fn parse_project_md(content: &str) -> Option<ProjectDocs> {
     let mut description = None;
@@ -1046,84 +1021,19 @@ fn parse_project_md(content: &str) -> Option<ProjectDocs> {
     None
 }
 
-/// Strip common inline markdown from a string: **bold**, *italic*, __bold__, _italic_, `code`.
-/// Does not handle nested or multi-line markdown — this is intentionally simple.
-fn strip_inline_markdown(s: &str) -> String {
-    let mut result = String::with_capacity(s.len());
-    let chars: Vec<char> = s.chars().collect();
-    let len = chars.len();
-    let mut i = 0;
-    while i < len {
-        // Double-star bold: **text**
-        if i + 1 < len && chars[i] == '*' && chars[i + 1] == '*' {
-            i += 2;
-            continue;
-        }
-        // Double-underscore bold: __text__
-        if i + 1 < len && chars[i] == '_' && chars[i + 1] == '_' {
-            i += 2;
-            continue;
-        }
-        // Single-star italic: *text*
-        if chars[i] == '*' {
-            i += 1;
-            continue;
-        }
-        // Single-underscore italic: _text_
-        if chars[i] == '_' {
-            i += 1;
-            continue;
-        }
-        // Backtick code: `text`
-        if chars[i] == '`' {
-            i += 1;
-            continue;
-        }
-        result.push(chars[i]);
-        i += 1;
-    }
-    // Collapse extra spaces left by removed markers
-    result.split_whitespace().collect::<Vec<_>>().join(" ")
-}
-
-/// Parse README.md - extract first non-heading paragraph as description.
-/// Skips HTML comments, HTML tags, badge lines, and heading lines.
-/// Strips inline markdown (bold, italic, backtick) from collected text.
+/// Parse README.md - extract first non-heading paragraph as description
 fn parse_readme(content: &str) -> Option<ProjectDocs> {
     let lines: Vec<&str> = content.lines().collect();
     let mut description_lines = Vec::new();
     let mut in_paragraph = false;
-    let mut in_html_comment = false;
 
     for line in lines {
         let trimmed = line.trim();
 
-        // Track multi-line HTML comment blocks
-        if in_html_comment {
-            if trimmed.contains("-->") {
-                in_html_comment = false;
-            }
-            continue;
-        }
-        // Single-line or start of multi-line HTML comment
-        if trimmed.starts_with("<!--") {
-            if !trimmed.contains("-->") {
-                in_html_comment = true;
-            }
-            continue;
-        }
-
-        // Skip HTML tags (e.g. <div align="center">, <p>, </div>)
-        if trimmed.starts_with('<') {
-            if in_paragraph {
-                break;
-            }
-            continue;
-        }
-
         // Skip empty lines before first paragraph
         if trimmed.is_empty() {
             if in_paragraph {
+                // End of first paragraph
                 break;
             }
             continue;
@@ -1137,28 +1047,23 @@ fn parse_readme(content: &str) -> Option<ProjectDocs> {
             continue;
         }
 
-        // Skip badge/image/link lines at top of README
+        // Skip badges and links at top of README
         if trimmed.starts_with('[') || trimmed.starts_with('!') {
             continue;
         }
 
-        // Skip lines that are entirely a horizontal rule
-        if trimmed.chars().all(|c| c == '-' || c == '=' || c == '*' || c == ' ') && trimmed.len() >= 3 {
-            continue;
-        }
-
+        // Start collecting paragraph
         in_paragraph = true;
         description_lines.push(trimmed);
     }
 
     if !description_lines.is_empty() {
-        let raw = description_lines.join(" ");
-        // Strip inline markdown: **bold**, *italic*, __bold__, _italic_, `code`
-        let clean = strip_inline_markdown(&raw);
-        let truncated = if clean.len() > 300 {
-            format!("{}...", &clean[..297])
+        let description = description_lines.join(" ");
+        // Limit to reasonable length
+        let truncated = if description.len() > 500 {
+            format!("{}...", &description[..497])
         } else {
-            clean
+            description
         };
 
         return Some(ProjectDocs {

@@ -1,4 +1,4 @@
-// GSD Vibe - Global Terminals Component
+// GSD VibeFlow - Global Terminals Component
 // Renders all terminal instances globally for persistence across navigation
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

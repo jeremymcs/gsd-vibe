@@ -1,4 +1,4 @@
-// GSD Vibe - Close Warning Hook
+// GSD VibeFlow - Close Warning Hook
 // Warns user before closing if active processes are running
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

@@ -1,4 +1,4 @@
-// GSD Vibe - GSD Milestones Tab
+// GSD VibeFlow - GSD Milestones Tab
 // Visual milestone timeline for GSD projects
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
@@ -94,7 +94,7 @@ export function GsdMilestonesTab({ projectId }: GsdMilestonesTabProps) {
           {completedCount} completed
         </Badge>
         {currentMilestone && (
-          <Badge variant="secondary">
+          <Badge variant="subtle-cyan">
             Current: {currentMilestone}
           </Badge>
         )}
@@ -124,7 +124,7 @@ export function GsdMilestonesTab({ projectId }: GsdMilestonesTabProps) {
                 <Card
                   className={cn(
                     'flex-1',
-                    isCurrent && 'ring-1 ring-primary/30'
+                    isCurrent && 'ring-1 ring-gsd-cyan/40'
                   )}
                 >
                   <CardContent className="p-4">
@@ -135,7 +135,7 @@ export function GsdMilestonesTab({ projectId }: GsdMilestonesTabProps) {
                             {milestone.name}
                           </h3>
                           {isCurrent && (
-                            <Badge variant="secondary" size="sm">
+                            <Badge variant="subtle-cyan" size="sm">
                               current
                             </Badge>
                           )}

@@ -1,4 +1,4 @@
-// GSD Vibe - Utility Functions Tests
+// GSD VibeFlow - Utility Functions Tests
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { describe, it, expect } from "vitest";

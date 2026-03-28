@@ -1,4 +1,4 @@
-// GSD Vibe - GSD-2 Status Bar
+// GSD VibeFlow - GSD-2 Status Bar
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { useEffect, useState } from 'react';

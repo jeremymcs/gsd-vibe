@@ -1,4 +1,4 @@
-// GSD Vibe - Snippets Panel Component
+// GSD VibeFlow - Snippets Panel Component
 // Saved command snippets grouped by category
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

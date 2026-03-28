@@ -1,4 +1,4 @@
-// GSD Vibe - Knowledge File Tree Navigation (KN-02)
+// GSD VibeFlow - Knowledge File Tree Navigation (KN-02)
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { useState } from 'react';

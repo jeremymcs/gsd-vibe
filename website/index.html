@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<!-- GSD Vibe - Marketing Website -->
+<!-- GSD VibeFlow - Marketing Website -->
 <!-- Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net> -->
 <html lang="en" class="scroll-smooth">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GSD Vibe - Desktop App</title>
-  <meta name="description" content="The native desktop companion for the GSD workflow. Manage projects, monitor roadmaps, visualize progress, integrated terminal, git operations, knowledge base, and more. Supports both GSD v1 and v2. Built with Tauri + Rust.">
+  <title>GSD VibeFlow - Desktop App</title>
+  <meta name="description" content="A native desktop app for the GSD VibeFlow workflow. Track projects, monitor roadmap progress, integrated terminal, git operations, knowledge base, and more. Built with Tauri.">
   <meta name="theme-color" content="#000000">
 
   <!-- Favicon -->
@@ -15,11 +15,11 @@
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
   <!-- Open Graph -->
-  <meta property="og:title" content="GSD Vibe - Desktop App">
-  <meta property="og:description" content="The native desktop companion for the GSD workflow. Manage projects, monitor roadmaps, visualize progress, integrated terminal, git operations, and more. Supports both GSD v1 and v2.">
+  <meta property="og:title" content="GSD VibeFlow - Desktop App">
+  <meta property="og:description" content="A native desktop app for the GSD VibeFlow workflow. Track projects, monitor roadmap progress, integrated terminal, git operations, and more.">
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://gsdvibe.com">
-  <link rel="canonical" href="https://gsdvibe.com">
+  <meta property="og:url" content="https://gsdvibeflow.com">
+  <link rel="canonical" href="https://gsdvibeflow.com">
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -56,34 +56,6 @@
   </script>
 
   <style>
-    /* Screenshot version badges */
-    .screenshot-wrapper {
-      position: relative;
-    }
-    .version-badge {
-      position: absolute;
-      top: 0.75rem;
-      right: 0.75rem;
-      padding: 0.25rem 0.75rem;
-      border-radius: 6px;
-      font-size: 0.7rem;
-      font-weight: 700;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-      z-index: 10;
-      backdrop-filter: blur(8px);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-    }
-    .badge-gsd1 {
-      background: rgba(251,146,60,0.85);
-      color: #000;
-      border: 1px solid rgba(251,146,60,0.6);
-    }
-    .badge-gsd2 {
-      background: rgba(124,207,255,0.85);
-      color: #000;
-      border: 1px solid rgba(124,207,255,0.6);
-    }
     /* Custom styles that Tailwind can't do inline */
     .gradient-text {
       background: linear-gradient(135deg, #7ccfff 0%, #a0e5ff 50%, #ffffff 100%);
@@ -189,7 +161,7 @@
     <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
       <a href="#" class="flex flex-col gap-0.5 group">
         <img src="gsd-logo.svg" alt="GSD" class="h-6 w-auto opacity-90 group-hover:opacity-100 transition-opacity">
-        <span style="font-size:9px;letter-spacing:0.2em;" class="uppercase font-semibold text-slate-500 group-hover:text-slate-400 transition-colors tracking-widest pl-px">Vibe</span>
+        <span style="font-size:9px;letter-spacing:0.2em;" class="uppercase font-semibold text-slate-500 group-hover:text-slate-400 transition-colors tracking-widest pl-px">VibeFlow</span>
       </a>
       <div class="hidden md:flex items-center gap-8">
         <a href="#features" class="text-sm text-slate-400 hover:text-white transition-colors">Features</a>
@@ -231,18 +203,18 @@
 
         <h1 class="text-5xl md:text-7xl lg:text-8xl font-black tracking-tight mb-6">
           <span class="text-white">GSD</span><br>
-          <span class="gradient-text">Vibe.</span>
+          <span class="gradient-text">VibeFlow.</span>
         </h1>
 
         <p class="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-          The native desktop companion for the
-          <a href="https://gsd.build/" class="text-brand-300 hover:text-brand-200 underline underline-offset-2">GSD</a> workflow.
-          Full GSD v1 &amp; v2 visualization, headless mode monitoring, integrated terminal,
-          git operations, knowledge base &mdash; all in one app.
+          The desktop companion for the
+          <a href="https://gsd.build/" class="text-brand-300 hover:text-brand-200 underline underline-offset-2">GSD VibeFlow</a> workflow.
+          Manage projects, track workflow progress, integrated terminal,
+          git operations, knowledge base &mdash; all in one place.
         </p>
 
         <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6">
-          <a href="https://github.com/jeremymcs/gsd-vibe/releases/download/v0.1.1/GSD.Vibe_0.1.1_aarch64.dmg" onclick="window.va && window.va('event', {name: 'download', data: {version: '0.1.1', platform: 'macos-aarch64'}})" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl bg-white text-black font-semibold text-lg hover:bg-gray-100 hover:-translate-y-px transition-all shadow-xl shadow-white/10">
+          <a href="https://github.com/fluxlabs/track-your-shit/releases/download/v0.1.1/Track.Your.Shit_0.1.1_aarch64.dmg" onclick="window.va && window.va('event', {name: 'download', data: {version: '0.1.1', platform: 'macos-aarch64'}})" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl bg-white text-black font-semibold text-lg hover:bg-gray-100 hover:-translate-y-px transition-all shadow-xl shadow-white/10">
             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
             Download for macOS
           </a>
@@ -254,15 +226,15 @@
 
         <!-- Additional platform downloads -->
         <div class="flex flex-wrap items-center justify-center gap-3 mb-16">
-          <a href="https://github.com/jeremymcs/gsd-vibe/releases/download/v0.1.1/GSD.Vibe_0.1.1_x64-setup.exe" onclick="window.va && window.va('event', {name: 'download', data: {version: '0.1.1', platform: 'windows-x64'}})" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-white/[0.12] text-slate-300 text-sm font-medium hover:border-white/30 hover:text-white transition-all bg-white/[0.04]">
+          <a href="https://github.com/fluxlabs/track-your-shit/releases/download/v0.1.1/Track.Your.Shit_0.1.1_x64-setup.exe" onclick="window.va && window.va('event', {name: 'download', data: {version: '0.1.1', platform: 'windows-x64'}})" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-white/[0.12] text-slate-300 text-sm font-medium hover:border-white/30 hover:text-white transition-all bg-white/[0.04]">
             <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/></svg>
             Windows (.exe)
           </a>
-          <a href="https://github.com/jeremymcs/gsd-vibe/releases/download/v0.1.1/GSD.Vibe_0.1.1_amd64.deb" onclick="window.va && window.va('event', {name: 'download', data: {version: '0.1.1', platform: 'linux-deb'}})" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-white/[0.12] text-slate-300 text-sm font-medium hover:border-white/30 hover:text-white transition-all bg-white/[0.04]">
+          <a href="https://github.com/fluxlabs/track-your-shit/releases/download/v0.1.1/Track.Your.Shit_0.1.1_amd64.deb" onclick="window.va && window.va('event', {name: 'download', data: {version: '0.1.1', platform: 'linux-deb'}})" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-white/[0.12] text-slate-300 text-sm font-medium hover:border-white/30 hover:text-white transition-all bg-white/[0.04]">
             <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12.504 0c-.155 0-.315.008-.48.021-4.226.333-3.105 4.807-3.17 6.298-.076 1.092-.3 1.953-1.05 3.02-.885 1.051-2.127 2.75-2.716 4.521-.278.832-.41 1.684-.287 2.489a.424.424 0 00-.11.135c-.26.268-.45.6-.663.839-.199.199-.485.267-.797.4-.313.136-.658.269-.864.68-.09.189-.136.394-.132.602 0 .199.027.4.055.536.058.399.116.728.04.97-.249.68-.28 1.145-.106 1.484.174.334.535.47.94.601.81.2 1.91.135 2.774.6.926.466 1.866.67 2.616.47.526-.116.97-.464 1.208-.946.587-.003 1.23-.269 2.26-.334.699-.058 1.574.267 2.577.2.025.134.063.198.114.333l.003.003c.391.778 1.113 1.368 1.884 1.43.868.07 1.723-.26 2.456-.594.733-.34 1.455-.78 2.28-.67.566.075 1.268-.281 1.583-.672.318-.401.395-.96.326-1.532-.135-1.08-.588-1.963-1.33-2.43-.313-.2-.458-.53-.78-.794-.16-.136-.36-.271-.52-.44-.19-.203-.28-.608-.373-.755-.027-.065-.049-.065-.064-.064-.108.023-.265.07-.27.267 0 .133.06.267.1.4.04.132.06.27.06.399 0 .1-.019.135-.04.202-.132 0-.267-.066-.4-.2-.268-.07-.4-.335-.6-.268-.168.136-.2.468-.066.601.266.268.668.535.867.67.466.334.862.662 1.26.865l.001.001c.063.039.18.142.26.26.131.2.196.465.254.733.06.268.08.535.086.732a2.17 2.17 0 01-.065.466c-.133.066-.267.2-.4.333-.133.067-.267.135-.33.267-.067.066-.135.2-.135.333 0 .066 0 .133.067.2.133.2.333.333.533.333.267.067.467 0 .667-.133s.4-.267.533-.467c.2-.333.267-.667.267-1.066.067-.534-.066-1-.133-1.534v-.066c.2-.534.133-1.134-.133-1.534-.134-.267-.334-.467-.534-.6-.067-.133-.2-.2-.2-.333a7.457 7.457 0 00-.066-.934c-.067-.333-.134-.733-.267-1.066-.267-.6-.667-1.134-1.2-1.467-.467-.333-.667-.667-1-1.066-.333-.4-.733-.867-.933-1.4-.267-.6-.4-1.267-.534-1.934-.067-.4-.2-.667-.333-1.066-.2-.667-.467-1.267-.467-2-.133-1.334.267-2.667 1-3.534.533-.6 1.267-1 2.067-1.134.8-.133 1.733 0 2.467.467.333.2.733.467.933.733.4.467.533.934.667 1.534.133.534.333 1.2.733 1.534.267.2.533.333.8.4.267.067.533.067.733.133.2.067.333.2.533.333.267.2.4.534.533.867.067.333.133.733.067 1.067a3.65 3.65 0 01-.267.933c-.333.667-.733 1.334-1.133 1.934-.4.667-.8 1.267-1.133 1.934-.4.6-.667 1.267-.8 2-.133.533-.2 1.133-.133 1.667.067.467.2.867.533 1.2.333.333.733.533 1.2.6.4.067.867 0 1.267-.133.4-.133.733-.333 1.067-.467.933-.467 1.733-1.133 2.533-1.8.267-.267.534-.534.734-.8.2-.267.4-.534.533-.867.133-.4.2-.8.2-1.2 0-.534-.067-1.067-.267-1.534-.4-1.066-1.2-1.866-2.133-2.4-.534-.333-.867-.733-1.134-1.2-.266-.467-.466-.934-.666-1.4-.2-.467-.4-.934-.6-1.334-.2-.4-.467-.733-.867-.933a8.33 8.33 0 00-1.8-.534c-.6-.133-1.2-.2-1.734-.333A8.565 8.565 0 0012.504 0z"/></svg>
             Linux (.deb)
           </a>
-          <a href="https://github.com/jeremymcs/gsd-vibe/releases/latest" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-white/[0.08] text-slate-500 text-sm hover:border-white/[0.15] hover:text-slate-400 transition-all">
+          <a href="https://github.com/fluxlabs/track-your-shit/releases/latest" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-white/[0.08] text-slate-500 text-sm hover:border-white/[0.15] hover:text-slate-400 transition-all">
             All releases
             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
           </a>
@@ -271,7 +243,7 @@
         <!-- App mockup -->
         <div class="relative max-w-5xl mx-auto float-animation">
           <div class="rounded-xl overflow-hidden shadow-2xl shadow-black/50 border border-white/[0.1]">
-            <img src="screenshots/dashboard.png" alt="GSD Vibe - Dashboard showing project cards with progress bars, GSD status, and activity overview" class="w-full h-auto" loading="eager" />
+            <img src="screenshots/dashboard.png" alt="GSD VibeFlow - Dashboard showing project cards with progress bars, GSD status, and activity overview" class="w-full h-auto" loading="eager" />
           </div>
           <!-- Glow effect behind screenshot -->
           <div class="absolute -inset-4 bg-gradient-to-r from-brand-400/10 via-brand-300/5 to-transparent rounded-2xl blur-3xl -z-10"></div>
@@ -285,12 +257,12 @@
     <div class="max-w-7xl mx-auto px-6 py-12">
       <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
         <div>
-          <div class="text-3xl md:text-4xl font-black text-white">176+</div>
+          <div class="text-3xl md:text-4xl font-black text-white">140+</div>
           <div class="text-sm text-slate-500 mt-1">Backend Commands</div>
         </div>
         <div>
-          <div class="text-3xl md:text-4xl font-black text-white">115+</div>
-          <div class="text-sm text-slate-500 mt-1">UI Components</div>
+          <div class="text-3xl md:text-4xl font-black text-white">~30MB</div>
+          <div class="text-sm text-slate-500 mt-1">App Size</div>
         </div>
         <div>
           <div class="text-3xl md:text-4xl font-black text-white">0</div>
@@ -309,7 +281,7 @@
     <div class="max-w-7xl mx-auto px-6">
       <div class="text-center mb-16">
         <h2 class="text-3xl md:text-5xl font-black text-white mb-4">Everything you need.<br><span class="gradient-text">Nothing you don't.</span></h2>
-        <p class="text-lg text-slate-400 max-w-2xl mx-auto">The native companion for the <a href="https://gsd.build/" class="text-brand-300 hover:text-brand-200">GSD</a> workflow, supporting both GSD v1 and v2. Built with Tauri for native performance.</p>
+        <p class="text-lg text-slate-400 max-w-2xl mx-auto">The companion app for the <a href="https://gsd.build/" class="text-brand-300 hover:text-brand-200">GSD VibeFlow</a> workflow, built as a fast native desktop app.</p>
       </div>
 
       <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -320,91 +292,64 @@
             <svg class="w-6 h-6 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
           </div>
           <h3 class="text-lg font-bold text-white mb-2">Project Dashboard</h3>
-          <p class="text-sm text-slate-400 leading-relaxed">Grid or list view of all projects. Favorites, filters, search, GSD version badges, roadmap progress bars, git branch indicators, and tech stack detection.</p>
+          <p class="text-sm text-slate-400 leading-relaxed">Grid or list view of all your projects at a glance. Favorites, filters, search, status badges, roadmap progress bars, and git branch indicators.</p>
         </div>
 
-        <!-- Feature 2: GSD-2 Workflow -->
+        <!-- Feature 2: GSD Workflow -->
         <div class="feature-card rounded-xl p-6 transition-all duration-300 card-glow">
           <div class="w-12 h-12 rounded-xl bg-brand-400/10 border border-brand-400/20 flex items-center justify-center mb-4">
             <svg class="w-6 h-6 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
           </div>
-          <h3 class="text-lg font-bold text-white mb-2"><a href="https://gsd.build/" class="hover:text-brand-300 transition-colors">GSD Integration</a></h3>
-          <p class="text-sm text-slate-400 leading-relaxed">Supports both <a href="https://gsd.build/" class="text-brand-300 hover:text-brand-200 underline underline-offset-2">GSD v1 and v2</a>. Auto-syncs your .planning/ directory &mdash; milestones, slices, tasks, plans, phases, research, UAT, validation, and debug sessions.</p>
+          <h3 class="text-lg font-bold text-white mb-2"><a href="https://gsd.build/" class="hover:text-brand-300 transition-colors">GSD VibeFlow</a></h3>
+          <p class="text-sm text-slate-400 leading-relaxed">Native integration with the <a href="https://gsd.build/" class="text-brand-300 hover:text-brand-200 underline underline-offset-2">GSD VibeFlow</a> workflow. Auto-syncs your .planning/ directory &mdash; todos, plans, phases, milestones, research, and verification.</p>
         </div>
 
-        <!-- Feature 3: GSD Visualizer -->
-        <div class="feature-card rounded-xl p-6 transition-all duration-300 card-glow">
-          <div class="w-12 h-12 rounded-xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center mb-4">
-            <svg class="w-6 h-6 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-          </div>
-          <h3 class="text-lg font-bold text-white mb-2">GSD Visualizer</h3>
-          <p class="text-sm text-slate-400 leading-relaxed">7-tab visualization system: progress tree, dependency graph, metrics charts, execution timeline, agent activity, changelog, and data export.</p>
-        </div>
-
-        <!-- Feature 4: Headless Mode -->
-        <div class="feature-card rounded-xl p-6 transition-all duration-300 card-glow">
-          <div class="w-12 h-12 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center mb-4">
-            <svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-          </div>
-          <h3 class="text-lg font-bold text-white mb-2">Headless Mode</h3>
-          <p class="text-sm text-slate-400 leading-relaxed">Monitor and control GSD autonomous execution from the UI. Track active sessions, execution state, next actions, and auto-mode progress in real time.</p>
-        </div>
-
-        <!-- Feature 5: Integrated Terminal -->
+        <!-- Feature 3: Integrated Terminal -->
         <div class="feature-card rounded-xl p-6 transition-all duration-300 card-glow">
           <div class="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mb-4">
             <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
           </div>
           <h3 class="text-lg font-bold text-white mb-2">Integrated Terminal</h3>
-          <p class="text-sm text-slate-400 leading-relaxed">Full PTY terminal with multi-tab support, tmux persistence, broadcast mode, command snippets, and split-pane layout. Your shell, inside your project manager.</p>
+          <p class="text-sm text-slate-400 leading-relaxed">Full PTY terminal with multi-tab support, tmux persistence, broadcast mode, and command snippets. Your shell, inside your project manager.</p>
         </div>
 
-        <!-- Feature 6: Git Operations -->
+        <!-- Feature 4: Git Operations -->
         <div class="feature-card rounded-xl p-6 transition-all duration-300 card-glow">
           <div class="w-12 h-12 rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center mb-4">
             <svg class="w-6 h-6 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
           </div>
           <h3 class="text-lg font-bold text-white mb-2">Git Operations</h3>
-          <p class="text-sm text-slate-400 leading-relaxed">Branch management, staging, commits, push/pull, stash, diffs, commit history with file stats, and worktree management. Full git workflow without leaving the app.</p>
+          <p class="text-sm text-slate-400 leading-relaxed">Branch management, staging, commits, push/pull, stash, diffs, and commit history. Full git workflow without leaving the app.</p>
         </div>
 
-        <!-- Feature 7: Knowledge Base -->
+        <!-- Feature 5: Knowledge Base -->
         <div class="feature-card rounded-xl p-6 transition-all duration-300 card-glow">
           <div class="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center mb-4">
             <svg class="w-6 h-6 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
           </div>
           <h3 class="text-lg font-bold text-white mb-2">Knowledge Base</h3>
-          <p class="text-sm text-slate-400 leading-relaxed">Browse project docs with rich markdown rendering, full-text search, bookmarks, file tree navigation, syntax highlighting, and auto-generated table of contents.</p>
+          <p class="text-sm text-slate-400 leading-relaxed">Browse project docs with rich markdown rendering, full-text search, file tree navigation, and auto-generated table of contents.</p>
         </div>
 
-        <!-- Feature 8: Global Search -->
-        <div class="feature-card rounded-xl p-6 transition-all duration-300 card-glow">
-          <div class="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mb-4">
-            <svg class="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-          </div>
-          <h3 class="text-lg font-bold text-white mb-2">Global Search</h3>
-          <p class="text-sm text-slate-400 leading-relaxed">Search across projects, phases, decisions, and knowledge base from one place. Command palette for keyboard-driven navigation to any view instantly.</p>
-        </div>
-
-        <!-- Feature 9: Cross-Project Todos -->
+        <!-- Feature 6: Todo Aggregation -->
         <div class="feature-card rounded-xl p-6 transition-all duration-300 card-glow">
           <div class="w-12 h-12 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center mb-4">
             <svg class="w-6 h-6 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
           </div>
           <h3 class="text-lg font-bold text-white mb-2">Cross-Project Todos</h3>
-          <p class="text-sm text-slate-400 leading-relaxed">Aggregate todos across all <a href="https://gsd.build/" class="text-rose-300 hover:text-rose-200">GSD</a> projects in one view. Filter by priority, blockers, status. Track critical items at a glance.</p>
+          <p class="text-sm text-slate-400 leading-relaxed">Aggregate todos across all <a href="https://gsd.build/" class="text-rose-300 hover:text-rose-200">GSD VibeFlow</a> projects in one view. Filter by priority, blockers, status. Track critical items and blockers at a glance.</p>
         </div>
 
-        <!-- Feature 10: Secrets & Security -->
+        <!-- Feature 7: Activity Tracking -->
         <div class="feature-card rounded-xl p-6 transition-all duration-300 card-glow">
-          <div class="w-12 h-12 rounded-xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center mb-4">
-            <svg class="w-6 h-6 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+          <div class="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mb-4">
+            <svg class="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
           </div>
-          <h3 class="text-lg font-bold text-white mb-2">Secrets Management</h3>
-          <p class="text-sm text-slate-400 leading-relaxed">Store API keys and secrets in your OS keychain &mdash; not in config files. Encrypted by macOS Keychain, Windows Credential Store, or Linux Secret Service.</p>
+          <h3 class="text-lg font-bold text-white mb-2">Activity & Decisions</h3>
+          <p class="text-sm text-slate-400 leading-relaxed">Complete audit trail of every phase completion, task, and architectural decision. Never lose context on why something was built a certain way.</p>
         </div>
 
-        <!-- Feature 11: Smart Notifications -->
+        <!-- Feature 8: Notifications -->
         <div class="feature-card rounded-xl p-6 transition-all duration-300 card-glow">
           <div class="w-12 h-12 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mb-4">
             <svg class="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
@@ -413,13 +358,13 @@
           <p class="text-sm text-slate-400 leading-relaxed">Get notified on phase completions, test failures, cost warnings, and blockers. Filter by type, mark as read, and never miss important events.</p>
         </div>
 
-        <!-- Feature 12: Codebase Health -->
+        <!-- Feature 9: Secrets & Security -->
         <div class="feature-card rounded-xl p-6 transition-all duration-300 card-glow">
-          <div class="w-12 h-12 rounded-xl bg-lime-500/10 border border-lime-500/20 flex items-center justify-center mb-4">
-            <svg class="w-6 h-6 text-lime-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+          <div class="w-12 h-12 rounded-xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center mb-4">
+            <svg class="w-6 h-6 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
           </div>
-          <h3 class="text-lg font-bold text-white mb-2">Codebase Health</h3>
-          <p class="text-sm text-slate-400 leading-relaxed">Health widget with doctor checks, dependency auditing, codebase scanner with grades, priority actions, and gap analysis across security, performance, and tests.</p>
+          <h3 class="text-lg font-bold text-white mb-2">Secrets Management</h3>
+          <p class="text-sm text-slate-400 leading-relaxed">Store API keys and secrets in your OS keychain &mdash; not in config files. Encrypted by macOS Keychain, Windows Credential Store, or Linux Secret Service.</p>
         </div>
 
       </div>
@@ -435,11 +380,11 @@
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
             GSD Integration
           </div>
-          <h2 class="text-3xl md:text-5xl font-black text-white mb-6">Full GSD<br><span class="gradient-text">integration.</span></h2>
+          <h2 class="text-3xl md:text-5xl font-black text-white mb-6">Built for the<br><span class="gradient-text">GSD workflow.</span></h2>
           <p class="text-lg text-slate-400 mb-8 leading-relaxed">
-            GSD Vibe natively understands the <a href="https://gsd.build/" class="text-brand-300 hover:text-brand-200 underline underline-offset-2">GSD</a> workflow &mdash; both v1 and v2.
+            GSD VibeFlow natively understands the <a href="https://gsd.build/" class="text-brand-300 hover:text-brand-200 underline underline-offset-2">GSD VibeFlow</a> workflow.
             It watches your <code class="text-sm font-mono bg-white/[0.08] px-2 py-0.5 rounded text-brand-300">.planning/</code> directory
-            and syncs everything in real time &mdash; milestones, phases, slices, tasks, and more.
+            and syncs everything in real time.
           </p>
 
           <div class="space-y-4">
@@ -448,8 +393,8 @@
                 <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
               </div>
               <div>
-                <h4 class="text-sm font-semibold text-white">Milestones, Slices & Tasks</h4>
-                <p class="text-sm text-slate-500">Full hierarchy view. Browse milestones, expand slices with risk badges and dependencies, drill into individual tasks with estimates and critical path status.</p>
+                <h4 class="text-sm font-semibold text-white">Roadmap & Phase Tracking</h4>
+                <p class="text-sm text-slate-500">Visual progress for every phase. See what's done, what's in progress, and what's next.</p>
               </div>
             </div>
             <div class="flex items-start gap-4">
@@ -457,8 +402,8 @@
                 <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
               </div>
               <div>
-                <h4 class="text-sm font-semibold text-white">7-Tab Visualizer</h4>
-                <p class="text-sm text-slate-500">Progress tree, dependency graph, metrics charts, execution timeline, agent activity monitoring, changelog, and data export &mdash; all in one view.</p>
+                <h4 class="text-sm font-semibold text-white">Todo Aggregation</h4>
+                <p class="text-sm text-slate-500">All todos from all projects in one place. Priority badges, blocker alerts, area tags.</p>
               </div>
             </div>
             <div class="flex items-start gap-4">
@@ -466,8 +411,8 @@
                 <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
               </div>
               <div>
-                <h4 class="text-sm font-semibold text-white">Headless Mode Monitoring</h4>
-                <p class="text-sm text-slate-500">Watch GSD autonomous execution in real time. Session management, execution state, next actions, and auto-mode controls from the UI.</p>
+                <h4 class="text-sm font-semibold text-white">Requirements Coverage</h4>
+                <p class="text-sm text-slate-500">Parse REQUIREMENTS.md and track completion status for every requirement.</p>
               </div>
             </div>
             <div class="flex items-start gap-4">
@@ -475,17 +420,8 @@
                 <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
               </div>
               <div>
-                <h4 class="text-sm font-semibold text-white">Worktrees & Health</h4>
-                <p class="text-sm text-slate-500">Manage git worktrees per project. Health widget with doctor checks, budget tracking, blocker alerts, and velocity analysis.</p>
-              </div>
-            </div>
-            <div class="flex items-start gap-4">
-              <div class="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-              </div>
-              <div>
-                <h4 class="text-sm font-semibold text-white">UAT, Validation & Debug</h4>
-                <p class="text-sm text-slate-500">User acceptance testing results, per-task validation maps with wave tracking, and persistent debug sessions with error types and resolution notes.</p>
+                <h4 class="text-sm font-semibold text-white">Milestones & Verification</h4>
+                <p class="text-sm text-slate-500">Track milestones, run UAT, and verify phase completions with structured checklists.</p>
               </div>
             </div>
           </div>
@@ -493,7 +429,7 @@
 
         <!-- GSD screenshot -->
         <div class="rounded-xl overflow-hidden shadow-2xl border border-white/[0.1]">
-          <img src="screenshots/project-detail.png" alt="GSD Vibe - Project detail with GSD-2 milestones, slices, tasks, visualizer, headless mode, and worktrees" class="w-full h-auto" loading="lazy" />
+          <img src="screenshots/project-detail.png" alt="GSD VibeFlow - Project detail view with GSD state, roadmap progress, requirements, and git status" class="w-full h-auto" loading="lazy" />
         </div>
       </div>
     </div>
@@ -579,123 +515,46 @@
         <p class="text-lg text-slate-400 max-w-2xl mx-auto">Real screenshots from the app &mdash; not mockups.</p>
       </div>
 
-      <!-- GSD-1 vs GSD-2 Side-by-Side Comparison -->
+      <!-- GSD Workflow Screenshots -->
       <div class="mb-16">
-        <h3 class="text-xl font-bold text-white mb-2 text-center">GSD-1 vs GSD-2</h3>
-        <p class="text-sm text-slate-500 text-center mb-4">See how the app adapts to each GSD version. Different sidebar, different capabilities.</p>
-        <div class="flex items-center justify-center gap-4 mb-8">
-          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wide" style="background:rgba(251,146,60,0.85);color:#000;">GSD-1</span>
-          <span class="text-slate-600 text-sm">Phase-based workflow</span>
-          <span class="text-slate-700 mx-2">|</span>
-          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wide" style="background:rgba(124,207,255,0.85);color:#000;">GSD-2</span>
-          <span class="text-slate-600 text-sm">Milestone &rarr; Slice &rarr; Task hierarchy</span>
-        </div>
-
-        <!-- Pair 1: Main View -->
-        <div class="grid md:grid-cols-2 gap-6 max-w-6xl mx-auto mb-8">
+        <h3 class="text-xl font-bold text-white mb-2 text-center">GSD Workflow</h3>
+        <p class="text-sm text-slate-500 text-center mb-8">Plans, context, validation, UAT, milestones, and debug sessions &mdash; all visualized.</p>
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
           <div class="space-y-3">
-            <div class="screenshot-wrapper rounded-xl overflow-hidden shadow-xl border border-white/[0.1]">
-              <span class="version-badge badge-gsd1">GSD-1</span>
-              <img src="screenshots/gsd-plans.png" alt="GSD-1 Plans view with phase-based plan tracking" class="w-full h-auto" loading="lazy" />
+            <div class="rounded-xl overflow-hidden shadow-xl border border-white/[0.1]">
+              <img src="screenshots/gsd-plans.png" alt="GSD Plans tab showing phase plans with tasks, timing data, and completion summaries" class="w-full h-auto" loading="lazy" />
             </div>
             <p class="text-sm text-slate-500 text-center">Plans &amp; Summaries</p>
           </div>
           <div class="space-y-3">
-            <div class="screenshot-wrapper rounded-xl overflow-hidden shadow-xl border border-white/[0.1]">
-              <span class="version-badge badge-gsd2">GSD-2</span>
-              <img src="screenshots/gsd2-dashboard.png" alt="GSD-2 Dashboard with current unit, slice progress, and health widget" class="w-full h-auto" loading="lazy" />
-            </div>
-            <p class="text-sm text-slate-500 text-center">Dashboard &amp; Activity</p>
-          </div>
-        </div>
-
-        <!-- Pair 2: Milestones -->
-        <div class="grid md:grid-cols-2 gap-6 max-w-6xl mx-auto mb-8">
-          <div class="space-y-3">
-            <div class="screenshot-wrapper rounded-xl overflow-hidden shadow-xl border border-white/[0.1]">
-              <span class="version-badge badge-gsd1">GSD-1</span>
-              <img src="screenshots/gsd-milestones.png" alt="GSD-1 Milestones with version timeline and phase ranges" class="w-full h-auto" loading="lazy" />
-            </div>
-            <p class="text-sm text-slate-500 text-center">Milestone Timeline</p>
-          </div>
-          <div class="space-y-3">
-            <div class="screenshot-wrapper rounded-xl overflow-hidden shadow-xl border border-white/[0.1]">
-              <span class="version-badge badge-gsd2">GSD-2</span>
-              <img src="screenshots/gsd2-milestones.png" alt="GSD-2 Milestones with expandable hierarchy showing slices and tasks" class="w-full h-auto" loading="lazy" />
-            </div>
-            <p class="text-sm text-slate-500 text-center">Milestones &amp; Slices</p>
-          </div>
-        </div>
-
-        <!-- Pair 3: Validation / Visualizer -->
-        <div class="grid md:grid-cols-2 gap-6 max-w-6xl mx-auto mb-8">
-          <div class="space-y-3">
-            <div class="screenshot-wrapper rounded-xl overflow-hidden shadow-xl border border-white/[0.1]">
-              <span class="version-badge badge-gsd1">GSD-1</span>
-              <img src="screenshots/gsd-validation.png" alt="GSD-1 Validation with per-task verification map and wave tracking" class="w-full h-auto" loading="lazy" />
-            </div>
-            <p class="text-sm text-slate-500 text-center">Validation &amp; Test Map</p>
-          </div>
-          <div class="space-y-3">
-            <div class="screenshot-wrapper rounded-xl overflow-hidden shadow-xl border border-white/[0.1]">
-              <span class="version-badge badge-gsd2">GSD-2</span>
-              <img src="screenshots/gsd2-visualizer.png" alt="GSD-2 Visualizer with progress tree, dependency graph, and metrics" class="w-full h-auto" loading="lazy" />
-            </div>
-            <p class="text-sm text-slate-500 text-center">7-Tab Visualizer</p>
-          </div>
-        </div>
-
-        <!-- Pair 4: UAT / Health -->
-        <div class="grid md:grid-cols-2 gap-6 max-w-6xl mx-auto mb-8">
-          <div class="space-y-3">
-            <div class="screenshot-wrapper rounded-xl overflow-hidden shadow-xl border border-white/[0.1]">
-              <span class="version-badge badge-gsd1">GSD-1</span>
-              <img src="screenshots/gsd-uat.png" alt="GSD-1 UAT with test results and pass/issue/pending status" class="w-full h-auto" loading="lazy" />
-            </div>
-            <p class="text-sm text-slate-500 text-center">User Acceptance Testing</p>
-          </div>
-          <div class="space-y-3">
-            <div class="screenshot-wrapper rounded-xl overflow-hidden shadow-xl border border-white/[0.1]">
-              <span class="version-badge badge-gsd2">GSD-2</span>
-              <img src="screenshots/gsd2-health.png" alt="GSD-2 Health with budget tracking, doctor checks, and active milestone" class="w-full h-auto" loading="lazy" />
-            </div>
-            <p class="text-sm text-slate-500 text-center">Health Monitoring</p>
-          </div>
-        </div>
-
-        <!-- Pair 5: Debug / Headless -->
-        <div class="grid md:grid-cols-2 gap-6 max-w-6xl mx-auto mb-8">
-          <div class="space-y-3">
-            <div class="screenshot-wrapper rounded-xl overflow-hidden shadow-xl border border-white/[0.1]">
-              <span class="version-badge badge-gsd1">GSD-1</span>
-              <img src="screenshots/gsd-debug.png" alt="GSD-1 Debug sessions with error types and resolution notes" class="w-full h-auto" loading="lazy" />
-            </div>
-            <p class="text-sm text-slate-500 text-center">Debug Sessions</p>
-          </div>
-          <div class="space-y-3">
-            <div class="screenshot-wrapper rounded-xl overflow-hidden shadow-xl border border-white/[0.1]">
-              <span class="version-badge badge-gsd2">GSD-2</span>
-              <img src="screenshots/gsd2-headless.png" alt="GSD-2 Headless mode with execution state and session management" class="w-full h-auto" loading="lazy" />
-            </div>
-            <p class="text-sm text-slate-500 text-center">Headless Mode</p>
-          </div>
-        </div>
-
-        <!-- Pair 6: Context / Worktrees -->
-        <div class="grid md:grid-cols-2 gap-6 max-w-6xl mx-auto">
-          <div class="space-y-3">
-            <div class="screenshot-wrapper rounded-xl overflow-hidden shadow-xl border border-white/[0.1]">
-              <span class="version-badge badge-gsd1">GSD-1</span>
-              <img src="screenshots/gsd-context.png" alt="GSD-1 Context with architectural decisions and deferred ideas" class="w-full h-auto" loading="lazy" />
+            <div class="rounded-xl overflow-hidden shadow-xl border border-white/[0.1]">
+              <img src="screenshots/gsd-context.png" alt="GSD Context tab showing architectural decisions and deferred ideas per phase" class="w-full h-auto" loading="lazy" />
             </div>
             <p class="text-sm text-slate-500 text-center">Phase Context &amp; Decisions</p>
           </div>
           <div class="space-y-3">
-            <div class="screenshot-wrapper rounded-xl overflow-hidden shadow-xl border border-white/[0.1]">
-              <span class="version-badge badge-gsd2">GSD-2</span>
-              <img src="screenshots/gsd2-worktrees.png" alt="GSD-2 Worktrees panel with active worktrees and file change counts" class="w-full h-auto" loading="lazy" />
+            <div class="rounded-xl overflow-hidden shadow-xl border border-white/[0.1]">
+              <img src="screenshots/gsd-validation.png" alt="GSD Validation tab showing per-task verification map with pass/fail status and wave tracking" class="w-full h-auto" loading="lazy" />
             </div>
-            <p class="text-sm text-slate-500 text-center">Worktrees</p>
+            <p class="text-sm text-slate-500 text-center">Validation &amp; Test Map</p>
+          </div>
+          <div class="space-y-3">
+            <div class="rounded-xl overflow-hidden shadow-xl border border-white/[0.1]">
+              <img src="screenshots/gsd-uat.png" alt="GSD UAT tab showing user acceptance test results with pass/issue/pending status" class="w-full h-auto" loading="lazy" />
+            </div>
+            <p class="text-sm text-slate-500 text-center">User Acceptance Testing</p>
+          </div>
+          <div class="space-y-3">
+            <div class="rounded-xl overflow-hidden shadow-xl border border-white/[0.1]">
+              <img src="screenshots/gsd-milestones.png" alt="GSD Milestones tab showing version timeline with current milestone and phase ranges" class="w-full h-auto" loading="lazy" />
+            </div>
+            <p class="text-sm text-slate-500 text-center">Milestone Timeline</p>
+          </div>
+          <div class="space-y-3">
+            <div class="rounded-xl overflow-hidden shadow-xl border border-white/[0.1]">
+              <img src="screenshots/gsd-debug.png" alt="GSD Debug tab showing active and resolved debug sessions with error types" class="w-full h-auto" loading="lazy" />
+            </div>
+            <p class="text-sm text-slate-500 text-center">Debug Sessions</p>
           </div>
         </div>
       </div>
@@ -841,7 +700,7 @@
     <div class="max-w-7xl mx-auto px-6">
       <div class="text-center mb-16">
         <h2 class="text-3xl md:text-5xl font-black text-white mb-4">And a whole lot more.</h2>
-        <p class="text-lg text-slate-400">Here's everything else packed into GSD Vibe.</p>
+        <p class="text-lg text-slate-400">Here's everything else packed into GSD VibeFlow.</p>
       </div>
 
       <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-y-8 gap-x-12 max-w-5xl mx-auto">
@@ -853,11 +712,10 @@
           <ul class="space-y-2 text-sm text-slate-500">
             <li>Grid &amp; list views</li>
             <li>Favorites &amp; pinning</li>
-            <li>Import &amp; create projects</li>
-            <li>Tech stack auto-detection</li>
+            <li>Bulk archive &amp; delete</li>
+            <li>Project import wizard</li>
+            <li>Tech stack detection</li>
             <li>Dependency auditing</li>
-            <li>Codebase health scanner</li>
-            <li>Project templates</li>
           </ul>
         </div>
         <div>
@@ -867,13 +725,11 @@
           </h4>
           <ul class="space-y-2 text-sm text-slate-500">
             <li>Auto-sync .planning/</li>
-            <li>Milestones, slices &amp; tasks</li>
-            <li>7-tab visualizer</li>
-            <li>Headless mode monitoring</li>
-            <li>UAT &amp; validation maps</li>
-            <li>Debug session tracking</li>
+            <li>Phase &amp; task tracking</li>
             <li>Requirements coverage</li>
-            <li>Phase research browser</li>
+            <li>Milestone management</li>
+            <li>UAT &amp; verification</li>
+            <li>Research browser</li>
           </ul>
         </div>
         <div>
@@ -885,7 +741,6 @@
             <li>Full PTY emulation</li>
             <li>Multi-tab with persistence</li>
             <li>tmux integration</li>
-            <li>Split-pane layout</li>
             <li>Broadcast to all tabs</li>
             <li>Command snippets</li>
             <li>Buffer search</li>
@@ -901,8 +756,7 @@
             <li>Stage, commit, push</li>
             <li>Diff viewer</li>
             <li>Stash operations</li>
-            <li>Commit history with stats</li>
-            <li>Worktree management</li>
+            <li>Commit history</li>
             <li>File browser</li>
           </ul>
         </div>
@@ -915,9 +769,8 @@
             <li>Markdown docs browser</li>
             <li>Full-text search</li>
             <li>File tree navigation</li>
-            <li>Bookmarks with notes</li>
             <li>Auto table of contents</li>
-            <li>Syntax highlighting</li>
+            <li>Code highlighting</li>
             <li>GFM support</li>
           </ul>
         </div>
@@ -929,11 +782,10 @@
           <ul class="space-y-2 text-sm text-slate-500">
             <li>Activity feed</li>
             <li>Decision history</li>
-            <li>Cost &amp; token tracking</li>
-            <li>Velocity analysis</li>
+            <li>Cost tracking</li>
+            <li>Test run results</li>
             <li>Notification center</li>
             <li>Application logs</li>
-            <li>Cross-project todos</li>
           </ul>
         </div>
         <div>
@@ -953,16 +805,15 @@
         <div>
           <h4 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
             <span class="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
-            UI &amp; Navigation
+            Customization
           </h4>
           <ul class="space-y-2 text-sm text-slate-500">
-            <li>Sidebar-driven navigation</li>
-            <li>Command palette (cmdk)</li>
-            <li>26+ tabbed views</li>
-            <li>Dark &amp; light themes</li>
+            <li>Dark, light, system themes</li>
+            <li>Brand color palettes</li>
+            <li>Font selection</li>
+            <li>UI density control</li>
             <li>Keyboard shortcuts</li>
-            <li>Global search</li>
-            <li>Linear-inspired design</li>
+            <li>Command palette</li>
           </ul>
         </div>
       </div>
@@ -979,7 +830,7 @@
       <!-- Platform download cards -->
       <div class="grid sm:grid-cols-3 gap-4 max-w-2xl mx-auto mb-10">
         <!-- macOS -->
-        <a href="https://github.com/jeremymcs/gsd-vibe/releases/download/v0.1.1/GSD.Vibe_0.1.1_aarch64.dmg" onclick="window.va && window.va('event', {name: 'download', data: {version: '0.1.1', platform: 'macos-aarch64'}})" class="group flex flex-col items-center gap-3 p-6 rounded-xl bg-white/[0.04] border border-white/[0.1] hover:border-brand-500/40 transition-all hover:shadow-lg hover:shadow-brand-500/10">
+        <a href="https://github.com/fluxlabs/track-your-shit/releases/download/v0.1.1/Track.Your.Shit_0.1.1_aarch64.dmg" onclick="window.va && window.va('event', {name: 'download', data: {version: '0.1.1', platform: 'macos-aarch64'}})" class="group flex flex-col items-center gap-3 p-6 rounded-xl bg-white/[0.04] border border-white/[0.1] hover:border-brand-500/40 transition-all hover:shadow-lg hover:shadow-brand-500/10">
           <svg class="w-8 h-8 text-slate-300 group-hover:text-white transition-colors" fill="currentColor" viewBox="0 0 24 24"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
           <div class="text-center">
             <div class="text-sm font-semibold text-white">macOS</div>
@@ -988,7 +839,7 @@
         </a>
 
         <!-- Windows -->
-        <a href="https://github.com/jeremymcs/gsd-vibe/releases/download/v0.1.1/GSD.Vibe_0.1.1_x64-setup.exe" onclick="window.va && window.va('event', {name: 'download', data: {version: '0.1.1', platform: 'windows-x64'}})" class="group flex flex-col items-center gap-3 p-6 rounded-xl bg-white/[0.04] border border-white/[0.1] hover:border-brand-500/40 transition-all hover:shadow-lg hover:shadow-brand-500/10">
+        <a href="https://github.com/fluxlabs/track-your-shit/releases/download/v0.1.1/Track.Your.Shit_0.1.1_x64-setup.exe" onclick="window.va && window.va('event', {name: 'download', data: {version: '0.1.1', platform: 'windows-x64'}})" class="group flex flex-col items-center gap-3 p-6 rounded-xl bg-white/[0.04] border border-white/[0.1] hover:border-brand-500/40 transition-all hover:shadow-lg hover:shadow-brand-500/10">
           <svg class="w-8 h-8 text-slate-300 group-hover:text-white transition-colors" fill="currentColor" viewBox="0 0 24 24"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/></svg>
           <div class="text-center">
             <div class="text-sm font-semibold text-white">Windows</div>
@@ -997,7 +848,7 @@
         </a>
 
         <!-- Linux -->
-        <a href="https://github.com/jeremymcs/gsd-vibe/releases/download/v0.1.1/GSD.Vibe_0.1.1_amd64.deb" onclick="window.va && window.va('event', {name: 'download', data: {version: '0.1.1', platform: 'linux-deb'}})" class="group flex flex-col items-center gap-3 p-6 rounded-xl bg-white/[0.04] border border-white/[0.1] hover:border-brand-500/40 transition-all hover:shadow-lg hover:shadow-brand-500/10">
+        <a href="https://github.com/fluxlabs/track-your-shit/releases/download/v0.1.1/Track.Your.Shit_0.1.1_amd64.deb" onclick="window.va && window.va('event', {name: 'download', data: {version: '0.1.1', platform: 'linux-deb'}})" class="group flex flex-col items-center gap-3 p-6 rounded-xl bg-white/[0.04] border border-white/[0.1] hover:border-brand-500/40 transition-all hover:shadow-lg hover:shadow-brand-500/10">
           <svg class="w-8 h-8 text-slate-300 group-hover:text-white transition-colors" fill="currentColor" viewBox="0 0 24 24"><path d="M12.504 0c-.155 0-.315.008-.48.021-4.226.333-3.105 4.807-3.17 6.298-.076 1.092-.3 1.953-1.05 3.02-.885 1.051-2.127 2.75-2.716 4.521-.278.832-.41 1.684-.287 2.489a.424.424 0 00-.11.135c-.26.268-.45.6-.663.839-.199.199-.485.267-.797.4-.313.136-.658.269-.864.68-.09.189-.136.394-.132.602 0 .199.027.4.055.536.058.399.116.728.04.97-.249.68-.28 1.145-.106 1.484.174.334.535.47.94.601.81.2 1.91.135 2.774.6.926.466 1.866.67 2.616.47.526-.116.97-.464 1.208-.946.587-.003 1.23-.269 2.26-.334.699-.058 1.574.267 2.577.2.025.134.063.198.114.333l.003.003c.391.778 1.113 1.368 1.884 1.43.868.07 1.723-.26 2.456-.594.733-.34 1.455-.78 2.28-.67.566.075 1.268-.281 1.583-.672.318-.401.395-.96.326-1.532-.135-1.08-.588-1.963-1.33-2.43-.313-.2-.458-.53-.78-.794-.16-.136-.36-.271-.52-.44-.19-.203-.28-.608-.373-.755-.027-.065-.049-.065-.064-.064-.108.023-.265.07-.27.267 0 .133.06.267.1.4.04.132.06.27.06.399 0 .1-.019.135-.04.202-.132 0-.267-.066-.4-.2-.268-.07-.4-.335-.6-.268-.168.136-.2.468-.066.601.266.268.668.535.867.67.466.334.862.662 1.26.865l.001.001c.063.039.18.142.26.26.131.2.196.465.254.733.06.268.08.535.086.732a2.17 2.17 0 01-.065.466c-.133.066-.267.2-.4.333-.133.067-.267.135-.33.267-.067.066-.135.2-.135.333 0 .066 0 .133.067.2.133.2.333.333.533.333.267.067.467 0 .667-.133s.4-.267.533-.467c.2-.333.267-.667.267-1.066.067-.534-.066-1-.133-1.534v-.066c.2-.534.133-1.134-.133-1.534-.134-.267-.334-.467-.534-.6-.067-.133-.2-.2-.2-.333a7.457 7.457 0 00-.066-.934c-.067-.333-.134-.733-.267-1.066-.267-.6-.667-1.134-1.2-1.467-.467-.333-.667-.667-1-1.066-.333-.4-.733-.867-.933-1.4-.267-.6-.4-1.267-.534-1.934-.067-.4-.2-.667-.333-1.066-.2-.667-.467-1.267-.467-2-.133-1.334.267-2.667 1-3.534.533-.6 1.267-1 2.067-1.134.8-.133 1.733 0 2.467.467.333.2.733.467.933.733.4.467.533.934.667 1.534.133.534.333 1.2.733 1.534.267.2.533.333.8.4.267.067.533.067.733.133.2.067.333.2.533.333.267.2.4.534.533.867.067.333.133.733.067 1.067a3.65 3.65 0 01-.267.933c-.333.667-.733 1.334-1.133 1.934-.4.667-.8 1.267-1.133 1.934-.4.6-.667 1.267-.8 2-.133.533-.2 1.133-.133 1.667.067.467.2.867.533 1.2.333.333.733.533 1.2.6.4.067.867 0 1.267-.133.4-.133.733-.333 1.067-.467.933-.467 1.733-1.133 2.533-1.8.267-.267.534-.534.734-.8.2-.267.4-.534.533-.867.133-.4.2-.8.2-1.2 0-.534-.067-1.067-.267-1.534-.4-1.066-1.2-1.866-2.133-2.4-.534-.333-.867-.733-1.134-1.2-.266-.467-.466-.934-.666-1.4-.2-.467-.4-.934-.6-1.334-.2-.4-.467-.733-.867-.933a8.33 8.33 0 00-1.8-.534c-.6-.133-1.2-.2-1.734-.333A8.565 8.565 0 0012.504 0z"/></svg>
           <div class="text-center">
             <div class="text-sm font-semibold text-white">Linux</div>
@@ -1007,96 +858,7 @@
       </div>
 
       <div class="text-center mb-8">
-        <a href="https://github.com/jeremymcs/gsd-vibe/releases/latest" class="text-sm text-slate-500 hover:text-slate-300 transition-colors underline underline-offset-2">View all releases on GitHub</a>
-      </div>
-
-      <!-- Requirements -->
-      <div class="max-w-2xl mx-auto mb-10 text-left">
-        <h3 class="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4 text-center">Requirements</h3>
-        <div class="space-y-3">
-          <!-- Required -->
-          <div class="rounded-xl bg-white/[0.04] border border-white/[0.08] overflow-hidden">
-            <div class="px-4 py-2 border-b border-white/[0.06] flex items-center gap-2">
-              <span class="w-2 h-2 rounded-full bg-red-400 shrink-0"></span>
-              <span class="text-xs font-semibold text-white uppercase tracking-wider">Required</span>
-            </div>
-            <div class="divide-y divide-white/[0.06]">
-              <div class="flex items-center justify-between px-4 py-3 gap-4">
-                <div>
-                  <a href="https://gsd.build/" target="_blank" rel="noopener noreferrer" class="text-sm font-semibold text-white hover:text-brand-300 transition-colors inline-flex items-center gap-1">
-                    gsd <svg class="w-3 h-3 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-                  </a>
-                  <p class="text-xs text-slate-500 mt-0.5">The GSD CLI — powers auto-mode, preferences, diagnostics, and model listing</p>
-                </div>
-                <code class="shrink-0 text-xs bg-black/40 border border-white/[0.08] rounded-lg px-3 py-1.5 font-mono text-brand-300">npm install -g @gsd/cli</code>
-              </div>
-              <div class="flex items-center justify-between px-4 py-3 gap-4">
-                <div>
-                  <a href="https://git-scm.com/" target="_blank" rel="noopener noreferrer" class="text-sm font-semibold text-white hover:text-brand-300 transition-colors inline-flex items-center gap-1">
-                    git <svg class="w-3 h-3 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-                  </a>
-                  <p class="text-xs text-slate-500 mt-0.5">Version control — git status, log, push, pull, commit, worktrees</p>
-                </div>
-                <code class="shrink-0 text-xs bg-black/40 border border-white/[0.08] rounded-lg px-3 py-1.5 font-mono text-brand-300">brew install git</code>
-              </div>
-            </div>
-          </div>
-
-          <!-- Recommended -->
-          <div class="rounded-xl bg-white/[0.04] border border-white/[0.08] overflow-hidden">
-            <div class="px-4 py-2 border-b border-white/[0.06] flex items-center gap-2">
-              <span class="w-2 h-2 rounded-full bg-yellow-400 shrink-0"></span>
-              <span class="text-xs font-semibold text-white uppercase tracking-wider">Recommended</span>
-            </div>
-            <div class="divide-y divide-white/[0.06]">
-              <div class="flex items-center justify-between px-4 py-3 gap-4">
-                <div>
-                  <a href="https://github.com/tmux/tmux" target="_blank" rel="noopener noreferrer" class="text-sm font-semibold text-white hover:text-brand-300 transition-colors inline-flex items-center gap-1">
-                    tmux <svg class="w-3 h-3 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-                  </a>
-                  <p class="text-xs text-slate-500 mt-0.5">Persistent terminal sessions that survive app restarts</p>
-                </div>
-                <code class="shrink-0 text-xs bg-black/40 border border-white/[0.08] rounded-lg px-3 py-1.5 font-mono text-slate-400">brew install tmux</code>
-              </div>
-            </div>
-          </div>
-
-          <!-- Optional -->
-          <div class="rounded-xl bg-white/[0.04] border border-white/[0.08] overflow-hidden">
-            <div class="px-4 py-2 border-b border-white/[0.06] flex items-center gap-2">
-              <span class="w-2 h-2 rounded-full bg-slate-500 shrink-0"></span>
-              <span class="text-xs font-semibold text-white uppercase tracking-wider">Optional</span>
-              <span class="text-xs text-slate-500 ml-1">— feature-gated, app works without these</span>
-            </div>
-            <div class="divide-y divide-white/[0.06]">
-              <div class="flex items-center justify-between px-4 py-3 gap-4">
-                <div>
-                  <a href="https://cli.github.com/" target="_blank" rel="noopener noreferrer" class="text-sm font-semibold text-white hover:text-brand-300 transition-colors inline-flex items-center gap-1">
-                    gh <svg class="w-3 h-3 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-                  </a>
-                  <p class="text-xs text-slate-500 mt-0.5">GitHub CLI — auto PR creation on milestone merge</p>
-                </div>
-                <code class="shrink-0 text-xs bg-black/40 border border-white/[0.08] rounded-lg px-3 py-1.5 font-mono text-slate-400">brew install gh</code>
-              </div>
-              <div class="flex items-center justify-between px-4 py-3 gap-4">
-                <div>
-                  <span class="text-sm font-semibold text-white">cargo-audit</span>
-                  <p class="text-xs text-slate-500 mt-0.5">Security audits for Rust projects</p>
-                </div>
-                <code class="shrink-0 text-xs bg-black/40 border border-white/[0.08] rounded-lg px-3 py-1.5 font-mono text-slate-400">cargo install cargo-audit</code>
-              </div>
-              <div class="flex items-center justify-between px-4 py-3 gap-4">
-                <div>
-                  <a href="https://pypi.org/project/pip-audit/" target="_blank" rel="noopener noreferrer" class="text-sm font-semibold text-white hover:text-brand-300 transition-colors inline-flex items-center gap-1">
-                    pip-audit <svg class="w-3 h-3 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-                  </a>
-                  <p class="text-xs text-slate-500 mt-0.5">Security audits for Python projects</p>
-                </div>
-                <code class="shrink-0 text-xs bg-black/40 border border-white/[0.08] rounded-lg px-3 py-1.5 font-mono text-slate-400">pip install pip-audit</code>
-              </div>
-            </div>
-          </div>
-        </div>
+        <a href="https://github.com/fluxlabs/track-your-shit/releases/latest" class="text-sm text-slate-500 hover:text-slate-300 transition-colors underline underline-offset-2">View all releases on GitHub</a>
       </div>
 
       <div class="flex flex-wrap items-center justify-center gap-6 text-sm text-slate-500">
@@ -1116,255 +878,20 @@
     </div>
   </section>
 
-  <!-- Prerequisites Section -->
-  <section id="prerequisites" class="py-24 lg:py-32 border-t border-white/[0.08]">
-    <div class="max-w-5xl mx-auto px-6">
-      <div class="text-center mb-16">
-        <h2 class="text-3xl md:text-5xl font-black text-white mb-4">Getting Started</h2>
-        <p class="text-lg text-slate-400 max-w-2xl mx-auto">GSD Vibe manages projects powered by the GSD workflow. Works with Claude Code, Gemini CLI, and OpenCode. Follow these steps to get started.</p>
-      </div>
-
-      <!-- Step 1: Platform Dependencies -->
-      <div class="mb-16">
-        <div class="flex items-center gap-3 mb-6">
-          <span class="flex items-center justify-center w-8 h-8 rounded-full bg-brand-500 text-black text-sm font-bold shrink-0">1</span>
-          <h3 class="text-xl font-bold text-white">Install Platform Dependencies</h3>
-        </div>
-        <div class="grid lg:grid-cols-3 gap-6">
-
-          <!-- macOS -->
-          <div class="p-6 rounded-xl bg-white/[0.04] border border-white/[0.1]">
-            <div class="flex items-center gap-3 mb-4">
-              <svg class="w-6 h-6 text-slate-300" fill="currentColor" viewBox="0 0 24 24"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
-              <h4 class="text-lg font-bold text-white">macOS</h4>
-            </div>
-            <div class="space-y-3 font-mono text-sm">
-              <div class="rounded-lg bg-black/40 border border-white/[0.08] p-3">
-                <div class="text-slate-500 text-xs mb-1"># Install Homebrew (if needed)</div>
-                <div class="text-slate-300 break-all text-xs">/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"</div>
-              </div>
-              <div class="rounded-lg bg-black/40 border border-white/[0.08] p-3">
-                <div class="text-slate-500 text-xs mb-1"># Install Node.js, Git, and tmux</div>
-                <div class="text-slate-300">brew install node git tmux</div>
-              </div>
-            </div>
-            <div class="mt-4 space-y-1.5">
-              <div class="flex items-center gap-2 text-sm text-slate-400">
-                <svg class="w-3.5 h-3.5 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                Node.js 22+ (includes npm)
-              </div>
-              <div class="flex items-center gap-2 text-sm text-slate-400">
-                <svg class="w-3.5 h-3.5 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                Git for project tracking
-              </div>
-              <div class="flex items-center gap-2 text-sm text-slate-400">
-                <svg class="w-3.5 h-3.5 text-slate-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                tmux optional (persistent terminal sessions)
-              </div>
-            </div>
-          </div>
-
-          <!-- Windows -->
-          <div class="p-6 rounded-xl bg-white/[0.04] border border-white/[0.1]">
-            <div class="flex items-center gap-3 mb-4">
-              <svg class="w-6 h-6 text-slate-300" fill="currentColor" viewBox="0 0 24 24"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/></svg>
-              <h4 class="text-lg font-bold text-white">Windows</h4>
-            </div>
-            <div class="space-y-3 font-mono text-sm">
-              <div class="rounded-lg bg-black/40 border border-white/[0.08] p-3">
-                <div class="text-slate-500 text-xs mb-1"># Option A: Install via winget (PowerShell)</div>
-                <div class="text-slate-300">winget install OpenJS.NodeJS.LTS</div>
-                <div class="text-slate-300">winget install Git.Git</div>
-              </div>
-              <div class="rounded-lg bg-black/40 border border-white/[0.08] p-3">
-                <div class="text-slate-500 text-xs mb-1"># Option B: Download installers directly</div>
-                <div class="text-slate-400 text-xs">Node.js &rarr; <span class="text-brand-400">nodejs.org</span></div>
-                <div class="text-slate-400 text-xs">Git &rarr; <span class="text-brand-400">git-scm.com</span></div>
-              </div>
-            </div>
-            <div class="mt-4 space-y-1.5">
-              <div class="flex items-center gap-2 text-sm text-slate-400">
-                <svg class="w-3.5 h-3.5 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                Node.js 22+ (includes npm)
-              </div>
-              <div class="flex items-center gap-2 text-sm text-slate-400">
-                <svg class="w-3.5 h-3.5 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                Git for project tracking
-              </div>
-              <div class="flex items-center gap-2 text-sm text-slate-400">
-                <svg class="w-3.5 h-3.5 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                WebView2 (pre-installed on Windows 10+)
-              </div>
-              <div class="flex items-center gap-2 text-sm text-slate-400">
-                <svg class="w-3.5 h-3.5 text-yellow-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                Restart terminal after installing Node.js
-              </div>
-            </div>
-          </div>
-
-          <!-- Linux -->
-          <div class="p-6 rounded-xl bg-white/[0.04] border border-white/[0.1]">
-            <div class="flex items-center gap-3 mb-4">
-              <svg class="w-6 h-6 text-slate-300" fill="currentColor" viewBox="0 0 24 24"><path d="M12.504 0c-.155 0-.315.008-.48.021-4.226.333-3.105 4.807-3.17 6.298-.076 1.092-.3 1.953-1.05 3.02-.885 1.051-2.127 2.75-2.716 4.521-.278.832-.41 1.684-.287 2.489a.424.424 0 00-.11.135c-.26.268-.45.6-.663.839-.199.199-.485.267-.797.4-.313.136-.658.269-.864.68-.09.189-.136.394-.132.602 0 .199.027.4.055.536.058.399.116.728.04.97-.249.68-.28 1.145-.106 1.484.174.334.535.47.94.601.81.2 1.91.135 2.774.6.926.466 1.866.67 2.616.47.526-.116.97-.464 1.208-.946.587-.003 1.23-.269 2.26-.334.699-.058 1.574.267 2.577.2a1.56 1.56 0 00.114.333l.003.003c.391.778 1.113 1.368 1.884 1.43.868.07 1.723-.26 2.456-.594.733-.34 1.455-.78 2.28-.67.566.075 1.268-.281 1.583-.672.318-.401.395-.96.326-1.532-.135-1.08-.588-1.963-1.33-2.43a2.13 2.13 0 01-.78-.794c-.16-.136-.36-.271-.52-.44-.19-.203-.28-.608-.373-.755l-.064-.064c-.108.023-.265.07-.27.267 0 .133.06.267.1.4.04.132.06.27.06.399 0 .1-.019.135-.04.202-.132 0-.267-.066-.4-.2-.268-.07-.4-.335-.6-.268-.168.136-.2.468-.066.601.266.268.668.535.867.67.466.334.862.662 1.26.865l.001.001c.063.039.18.142.26.26.131.2.196.465.254.733.06.268.08.535.086.732a2.17 2.17 0 01-.065.466 4.46 4.46 0 01-.4.333c-.133.067-.267.135-.33.267a.631.631 0 00-.135.333c0 .066 0 .133.067.2.133.2.333.333.533.333.267.067.467 0 .667-.133s.4-.267.533-.467c.2-.333.267-.667.267-1.066.067-.534-.066-1-.133-1.534v-.066c.2-.534.133-1.134-.133-1.534a1.74 1.74 0 00-.534-.6c-.067-.133-.2-.2-.2-.333a7.457 7.457 0 00-.066-.934c-.067-.333-.134-.733-.267-1.066-.267-.6-.667-1.134-1.2-1.467-.467-.333-.667-.667-1-1.066-.333-.4-.733-.867-.933-1.4-.267-.6-.4-1.267-.534-1.934-.067-.4-.2-.667-.333-1.066-.2-.667-.467-1.267-.467-2-.133-1.334.267-2.667 1-3.534.533-.6 1.267-1 2.067-1.134.8-.133 1.733 0 2.467.467.333.2.733.467.933.733.4.467.533.934.667 1.534.133.534.333 1.2.733 1.534.267.2.533.333.8.4.267.067.533.067.733.133.2.067.333.2.533.333.267.2.4.534.533.867.067.333.133.733.067 1.067a3.65 3.65 0 01-.267.933c-.333.667-.733 1.334-1.133 1.934-.4.667-.8 1.267-1.133 1.934-.4.6-.667 1.267-.8 2-.133.533-.2 1.133-.133 1.667.067.467.2.867.533 1.2.333.333.733.533 1.2.6.4.067.867 0 1.267-.133.4-.133.733-.333 1.067-.467.933-.467 1.733-1.133 2.533-1.8.267-.267.534-.534.734-.8.2-.267.4-.534.533-.867.133-.4.2-.8.2-1.2 0-.534-.067-1.067-.267-1.534-.4-1.066-1.2-1.866-2.133-2.4-.534-.333-.867-.733-1.134-1.2a13.8 13.8 0 01-.666-1.4c-.2-.467-.4-.934-.6-1.334-.2-.4-.467-.733-.867-.933a8.33 8.33 0 00-1.8-.534c-.6-.133-1.2-.2-1.734-.333A8.565 8.565 0 0012.504 0z"/></svg>
-              <h4 class="text-lg font-bold text-white">Linux</h4>
-            </div>
-            <div class="space-y-3 font-mono text-sm">
-              <div class="rounded-lg bg-black/40 border border-white/[0.08] p-3 overflow-x-auto">
-                <div class="text-slate-500 text-xs mb-1"># Ubuntu / Debian</div>
-                <div class="text-slate-300 text-xs whitespace-nowrap">curl -fsSL https://deb.nodesource.com/setup_22.x \</div>
-                <div class="text-slate-300 text-xs whitespace-nowrap">&nbsp;&nbsp;| sudo -E bash -</div>
-                <div class="text-slate-300 text-xs">sudo apt install -y nodejs git tmux \</div>
-                <div class="text-slate-300 text-xs">&nbsp;&nbsp;libwebkit2gtk-4.1-0</div>
-              </div>
-              <div class="rounded-lg bg-black/40 border border-white/[0.08] p-3">
-                <div class="text-slate-500 text-xs mb-1"># Fedora / RHEL</div>
-                <div class="text-slate-300 text-xs">sudo dnf install -y nodejs npm git tmux</div>
-                <div class="text-slate-300 text-xs">sudo dnf install -y webkit2gtk4.1</div>
-              </div>
-            </div>
-            <div class="mt-4 space-y-1.5">
-              <div class="flex items-center gap-2 text-sm text-slate-400">
-                <svg class="w-3.5 h-3.5 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                Node.js 22+ (includes npm)
-              </div>
-              <div class="flex items-center gap-2 text-sm text-slate-400">
-                <svg class="w-3.5 h-3.5 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                WebKitGTK 4.1 (Tauri runtime)
-              </div>
-              <div class="flex items-center gap-2 text-sm text-slate-400">
-                <svg class="w-3.5 h-3.5 text-slate-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                tmux optional (persistent terminal sessions)
-              </div>
-            </div>
-          </div>
-
-        </div>
-      </div>
-
-      <!-- Step 2: Install an AI Coding Tool -->
-      <div class="mb-16">
-        <div class="flex items-center gap-3 mb-6">
-          <span class="flex items-center justify-center w-8 h-8 rounded-full bg-brand-500 text-black text-sm font-bold shrink-0">2</span>
-          <h3 class="text-xl font-bold text-white">Install an AI Coding Tool</h3>
-        </div>
-        <div class="max-w-3xl mx-auto">
-          <p class="text-sm text-slate-400 mb-4">GSD works with multiple AI coding tools. Install at least one globally with npm (included with Node.js from Step 1).</p>
-          <div class="grid sm:grid-cols-3 gap-4">
-            <div class="rounded-xl bg-white/[0.04] border border-brand-500/30 p-5 relative">
-              <span class="absolute -top-3 left-4 px-2 py-0.5 rounded-full bg-brand-500 text-black text-xs font-bold">Recommended</span>
-              <h4 class="text-sm font-bold text-white mb-3">Claude Code</h4>
-              <div class="rounded-lg bg-black/40 border border-white/[0.08] p-3 font-mono text-xs">
-                <div class="flex items-center justify-between gap-2">
-                  <code class="text-emerald-400">npm i -g @anthropic-ai/claude-code</code>
-                  <button onclick="navigator.clipboard.writeText('npm install -g @anthropic-ai/claude-code')" class="text-slate-500 hover:text-white transition-colors shrink-0" title="Copy">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
-                  </button>
-                </div>
-              </div>
-              <p class="text-xs text-slate-500 mt-2">Anthropic API key or Claude Pro/Max</p>
-            </div>
-            <div class="rounded-xl bg-white/[0.04] border border-white/[0.1] p-5">
-              <h4 class="text-sm font-bold text-white mb-3">Gemini CLI</h4>
-              <div class="rounded-lg bg-black/40 border border-white/[0.08] p-3 font-mono text-xs">
-                <div class="flex items-center justify-between gap-2">
-                  <code class="text-slate-300">npm i -g @google/gemini-cli</code>
-                  <button onclick="navigator.clipboard.writeText('npm install -g @google/gemini-cli')" class="text-slate-500 hover:text-white transition-colors shrink-0" title="Copy">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
-                  </button>
-                </div>
-              </div>
-              <p class="text-xs text-slate-500 mt-2">Google AI API key</p>
-            </div>
-            <div class="rounded-xl bg-white/[0.04] border border-white/[0.1] p-5">
-              <h4 class="text-sm font-bold text-white mb-3">OpenCode</h4>
-              <div class="rounded-lg bg-black/40 border border-white/[0.08] p-3 font-mono text-xs">
-                <div class="flex items-center justify-between gap-2">
-                  <code class="text-slate-300">npx opencode@latest</code>
-                  <button onclick="navigator.clipboard.writeText('npx opencode@latest')" class="text-slate-500 hover:text-white transition-colors shrink-0" title="Copy">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
-                  </button>
-                </div>
-              </div>
-              <p class="text-xs text-slate-500 mt-2">Multi-provider support</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Step 3: Install GSD CLI -->
-      <div class="mb-16">
-        <div class="flex items-center gap-3 mb-6">
-          <span class="flex items-center justify-center w-8 h-8 rounded-full bg-brand-500 text-black text-sm font-bold shrink-0">3</span>
-          <h3 class="text-xl font-bold text-white">Install GSD CLI</h3>
-        </div>
-        <div class="grid sm:grid-cols-2 gap-6 max-w-3xl mx-auto">
-          <!-- GSD v2 (Recommended) -->
-          <div class="p-6 rounded-xl bg-white/[0.04] border border-brand-500/30 relative">
-            <span class="absolute -top-3 left-4 px-2 py-0.5 rounded-full bg-brand-500 text-black text-xs font-bold">Recommended</span>
-            <h4 class="text-lg font-bold text-white mb-2">GSD v2</h4>
-            <p class="text-sm text-slate-400 mb-4">Latest version with milestone workflows, parallel agents, and advanced planning.</p>
-            <div class="rounded-lg bg-black/40 border border-white/[0.08] p-4 font-mono text-sm">
-              <div class="flex items-center justify-between gap-2">
-                <code class="text-emerald-400">npm install -g gsd-pi@latest</code>
-                <button onclick="navigator.clipboard.writeText('npm install -g gsd-pi@latest')" class="text-slate-500 hover:text-white transition-colors shrink-0" title="Copy">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
-                </button>
-              </div>
-            </div>
-            <div class="text-xs text-slate-500 mt-2">v2.58.0</div>
-          </div>
-
-          <!-- GSD v1 -->
-          <div class="p-6 rounded-xl bg-white/[0.04] border border-white/[0.1]">
-            <h4 class="text-lg font-bold text-white mb-2">GSD v1</h4>
-            <p class="text-sm text-slate-400 mb-4">Original version. Stable and battle-tested for single-phase workflows.</p>
-            <div class="rounded-lg bg-black/40 border border-white/[0.08] p-4 font-mono text-sm">
-              <div class="flex items-center justify-between gap-2">
-                <code class="text-slate-300">npm i -g get-shit-done-cc@latest</code>
-                <button onclick="navigator.clipboard.writeText('npm i -g get-shit-done-cc@latest')" class="text-slate-500 hover:text-white transition-colors shrink-0" title="Copy">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
-                </button>
-              </div>
-            </div>
-            <div class="text-xs text-slate-500 mt-2">v1.30.0</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Step 4: Download GSD Vibe -->
-      <div>
-        <div class="flex items-center gap-3 mb-6">
-          <span class="flex items-center justify-center w-8 h-8 rounded-full bg-brand-500 text-black text-sm font-bold shrink-0">4</span>
-          <h3 class="text-xl font-bold text-white">Download GSD Vibe</h3>
-        </div>
-        <div class="max-w-3xl mx-auto text-center">
-          <p class="text-sm text-slate-400 mb-4">Grab the desktop app for your platform from the <a href="#download" class="text-brand-400 hover:text-brand-300 underline underline-offset-2">download section above</a>, import your projects, and start building.</p>
-        </div>
-      </div>
-
-    </div>
-  </section>
-
   <!-- Footer -->
   <footer class="border-t border-white/[0.08] py-12">
     <div class="max-w-7xl mx-auto px-6">
-      <div class="flex flex-col items-center gap-6">
-        <!-- Proudly Built with GSD -->
-        <a href="https://gsd.build/" class="group flex items-center gap-3 px-6 py-3 rounded-xl bg-white/[0.04] border border-white/[0.1] hover:border-brand-500/30 transition-all hover:shadow-lg hover:shadow-brand-500/5">
-          <img src="gsd-logo.svg" alt="GSD" class="h-7 w-auto opacity-70 group-hover:opacity-100 transition-opacity">
-          <div class="flex flex-col">
-            <span class="text-sm font-semibold text-white">Proudly Built with GSD</span>
-            <span class="text-xs text-slate-500">The AI-native project workflow</span>
-          </div>
-          <svg class="w-4 h-4 text-slate-500 group-hover:text-brand-400 transition-colors ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-        </a>
-        <!-- Links -->
+      <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+        <div class="flex items-center gap-3">
+          <img src="gsd-logo.svg" alt="GSD VibeFlow" class="h-5 w-auto opacity-50">
+          <span class="text-sm text-slate-500">GSD VibeFlow &copy; 2026 Jeremy McSpadden</span>
+        </div>
         <div class="flex items-center gap-6 text-sm text-slate-500">
-          <a href="https://github.com/jeremymcs/gsd-vibe/" class="hover:text-white transition-colors flex items-center gap-1.5">
+          <a href="https://github.com/fluxlabs/track-your-shit/" class="hover:text-white transition-colors flex items-center gap-1.5">
             <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
             GitHub
           </a>
-          <a href="https://gsd.build/" class="hover:text-white transition-colors">gsd.build</a>
+          <a href="https://fluxlabs.net" class="hover:text-white transition-colors">Flux Labs</a>
         </div>
       </div>
     </div>

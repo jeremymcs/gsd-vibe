@@ -1,4 +1,4 @@
-// GSD Vibe - Knowledge Graph Visualization
+// GSD VibeFlow - Knowledge Graph Visualization
 // ReactFlow-based graph view of knowledge file relationships
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

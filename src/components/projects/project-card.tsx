@@ -1,4 +1,4 @@
-// GSD Vibe - Shared Project Card Component
+// GSD VibeFlow - Shared Project Card Component
 // Enriched card with stats, git info, progress, costs, and favorites
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
@@ -67,7 +67,7 @@ export function ProjectCard({ project, showDescription, selected, onToggleSelect
     onToggleSelect?.();
   };
 
-  const projectType = getProjectType(project.tech_stack, project.gsd_version);
+  const projectType = getProjectType(project.tech_stack);
   const typeConfig = projectTypeConfig[projectType];
 
   const progressPct =
@@ -229,6 +229,14 @@ export function ProjectCard({ project, showDescription, selected, onToggleSelect
             </TooltipContent>
           </Tooltip>
         )}
+        {(project.gsd_version === 'gsd2' || project.gsd_version === 'gsd1') && (
+          <Badge
+            variant={project.gsd_version === 'gsd2' ? 'subtle-cyan' : 'secondary'}
+            size="sm"
+          >
+            {project.gsd_version === 'gsd2' ? 'GSD-2' : 'GSD-1'}
+          </Badge>
+        )}
       </div>
 
       {/* Row 5: Progress bar + Cost + Last activity */}
@@ -253,7 +261,7 @@ export function ProjectCard({ project, showDescription, selected, onToggleSelect
         <div className="flex items-center gap-2 ml-auto shrink-0">
           {/* Cost badge */}
           {project.total_cost > 0 && (
-            <Badge variant="outline" size="sm">
+            <Badge variant="subtle-cyan" size="sm">
               <DollarSign className="h-3 w-3 mr-0.5" />
               {formatCost(project.total_cost)}
             </Badge>

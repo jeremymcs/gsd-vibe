@@ -1,4 +1,4 @@
-// GSD Vibe - GSD UAT Tab
+// GSD VibeFlow - GSD UAT Tab
 // User Acceptance Testing results per phase (XX-UAT.md)
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
@@ -78,14 +78,14 @@ function resultBadgeVariant(result: string): 'success' | 'error' | 'warning' | '
 
 function severityVariant(
   severity: string,
-): 'error' | 'warning' | 'secondary' {
+): 'error' | 'warning' | 'secondary' | 'subtle-cyan' {
   switch (severity) {
     case 'blocker':
       return 'error';
     case 'major':
       return 'warning';
     case 'cosmetic':
-      return 'secondary';
+      return 'subtle-cyan';
     default:
       return 'secondary';
   }

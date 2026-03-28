@@ -1,4 +1,4 @@
-// GSD Vibe - GSD-2 Commands
+// GSD VibeFlow - GSD-2 Commands
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 //
 // GSD-2 backend: version detection, file resolvers, struct definitions, and helpers.
@@ -7,7 +7,6 @@
 use crate::db::Database;
 use crate::headless::HeadlessRegistryState;
 use rusqlite::params;
-use rusqlite::OptionalExtension;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::Path;
@@ -19,129 +18,6 @@ type DbState = Arc<crate::db::DbPool>;
 // ============================================================
 // Helpers (copied from gsd.rs — do NOT import across module boundary)
 // ============================================================
-
-/// Remove stale auto.lock and paused-session.json files for a project if the PID inside them is dead.
-/// If the PID is alive but not a gsd process (PID reuse), the lock is removed as stale.
-/// If the PID is alive AND is a gsd process, the lock is left in place — the caller
-/// should use `gsd2_check_auto_lock` to surface this to the user.
-/// Checks `.gsd/auto.lock`, `.gsd/runtime/auto.lock`, and `.gsd/runtime/paused-session.json`.
-fn clean_stale_auto_lock(project_path: &str, project_id: &str) {
-    let gsd_dir = std::path::Path::new(project_path).join(".gsd");
-
-    // Helper: check if a PID is dead (kill -0 fails)
-    let pid_is_dead = |pid: u64| -> bool {
-        std::process::Command::new("kill")
-            .args(["-0", &pid.to_string()])
-            .output()
-            .map(|o| !o.status.success())
-            .unwrap_or(true)
-    };
-
-    // Helper: extract PID from lock file JSON content
-    let extract_pid = |content: &str| -> Option<u64> {
-        serde_json::from_str::<serde_json::Value>(content)
-            .ok()
-            .and_then(|v| v.get("pid").and_then(|p| p.as_u64()))
-    };
-
-    // Helper: check if a PID is a gsd/pi process
-    let is_gsd_process = |pid: u64| -> bool {
-        std::process::Command::new("ps")
-            .args(["-p", &pid.to_string(), "-o", "command="])
-            .output()
-            .map(|o| {
-                let cmd = String::from_utf8_lossy(&o.stdout);
-                let cmd_lower = cmd.to_lowercase();
-                cmd_lower.contains("gsd") || cmd_lower.contains("/pi ") || cmd_lower.contains("/pi\n")
-            })
-            .unwrap_or(false)
-    };
-
-    // Clean auto.lock files
-    let lock_paths = [
-        gsd_dir.join("auto.lock"),
-        gsd_dir.join("runtime").join("auto.lock"),
-    ];
-    for lock_path in &lock_paths {
-        if !lock_path.exists() {
-            continue;
-        }
-        if let Ok(content) = std::fs::read_to_string(lock_path) {
-            if let Some(pid) = extract_pid(&content) {
-                if pid_is_dead(pid) {
-                    let _ = std::fs::remove_file(lock_path);
-                    tracing::info!(
-                        "Removed stale {} (dead PID {}) for project {}",
-                        lock_path.display(),
-                        pid,
-                        project_id
-                    );
-                } else if !is_gsd_process(pid) {
-                    // PID is alive but NOT a gsd process — PID was reused by OS, lock is stale
-                    let _ = std::fs::remove_file(lock_path);
-                    tracing::info!(
-                        "Removed stale {} (PID {} reused by non-gsd process) for project {}",
-                        lock_path.display(),
-                        pid,
-                        project_id
-                    );
-                }
-                // If PID is alive AND is a gsd process, leave it — it's a real session
-            }
-        }
-    }
-
-    // Clean paused-session.json — it blocks gsd auto from starting a new session
-    let paused_path = gsd_dir.join("runtime").join("paused-session.json");
-    if paused_path.exists() {
-        let _ = std::fs::remove_file(&paused_path);
-        tracing::info!(
-            "Removed paused-session.json for project {} to allow fresh headless start",
-            project_id
-        );
-    }
-
-    // Clean proper-lockfile directory (.gsd.lock/) — OS-level lock from previous session
-    let lock_dir = std::path::Path::new(project_path).join(".gsd.lock");
-    if lock_dir.exists() && lock_dir.is_dir() {
-        let _ = std::fs::remove_dir_all(&lock_dir);
-        tracing::info!(
-            "Removed stale .gsd.lock/ directory for project {}",
-            project_id
-        );
-    }
-
-    // Also check for parallel lock dirs like ".gsd/parallel/*/auto.lock"
-    let parallel_dir = gsd_dir.join("parallel");
-    if parallel_dir.exists() {
-        if let Ok(entries) = std::fs::read_dir(&parallel_dir) {
-            for entry in entries.flatten() {
-                let lock_file = entry.path().join("auto.lock");
-                if lock_file.exists() {
-                    if let Ok(content) = std::fs::read_to_string(&lock_file) {
-                        if let Some(pid) = extract_pid(&content) {
-                            if pid_is_dead(pid) {
-                                let _ = std::fs::remove_file(&lock_file);
-                                // Also remove the parallel lock dir for this milestone
-                                let plock_dir = entry.path().to_string_lossy().to_string() + ".lock";
-                                let _ = std::fs::remove_dir_all(&plock_dir);
-                            } else if is_gsd_process(pid) {
-                                let _ = std::process::Command::new("kill").args([&pid.to_string()]).output();
-                                std::thread::sleep(std::time::Duration::from_millis(200));
-                                if !pid_is_dead(pid) {
-                                    let _ = std::process::Command::new("kill").args(["-9", &pid.to_string()]).output();
-                                }
-                                let _ = std::fs::remove_file(&lock_file);
-                                let plock_dir = entry.path().to_string_lossy().to_string() + ".lock";
-                                let _ = std::fs::remove_dir_all(&plock_dir);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
 
 /// Resolve project path from DB by project_id
 fn get_project_path(db: &Database, project_id: &str) -> Result<String, String> {
@@ -1584,94 +1460,6 @@ pub async fn gsd2_headless_unregister(
     Ok(())
 }
 
-/// Check if a project has a live auto.lock held by a real gsd process.
-/// Returns the PID if locked, null if clear.
-#[tauri::command]
-pub async fn gsd2_check_auto_lock(
-    project_id: String,
-    db: tauri::State<'_, DbState>,
-) -> Result<Option<u64>, String> {
-    let project_path = {
-        let db_guard = db.write().await;
-        get_project_path(&db_guard, &project_id)?
-    };
-    let gsd_dir = std::path::Path::new(&project_path).join(".gsd");
-    let lock_paths = [
-        gsd_dir.join("auto.lock"),
-        gsd_dir.join("runtime").join("auto.lock"),
-    ];
-    for lock_path in &lock_paths {
-        if let Ok(content) = std::fs::read_to_string(lock_path) {
-            if let Ok(parsed) = serde_json::from_str::<serde_json::Value>(&content) {
-                if let Some(pid) = parsed.get("pid").and_then(|v| v.as_u64()) {
-                    // Check if alive
-                    let alive = std::process::Command::new("kill")
-                        .args(["-0", &pid.to_string()])
-                        .output()
-                        .map(|o| o.status.success())
-                        .unwrap_or(false);
-                    if alive {
-                        return Ok(Some(pid));
-                    }
-                }
-            }
-        }
-    }
-    Ok(None)
-}
-
-/// Force-clear the auto.lock for a project, killing the holding PID if it's a gsd process.
-#[tauri::command]
-pub async fn gsd2_force_clear_auto_lock(
-    project_id: String,
-    db: tauri::State<'_, DbState>,
-) -> Result<(), String> {
-    let project_path = {
-        let db_guard = db.write().await;
-        get_project_path(&db_guard, &project_id)?
-    };
-    let gsd_dir = std::path::Path::new(&project_path).join(".gsd");
-    let lock_paths = [
-        gsd_dir.join("auto.lock"),
-        gsd_dir.join("runtime").join("auto.lock"),
-    ];
-    for lock_path in &lock_paths {
-        if let Ok(content) = std::fs::read_to_string(&lock_path) {
-            if let Ok(parsed) = serde_json::from_str::<serde_json::Value>(&content) {
-                if let Some(pid) = parsed.get("pid").and_then(|v| v.as_u64()) {
-                    let alive = std::process::Command::new("kill")
-                        .args(["-0", &pid.to_string()])
-                        .output()
-                        .map(|o| o.status.success())
-                        .unwrap_or(false);
-                    if alive {
-                        // Kill it
-                        let _ = std::process::Command::new("kill").args([&pid.to_string()]).output();
-                        std::thread::sleep(std::time::Duration::from_millis(300));
-                        // Force kill if still alive
-                        let still_alive = std::process::Command::new("kill")
-                            .args(["-0", &pid.to_string()])
-                            .output()
-                            .map(|o| o.status.success())
-                            .unwrap_or(false);
-                        if still_alive {
-                            let _ = std::process::Command::new("kill").args(["-9", &pid.to_string()]).output();
-                        }
-                    }
-                }
-            }
-            let _ = std::fs::remove_file(&lock_path);
-        }
-    }
-    // Also clean paused-session.json
-    let paused = gsd_dir.join("runtime").join("paused-session.json");
-    if paused.exists() {
-        let _ = std::fs::remove_file(&paused);
-    }
-    tracing::info!("Force-cleared auto.lock for project {}", project_id);
-    Ok(())
-}
-
 /// Start a headless GSD session for a project via PTY (creates a real terminal session).
 /// Enforces one headless session per project.
 #[tauri::command]
@@ -1682,23 +1470,11 @@ pub async fn gsd2_headless_start(
     terminal_manager: tauri::State<'_, crate::pty::TerminalManagerState>,
     registry: tauri::State<'_, HeadlessRegistryState>,
 ) -> Result<String, String> {
-    // Check for existing session — verify it's actually alive before blocking
+    // Check for existing session for this project
     {
-        let existing_sid = {
-            let reg = registry.lock().await;
-            reg.session_for_project(&project_id)
-        };
-        if let Some(sid) = existing_sid {
-            let alive = {
-                let mut manager = terminal_manager.lock().await;
-                manager.is_active(&sid)
-            };
-            if alive {
-                return Err("A headless session is already running for this project".to_string());
-            }
-            // Stale registry entry — clean up and allow a new session to start
-            let mut reg = registry.lock().await;
-            reg.unregister(&sid);
+        let reg = registry.lock().await;
+        if reg.session_for_project(&project_id).is_some() {
+            return Err("A headless session is already running for this project".to_string());
         }
     }
 
@@ -1709,9 +1485,6 @@ pub async fn gsd2_headless_start(
     };
 
     let session_id = uuid::Uuid::new_v4().to_string();
-
-    // Clean stale auto.lock if the PID inside it is dead
-    clean_stale_auto_lock(&project_path, &project_id);
 
     // Create PTY session
     {
@@ -2348,9 +2121,8 @@ fn parse_metrics_json(
 
     if let Some(arr) = units_arr {
         for item in arr {
-            // JSON uses "type" not "unitType"
             let unit_type = item
-                .get("type")
+                .get("unitType")
                 .and_then(|v| v.as_str())
                 .unwrap_or("")
                 .to_string();
@@ -2376,26 +2148,24 @@ fn parse_metrics_json(
                 .get("cost")
                 .and_then(|v| v.as_f64())
                 .unwrap_or(0.0);
-            // Tokens are nested under item.tokens.{input,output,cacheRead,cacheWrite,total}
-            let tokens_obj = item.get("tokens");
-            let input_tokens = tokens_obj
-                .and_then(|t| t.get("input"))
+            let input_tokens = item
+                .get("inputTokens")
                 .and_then(|v| v.as_i64())
                 .unwrap_or(0);
-            let output_tokens = tokens_obj
-                .and_then(|t| t.get("output"))
+            let output_tokens = item
+                .get("outputTokens")
                 .and_then(|v| v.as_i64())
                 .unwrap_or(0);
-            let cache_read_tokens = tokens_obj
-                .and_then(|t| t.get("cacheRead"))
+            let cache_read_tokens = item
+                .get("cacheRead")
                 .and_then(|v| v.as_i64())
                 .unwrap_or(0);
-            let cache_write_tokens = tokens_obj
-                .and_then(|t| t.get("cacheWrite"))
+            let cache_write_tokens = item
+                .get("cacheWrite")
                 .and_then(|v| v.as_i64())
                 .unwrap_or(0);
-            let total_tokens = tokens_obj
-                .and_then(|t| t.get("total"))
+            let total_tokens = item
+                .get("totalTokens")
                 .and_then(|v| v.as_i64())
                 .unwrap_or_else(|| input_tokens + output_tokens + cache_read_tokens + cache_write_tokens);
             let tool_calls = item
@@ -3997,158 +3767,12 @@ pub async fn gsd2_doctor(
     })
 }
 
-// ─── Session JSONL parsing ────────────────────────────────────────────────────
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GsdSessionEntry {
-    pub id: String,
-    pub filename: String,
-    pub timestamp: String,
-    pub name: Option<String>,
-    pub first_message: Option<String>,
-    pub message_count: u32,
-    pub user_message_count: u32,
-    pub assistant_message_count: u32,
+    pub raw: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct GsdSessionMessage {
-    pub role: String,
-    pub text: String,
-    pub timestamp: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct GsdSessionDetail {
-    pub id: String,
-    pub filename: String,
-    pub timestamp: String,
-    pub name: Option<String>,
-    pub messages: Vec<GsdSessionMessage>,
-    pub cwd: Option<String>,
-}
-
-/// Derive the session directory name from a project path.
-/// Strips leading `/`, replaces `/`, `\`, `:` with `-`, wraps in `--`.
-fn derive_session_dir_name(path: &str) -> String {
-    let stripped = path.strip_prefix('/').unwrap_or(path);
-    let replaced = stripped
-        .replace('/', "-")
-        .replace('\\', "-")
-        .replace(':', "-");
-    format!("--{}--", replaced)
-}
-
-/// Get the sessions directory for a project path.
-fn get_sessions_dir(project_path: &str) -> Option<std::path::PathBuf> {
-    let home = dirs::home_dir()?;
-    let dir_name = derive_session_dir_name(project_path);
-    let sessions_dir = home.join(".gsd").join("sessions").join(dir_name);
-    if sessions_dir.is_dir() {
-        Some(sessions_dir)
-    } else {
-        None
-    }
-}
-
-/// Parse a single JSONL session file into a GsdSessionEntry (summary).
-fn parse_session_summary(filepath: &std::path::Path) -> Option<GsdSessionEntry> {
-    let filename = filepath.file_name()?.to_str()?.to_string();
-    let content = std::fs::read_to_string(filepath).ok()?;
-
-    let mut session_id = String::new();
-    let mut timestamp = String::new();
-    let mut name: Option<String> = None;
-    let mut first_message: Option<String> = None;
-    let mut message_count: u32 = 0;
-    let mut user_message_count: u32 = 0;
-    let mut assistant_message_count: u32 = 0;
-
-    for line in content.lines() {
-        let line = line.trim();
-        if line.is_empty() { continue; }
-        let v: serde_json::Value = match serde_json::from_str(line) {
-            Ok(v) => v,
-            Err(_) => continue,
-        };
-
-        match v.get("type").and_then(|t| t.as_str()) {
-            Some("session") => {
-                session_id = v.get("id").and_then(|i| i.as_str()).unwrap_or("").to_string();
-                timestamp = v.get("timestamp").and_then(|t| t.as_str()).unwrap_or("").to_string();
-            }
-            Some("session_info") => {
-                // Last session_info wins (append semantics)
-                if let Some(n) = v.get("name").and_then(|n| n.as_str()) {
-                    name = Some(n.to_string());
-                }
-            }
-            Some("message") => {
-                if let Some(msg) = v.get("message") {
-                    let role = msg.get("role").and_then(|r| r.as_str()).unwrap_or("");
-                    message_count += 1;
-                    match role {
-                        "user" => {
-                            user_message_count += 1;
-                            if first_message.is_none() {
-                                first_message = extract_message_text(msg);
-                            }
-                        }
-                        "assistant" => {
-                            assistant_message_count += 1;
-                        }
-                        _ => {}
-                    }
-                }
-            }
-            _ => {}
-        }
-    }
-
-    if session_id.is_empty() {
-        return None;
-    }
-
-    // Truncate first_message preview to 120 chars
-    if let Some(ref mut fm) = first_message {
-        if fm.len() > 120 {
-            fm.truncate(120);
-            fm.push_str("…");
-        }
-    }
-
-    Some(GsdSessionEntry {
-        id: session_id,
-        filename,
-        timestamp,
-        name,
-        first_message,
-        message_count,
-        user_message_count,
-        assistant_message_count,
-    })
-}
-
-/// Extract the text content from a message object.
-/// Content can be a string or an array of content blocks.
-fn extract_message_text(msg: &serde_json::Value) -> Option<String> {
-    let content = msg.get("content")?;
-    if let Some(s) = content.as_str() {
-        return Some(s.to_string());
-    }
-    if let Some(arr) = content.as_array() {
-        for item in arr {
-            if item.get("type").and_then(|t| t.as_str()) == Some("text") {
-                if let Some(text) = item.get("text").and_then(|t| t.as_str()) {
-                    return Some(text.to_string());
-                }
-            }
-        }
-    }
-    None
-}
-
-/// List past GSD sessions for a project by parsing JSONL files directly.
+/// List past GSD sessions for a project by running `gsd sessions`.
 #[tauri::command]
 pub async fn gsd2_list_sessions(
     db: tauri::State<'_, DbState>,
@@ -4159,169 +3783,28 @@ pub async fn gsd2_list_sessions(
         get_project_path(&db_guard, &project_id)?
     };
 
-    let sessions_dir = match get_sessions_dir(&project_path) {
-        Some(d) => d,
-        None => return Ok(Vec::new()),
-    };
+    let output = std::process::Command::new("gsd")
+        .arg("sessions")
+        .current_dir(&project_path)
+        .output()
+        .map_err(|e| format!("Failed to run gsd sessions: {}", e))?;
 
-    let mut entries: Vec<GsdSessionEntry> = std::fs::read_dir(&sessions_dir)
-        .map_err(|e| format!("Failed to read sessions dir: {}", e))?
-        .filter_map(|e| e.ok())
-        .filter(|e| {
-            e.path().extension().and_then(|ext| ext.to_str()) == Some("jsonl")
+    let stdout = String::from_utf8_lossy(&output.stdout);
+
+    if stdout.contains("No sessions found") {
+        return Ok(Vec::new());
+    }
+
+    let entries: Vec<GsdSessionEntry> = stdout
+        .lines()
+        .filter(|line| {
+            let t = line.trim();
+            !t.is_empty() && !t.contains("Loading sessions")
         })
-        .filter_map(|e| parse_session_summary(&e.path()))
+        .map(|line| GsdSessionEntry { raw: line.to_string() })
         .collect();
 
-    // Sort by timestamp descending (newest first)
-    entries.sort_by(|a, b| b.timestamp.cmp(&a.timestamp));
-
     Ok(entries)
-}
-
-/// Get full session detail (all messages) for a specific session file.
-#[tauri::command]
-pub async fn gsd2_get_session_detail(
-    db: tauri::State<'_, DbState>,
-    project_id: String,
-    filename: String,
-) -> Result<GsdSessionDetail, String> {
-    let project_path = {
-        let db_guard = db.write().await;
-        get_project_path(&db_guard, &project_id)?
-    };
-
-    let sessions_dir = get_sessions_dir(&project_path)
-        .ok_or_else(|| "Sessions directory not found".to_string())?;
-
-    let filepath = sessions_dir.join(&filename);
-    if !filepath.exists() {
-        return Err(format!("Session file not found: {}", filename));
-    }
-
-    let content = std::fs::read_to_string(&filepath)
-        .map_err(|e| format!("Failed to read session file: {}", e))?;
-
-    let mut session_id = String::new();
-    let mut timestamp = String::new();
-    let mut cwd: Option<String> = None;
-    let mut name: Option<String> = None;
-    let mut messages: Vec<GsdSessionMessage> = Vec::new();
-
-    for line in content.lines() {
-        let line = line.trim();
-        if line.is_empty() { continue; }
-        let v: serde_json::Value = match serde_json::from_str(line) {
-            Ok(v) => v,
-            Err(_) => continue,
-        };
-
-        match v.get("type").and_then(|t| t.as_str()) {
-            Some("session") => {
-                session_id = v.get("id").and_then(|i| i.as_str()).unwrap_or("").to_string();
-                timestamp = v.get("timestamp").and_then(|t| t.as_str()).unwrap_or("").to_string();
-                cwd = v.get("cwd").and_then(|c| c.as_str()).map(|s| s.to_string());
-            }
-            Some("session_info") => {
-                if let Some(n) = v.get("name").and_then(|n| n.as_str()) {
-                    name = Some(n.to_string());
-                }
-            }
-            Some("message") => {
-                let msg_timestamp = v.get("timestamp")
-                    .and_then(|t| t.as_str())
-                    .unwrap_or("")
-                    .to_string();
-                if let Some(msg) = v.get("message") {
-                    let role = msg.get("role").and_then(|r| r.as_str()).unwrap_or("").to_string();
-                    if role == "user" || role == "assistant" {
-                        if let Some(text) = extract_message_text(msg) {
-                            messages.push(GsdSessionMessage {
-                                role,
-                                text,
-                                timestamp: msg_timestamp,
-                            });
-                        }
-                    }
-                }
-            }
-            _ => {}
-        }
-    }
-
-    Ok(GsdSessionDetail {
-        id: session_id,
-        filename,
-        timestamp,
-        name,
-        messages,
-        cwd,
-    })
-}
-
-/// Rename a session by appending a session_info line to the JSONL file.
-#[tauri::command]
-pub async fn gsd2_rename_session(
-    db: tauri::State<'_, DbState>,
-    project_id: String,
-    filename: String,
-    new_name: String,
-) -> Result<(), String> {
-    let project_path = {
-        let db_guard = db.write().await;
-        get_project_path(&db_guard, &project_id)?
-    };
-
-    let sessions_dir = get_sessions_dir(&project_path)
-        .ok_or_else(|| "Sessions directory not found".to_string())?;
-
-    let filepath = sessions_dir.join(&filename);
-    if !filepath.exists() {
-        return Err(format!("Session file not found: {}", filename));
-    }
-
-    // Append semantics — last session_info wins
-    let info_line = serde_json::json!({
-        "type": "session_info",
-        "name": new_name,
-    });
-
-    use std::io::Write;
-    let mut file = std::fs::OpenOptions::new()
-        .append(true)
-        .open(&filepath)
-        .map_err(|e| format!("Failed to open session file: {}", e))?;
-
-    writeln!(file, "{}", serde_json::to_string(&info_line).unwrap())
-        .map_err(|e| format!("Failed to write session info: {}", e))?;
-
-    Ok(())
-}
-
-/// Delete a session JSONL file.
-#[tauri::command]
-pub async fn gsd2_delete_session(
-    db: tauri::State<'_, DbState>,
-    project_id: String,
-    filename: String,
-) -> Result<(), String> {
-    let project_path = {
-        let db_guard = db.write().await;
-        get_project_path(&db_guard, &project_id)?
-    };
-
-    let sessions_dir = get_sessions_dir(&project_path)
-        .ok_or_else(|| "Sessions directory not found".to_string())?;
-
-    let filepath = sessions_dir.join(&filename);
-    if !filepath.exists() {
-        return Err(format!("Session file not found: {}", filename));
-    }
-
-    std::fs::remove_file(&filepath)
-        .map_err(|e| format!("Failed to delete session: {}", e))?;
-
-    Ok(())
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -4351,16 +3834,19 @@ pub async fn gsd2_list_models(
 
     for line in stdout.lines() {
         let trimmed = line.trim();
-        if trimmed.is_empty() { continue; }
-        if trimmed.to_lowercase().starts_with("provider") { continue; }
-
-        // Split on runs of 2+ spaces — each column is separated by at least 2 spaces
+        if trimmed.is_empty() {
+            continue;
+        }
+        // Skip header line starting with "provider"
+        if trimmed.to_lowercase().starts_with("provider") {
+            continue;
+        }
+        // Split by 2+ consecutive spaces
         let parts: Vec<&str> = trimmed
-            .split("  ")
+            .splitn(3, "  ")
             .map(|p| p.trim())
             .filter(|p| !p.is_empty())
             .collect();
-
         if parts.len() >= 3 {
             entries.push(GsdModelEntry {
                 provider: parts[0].to_string(),
@@ -4375,11 +3861,6 @@ pub async fn gsd2_list_models(
             });
         }
     }
-
-    entries.sort_by(|a, b| {
-        a.provider.to_lowercase().cmp(&b.provider.to_lowercase())
-            .then(a.name.to_lowercase().cmp(&b.name.to_lowercase()))
-    });
 
     Ok(entries)
 }
@@ -4439,23 +3920,11 @@ pub async fn gsd2_headless_start_with_model(
     registry: tauri::State<'_, HeadlessRegistryState>,
     terminal_manager: tauri::State<'_, crate::pty::TerminalManagerState>,
 ) -> Result<String, String> {
-    // Check for existing session — verify it's actually alive before blocking
+    // Check for existing session for this project
     {
-        let existing_sid = {
-            let reg = registry.lock().await;
-            reg.session_for_project(&project_id)
-        };
-        if let Some(sid) = existing_sid {
-            let alive = {
-                let mut manager = terminal_manager.lock().await;
-                manager.is_active(&sid)
-            };
-            if alive {
-                return Err("A headless session is already running for this project".to_string());
-            }
-            // Stale registry entry — clean up and allow a new session to start
-            let mut reg = registry.lock().await;
-            reg.unregister(&sid);
+        let reg = registry.lock().await;
+        if reg.session_for_project(&project_id).is_some() {
+            return Err("A headless session is already running for this project".to_string());
         }
     }
 
@@ -4467,9 +3936,6 @@ pub async fn gsd2_headless_start_with_model(
 
     let session_id = uuid::Uuid::new_v4().to_string();
     let command = format!("gsd headless --model {}", model);
-
-    // Clean stale auto.lock if the PID inside it is dead
-    clean_stale_auto_lock(&project_path, &project_id);
 
     // Create PTY session
     {
@@ -4491,77 +3957,6 @@ pub async fn gsd2_headless_start_with_model(
     }
 
     Ok(session_id)
-}
-
-/// Save a completed headless session (logs + chat messages) to the DB for persistence.
-#[tauri::command]
-pub async fn gsd2_headless_save_session(
-    project_id: String,
-    started_at: i64,
-    completed_at: Option<i64>,
-    status: String,
-    logs_json: String,
-    messages_json: String,
-    last_snapshot_json: Option<String>,
-    db: tauri::State<'_, DbState>,
-) -> Result<(), String> {
-    let db_guard = db.write().await;
-    db_guard.conn().execute(
-        "INSERT INTO headless_sessions (project_id, started_at, completed_at, status, logs_json, messages_json, last_snapshot_json)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
-        rusqlite::params![
-            project_id,
-            started_at,
-            completed_at,
-            status,
-            logs_json,
-            messages_json,
-            last_snapshot_json,
-        ],
-    ).map_err(|e| format!("DB error saving headless session: {}", e))?;
-    Ok(())
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct PersistedHeadlessSession {
-    pub id: String,
-    pub project_id: String,
-    pub started_at: i64,
-    pub completed_at: Option<i64>,
-    pub status: String,
-    pub logs_json: String,
-    pub messages_json: String,
-    pub last_snapshot_json: Option<String>,
-}
-
-/// Load the most recent persisted headless session for a project.
-#[tauri::command]
-pub async fn gsd2_headless_load_last_session(
-    project_id: String,
-    db: tauri::State<'_, DbState>,
-) -> Result<Option<PersistedHeadlessSession>, String> {
-    let db_guard = db.read().await;
-    let result = db_guard.query_row(
-        "SELECT id, project_id, started_at, completed_at, status, logs_json, messages_json, last_snapshot_json
-         FROM headless_sessions
-         WHERE project_id = ?1
-         ORDER BY started_at DESC
-         LIMIT 1",
-        rusqlite::params![project_id],
-        |row| {
-            Ok(PersistedHeadlessSession {
-                id: row.get(0)?,
-                project_id: row.get(1)?,
-                started_at: row.get(2)?,
-                completed_at: row.get(3)?,
-                status: row.get(4)?,
-                logs_json: row.get(5)?,
-                messages_json: row.get(6)?,
-                last_snapshot_json: row.get(7)?,
-            })
-        },
-    ).optional().map_err(|e| format!("DB error loading headless session: {}", e))?;
-    Ok(result)
 }
 
 // ============================================================
@@ -8073,670 +7468,4 @@ pub async fn gsd2_get_reports_index(
         gsd_version: "2.0".to_string(),
         entries: Vec::new(),
     }))
-}
-
-// ============================================================
-// M011 — Preferences Editor
-// ============================================================
-
-/// Extract YAML frontmatter block (between first --- and second ---) from a file.
-/// Returns (frontmatter_str, body_after_frontmatter).
-fn extract_preferences_frontmatter(content: &str) -> Option<(&str, &str)> {
-    let content = content.trim_start();
-    if !content.starts_with("---") {
-        return None;
-    }
-    let after_open = &content[3..];
-    // Skip optional \r\n or \n after opening ---
-    let after_open = after_open.trim_start_matches('\n').trim_start_matches('\r');
-    let fm_start = content.len() - after_open.len();
-    // Find closing ---
-    if let Some(close_offset) = after_open.find("\n---") {
-        let fm_str = &content[fm_start..fm_start + close_offset];
-        let body_start = fm_start + close_offset + 4; // past \n---
-        let body = if body_start < content.len() {
-            &content[body_start..]
-        } else {
-            ""
-        };
-        Some((fm_str, body))
-    } else {
-        None
-    }
-}
-
-/// Parse a YAML frontmatter string into a serde_json::Value (Object).
-/// Handles: scalars, booleans, numbers, quoted strings, null/~,
-/// inline arrays (- items), and nested objects (indented keys).
-fn parse_yaml_to_json(yaml: &str) -> serde_json::Value {
-    let mut root = serde_json::Map::new();
-    parse_yaml_block(yaml, 0, &mut root);
-    serde_json::Value::Object(root)
-}
-
-fn yaml_scalar_to_json(s: &str) -> serde_json::Value {
-    let s = s.trim();
-    if s == "true" { return serde_json::Value::Bool(true); }
-    if s == "false" { return serde_json::Value::Bool(false); }
-    if s == "null" || s == "~" || s.is_empty() { return serde_json::Value::Null; }
-    // Quoted string
-    if (s.starts_with('"') && s.ends_with('"')) ||
-       (s.starts_with('\'') && s.ends_with('\'')) {
-        let inner = &s[1..s.len()-1];
-        return serde_json::Value::String(inner.to_string());
-    }
-    // Integer
-    if let Ok(n) = s.parse::<i64>() { return serde_json::json!(n); }
-    // Float
-    if let Ok(f) = s.parse::<f64>() { return serde_json::json!(f); }
-    serde_json::Value::String(s.to_string())
-}
-
-/// Parse lines at a given base indentation into the map.
-fn parse_yaml_block(yaml: &str, base_indent: usize, map: &mut serde_json::Map<String, serde_json::Value>) {
-    let lines: Vec<&str> = yaml.lines().collect();
-    let mut i = 0;
-    while i < lines.len() {
-        let line = lines[i];
-        let trimmed = line.trim();
-        if trimmed.is_empty() || trimmed.starts_with('#') { i += 1; continue; }
-
-        let indent = line.len() - line.trim_start().len();
-        if indent < base_indent { break; } // dedented out of this block
-
-        // key: value line
-        if let Some(colon_pos) = trimmed.find(':') {
-            let key = trimmed[..colon_pos].trim().to_string();
-            let rest = trimmed[colon_pos+1..].trim();
-
-            if rest.is_empty() {
-                // Could be a nested object or array — peek ahead
-                let child_indent = if i + 1 < lines.len() {
-                    let next = lines[i+1];
-                    next.len() - next.trim_start().len()
-                } else { 0 };
-
-                if child_indent > indent {
-                    // Gather child lines
-                    let mut child_lines: Vec<&str> = Vec::new();
-                    let mut j = i + 1;
-                    while j < lines.len() {
-                        let cl = lines[j];
-                        let cl_indent = cl.len() - cl.trim_start().len();
-                        if cl.trim().is_empty() { child_lines.push(cl); j += 1; continue; }
-                        if cl_indent <= indent { break; }
-                        child_lines.push(cl); j += 1;
-                    }
-                    let child_block = child_lines.join("\n");
-
-                    // Array or object?
-                    let is_array = child_lines.iter().any(|l| l.trim_start().starts_with("- ") || l.trim() == "-");
-                    if is_array {
-                        let arr = parse_yaml_array(&child_block);
-                        map.insert(key, serde_json::Value::Array(arr));
-                    } else {
-                        let mut child_map = serde_json::Map::new();
-                        parse_yaml_block(&child_block, child_indent, &mut child_map);
-                        map.insert(key, serde_json::Value::Object(child_map));
-                    }
-                    i = i + 1 + child_lines.len();
-                    continue;
-                } else {
-                    map.insert(key, serde_json::Value::Null);
-                }
-            } else if rest.starts_with('[') && rest.ends_with(']') {
-                // Inline array: [a, b, c]
-                let inner = &rest[1..rest.len()-1];
-                let items: Vec<serde_json::Value> = inner.split(',')
-                    .map(|s| yaml_scalar_to_json(s.trim()))
-                    .filter(|v| !matches!(v, serde_json::Value::Null))
-                    .collect();
-                map.insert(key, serde_json::Value::Array(items));
-            } else if rest.starts_with('{') && rest.ends_with('}') {
-                // Inline object — skip for now, store as string
-                map.insert(key, serde_json::Value::String(rest.to_string()));
-            } else {
-                map.insert(key, yaml_scalar_to_json(rest));
-            }
-        } else if trimmed.starts_with("- ") {
-            // Top-level array item (unusual but handle it)
-            // skip
-        }
-        i += 1;
-    }
-}
-
-fn parse_yaml_array(block: &str) -> Vec<serde_json::Value> {
-    let mut items = Vec::new();
-    let mut current_item_lines: Vec<String> = Vec::new();
-    let mut in_item = false;
-    let base_indent = block.lines()
-        .find(|l| l.trim_start().starts_with("- "))
-        .map(|l| l.len() - l.trim_start().len())
-        .unwrap_or(0);
-
-    for line in block.lines() {
-        let stripped = line.trim();
-        if stripped.is_empty() { continue; }
-        let indent = line.len() - line.trim_start().len();
-
-        if stripped.starts_with("- ") && indent == base_indent {
-            if in_item {
-                // Flush previous item
-                let item_str = current_item_lines.join("\n");
-                items.push(parse_yaml_item(&item_str));
-                current_item_lines.clear();
-            }
-            in_item = true;
-            let item_value = stripped[2..].trim();
-            current_item_lines.push(item_value.to_string());
-        } else if in_item && indent > base_indent {
-            current_item_lines.push(line.to_string());
-        }
-    }
-    if in_item && !current_item_lines.is_empty() {
-        let item_str = current_item_lines.join("\n");
-        items.push(parse_yaml_item(&item_str));
-    }
-    items
-}
-
-fn parse_yaml_item(item: &str) -> serde_json::Value {
-    // If it's a plain scalar, return it
-    if !item.contains('\n') && !item.contains(':') {
-        return yaml_scalar_to_json(item.trim());
-    }
-    // Otherwise it's a mapping
-    let mut map = serde_json::Map::new();
-    // First line might be a scalar or key: value
-    let lines: Vec<&str> = item.lines().collect();
-    if !lines.is_empty() {
-        let first = lines[0].trim();
-        if first.contains(':') {
-            // All lines are key: value
-            let normalized = lines.iter().map(|l| l.to_string()).collect::<Vec<_>>().join("\n");
-            let child_indent = lines[0].len() - lines[0].trim_start().len();
-            parse_yaml_block(&normalized, child_indent, &mut map);
-        } else {
-            return yaml_scalar_to_json(first);
-        }
-    }
-    serde_json::Value::Object(map)
-}
-
-/// Serialize a serde_json::Value back to YAML frontmatter string.
-/// Produces clean YAML compatible with GSD's preferences.md format.
-fn json_to_yaml_frontmatter(val: &serde_json::Value) -> String {
-    let mut out = String::new();
-    if let serde_json::Value::Object(map) = val {
-        for (key, value) in map {
-            write_yaml_value(&mut out, key, value, 0);
-        }
-    }
-    out
-}
-
-fn write_yaml_value(out: &mut String, key: &str, value: &serde_json::Value, indent: usize) {
-    let prefix = " ".repeat(indent);
-    match value {
-        serde_json::Value::Null => {
-            out.push_str(&format!("{}{}:\n", prefix, key));
-        }
-        serde_json::Value::Bool(b) => {
-            out.push_str(&format!("{}{}: {}\n", prefix, key, b));
-        }
-        serde_json::Value::Number(n) => {
-            out.push_str(&format!("{}{}: {}\n", prefix, key, n));
-        }
-        serde_json::Value::String(s) => {
-            // Quote strings with special chars
-            if s.contains(':') || s.contains('#') || s.contains('\'') || s.is_empty() {
-                out.push_str(&format!("{}{}: \"{}\"\n", prefix, key, s.replace('"', "\\\"")));
-            } else {
-                out.push_str(&format!("{}{}: {}\n", prefix, key, s));
-            }
-        }
-        serde_json::Value::Array(arr) => {
-            if arr.is_empty() {
-                out.push_str(&format!("{}{}:\n", prefix, key));
-            } else {
-                out.push_str(&format!("{}{}:\n", prefix, key));
-                for item in arr {
-                    write_yaml_array_item(out, item, indent + 2);
-                }
-            }
-        }
-        serde_json::Value::Object(map) => {
-            out.push_str(&format!("{}{}:\n", prefix, key));
-            for (k, v) in map {
-                write_yaml_value(out, k, v, indent + 2);
-            }
-        }
-    }
-}
-
-fn write_yaml_array_item(out: &mut String, item: &serde_json::Value, indent: usize) {
-    let prefix = " ".repeat(indent);
-    match item {
-        serde_json::Value::String(s) => {
-            if s.contains(':') || s.contains('#') || s.is_empty() {
-                out.push_str(&format!("{}- \"{}\"\n", prefix, s.replace('"', "\\\"")));
-            } else {
-                out.push_str(&format!("{}- {}\n", prefix, s));
-            }
-        }
-        serde_json::Value::Bool(b) => out.push_str(&format!("{}- {}\n", prefix, b)),
-        serde_json::Value::Number(n) => out.push_str(&format!("{}- {}\n", prefix, n)),
-        serde_json::Value::Null => out.push_str(&format!("{}- null\n", prefix)),
-        serde_json::Value::Array(arr) => {
-            for sub in arr {
-                write_yaml_array_item(out, sub, indent);
-            }
-        }
-        serde_json::Value::Object(map) => {
-            let mut first = true;
-            for (k, v) in map {
-                if first {
-                    out.push_str(&format!("{}- ", prefix));
-                    let mut tmp = String::new();
-                    write_yaml_value(&mut tmp, k, v, 0);
-                    out.push_str(tmp.trim_start());
-                    first = false;
-                } else {
-                    write_yaml_value(out, k, v, indent + 2);
-                }
-            }
-        }
-    }
-}
-
-/// Scope annotation: for each key in the merged result, track where it came from.
-/// "project" = key present in project prefs
-/// "global"  = key present only in global prefs
-/// "default" = key not in either (it has a default value)
-fn annotate_scopes(
-    global: &serde_json::Value,
-    project: &serde_json::Value,
-    merged: &serde_json::Value,
-) -> HashMap<String, String> {
-    let mut scopes = HashMap::new();
-    if let serde_json::Value::Object(m) = merged {
-        for key in m.keys() {
-            let in_project = project.get(key).map(|v| !v.is_null()).unwrap_or(false);
-            let in_global = global.get(key).map(|v| !v.is_null()).unwrap_or(false);
-            let scope = if in_project {
-                "project"
-            } else if in_global {
-                "global"
-            } else {
-                "default"
-            };
-            scopes.insert(key.clone(), scope.to_string());
-        }
-    }
-    scopes
-}
-
-/// Merge global + project preferences into a single Value.
-/// Rules:
-/// - Scalar/boolean/number: project wins over global
-/// - Arrays (always_use_skills, prefer_skills, avoid_skills,
-///   skill_rules, custom_instructions, verification_commands): concatenate (global first)
-/// - Objects (models, git, cmux, dynamic_routing, auto_supervisor,
-///   notifications, phases, parallel, remote_questions, experimental): shallow merge
-fn merge_preferences(global: &serde_json::Value, project: &serde_json::Value) -> serde_json::Value {
-    const CONCAT_ARRAYS: &[&str] = &[
-        "always_use_skills", "prefer_skills", "avoid_skills",
-        "skill_rules", "custom_instructions", "verification_commands",
-    ];
-    const MERGE_OBJECTS: &[&str] = &[
-        "models", "git", "cmux", "dynamic_routing", "auto_supervisor",
-        "notifications", "phases", "parallel", "remote_questions",
-        "experimental", "provider_capabilities",
-    ];
-
-    let g = if let serde_json::Value::Object(m) = global { m } else { return project.clone(); };
-    let p = if let serde_json::Value::Object(m) = project { m } else { return global.clone(); };
-
-    let mut result = serde_json::Map::new();
-
-    // Collect all known keys
-    let mut all_keys: std::collections::HashSet<String> = std::collections::HashSet::new();
-    for k in g.keys() { all_keys.insert(k.clone()); }
-    for k in p.keys() { all_keys.insert(k.clone()); }
-
-    for key in &all_keys {
-        let gv = g.get(key).cloned().unwrap_or(serde_json::Value::Null);
-        let pv = p.get(key).cloned().unwrap_or(serde_json::Value::Null);
-
-        if CONCAT_ARRAYS.contains(&key.as_str()) {
-            let mut arr = Vec::new();
-            if let serde_json::Value::Array(a) = &gv { arr.extend(a.iter().cloned()); }
-            if let serde_json::Value::Array(a) = &pv { arr.extend(a.iter().cloned()); }
-            result.insert(key.clone(), serde_json::Value::Array(arr));
-        } else if MERGE_OBJECTS.contains(&key.as_str()) {
-            match (&gv, &pv) {
-                (serde_json::Value::Object(go), serde_json::Value::Object(po)) => {
-                    let mut merged = go.clone();
-                    for (k, v) in po { merged.insert(k.clone(), v.clone()); }
-                    result.insert(key.clone(), serde_json::Value::Object(merged));
-                }
-                (_, serde_json::Value::Object(_)) => { result.insert(key.clone(), pv); }
-                (serde_json::Value::Object(_), _) => { result.insert(key.clone(), gv); }
-                _ => {
-                    if !pv.is_null() { result.insert(key.clone(), pv); }
-                    else if !gv.is_null() { result.insert(key.clone(), gv); }
-                }
-            }
-        } else {
-            // Scalar: project wins
-            if !pv.is_null() {
-                result.insert(key.clone(), pv);
-            } else if !gv.is_null() {
-                result.insert(key.clone(), gv);
-            }
-        }
-    }
-
-    serde_json::Value::Object(result)
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct PreferencesData {
-    /// Merged effective preferences as JSON value
-    pub merged: serde_json::Value,
-    /// Raw global preferences (parsed)
-    pub global: serde_json::Value,
-    /// Raw project preferences (parsed)
-    pub project: serde_json::Value,
-    /// Scope map: field name -> "global" | "project" | "default"
-    pub scopes: HashMap<String, String>,
-    /// Whether global preferences file exists
-    pub global_exists: bool,
-    /// Whether project preferences file exists
-    pub project_exists: bool,
-    /// Path to global preferences file
-    pub global_path: String,
-    /// Path to project preferences file
-    pub project_path: String,
-}
-
-fn read_preferences_file(path: &Path) -> serde_json::Value {
-    match std::fs::read_to_string(path) {
-        Ok(content) => {
-            if let Some((fm, _body)) = extract_preferences_frontmatter(&content) {
-                parse_yaml_to_json(fm)
-            } else {
-                serde_json::Value::Object(serde_json::Map::new())
-            }
-        }
-        Err(_) => serde_json::Value::Object(serde_json::Map::new()),
-    }
-}
-
-// ============================================================
-// Unit tests for preferences parsing and merge
-// ============================================================
-#[cfg(test)]
-mod preferences_tests {
-    use super::*;
-
-    #[test]
-    fn test_extract_frontmatter_basic() {
-        let content = "---\nversion: 1\nuat_dispatch: false\n---\n\n# Body here\n";
-        let result = extract_preferences_frontmatter(content);
-        assert!(result.is_some());
-        let (fm, body) = result.unwrap();
-        assert!(fm.contains("version: 1"));
-        assert!(body.contains("Body here"));
-    }
-
-    #[test]
-    fn test_parse_yaml_scalars() {
-        let yaml = "version: 1\nuat_dispatch: false\nskill_staleness_days: 60\n";
-        let val = parse_yaml_to_json(yaml);
-        assert_eq!(val["version"], serde_json::json!(1));
-        assert_eq!(val["uat_dispatch"], serde_json::json!(false));
-        assert_eq!(val["skill_staleness_days"], serde_json::json!(60));
-    }
-
-    #[test]
-    fn test_parse_yaml_nested_object() {
-        let yaml = "git:\n  auto_push: true\n  main_branch: main\n";
-        let val = parse_yaml_to_json(yaml);
-        assert_eq!(val["git"]["auto_push"], serde_json::json!(true));
-        assert_eq!(val["git"]["main_branch"], serde_json::json!("main"));
-    }
-
-    #[test]
-    fn test_parse_yaml_array() {
-        let yaml = "always_use_skills:\n  - playwright\n  - resolve_library\n";
-        let val = parse_yaml_to_json(yaml);
-        let arr = val["always_use_skills"].as_array().unwrap();
-        assert_eq!(arr.len(), 2);
-        assert_eq!(arr[0], serde_json::json!("playwright"));
-    }
-
-    #[test]
-    fn test_parse_yaml_null_key() {
-        let yaml = "remote_questions:\nnot_notifications:\n";
-        let val = parse_yaml_to_json(yaml);
-        assert!(val["remote_questions"].is_null() || val["remote_questions"].is_object());
-    }
-
-    #[test]
-    fn test_merge_scalar_project_wins() {
-        let global = parse_yaml_to_json("skill_staleness_days: 60\nuat_dispatch: false\n");
-        let project = parse_yaml_to_json("skill_staleness_days: 30\n");
-        let merged = merge_preferences(&global, &project);
-        assert_eq!(merged["skill_staleness_days"], serde_json::json!(30));
-        assert_eq!(merged["uat_dispatch"], serde_json::json!(false));
-    }
-
-    #[test]
-    fn test_merge_array_concat() {
-        let global = parse_yaml_to_json("always_use_skills:\n  - playwright\n");
-        let project = parse_yaml_to_json("always_use_skills:\n  - resolve_library\n");
-        let merged = merge_preferences(&global, &project);
-        let arr = merged["always_use_skills"].as_array().unwrap();
-        assert_eq!(arr.len(), 2);
-        assert_eq!(arr[0], serde_json::json!("playwright")); // global first
-        assert_eq!(arr[1], serde_json::json!("resolve_library"));
-    }
-
-    #[test]
-    fn test_merge_object_shallow() {
-        let global = parse_yaml_to_json("git:\n  auto_push: false\n  main_branch: main\n");
-        let project = parse_yaml_to_json("git:\n  auto_push: true\n");
-        let merged = merge_preferences(&global, &project);
-        assert_eq!(merged["git"]["auto_push"], serde_json::json!(true));
-        assert_eq!(merged["git"]["main_branch"], serde_json::json!("main")); // preserved from global
-    }
-
-    #[test]
-    fn test_scope_annotation() {
-        let global = parse_yaml_to_json("skill_staleness_days: 60\n");
-        let project = parse_yaml_to_json("uat_dispatch: true\n");
-        let merged = merge_preferences(&global, &project);
-        let scopes = annotate_scopes(&global, &project, &merged);
-        assert_eq!(scopes["skill_staleness_days"], "global");
-        assert_eq!(scopes["uat_dispatch"], "project");
-    }
-
-    #[test]
-    fn test_round_trip_frontmatter() {
-        let original = "version: 1\nuat_dispatch: false\nskill_staleness_days: 60\n";
-        let parsed = parse_yaml_to_json(original);
-        let serialized = json_to_yaml_frontmatter(&parsed);
-        // Must contain all three fields
-        assert!(serialized.contains("version:"));
-        assert!(serialized.contains("uat_dispatch:"));
-        assert!(serialized.contains("skill_staleness_days:"));
-    }
-}
-
-// ============================================================
-// R089 — gsd2_get_preferences: read + merge global + project prefs
-// ============================================================
-/// Return merged PreferencesData for a project.
-/// Reads ~/.gsd/PREFERENCES.md (global) and {project_path}/.gsd/PREFERENCES.md (project).
-#[tauri::command]
-pub async fn gsd2_get_preferences(
-    project_id: String,
-    db: tauri::State<'_, DbState>,
-) -> Result<PreferencesData, String> {
-    let project_path = {
-        let db_guard = db.write().await;
-        get_project_path(&db_guard, &project_id)?
-    };
-
-    let global_path = dirs::home_dir()
-        .ok_or_else(|| "Cannot determine home directory".to_string())?
-        .join(".gsd")
-        .join("PREFERENCES.md");
-
-    let project_prefs_path = Path::new(&project_path)
-        .join(".gsd")
-        .join("PREFERENCES.md");
-
-    let global_exists = global_path.exists();
-    let project_exists = project_prefs_path.exists();
-
-    let global = read_preferences_file(&global_path);
-    let project = read_preferences_file(&project_prefs_path);
-    let merged = merge_preferences(&global, &project);
-    let scopes = annotate_scopes(&global, &project, &merged);
-
-    Ok(PreferencesData {
-        merged,
-        global,
-        project,
-        scopes,
-        global_exists,
-        project_exists,
-        global_path: global_path.to_string_lossy().to_string(),
-        project_path: project_prefs_path.to_string_lossy().to_string(),
-    })
-}
-
-// ============================================================
-// R090 — gsd2_save_preferences: atomic write-back for one scope
-// ============================================================
-/// Save preferences for a given scope ("global" or "project").
-/// Reads the target file, replaces only the YAML frontmatter block,
-/// writes to .tmp.{pid} then renames atomically.
-#[tauri::command]
-pub async fn gsd2_save_preferences(
-    project_id: String,
-    scope: String,         // "global" | "project"
-    payload: serde_json::Value,
-    db: tauri::State<'_, DbState>,
-) -> Result<(), String> {
-    let project_path = {
-        let db_guard = db.write().await;
-        get_project_path(&db_guard, &project_id)?
-    };
-
-    let target_path: std::path::PathBuf = if scope == "global" {
-        dirs::home_dir()
-            .ok_or_else(|| "Cannot determine home directory".to_string())?
-            .join(".gsd")
-            .join("PREFERENCES.md")
-    } else if scope == "project" {
-        Path::new(&project_path).join(".gsd").join("PREFERENCES.md")
-    } else {
-        return Err(format!("Unknown scope: {}. Must be 'global' or 'project'", scope));
-    };
-
-    // Ensure parent directory exists (for project scope, .gsd/ may not exist yet)
-    if let Some(parent) = target_path.parent() {
-        std::fs::create_dir_all(parent)
-            .map_err(|e| format!("Failed to create .gsd directory: {}", e))?;
-    }
-
-    // Read existing file to preserve body content after frontmatter
-    let existing_content = std::fs::read_to_string(&target_path).unwrap_or_default();
-    let body = if let Some((_fm, body)) = extract_preferences_frontmatter(&existing_content) {
-        body.to_string()
-    } else {
-        // No existing frontmatter — use default body
-        "\n# GSD Preferences\n\nSee `~/.gsd/agent/extensions/gsd/docs/preferences-reference.md` for full field documentation.\n".to_string()
-    };
-
-    // Serialize the new frontmatter
-    let new_fm = json_to_yaml_frontmatter(&payload);
-    let new_content = format!("---\n{}---{}", new_fm, body);
-
-    // Atomic write: tmp → rename
-    let tmp_path = target_path.with_extension(format!("tmp.{}", std::process::id()));
-    std::fs::write(&tmp_path, &new_content)
-        .map_err(|e| format!("Failed to write temp file: {}", e))?;
-    std::fs::rename(&tmp_path, &target_path)
-        .map_err(|e| format!("Failed to rename preferences file: {}", e))?;
-
-    Ok(())
-}
-
-// ============================================================
-// R091 — gsd2_get_global_preferences: read only global ~/.gsd/PREFERENCES.md
-// ============================================================
-#[tauri::command]
-pub async fn gsd2_get_global_preferences() -> Result<PreferencesData, String> {
-    let global_path = dirs::home_dir()
-        .ok_or_else(|| "Cannot determine home directory".to_string())?
-        .join(".gsd")
-        .join("PREFERENCES.md");
-
-    let global_exists = global_path.exists();
-    let global = read_preferences_file(&global_path);
-    let empty = serde_json::Value::Object(serde_json::Map::new());
-    let merged = global.clone();
-    let scopes = annotate_scopes(&global, &empty, &merged);
-
-    Ok(PreferencesData {
-        merged,
-        global: global.clone(),
-        project: empty,
-        scopes,
-        global_exists,
-        project_exists: false,
-        global_path: global_path.to_string_lossy().to_string(),
-        project_path: String::new(),
-    })
-}
-
-// ============================================================
-// R092 — gsd2_save_global_preferences: write only ~/.gsd/PREFERENCES.md
-// ============================================================
-#[tauri::command]
-pub async fn gsd2_save_global_preferences(
-    payload: serde_json::Value,
-) -> Result<(), String> {
-    let target_path = dirs::home_dir()
-        .ok_or_else(|| "Cannot determine home directory".to_string())?
-        .join(".gsd")
-        .join("PREFERENCES.md");
-
-    if let Some(parent) = target_path.parent() {
-        std::fs::create_dir_all(parent)
-            .map_err(|e| format!("Failed to create .gsd directory: {}", e))?;
-    }
-
-    let existing_content = std::fs::read_to_string(&target_path).unwrap_or_default();
-    let body = if let Some((_fm, body)) = extract_preferences_frontmatter(&existing_content) {
-        body.to_string()
-    } else {
-        "\n# GSD Preferences\n\nSee `~/.gsd/agent/extensions/gsd/docs/preferences-reference.md` for full field documentation.\n".to_string()
-    };
-
-    let new_fm = json_to_yaml_frontmatter(&payload);
-    let new_content = format!("---\n{}---{}", new_fm, body);
-
-    let tmp_path = target_path.with_extension(format!("tmp.{}", std::process::id()));
-    std::fs::write(&tmp_path, &new_content)
-        .map_err(|e| format!("Failed to write temp file: {}", e))?;
-    std::fs::rename(&tmp_path, &target_path)
-        .map_err(|e| format!("Failed to rename preferences file: {}", e))?;
-
-    Ok(())
 }

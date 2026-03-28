@@ -1,4 +1,4 @@
-// GSD Vibe - Breadcrumb Navigation
+// GSD VibeFlow - Breadcrumb Navigation
 // Shows Home > ProjectName > ActiveView with view label from project-views registry
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

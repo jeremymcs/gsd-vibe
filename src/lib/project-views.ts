@@ -1,4 +1,4 @@
-// GSD Vibe - Project View Definitions
+// GSD VibeFlow - Project View Definitions
 // Canonical list of all project views for sidebar navigation
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
@@ -9,24 +9,23 @@ import {
   ClipboardList,
   SquareTerminal,
   Key,
+  Activity,
   Play,
   GitBranch,
   BarChart3,
   Flag,
+  Layers,
   CheckSquare,
   Stethoscope,
+  Search,
+  Brain,
+  BookOpen,
   FileText,
   Lightbulb,
   FlaskConical,
   ClipboardCheck,
   ShieldCheck,
   Bug,
-  Layers,
-  BookOpen,
-  Settings2,
-  History,
-  TrendingUp,
-  Terminal,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -55,19 +54,21 @@ export const projectViews: ProjectView[] = [
   { id: 'knowledge', label: 'Knowledge', icon: ClipboardList, section: 'Core' },
   { id: 'shell', label: 'Shell', icon: SquareTerminal, section: 'Core' },
   { id: 'envvars', label: 'Env Vars', icon: Key, section: 'Core' },
-  { id: 'git', label: 'Git', icon: GitBranch, section: 'Core' },
 
   // --- GSD-2 ---
-  { id: 'gsd2-group-progress', label: 'Progress', icon: BarChart3, section: 'GSD', gsd2Only: true },
-  { id: 'gsd2-group-planning', label: 'Planning', icon: Layers, section: 'GSD', gsd2Only: true },
-  { id: 'gsd2-group-metrics', label: 'Metrics', icon: TrendingUp, section: 'GSD', gsd2Only: true },
-  { id: 'gsd2-group-commands', label: 'Commands', icon: Terminal, section: 'GSD', gsd2Only: true },
-  { id: 'gsd2-group-diagnostics', label: 'Diagnostics', icon: Stethoscope, section: 'Diagnostics', gsd2Only: true },
-  { id: 'gsd2-headless', label: 'Session', icon: Play, section: 'GSD', gsd2Only: true },
+  { id: 'gsd2-dashboard', label: 'Dashboard', icon: LayoutDashboard, section: 'GSD', gsd2Only: true },
+  { id: 'gsd2-health', label: 'Health', icon: Activity, section: 'GSD', gsd2Only: true },
+  { id: 'gsd2-headless', label: 'Headless', icon: Play, section: 'GSD', gsd2Only: true },
   { id: 'gsd2-worktrees', label: 'Worktrees', icon: GitBranch, section: 'GSD', gsd2Only: true },
-  { id: 'gsd2-sessions', label: 'Sessions', icon: History, section: 'GSD', gsd2Only: true },
-  { id: 'gsd2-knowledge-captures', label: 'Knowledge Captures', icon: BookOpen, section: 'GSD', gsd2Only: true },
-  { id: 'gsd2-preferences', label: 'Preferences', icon: Settings2, section: 'GSD', gsd2Only: true },
+  { id: 'gsd2-visualizer', label: 'Visualizer', icon: BarChart3, section: 'GSD', gsd2Only: true },
+  { id: 'gsd2-milestones', label: 'Milestones', icon: Flag, section: 'GSD', gsd2Only: true },
+  { id: 'gsd2-slices', label: 'Slices', icon: Layers, section: 'GSD', gsd2Only: true },
+  { id: 'gsd2-tasks', label: 'Tasks', icon: CheckSquare, section: 'GSD', gsd2Only: true },
+  { id: 'gsd2-doctor', label: 'Doctor', icon: Stethoscope, section: 'Diagnostics', gsd2Only: true },
+  { id: 'gsd2-forensics', label: 'Forensics', icon: Search, section: 'Diagnostics', gsd2Only: true },
+  { id: 'gsd2-skill-health', label: 'Skill Health', icon: Brain, section: 'Diagnostics', gsd2Only: true },
+  { id: 'gsd2-knowledge-captures', label: 'Knowledge', icon: BookOpen, section: 'Diagnostics', gsd2Only: true },
+  { id: 'gsd2-reports', label: 'Reports', icon: FileText, section: 'GSD', gsd2Only: true },
 
   // --- GSD-1 ---
   { id: 'gsd-plans', label: 'Plans', icon: FileText, section: 'GSD', gsd1Only: true },

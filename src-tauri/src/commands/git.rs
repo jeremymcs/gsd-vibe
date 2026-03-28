@@ -1,4 +1,4 @@
-// GSD Vibe - Git Status Commands
+// GSD VibeFlow - Git Status Commands
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 use crate::models::{
@@ -342,7 +342,7 @@ pub async fn git_commit(
 pub async fn git_stash_save(project_path: String) -> Result<GitOperationResult, String> {
     run_git_op(
         &project_path,
-        &["stash", "push", "-m", "GSD Vibe stash"],
+        &["stash", "push", "-m", "GSD VibeFlow stash"],
     )
 }
 

@@ -1,4 +1,4 @@
-// GSD Vibe - GSD File Watcher Hook
+// GSD VibeFlow - GSD File Watcher Hook
 // Listens for gsd:file-changed events and triggers targeted query invalidation
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
@@ -103,7 +103,7 @@ export function useGsdFileWatcher(
 
     listen<GsdFileChangedPayload>('gsd2:file-changed', (event) => {
       if (event.payload.project_path !== projectPath) return;
-      // Invalidate all GSD-2 reactive queries on any .gsd/ file change
+      // Immediately invalidate GSD-2 reactive queries (no debounce — dedicated key)
       void queryClient.invalidateQueries({ queryKey: queryKeys.gsd2Health(projectId) });
       void queryClient.invalidateQueries({ queryKey: queryKeys.gsd2Worktrees(projectId) });
       void queryClient.invalidateQueries({ queryKey: queryKeys.gsd2VisualizerData(projectId) });
@@ -111,7 +111,7 @@ export function useGsdFileWatcher(
       void queryClient.invalidateQueries({ queryKey: queryKeys.gsd2DerivedState(projectId) });
       void queryClient.invalidateQueries({ queryKey: ['gsd2', 'milestone', projectId] });
       void queryClient.invalidateQueries({ queryKey: ['gsd2', 'slice', projectId] });
-void queryClient.invalidateQueries({ queryKey: queryKeys.gsd2History(projectId) });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.gsd2History(projectId) });
       void queryClient.invalidateQueries({ queryKey: queryKeys.gsd2GitSummary(projectId) });
       void queryClient.invalidateQueries({ queryKey: queryKeys.gsd2Inspect(projectId) });
       void queryClient.invalidateQueries({ queryKey: queryKeys.gsd2UndoInfo(projectId) });

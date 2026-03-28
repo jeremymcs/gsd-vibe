@@ -1,4 +1,4 @@
-// GSD Vibe - Query Key Factory
+// GSD VibeFlow - Query Key Factory
 // Centralized query key management for TanStack Query
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
@@ -123,21 +123,4 @@ export const queryKeys = {
   gsd2GitSummary: (projectId: string) => ['gsd2', 'git-summary', projectId] as const,
   gsd2Export: (projectId: string) => ['gsd2', 'export', projectId] as const,
   gsd2ReportsIndex: (projectId: string) => ['gsd2', 'reports-index', projectId] as const,
-  gsd2Preferences: (projectId: string) => ['gsd2', 'preferences', projectId] as const,
-  // GitHub
-  githubTokenStatus: () => ['github-token-status'] as const,
-  githubRepoInfo: (path: string) => ['github-repo-info', path] as const,
-  githubPrs: (path: string, state?: string) => ['github-prs', path, state] as const,
-  githubPrReviews: (path: string, prNumber: number) => ['github-pr-reviews', path, prNumber] as const,
-  githubIssues: (path: string, state?: string) => ['github-issues', path, state] as const,
-  githubCheckRuns: (path: string, ref: string) => ['github-check-runs', path, ref] as const,
-  githubReleases: (path: string) => ['github-releases', path] as const,
-  githubNotifications: (path: string) => ['github-notifications', path] as const,
-  // gsd2 sessions
-  gsd2Sessions: (projectId: string) => ['gsd2-sessions', projectId] as const,
-  gsd2SessionDetail: (projectId: string, filename: string) => ['gsd2-session-detail', projectId, filename] as const,
-  gsd2HeadlessSession: (projectId: string) => ['gsd2', 'headless-session', projectId] as const,
 };
-// appended by M011 global prefs
-export const globalPreferencesKey = ['gsd2', 'global-preferences'] as const;
-export const gsd2ModelsKey = ['gsd2', 'models'] as const;

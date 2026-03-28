@@ -1,4 +1,4 @@
-// GSD Vibe - Shared Navigation Configuration
+// GSD VibeFlow - Shared Navigation Configuration
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import {
@@ -7,7 +7,6 @@ import {
   Terminal,
   Bell,
   Settings,
-  Settings2,
   LucideIcon,
 } from 'lucide-react';
 
@@ -33,7 +32,6 @@ export const navigation: NavigationItem[] = [
 
   { type: 'section', label: 'System' },
   { type: 'link', name: 'Notifications', href: '/notifications', icon: Bell },
-  { type: 'link', name: 'GSD Preferences', href: '/gsd-preferences', icon: Settings2 },
   { type: 'link', name: 'Settings', href: '/settings', icon: Settings },
 ];
 

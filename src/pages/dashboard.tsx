@@ -1,8 +1,8 @@
-// GSD Vibe - Dashboard Page
+// GSD VibeFlow - Dashboard Page
 // Rich project grid — all GSD projects at a glance
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Plus,
   FolderOpen,
@@ -14,7 +14,6 @@ import {
 } from 'lucide-react';
 import { useQueries } from '@tanstack/react-query';
 import { useProjectsWithStats } from '@/lib/queries';
-import { useRefreshProjectDescription } from '@/lib/queries';
 import { queryKeys } from '@/lib/query-keys';
 import * as api from '@/lib/tauri';
 import type { GitInfo } from '@/lib/tauri';
@@ -24,7 +23,6 @@ import { ProjectWizardDialog } from '@/components/projects';
 import { StatusBar, ProjectCard, ProjectRow } from '@/components/dashboard';
 import { PageHeader } from '@/components/layout/page-header';
 import { cn } from '@/lib/utils';
-import { cleanDescription } from '@/lib/utils';
 
 type ViewMode = 'grid' | 'list';
 type FilterTab = 'all' | 'active' | 'archived';
@@ -42,29 +40,6 @@ export function Dashboard() {
   const [activeFilter, setActiveFilter] = useState<FilterTab>('all');
 
   const { data: projects, isLoading } = useProjectsWithStats();
-  const refreshDescription = useRefreshProjectDescription();
-  const refreshedRef = useRef(new Set<string>());
-
-  // Auto-refresh descriptions that look stale (HTML comments, raw markdown, or missing)
-  useEffect(() => {
-    if (!projects) return;
-    for (const p of projects) {
-      if (refreshedRef.current.has(p.id)) continue;
-      const clean = cleanDescription(p.description);
-      // Trigger refresh if description is null/empty OR contains raw HTML/markdown artifacts
-      const looksStale =
-        !clean ||
-        p.description?.includes('<!--') ||
-        p.description?.includes('<div') ||
-        p.description?.includes('<p') ||
-        p.description?.startsWith('**') ||
-        p.description?.startsWith('*');
-      if (looksStale) {
-        refreshedRef.current.add(p.id);
-        refreshDescription.mutate({ projectId: p.id, projectPath: p.path });
-      }
-    }
-  }, [projects]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Batch git queries for all projects
   const gitQueries = useQueries({

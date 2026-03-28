@@ -1,4 +1,4 @@
-// GSD Vibe - Library Root (Tauri app setup, command registration, event listeners)
+// GSD VibeFlow - Library Root (Tauri app setup, command registration, event listeners)
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 mod commands;
@@ -114,7 +114,7 @@ pub fn run() {
             let watcher_manager = commands::watcher::WatcherManager::new();
             app.manage(Arc::new(Mutex::new(watcher_manager)));
 
-            tracing::info!("GSD Vibe initialized");
+            tracing::info!("GSD VibeFlow initialized");
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -137,7 +137,6 @@ pub fn run() {
             commands::filesystem::get_scanner_summary,
             commands::filesystem::read_project_file,
             commands::filesystem::read_project_docs,
-            commands::filesystem::refresh_project_description,
             commands::filesystem::pick_folder,
             commands::filesystem::list_knowledge_files,
             commands::filesystem::list_code_files,
@@ -208,20 +207,6 @@ pub fn run() {
             commands::git::git_remote_url,
             commands::git::git_branches,
             commands::git::git_tags,
-            // GitHub commands
-            commands::github::github_get_token_status,
-            commands::github::github_get_repo_info,
-            commands::github::github_list_prs,
-            commands::github::github_create_pr,
-            commands::github::github_get_pr_reviews,
-            commands::github::github_list_issues,
-            commands::github::github_create_issue,
-            commands::github::github_list_check_runs,
-            commands::github::github_list_releases,
-            commands::github::github_list_repo_notifications,
-            commands::github::github_import_gh_token,
-            commands::github::github_save_token,
-            commands::github::github_remove_token,
             // Notification commands
             commands::notifications::get_notifications,
             commands::notifications::get_unread_notification_count,
@@ -298,8 +283,6 @@ pub fn run() {
             commands::gsd2::gsd2_headless_query,
             commands::gsd2::gsd2_headless_get_session,
             commands::gsd2::gsd2_headless_unregister,
-            commands::gsd2::gsd2_check_auto_lock,
-            commands::gsd2::gsd2_force_clear_auto_lock,
             commands::gsd2::gsd2_headless_start,
             commands::gsd2::gsd2_headless_stop,
             commands::gsd2::gsd2_get_inspect,
@@ -316,15 +299,10 @@ pub fn run() {
             commands::gsd2::force_close_all,
             commands::gsd2::gsd2_doctor,
             commands::gsd2::gsd2_list_sessions,
-            commands::gsd2::gsd2_get_session_detail,
-            commands::gsd2::gsd2_rename_session,
-            commands::gsd2::gsd2_delete_session,
             commands::gsd2::gsd2_list_models,
             commands::gsd2::gsd2_merge_worktree,
             commands::gsd2::gsd2_clean_worktrees,
             commands::gsd2::gsd2_headless_start_with_model,
-            commands::gsd2::gsd2_headless_save_session,
-            commands::gsd2::gsd2_headless_load_last_session,
             commands::gsd2::gsd2_get_doctor_report,
             commands::gsd2::gsd2_apply_doctor_fixes,
             commands::gsd2::gsd2_get_forensics_report,
@@ -334,10 +312,6 @@ pub fn run() {
             commands::gsd2::gsd2_resolve_capture,
             commands::gsd2::gsd2_generate_html_report,
             commands::gsd2::gsd2_get_reports_index,
-            commands::gsd2::gsd2_get_preferences,
-            commands::gsd2::gsd2_save_preferences,
-            commands::gsd2::gsd2_get_global_preferences,
-            commands::gsd2::gsd2_save_global_preferences,
             // Secrets / OS keychain commands
             commands::secrets::set_secret,
             commands::secrets::get_secret,
@@ -351,7 +325,7 @@ pub fn run() {
             commands::templates::scaffold_project,
         ])
         .run(tauri::generate_context!())
-        .expect("error while running GSD Vibe");
+        .expect("error while running GSD VibeFlow");
 }
 
 #[cfg(test)]

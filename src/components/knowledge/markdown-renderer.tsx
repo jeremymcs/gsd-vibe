@@ -1,4 +1,4 @@
-// GSD Vibe - Markdown Renderer Component
+// GSD VibeFlow - Markdown Renderer Component
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { Children } from 'react';

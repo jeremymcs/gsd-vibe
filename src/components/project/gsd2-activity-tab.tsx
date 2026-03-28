@@ -1,16 +1,37 @@
-// GSD Vibe - GSD-2 Activity Tab
+// GSD VibeFlow - GSD-2 Activity Tab
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { Activity } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { ViewEmpty } from '@/components/shared/loading-states';
 import { useGsd2History } from '@/lib/queries';
 import { formatCost, formatTokenCount, formatDuration } from '@/lib/utils';
-import { phaseBadgeClass, classifyPhase, HistorySummaryCards } from './gsd2-shared';
 
 interface Gsd2ActivityTabProps {
   projectId: string;
   projectPath: string;
+}
+
+function phaseBadgeClass(phase: string): string {
+  switch (phase) {
+    case 'execution':   return 'bg-status-success/15 text-status-success border-status-success/30';
+    case 'completion':  return 'bg-status-info/15 text-status-info border-status-info/30';
+    case 'planning':    return 'bg-status-warning/15 text-status-warning border-status-warning/30';
+    case 'research':    return 'bg-primary/15 text-primary border-primary/30';
+    case 'reassessment': return 'bg-muted text-muted-foreground border-border';
+    default:            return 'bg-muted text-muted-foreground border-border';
+  }
+}
+
+function classifyPhase(unitType: string): string {
+  if (unitType.startsWith('research-')) return 'research';
+  if (unitType.startsWith('plan-') || unitType === 'plan-milestone' || unitType === 'plan-slice' || unitType === 'plan-task') return 'planning';
+  if (unitType === 'execute-task') return 'execution';
+  if (unitType.startsWith('complete-') || unitType === 'complete-milestone') return 'completion';
+  if (unitType === 'reassess-roadmap') return 'reassessment';
+  return 'execution';
 }
 
 export function Gsd2ActivityTab({ projectId }: Gsd2ActivityTabProps) {
@@ -20,13 +41,9 @@ export function Gsd2ActivityTab({ projectId }: Gsd2ActivityTabProps) {
     return (
       <div className="p-4 space-y-3">
         <div className="grid grid-cols-4 gap-3">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-16 rounded-md bg-muted/40 animate-pulse" />
-          ))}
+          {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-16" />)}
         </div>
-        {Array.from({ length: 8 }).map((_, i) => (
-          <div key={i} className="h-10 w-full rounded-md bg-muted/40 animate-pulse" />
-        ))}
+        {Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
       </div>
     );
   }
@@ -55,8 +72,31 @@ export function Gsd2ActivityTab({ projectId }: Gsd2ActivityTabProps) {
   return (
     <div className="flex h-full flex-col overflow-hidden">
       {/* Summary cards */}
-      <div className="p-3 pb-0 shrink-0">
-        <HistorySummaryCards totals={totals} responsive />
+      <div className="grid grid-cols-2 gap-2 p-3 pb-0 shrink-0 sm:grid-cols-4">
+        <Card className="py-2">
+          <CardContent className="p-3 text-center">
+            <p className="text-lg font-semibold tabular-nums">{formatCost(totals.total_cost)}</p>
+            <p className="text-[11px] text-muted-foreground">Total Cost</p>
+          </CardContent>
+        </Card>
+        <Card className="py-2">
+          <CardContent className="p-3 text-center">
+            <p className="text-lg font-semibold tabular-nums">{formatTokenCount(totals.total_tokens)}</p>
+            <p className="text-[11px] text-muted-foreground">Tokens</p>
+          </CardContent>
+        </Card>
+        <Card className="py-2">
+          <CardContent className="p-3 text-center">
+            <p className="text-lg font-semibold tabular-nums">{totals.units}</p>
+            <p className="text-[11px] text-muted-foreground">Units</p>
+          </CardContent>
+        </Card>
+        <Card className="py-2">
+          <CardContent className="p-3 text-center">
+            <p className="text-lg font-semibold tabular-nums">{formatDuration(totals.duration_ms)}</p>
+            <p className="text-[11px] text-muted-foreground">Duration</p>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Unit list */}

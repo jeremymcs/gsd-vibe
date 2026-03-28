@@ -1,4 +1,4 @@
-// GSD Vibe - Project Header Component (Slim)
+// GSD VibeFlow - Project Header Component (Slim)
 // Compact bar with tech stack badges and actions — no back arrow or project name (sidebar handles that)
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
@@ -22,7 +22,7 @@ interface ProjectHeaderProps {
 }
 
 export function ProjectHeader({ project, onDelete }: ProjectHeaderProps) {
-  const projectType = getProjectType(project.tech_stack, project.gsd_version);
+  const projectType = getProjectType(project.tech_stack);
   const typeConfig = projectTypeConfig[projectType];
 
   return (

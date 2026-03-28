@@ -1,4 +1,4 @@
-// GSD Vibe - Activity Feed Component
+// GSD VibeFlow - Activity Feed Component
 // Real-time activity timeline for project and execution events
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
@@ -9,7 +9,7 @@ import { useActivityLog } from '@/lib/queries';
 import { onActivityLogged } from '@/lib/tauri';
 import type { ActivityEntry } from '@/lib/tauri';
 import { queryKeys } from '@/lib/query-keys';
-import { formatRelativeTime, formatCost, cn } from '@/lib/utils';
+import { formatRelativeTime, cn } from '@/lib/utils';
 import {
   Flag,
   CheckSquare,
@@ -42,13 +42,13 @@ const eventTypeIcons: Record<string, typeof Activity> = {
 };
 
 const eventTypeColors: Record<string, string> = {
-  phase_started: 'text-status-info',
+  phase_started: 'text-gsd-cyan',
   phase_completed: 'text-status-success',
   task_started: 'text-muted-foreground',
   task_completed: 'text-status-success',
   context_warning: 'text-status-warning',
   cost_warning: 'text-status-warning',
-  decision_made: 'text-status-info',
+  decision_made: 'text-gsd-cyan',
   debug_started: 'text-status-warning',
   debug_resolved: 'text-status-success',
   error: 'text-status-error',
@@ -75,7 +75,7 @@ function ActivityItem({ entry }: { entry: ActivityEntry }) {
           </span>
           {cost != null && cost > 0 && (
             <span className="text-[10px] text-muted-foreground tabular-nums">
-              {formatCost(cost)}
+              ${cost.toFixed(4)}
             </span>
           )}
         </div>

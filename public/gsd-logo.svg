@@ -1,23 +1,17 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="200 700 1600 700" width="1600" height="700">
   <defs>
-    <linearGradient id="shard-light" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#22d3ee" />
-      <stop offset="100%" stop-color="#0ea5e9" />
-    </linearGradient>
-    <linearGradient id="shard-shadow" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#0891b2" />
-      <stop offset="100%" stop-color="#075985" />
-    </linearGradient>
-    <filter id="v-glow" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur stdDeviation="8" result="blur" />
-      <feComposite in="SourceGraphic" in2="blur" operator="over" />
-    </filter>
+    <style>
+      .logo { font-family: 'SF Mono', 'Fira Code', 'JetBrains Mono', 'Courier New', monospace; fill: #7dcfff; }
+    </style>
   </defs>
-  <rect width="512" height="512" rx="120" ry="120" fill="#020617" />
-  <g transform="translate(256, 265)">
-    <path d="M 0 150 L -140 -160 L -60 -160 L 0 0 Z" fill="url(#shard-shadow)" />
-    <path d="M 0 150 L 140 -160 L 60 -160 L 0 0 Z" fill="url(#shard-light)" filter="url(#v-glow)" />
-    <path d="M 0 150 L 140 -160 L 138 -158 L 2 150 Z" fill="#ffffff" fill-opacity="0.2" />
+
+  <!-- GSD ASCII Logo - centered -->
+  <g transform="translate(1000, 1000)">
+    <text class="logo" font-size="108" text-anchor="middle" y="-225" xml:space="preserve">  ██████╗ ███████╗██████╗ </text>
+    <text class="logo" font-size="108" text-anchor="middle" y="-105" xml:space="preserve"> ██╔════╝ ██╔════╝██╔══██╗</text>
+    <text class="logo" font-size="108" text-anchor="middle" y="15" xml:space="preserve"> ██║  ███╗███████╗██║  ██║</text>
+    <text class="logo" font-size="108" text-anchor="middle" y="135" xml:space="preserve"> ██║   ██║╚════██║██║  ██║</text>
+    <text class="logo" font-size="108" text-anchor="middle" y="255" xml:space="preserve"> ╚██████╔╝███████║██████╔╝</text>
+    <text class="logo" font-size="108" text-anchor="middle" y="375" xml:space="preserve">  ╚═════╝ ╚══════╝╚═════╝ </text>
   </g>
-  <rect x="220" y="440" width="72" height="6" rx="3" fill="#22d3ee" fill-opacity="0.3" />
 </svg>

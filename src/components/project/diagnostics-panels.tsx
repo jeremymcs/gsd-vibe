@@ -1,4 +1,4 @@
-// GSD Vibe - Diagnostics Panel Components
+// GSD VibeFlow - Diagnostics Panel Components
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import {
@@ -197,7 +197,7 @@ export function ForensicsPanel({
     useGsd2ForensicsReport(projectId);
 
   return (
-    <div className="space-y-4 p-4" data-testid="diagnostics-forensics">
+    <div className="space-y-4" data-testid="diagnostics-forensics">
       <DiagHeader
         title="Forensic Analysis"
         subtitle={data ? new Date(data.timestamp).toLocaleString() : null}
@@ -404,7 +404,7 @@ export function DoctorPanel({
   const fixableCount = data?.summary.fixable ?? 0;
 
   return (
-    <div className="space-y-4 p-4" data-testid="diagnostics-doctor">
+    <div className="space-y-4" data-testid="diagnostics-doctor">
       <DiagHeader
         title="Doctor Health Check"
         status={
@@ -581,7 +581,7 @@ export function SkillHealthPanel({
   const { data, error, isFetching, refetch } = useGsd2SkillHealth(projectId);
 
   return (
-    <div className="space-y-4 p-4" data-testid="diagnostics-skill-health">
+    <div className="space-y-4" data-testid="diagnostics-skill-health">
       <DiagHeader
         title="Skill Health"
         subtitle={

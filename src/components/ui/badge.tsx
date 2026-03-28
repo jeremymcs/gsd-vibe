@@ -1,4 +1,4 @@
-// GSD Vibe - Badge Component
+// GSD VibeFlow - Badge Component
 // Enhanced with brand colors and status variants
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
@@ -30,6 +30,9 @@ const badgeVariants = cva(
           "border-status-info/30 bg-status-info/10 text-status-info",
         pending:
           "border-status-pending/30 bg-status-pending/10 text-status-pending",
+        // Subtle variant
+        "subtle-cyan":
+          "border-gsd-cyan/20 bg-gsd-cyan/10 text-gsd-cyan",
       },
       size: {
         default: "px-2.5 py-0.5 text-xs",

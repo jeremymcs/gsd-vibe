@@ -1,4 +1,4 @@
-// GSD Vibe - Dependencies Tab Component
+// GSD VibeFlow - Dependencies Tab Component
 // Package dependency analysis and vulnerability detection for project page tab context
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
@@ -29,6 +29,7 @@ import {
 } from '@/lib/utils';
 import {
   Package,
+  Box,
   AlertTriangle,
   ShieldAlert,
   Clock,
@@ -38,17 +39,112 @@ import {
   ExternalLink,
   CheckCircle2,
   ShieldCheck,
-  Terminal,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import {
-  PackageManagerIcon,
-  severityBadgeVariant,
-  parseOutdatedPackages,
-  parseVulnerablePackages,
-  type OutdatedEntry,
-  type AuditVulnerability,
-} from '@/lib/dependency-utils';
+
+interface OutdatedEntry {
+  current: string;
+  wanted: string;
+  latest: string;
+}
+
+interface AuditVulnerability {
+  severity: string;
+  title?: string;
+  url?: string;
+  range?: string;
+  via?: unknown[];
+}
+
+function parseOutdatedPackages(
+  details: Record<string, unknown> | null
+): [string, OutdatedEntry][] {
+  if (!details || typeof details !== 'object') return [];
+  let resolved = details;
+  if (typeof resolved === 'string') {
+    try {
+      resolved = JSON.parse(resolved) as Record<string, unknown>;
+    } catch {
+      return [];
+    }
+  }
+  let outdated = resolved.outdated as Record<string, OutdatedEntry> | undefined;
+  if (typeof outdated === 'string') {
+    try {
+      outdated = JSON.parse(outdated) as Record<string, OutdatedEntry>;
+    } catch {
+      outdated = undefined;
+    }
+  }
+  if (!outdated || typeof outdated !== 'object' || Array.isArray(outdated)) {
+    const firstValue = Object.values(resolved)[0];
+    if (
+      firstValue &&
+      typeof firstValue === 'object' &&
+      firstValue !== null &&
+      'current' in firstValue
+    ) {
+      outdated = resolved as unknown as Record<string, OutdatedEntry>;
+    } else {
+      return [];
+    }
+  }
+  return Object.entries(outdated)
+    .filter(([, v]) => v && typeof v === 'object' && 'current' in v)
+    .sort(([a], [b]) => a.localeCompare(b));
+}
+
+function parseVulnerablePackages(
+  details: Record<string, unknown> | null
+): [string, AuditVulnerability][] {
+  if (!details) return [];
+  const audit = details.audit as Record<string, unknown> | undefined;
+  if (!audit) return [];
+  const vulns = audit.vulnerabilities as
+    | Record<string, AuditVulnerability>
+    | undefined;
+  if (!vulns || typeof vulns !== 'object') return [];
+  return Object.entries(vulns)
+    .filter(([, v]) => v.severity && v.severity !== 'info')
+    .sort(([, a], [, b]) => {
+      const order: Record<string, number> = {
+        critical: 0,
+        high: 1,
+        moderate: 2,
+        low: 3,
+      };
+      return (order[a.severity] ?? 4) - (order[b.severity] ?? 4);
+    });
+}
+
+function severityBadgeVariant(
+  severity: string
+): 'error' | 'warning' | 'secondary' {
+  switch (severity.toLowerCase()) {
+    case 'critical':
+    case 'high':
+      return 'error';
+    case 'moderate':
+      return 'warning';
+    default:
+      return 'secondary';
+  }
+}
+
+function PackageManagerIcon({
+  pm,
+  className,
+}: {
+  pm: string;
+  className?: string;
+}) {
+  switch (pm.toLowerCase()) {
+    case 'cargo':
+      return <Box className={className} />;
+    default:
+      return <Package className={className} />;
+  }
+}
 
 function computeHealthScore(outdated: number): number {
   if (outdated === 0) return 100;
@@ -206,108 +302,6 @@ function VulnerabilityTable({
         </div>
       ))}
     </ScrollArea>
-  );
-}
-
-interface RequiredTool {
-  name: string;
-  url: string;
-  description: string;
-  install: string;
-  optional?: boolean;
-}
-
-const TOOLS_BY_PM: Record<string, RequiredTool[]> = {
-  npm: [
-    { name: 'Node.js / npm', url: 'https://nodejs.org/', description: 'JavaScript runtime and package manager', install: 'brew install node' },
-    { name: 'git', url: 'https://git-scm.com/', description: 'Version control', install: 'brew install git' },
-    { name: 'gsd', url: 'https://gsd.build/', description: 'GSD CLI — auto-mode, diagnostics, model listing', install: 'npm install -g @gsd/cli' },
-    { name: 'tmux', url: 'https://github.com/tmux/tmux', description: 'Persistent terminal sessions', install: 'brew install tmux', optional: true },
-    { name: 'gh', url: 'https://cli.github.com/', description: 'GitHub CLI — auto PR on milestone merge', install: 'brew install gh', optional: true },
-  ],
-  cargo: [
-    { name: 'Rust / cargo', url: 'https://rustup.rs/', description: 'Rust toolchain and package manager', install: 'curl --proto \'=https\' --tlsv1.2 -sSf https://sh.rustup.rs | sh' },
-    { name: 'cargo-audit', url: 'https://crates.io/crates/cargo-audit', description: 'Security audits for Rust dependencies', install: 'cargo install cargo-audit', optional: true },
-    { name: 'git', url: 'https://git-scm.com/', description: 'Version control', install: 'brew install git' },
-    { name: 'gsd', url: 'https://gsd.build/', description: 'GSD CLI — auto-mode, diagnostics, model listing', install: 'npm install -g @gsd/cli' },
-    { name: 'tmux', url: 'https://github.com/tmux/tmux', description: 'Persistent terminal sessions', install: 'brew install tmux', optional: true },
-  ],
-  pip: [
-    { name: 'Python / pip', url: 'https://www.python.org/', description: 'Python runtime and package manager', install: 'brew install python' },
-    { name: 'pip-audit', url: 'https://pypi.org/project/pip-audit/', description: 'Security audits for Python dependencies', install: 'pip install pip-audit', optional: true },
-    { name: 'git', url: 'https://git-scm.com/', description: 'Version control', install: 'brew install git' },
-    { name: 'gsd', url: 'https://gsd.build/', description: 'GSD CLI — auto-mode, diagnostics, model listing', install: 'npm install -g @gsd/cli' },
-    { name: 'tmux', url: 'https://github.com/tmux/tmux', description: 'Persistent terminal sessions', install: 'brew install tmux', optional: true },
-  ],
-};
-
-// Fallback for unknown package managers
-const COMMON_TOOLS: RequiredTool[] = [
-  { name: 'git', url: 'https://git-scm.com/', description: 'Version control', install: 'brew install git' },
-  { name: 'gsd', url: 'https://gsd.build/', description: 'GSD CLI — auto-mode, diagnostics, model listing', install: 'npm install -g @gsd/cli' },
-  { name: 'tmux', url: 'https://github.com/tmux/tmux', description: 'Persistent terminal sessions', install: 'brew install tmux', optional: true },
-  { name: 'gh', url: 'https://cli.github.com/', description: 'GitHub CLI — auto PR on milestone merge', install: 'brew install gh', optional: true },
-];
-
-function RequiredToolsCard({ packageManager }: { packageManager: string }) {
-  const tools = TOOLS_BY_PM[packageManager.toLowerCase()] ?? COMMON_TOOLS;
-  const required = tools.filter(t => !t.optional);
-  const optional = tools.filter(t => t.optional);
-
-  return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-sm font-medium flex items-center gap-2">
-          <Terminal className="h-4 w-4 text-muted-foreground" />
-          Required Tools
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="pt-0 space-y-3">
-        <div className="space-y-1.5">
-          {required.map(tool => (
-            <div key={tool.name} className="flex items-center justify-between gap-3 py-1.5 border-b border-border/50 last:border-0">
-              <div className="min-w-0">
-                <a href={tool.url} target="_blank" rel="noopener noreferrer"
-                  className="text-xs font-semibold text-foreground hover:text-primary transition-colors inline-flex items-center gap-1">
-                  {tool.name}
-                  <ExternalLink className="h-2.5 w-2.5 opacity-50" />
-                </a>
-                <p className="text-[10px] text-muted-foreground truncate">{tool.description}</p>
-              </div>
-              <code className="shrink-0 text-[10px] bg-muted border border-border rounded px-2 py-0.5 font-mono text-muted-foreground whitespace-nowrap">
-                {tool.install}
-              </code>
-            </div>
-          ))}
-        </div>
-        {optional.length > 0 && (
-          <details className="group">
-            <summary className="text-[10px] text-muted-foreground cursor-pointer hover:text-foreground transition-colors select-none list-none flex items-center gap-1">
-              <span className="group-open:hidden">▶</span>
-              <span className="hidden group-open:inline">▼</span>
-              {optional.length} optional tool{optional.length !== 1 ? 's' : ''}
-            </summary>
-            <div className="mt-2 space-y-1.5">
-              {optional.map(tool => (
-                <div key={tool.name} className="flex items-center justify-between gap-3 py-1.5 border-b border-border/50 last:border-0 opacity-70">
-                  <div className="min-w-0">
-                    <a href={tool.url} target="_blank" rel="noopener noreferrer"
-                      className="text-xs font-medium text-foreground hover:text-primary transition-colors inline-flex items-center gap-1">
-                      {tool.name}
-                      <ExternalLink className="h-2.5 w-2.5 opacity-50" />
-                    </a>
-                    <p className="text-[10px] text-muted-foreground truncate">{tool.description}</p>
-                  </div>
-                  <code className="shrink-0 text-[10px] bg-muted border border-border rounded px-2 py-0.5 font-mono text-muted-foreground whitespace-nowrap">
-                    {tool.install}
-                  </code>
-                </div>
-              ))}
-            </div>
-          </details>
-        )}
-      </CardContent>
-    </Card>
   );
 }
 
@@ -545,9 +539,6 @@ export function DependenciesTab({
           </CardContent>
         </Card>
       </div>
-
-      {/* Required Tools */}
-      <RequiredToolsCard packageManager={status.package_manager} />
 
       {/* Search + Refresh toolbar */}
       <div className="flex items-center gap-3">

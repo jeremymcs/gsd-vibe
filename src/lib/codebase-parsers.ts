@@ -1,4 +1,4 @@
-// GSD Vibe - Codebase Document Parsers
+// GSD VibeFlow - Codebase Document Parsers
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 export interface ConcernCategory {

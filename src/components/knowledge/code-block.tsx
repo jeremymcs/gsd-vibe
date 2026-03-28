@@ -1,4 +1,4 @@
-// GSD Vibe - Code Block Component
+// GSD VibeFlow - Code Block Component
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { useState } from "react";

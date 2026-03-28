@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "GSD Vibe",
+  "productName": "GSD VibeFlow",
   "identifier": "io.gsd.vibeflow",
   "version": "0.1.1",
   "build": {
@@ -13,7 +13,7 @@
     "withGlobalTauri": true,
     "windows": [
       {
-        "title": "GSD Vibe",
+        "title": "GSD VibeFlow",
         "width": 1200,
         "height": 800,
         "minWidth": 900,

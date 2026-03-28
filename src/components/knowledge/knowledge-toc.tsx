@@ -1,4 +1,4 @@
-// GSD Vibe - Knowledge Table of Contents Sidebar (KN-07)
+// GSD VibeFlow - Knowledge Table of Contents Sidebar (KN-07)
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { useState, useEffect, useMemo, useCallback } from 'react';

@@ -1,4 +1,4 @@
-// GSD Vibe - PTY Chat Parser
+// GSD VibeFlow - PTY Chat Parser
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 /**
@@ -89,8 +89,6 @@ type Unsubscribe = () => void
  * - Bare \r at line start (overwrite pattern) → normalised to \n
  */
 export function stripAnsi(s: string): string {
-  // Charset designators: ESC ( X, ESC ) X, ESC * X, ESC + X (3-char sequences)
-  s = s.replace(/\x1b[()*.+][A-Z0-9<>]/gi, "")
   // OSC: \x1b] ... (\x07 or \x1b\)
    
   s = s.replace(/\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)/g, "")
@@ -192,9 +190,6 @@ const CHECKBOX_SELECTED_RE = /^\s{0,4}›\s+\[([x ])\]\s+(.+)/i
 
 /** Matches a GSD separator bar line: all ─ characters */
 const BAR_LINE_RE = /^[─━─\-─]+$/
-
-/** Matches tmux status bar lines: start with ── and contain hostname-like text */
-const TMUX_STATUS_RE = /^[─━\-─]+\s*\d+\s+\S+/
 
 /**
  * Matches @clack/prompts password prompt lines:
@@ -424,11 +419,6 @@ export class PtyChatParser {
       if (this._activeMessage?.role === "assistant") {
         this._appendToActive("\n")
       }
-      return
-    }
-
-    // ── tmux status bar lines — terminal noise, skip entirely ───────────────
-    if (TMUX_STATUS_RE.test(trimmed)) {
       return
     }
 

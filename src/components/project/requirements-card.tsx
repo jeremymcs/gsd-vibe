@@ -1,4 +1,4 @@
-// GSD Vibe - Requirements Coverage Card
+// GSD VibeFlow - Requirements Coverage Card
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { Link } from 'react-router-dom';
