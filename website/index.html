@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<!-- GSD Vibe - Marketing Website -->
+<!-- Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net> -->
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GSD Vibe - Desktop App</title>
+  <meta name="description" content="The native desktop companion for the GSD workflow. Manage projects, monitor GSD-2 roadmaps, visualize progress, integrated terminal, git operations, knowledge base, and more. Built with Tauri + Rust.">
+  <meta name="theme-color" content="#000000">
+
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.ico" sizes="48x48">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="GSD Vibe - Desktop App">
+  <meta property="og:description" content="The native desktop companion for the GSD workflow. Manage projects, monitor GSD-2 roadmaps, visualize progress, integrated terminal, git operations, and more.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://gsdvibe.com">
+  <link rel="canonical" href="https://gsdvibe.com">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['DM Sans', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#e8f9ff',
+              100: '#c7f0ff',
+              200: '#a0e5ff',
+              300: '#7ccfff',
+              400: '#7ccfff',
+              500: '#7ccfff',
+              600: '#4db8f5',
+              700: '#239fe0',
+              800: '#0d80bb',
+              900: '#035f8e',
+            },
+          },
+        },
+      },
+    }
+  </script>
+
+  <style>
+    /* Screenshot version badges */
+    .screenshot-wrapper {
+      position: relative;
+    }
+    .version-badge {
+      position: absolute;
+      top: 0.75rem;
+      right: 0.75rem;
+      padding: 0.25rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      z-index: 10;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    }
+    .badge-gsd1 {
+      background: rgba(251,146,60,0.85);
+      color: #000;
+      border: 1px solid rgba(251,146,60,0.6);
+    }
+    .badge-gsd2 {
+      background: rgba(124,207,255,0.85);
+      color: #000;
+      border: 1px solid rgba(124,207,255,0.6);
+    }
+    /* Custom styles that Tailwind can't do inline */
+    .gradient-text {
+      background: linear-gradient(135deg, #7ccfff 0%, #a0e5ff 50%, #ffffff 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .gradient-border {
+      background: linear-gradient(135deg, #7ccfff, #a0e5ff);
+      padding: 1px;
+    }
+    .gradient-border > * {
+      background: #000000;
+    }
+    .hero-glow {
+      background: radial-gradient(circle at 50% 0%, rgba(124,207,255,0.08), transparent 70%);
+    }
+    .card-glow:hover {
+      box-shadow: 0 0 40px -12px rgba(124,207,255,0.2);
+    }
+    .feature-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .feature-card:hover {
+      border-color: rgba(124,207,255,0.3);
+      background: rgba(255,255,255,0.05);
+    }
+    .screenshot-mock {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    /* Lightbox */
+    .lightbox-trigger { cursor: zoom-in; }
+    .lightbox-overlay {
+      position: fixed; inset: 0; z-index: 9999;
+      background: rgba(0,0,0,0.9); backdrop-filter: blur(8px);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity 0.25s ease;
+      cursor: zoom-out; padding: 2rem;
+    }
+    .lightbox-overlay.active { opacity: 1; pointer-events: auto; }
+    .lightbox-overlay img {
+      max-width: 95vw; max-height: 92vh; width: auto; height: auto;
+      border-radius: 0.75rem; border: 1px solid rgba(255,255,255,0.1);
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+      transform: scale(0.95); transition: transform 0.25s ease;
+    }
+    .lightbox-overlay.active img { transform: scale(1); }
+    .lightbox-close {
+      position: absolute; top: 1.5rem; right: 1.5rem;
+      width: 2.5rem; height: 2.5rem; border-radius: 9999px;
+      background: rgba(20,20,20,0.9); border: 1px solid rgba(255,255,255,0.15);
+      color: #94a3b8; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: all 0.15s ease; font-size: 1.25rem;
+    }
+    .lightbox-close:hover { background: rgba(51,65,85,0.9); color: white; }
+    .terminal-line::before {
+      content: '$ ';
+      color: #22c55e;
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+    }
+    .float-animation {
+      animation: float 6s ease-in-out infinite;
+    }
+    @keyframes pulse-glow {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 0.8; }
+    }
+    .pulse-glow {
+      animation: pulse-glow 3s ease-in-out infinite;
+    }
+    .grid-bg {
+      background-image:
+        linear-gradient(rgba(124,207,255,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(124,207,255,0.04) 1px, transparent 1px);
+      background-size: 64px 64px;
+    }
+    /* Smooth scrolling for the whole page */
+    html {
+      scroll-behavior: smooth;
+    }
+    /* Nav blur */
+    .nav-blur {
+      backdrop-filter: blur(16px) saturate(180%);
+      -webkit-backdrop-filter: blur(16px) saturate(180%);
+    }
+    /* Mockup window dots */
+    .window-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+  </style>
+</head>
+<body class="bg-black text-slate-200 font-sans antialiased">
+
+  <!-- Navigation -->
+  <nav class="fixed top-0 left-0 right-0 z-50 nav-blur bg-black/80 border-b border-white/[0.08]">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+      <a href="#" class="flex flex-col gap-0.5 group">
+        <img src="gsd-logo.svg" alt="GSD" class="h-6 w-auto opacity-90 group-hover:opacity-100 transition-opacity">
+        <span style="font-size:9px;letter-spacing:0.2em;" class="uppercase font-semibold text-slate-500 group-hover:text-slate-400 transition-colors tracking-widest pl-px">Vibe</span>
+      </a>
+      <div class="hidden md:flex items-center gap-8">
+        <a href="#features" class="text-sm text-slate-400 hover:text-white transition-colors">Features</a>
+        <a href="#workflow" class="text-sm text-slate-400 hover:text-white transition-colors">Workflow</a>
+        <a href="#terminal" class="text-sm text-slate-400 hover:text-white transition-colors">Terminal</a>
+        <a href="#privacy" class="text-sm text-slate-400 hover:text-white transition-colors">Privacy</a>
+        <a href="#download" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white text-black text-sm font-semibold hover:bg-gray-100 hover:-translate-y-px transition-all shadow-lg shadow-white/10">
+          Download
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+        </a>
+      </div>
+      <!-- Mobile menu button -->
+      <button id="mobile-menu-btn" class="md:hidden p-2 text-slate-400 hover:text-white">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+    </div>
+    <!-- Mobile menu -->
+    <div id="mobile-menu" class="hidden md:hidden border-t border-white/[0.08] px-6 py-4 space-y-3">
+      <a href="#features" class="block text-sm text-slate-400 hover:text-white py-2">Features</a>
+      <a href="#workflow" class="block text-sm text-slate-400 hover:text-white py-2">Workflow</a>
+      <a href="#terminal" class="block text-sm text-slate-400 hover:text-white py-2">Terminal</a>
+      <a href="#privacy" class="block text-sm text-slate-400 hover:text-white py-2">Privacy</a>
+      <a href="#download" class="block text-sm text-brand-400 hover:text-brand-300 py-2 font-semibold">Download</a>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="relative pt-32 pb-20 lg:pt-44 lg:pb-32 hero-glow overflow-hidden">
+    <!-- Background grid -->
+    <div class="absolute inset-0 grid-bg"></div>
+
+    <div class="relative max-w-7xl mx-auto px-6">
+      <div class="text-center max-w-4xl mx-auto">
+        <!-- Badge -->
+        <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/[0.1] bg-white/[0.05] text-sm text-slate-300 mb-8">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 pulse-glow"></span>
+          Built with Tauri &middot; Rust + React
+        </div>
+
+        <h1 class="text-5xl md:text-7xl lg:text-8xl font-black tracking-tight mb-6">
+          <span class="text-white">GSD</span><br>
+          <span class="gradient-text">Vibe.</span>
+        </h1>
+
+        <p class="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed">
+          The native desktop companion for the
+          <a href="https://gsd.build/" class="text-brand-300 hover:text-brand-200 underline underline-offset-2">GSD</a> workflow.
+          Full GSD-2 visualization, headless mode monitoring, integrated terminal,
+          git operations, knowledge base &mdash; all in one app.
+        </p>
+
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6">
+          <a href="https://github.com/jeremymcs/gsd-vibe/releases/download/v0.1.1/GSD.Vibe_0.1.1_aarch64.dmg" onclick="window.va && window.va('event', {name: 'download', data: {version: '0.1.1', platform: 'macos-aarch64'}})" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl bg-white text-black font-semibold text-lg hover:bg-gray-100 hover:-translate-y-px transition-all shadow-xl shadow-white/10">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+            Download for macOS
+          </a>
+          <a href="#features" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl border border-white/[0.12] text-slate-300 font-semibold text-lg hover:border-white/30 hover:text-white transition-all bg-white/[0.04]">
+            See Features
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </a>
+        </div>
+
+        <!-- Additional platform downloads -->
+        <div class="flex flex-wrap items-center justify-center gap-3 mb-16">
+          <a href="https://github.com/jeremymcs/gsd-vibe/releases/download/v0.1.1/GSD.Vibe_0.1.1_x64-setup.exe" onclick="window.va && window.va('event', {name: 'download', data: {version: '0.1.1', platform: 'windows-x64'}})" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-white/[0.12] text-slate-300 text-sm font-medium hover:border-white/30 hover:text-white transition-all bg-white/[0.04]">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/></svg>
+            Windows (.exe)
+          </a>
+          <a href="https://github.com/jeremymcs/gsd-vibe/releases/download/v0.1.1/GSD.Vibe_0.1.1_amd64.deb" onclick="window.va && window.va('event', {name: 'download', data: {version: '0.1.1', platform: 'linux-deb'}})" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-white/[0.12] text-slate-300 text-sm font-medium hover:border-white/30 hover:text-white transition-all bg-white/[0.04]">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12.504 0c-.155 0-.315.008-.48.021-4.226.333-3.105 4.807-3.17 6.298-.076 1.092-.3 1.953-1.05 3.02-.885 1.051-2.127 2.75-2.716 4.521-.278.832-.41 1.684-.287 2.489a.424.424 0 00-.11.135c-.26.268-.45.6-.663.839-.199.199-.485.267-.797.4-.313.136-.658.269-.864.68-.09.189-.136.394-.132.602 0 .199.027.4.055.536.058.399.116.728.04.97-.249.68-.28 1.145-.106 1.484.174.334.535.47.94.601.81.2 1.91.135 2.774.6.926.466 1.866.67 2.616.47.526-.116.97-.464 1.208-.946.587-.003 1.23-.269 2.26-.334.699-.058 1.574.267 2.577.2.025.134.063.198.114.333l.003.003c.391.778 1.113 1.368 1.884 1.43.868.07 1.723-.26 2.456-.594.733-.34 1.455-.78 2.28-.67.566.075 1.268-.281 1.583-.672.318-.401.395-.96.326-1.532-.135-1.08-.588-1.963-1.33-2.43-.313-.2-.458-.53-.78-.794-.16-.136-.36-.271-.52-.44-.19-.203-.28-.608-.373-.755-.027-.065-.049-.065-.064-.064-.108.023-.265.07-.27.267 0 .133.06.267.1.4.04.132.06.27.06.399 0 .1-.019.135-.04.202-.132 0-.267-.066-.4-.2-.268-.07-.4-.335-.6-.268-.168.136-.2.468-.066.601.266.268.668.535.867.67.466.334.862.662 1.26.865l.001.001c.063.039.18.142.26.26.131.2.196.465.254.733.06.268.08.535.086.732a2.17 2.17 0 01-.065.466c-.133.066-.267.2-.4.333-.133.067-.267.135-.33.267-.067.066-.135.2-.135.333 0 .066 0 .133.067.2.133.2.333.333.533.333.267.067.467 0 .667-.133s.4-.267.533-.467c.2-.333.267-.667.267-1.066.067-.534-.066-1-.133-1.534v-.066c.2-.534.133-1.134-.133-1.534-.134-.267-.334-.467-.534-.6-.067-.133-.2-.2-.2-.333a7.457 7.457 0 00-.066-.934c-.067-.333-.134-.733-.267-1.066-.267-.6-.667-1.134-1.2-1.467-.467-.333-.667-.667-1-1.066-.333-.4-.733-.867-.933-1.4-.267-.6-.4-1.267-.534-1.934-.067-.4-.2-.667-.333-1.066-.2-.667-.467-1.267-.467-2-.133-1.334.267-2.667 1-3.534.533-.6 1.267-1 2.067-1.134.8-.133 1.733 0 2.467.467.333.2.733.467.933.733.4.467.533.934.667 1.534.133.534.333 1.2.733 1.534.267.2.533.333.8.4.267.067.533.067.733.133.2.067.333.2.533.333.267.2.4.534.533.867.067.333.133.733.067 1.067a3.65 3.65 0 01-.267.933c-.333.667-.733 1.334-1.133 1.934-.4.667-.8 1.267-1.133 1.934-.4.6-.667 1.267-.8 2-.133.533-.2 1.133-.133 1.667.067.467.2.867.533 1.2.333.333.733.533 1.2.6.4.067.867 0 1.267-.133.4-.133.733-.333 1.067-.467.933-.467 1.733-1.133 2.533-1.8.267-.267.534-.534.734-.8.2-.267.4-.534.533-.867.133-.4.2-.8.2-1.2 0-.534-.067-1.067-.267-1.534-.4-1.066-1.2-1.866-2.133-2.4-.534-.333-.867-.733-1.134-1.2-.266-.467-.466-.934-.666-1.4-.2-.467-.4-.934-.6-1.334-.2-.4-.467-.733-.867-.933a8.33 8.33 0 00-1.8-.534c-.6-.133-1.2-.2-1.734-.333A8.565 8.565 0 0012.504 0z"/></svg>
+            Linux (.deb)
+          </a>
+          <a href="https://github.com/jeremymcs/gsd-vibe/releases/latest" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-white/[0.08] text-slate-500 text-sm hover:border-white/[0.15] hover:text-slate-400 transition-all">
+            All releases
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+          </a>
+        </div>
+
+        <!-- App mockup -->
+        <div class="relative max-w-5xl mx-auto float-animation">
+          <div class="rounded-xl overflow-hidden shadow-2xl shadow-black/50 border border-white/[0.1]">
+            <img src="screenshots/dashboard.png" alt="GSD Vibe - Dashboard showing project cards with progress bars, GSD status, and activity overview" class="w-full h-auto" loading="eager" />
+          </div>
+          <!-- Glow effect behind screenshot -->
+          <div class="absolute -inset-4 bg-gradient-to-r from-brand-400/10 via-brand-300/5 to-transparent rounded-2xl blur-3xl -z-10"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats Banner -->
+  <section class="border-y border-white/[0.08] bg-white/[0.02]">
+    <div class="max-w-7xl mx-auto px-6 py-12">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+        <div>
+          <div class="text-3xl md:text-4xl font-black text-white">176+</div>
+          <div class="text-sm text-slate-500 mt-1">Backend Commands</div>
+        </div>
+        <div>
+          <div class="text-3xl md:text-4xl font-black text-white">115+</div>
+          <div class="text-sm text-slate-500 mt-1">UI Components</div>
+        </div>
+        <div>
+          <div class="text-3xl md:text-4xl font-black text-white">0</div>
+          <div class="text-sm text-slate-500 mt-1">Cloud Dependencies</div>
+        </div>
+        <div>
+          <div class="text-3xl md:text-4xl font-black gradient-text font-black">100%</div>
+          <div class="text-sm text-slate-500 mt-1">Local & Private</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Grid -->
+  <section id="features" class="py-24 lg:py-32">
+    <div class="max-w-7xl mx-auto px-6">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl md:text-5xl font-black text-white mb-4">Everything you need.<br><span class="gradient-text">Nothing you don't.</span></h2>
+        <p class="text-lg text-slate-400 max-w-2xl mx-auto">The native companion for the <a href="https://gsd.build/" class="text-brand-300 hover:text-brand-200">GSD</a> workflow, with full GSD-2 feature parity. Built with Tauri for native performance.</p>
+      </div>
+
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+        <!-- Feature 1: Project Dashboard -->
+        <div class="feature-card rounded-xl p-6 transition-all duration-300 card-glow">
+          <div class="w-12 h-12 rounded-xl bg-brand-500/10 border border-brand-500/20 flex items-center justify-center mb-4">
+            <svg class="w-6 h-6 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+          </div>
+          <h3 class="text-lg font-bold text-white mb-2">Project Dashboard</h3>
+          <p class="text-sm text-slate-400 leading-relaxed">Grid or list view of all projects. Favorites, filters, search, GSD version badges, roadmap progress bars, git branch indicators, and tech stack detection.</p>
+        </div>
+
+        <!-- Feature 2: GSD-2 Workflow -->
+        <div class="feature-card rounded-xl p-6 transition-all duration-300 card-glow">
+          <div class="w-12 h-12 rounded-xl bg-brand-400/10 border border-brand-400/20 flex items-center justify-center mb-4">
+            <svg class="w-6 h-6 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+          </div>
+          <h3 class="text-lg font-bold text-white mb-2"><a href="https://gsd.build/" class="hover:text-brand-300 transition-colors">GSD-2 Integration</a></h3>
+          <p class="text-sm text-slate-400 leading-relaxed">Full <a href="https://gsd.build/" class="text-brand-300 hover:text-brand-200 underline underline-offset-2">GSD-2</a> feature parity. Auto-syncs your .planning/ directory &mdash; milestones, slices, tasks, plans, phases, research, UAT, validation, and debug sessions.</p>
+        </div>
+
+        <!-- Feature 3: GSD Visualizer -->
+        <div class="feature-card rounded-xl p-6 transition-all duration-300 card-glow">
+          <div class="w-12 h-12 rounded-xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center mb-4">
+            <svg class="w-6 h-6 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          </div>
+          <h3 class="text-lg font-bold text-white mb-2">GSD Visualizer</h3>
+          <p class="text-sm text-slate-400 leading-relaxed">7-tab visualization system: progress tree, dependency graph, metrics charts, execution timeline, agent activity, changelog, and data export.</p>
+        </div>
+
+        <!-- Feature 4: Headless Mode -->
+        <div class="feature-card rounded-xl p-6 transition-all duration-300 card-glow">
+          <div class="w-12 h-12 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center mb-4">
+            <svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          </div>
+          <h3 class="text-lg font-bold text-white mb-2">Headless Mode</h3>
+          <p class="text-sm text-slate-400 leading-relaxed">Monitor and control GSD autonomous execution from the UI. Track active sessions, execution state, next actions, and auto-mode progress in real time.</p>
+        </div>
+
+        <!-- Feature 5: Integrated Terminal -->
+        <div class="feature-card rounded-xl p-6 transition-all duration-300 card-glow">
+          <div class="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mb-4">
+            <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+          </div>
+          <h3 class="text-lg font-bold text-white mb-2">Integrated Terminal</h3>
+          <p class="text-sm text-slate-400 leading-relaxed">Full PTY terminal with multi-tab support, tmux persistence, broadcast mode, command snippets, and split-pane layout. Your shell, inside your project manager.</p>
+        </div>
+
+        <!-- Feature 6: Git Operations -->
+        <div class="feature-card rounded-xl p-6 transition-all duration-300 card-glow">
+          <div class="w-12 h-12 rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center mb-4">
+            <svg class="w-6 h-6 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+          </div>
+          <h3 class="text-lg font-bold text-white mb-2">Git Operations</h3>
+          <p class="text-sm text-slate-400 leading-relaxed">Branch management, staging, commits, push/pull, stash, diffs, commit history with file stats, and worktree management. Full git workflow without leaving the app.</p>
+        </div>
+
+        <!-- Feature 7: Knowledge Base -->
+        <div class="feature-card rounded-xl p-6 transition-all duration-300 card-glow">
+          <div class="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center mb-4">
+            <svg class="w-6 h-6 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+          </div>
+          <h3 class="text-lg font-bold text-white mb-2">Knowledge Base</h3>
+          <p class="text-sm text-slate-400 leading-relaxed">Browse project docs with rich markdown rendering, full-text search, bookmarks, file tree navigation, syntax highlighting, and auto-generated table of contents.</p>
+        </div>
+
+        <!-- Feature 8: Global Search -->
+        <div class="feature-card rounded-xl p-6 transition-all duration-300 card-glow">
+          <div class="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mb-4">
+            <svg class="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          </div>
+          <h3 class="text-lg font-bold text-white mb-2">Global Search</h3>
+          <p class="text-sm text-slate-400 leading-relaxed">Search across projects, phases, decisions, and knowledge base from one place. Command palette for keyboard-driven navigation to any view instantly.</p>
+        </div>
+
+        <!-- Feature 9: Cross-Project Todos -->
+        <div class="feature-card rounded-xl p-6 transition-all duration-300 card-glow">
+          <div class="w-12 h-12 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center mb-4">
+            <svg class="w-6 h-6 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </div>
+          <h3 class="text-lg font-bold text-white mb-2">Cross-Project Todos</h3>
+          <p class="text-sm text-slate-400 leading-relaxed">Aggregate todos across all <a href="https://gsd.build/" class="text-rose-300 hover:text-rose-200">GSD</a> projects in one view. Filter by priority, blockers, status. Track critical items at a glance.</p>
+        </div>
+
+        <!-- Feature 10: Secrets & Security -->
+        <div class="feature-card rounded-xl p-6 transition-all duration-300 card-glow">
+          <div class="w-12 h-12 rounded-xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center mb-4">
+            <svg class="w-6 h-6 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+          </div>
+          <h3 class="text-lg font-bold text-white mb-2">Secrets Management</h3>
+          <p class="text-sm text-slate-400 leading-relaxed">Store API keys and secrets in your OS keychain &mdash; not in config files. Encrypted by macOS Keychain, Windows Credential Store, or Linux Secret Service.</p>
+        </div>
+
+        <!-- Feature 11: Smart Notifications -->
+        <div class="feature-card rounded-xl p-6 transition-all duration-300 card-glow">
+          <div class="w-12 h-12 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mb-4">
+            <svg class="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+          </div>
+          <h3 class="text-lg font-bold text-white mb-2">Smart Notifications</h3>
+          <p class="text-sm text-slate-400 leading-relaxed">Get notified on phase completions, test failures, cost warnings, and blockers. Filter by type, mark as read, and never miss important events.</p>
+        </div>
+
+        <!-- Feature 12: Codebase Health -->
+        <div class="feature-card rounded-xl p-6 transition-all duration-300 card-glow">
+          <div class="w-12 h-12 rounded-xl bg-lime-500/10 border border-lime-500/20 flex items-center justify-center mb-4">
+            <svg class="w-6 h-6 text-lime-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+          </div>
+          <h3 class="text-lg font-bold text-white mb-2">Codebase Health</h3>
+          <p class="text-sm text-slate-400 leading-relaxed">Health widget with doctor checks, dependency auditing, codebase scanner with grades, priority actions, and gap analysis across security, performance, and tests.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- GSD Workflow Section -->
+  <section id="workflow" class="py-24 lg:py-32 bg-white/[0.02] border-y border-white/[0.06]">
+    <div class="max-w-7xl mx-auto px-6">
+      <div class="grid lg:grid-cols-2 gap-16 items-center">
+        <div>
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-400/10 border border-brand-400/20 text-sm text-brand-300 mb-6">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            GSD Integration
+          </div>
+          <h2 class="text-3xl md:text-5xl font-black text-white mb-6">Full GSD-2<br><span class="gradient-text">feature parity.</span></h2>
+          <p class="text-lg text-slate-400 mb-8 leading-relaxed">
+            GSD Vibe natively understands the <a href="https://gsd.build/" class="text-brand-300 hover:text-brand-200 underline underline-offset-2">GSD</a> workflow.
+            It watches your <code class="text-sm font-mono bg-white/[0.08] px-2 py-0.5 rounded text-brand-300">.planning/</code> directory
+            and syncs everything in real time &mdash; including GSD-2's milestones, slices, and tasks.
+          </p>
+
+          <div class="space-y-4">
+            <div class="flex items-start gap-4">
+              <div class="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+              </div>
+              <div>
+                <h4 class="text-sm font-semibold text-white">Milestones, Slices & Tasks</h4>
+                <p class="text-sm text-slate-500">Full GSD-2 hierarchy. Browse milestones, expand slices with risk badges and dependencies, drill into individual tasks with estimates and critical path status.</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-4">
+              <div class="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+              </div>
+              <div>
+                <h4 class="text-sm font-semibold text-white">7-Tab Visualizer</h4>
+                <p class="text-sm text-slate-500">Progress tree, dependency graph, metrics charts, execution timeline, agent activity monitoring, changelog, and data export &mdash; all in one view.</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-4">
+              <div class="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+              </div>
+              <div>
+                <h4 class="text-sm font-semibold text-white">Headless Mode Monitoring</h4>
+                <p class="text-sm text-slate-500">Watch GSD autonomous execution in real time. Session management, execution state, next actions, and auto-mode controls from the UI.</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-4">
+              <div class="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+              </div>
+              <div>
+                <h4 class="text-sm font-semibold text-white">Worktrees & Health</h4>
+                <p class="text-sm text-slate-500">Manage git worktrees per project. Health widget with doctor checks, budget tracking, blocker alerts, and velocity analysis.</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-4">
+              <div class="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+              </div>
+              <div>
+                <h4 class="text-sm font-semibold text-white">UAT, Validation & Debug</h4>
+                <p class="text-sm text-slate-500">User acceptance testing results, per-task validation maps with wave tracking, and persistent debug sessions with error types and resolution notes.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- GSD screenshot -->
+        <div class="rounded-xl overflow-hidden shadow-2xl border border-white/[0.1]">
+          <img src="screenshots/project-detail.png" alt="GSD Vibe - Project detail with GSD-2 milestones, slices, tasks, visualizer, headless mode, and worktrees" class="w-full h-auto" loading="lazy" />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Terminal Section -->
+  <section id="terminal" class="py-24 lg:py-32">
+    <div class="max-w-7xl mx-auto px-6">
+      <div class="grid lg:grid-cols-2 gap-16 items-center">
+        <!-- Terminal mockup -->
+        <div class="order-2 lg:order-1">
+          <div class="screenshot-mock rounded-xl overflow-hidden shadow-2xl">
+            <div class="flex items-center gap-2 px-4 py-3 bg-white/[0.06] border-b border-white/[0.1]">
+              <div class="window-dot bg-red-500/80"></div>
+              <div class="window-dot bg-yellow-500/80"></div>
+              <div class="window-dot bg-green-500/80"></div>
+              <div class="flex gap-1 ml-4">
+                <span class="px-3 py-1 rounded-md bg-brand-500/20 text-[10px] text-brand-300 font-medium">Shell 1</span>
+                <span class="px-3 py-1 rounded-md text-[10px] text-slate-500">Shell 2</span>
+                <span class="px-3 py-1 rounded-md text-[10px] text-slate-500">Build</span>
+                <span class="w-5 h-5 rounded flex items-center justify-center text-slate-600 text-xs">+</span>
+              </div>
+            </div>
+            <div class="p-5 font-mono text-sm space-y-1">
+              <div class="text-slate-500">~/projects/saas-dashboard</div>
+              <div class="terminal-line text-slate-300">pnpm dev</div>
+              <div class="text-slate-500 mt-2">  <span class="text-brand-400">VITE</span> v5.4.2 ready in <span class="text-emerald-400">342ms</span></div>
+              <div class="text-slate-500 mt-1">  <span class="text-cyan-400">&#10132;</span>  Local:   <span class="text-brand-400">http://localhost:3000/</span></div>
+              <div class="text-slate-500">  <span class="text-cyan-400">&#10132;</span>  Network: <span class="text-slate-600">http://192.168.1.42:3000/</span></div>
+              <div class="text-slate-600 mt-3">  press <span class="text-white">h + enter</span> to show help</div>
+              <div class="mt-4 text-slate-500">
+                <span class="text-emerald-400">&#10004;</span> Compiled successfully in 1.2s
+              </div>
+              <div class="text-slate-500">
+                <span class="text-amber-400">&#9888;</span>  1 warning (unused import in src/lib/utils.ts:4)
+              </div>
+              <div class="mt-3">
+                <span class="text-emerald-400">$</span> <span class="bg-slate-700 w-2 h-4 inline-block animate-pulse"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="order-1 lg:order-2">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-sm text-emerald-300 mb-6">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            Full PTY Terminal
+          </div>
+          <h2 class="text-3xl md:text-5xl font-black text-white mb-6">Your shell.<br><span class="gradient-text">Built right in.</span></h2>
+          <p class="text-lg text-slate-400 mb-8 leading-relaxed">
+            A real terminal emulator powered by xterm.js and native PTY sessions.
+            Not a toy &mdash; it's a full shell with tab completion, colors, and everything you'd expect.
+          </p>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div class="p-4 rounded-lg bg-white/[0.04] border border-white/[0.08]">
+              <h4 class="text-sm font-semibold text-white mb-1">Multi-Tab</h4>
+              <p class="text-xs text-slate-500">Unlimited terminal tabs per project with persistence.</p>
+            </div>
+            <div class="p-4 rounded-lg bg-white/[0.04] border border-white/[0.08]">
+              <h4 class="text-sm font-semibold text-white mb-1">tmux Support</h4>
+              <p class="text-xs text-slate-500">Optional tmux integration for persistent sessions.</p>
+            </div>
+            <div class="p-4 rounded-lg bg-white/[0.04] border border-white/[0.08]">
+              <h4 class="text-sm font-semibold text-white mb-1">Broadcast Mode</h4>
+              <p class="text-xs text-slate-500">Send commands to multiple tabs simultaneously.</p>
+            </div>
+            <div class="p-4 rounded-lg bg-white/[0.04] border border-white/[0.08]">
+              <h4 class="text-sm font-semibold text-white mb-1">Snippets</h4>
+              <p class="text-xs text-slate-500">Save and run frequently-used commands instantly.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Screenshot Gallery -->
+  <section class="py-24 lg:py-32 bg-white/[0.02] border-y border-white/[0.06]">
+    <div class="max-w-7xl mx-auto px-6">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl md:text-5xl font-black text-white mb-4">See it in action.</h2>
+        <p class="text-lg text-slate-400 max-w-2xl mx-auto">Real screenshots from the app &mdash; not mockups.</p>
+      </div>
+
+      <!-- GSD-1 vs GSD-2 Side-by-Side Comparison -->
+      <div class="mb-16">
+        <h3 class="text-xl font-bold text-white mb-2 text-center">GSD-1 vs GSD-2</h3>
+        <p class="text-sm text-slate-500 text-center mb-4">See how the app adapts to each GSD version. Different sidebar, different capabilities.</p>
+        <div class="flex items-center justify-center gap-4 mb-8">
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wide" style="background:rgba(251,146,60,0.85);color:#000;">GSD-1</span>
+          <span class="text-slate-600 text-sm">Phase-based workflow</span>
+          <span class="text-slate-700 mx-2">|</span>
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wide" style="background:rgba(124,207,255,0.85);color:#000;">GSD-2</span>
+          <span class="text-slate-600 text-sm">Milestone &rarr; Slice &rarr; Task hierarchy</span>
+        </div>
+
+        <!-- Pair 1: Main View -->
+        <div class="grid md:grid-cols-2 gap-6 max-w-6xl mx-auto mb-8">
+          <div class="space-y-3">
+            <div class="screenshot-wrapper rounded-xl overflow-hidden shadow-xl border border-white/[0.1]">
+              <span class="version-badge badge-gsd1">GSD-1</span>
+              <img src="screenshots/gsd-plans.png" alt="GSD-1 Plans view with phase-based plan tracking" class="w-full h-auto" loading="lazy" />
+            </div>
+            <p class="text-sm text-slate-500 text-center">Plans &amp; Summaries</p>
+          </div>
+          <div class="space-y-3">
+            <div class="screenshot-wrapper rounded-xl overflow-hidden shadow-xl border border-white/[0.1]">
+              <span class="version-badge badge-gsd2">GSD-2</span>
+              <img src="screenshots/gsd2-dashboard.png" alt="GSD-2 Dashboard with current unit, slice progress, and health widget" class="w-full h-auto" loading="lazy" />
+            </div>
+            <p class="text-sm text-slate-500 text-center">Dashboard &amp; Activity</p>
+          </div>
+        </div>
+
+        <!-- Pair 2: Milestones -->
+        <div class="grid md:grid-cols-2 gap-6 max-w-6xl mx-auto mb-8">
+          <div class="space-y-3">
+            <div class="screenshot-wrapper rounded-xl overflow-hidden shadow-xl border border-white/[0.1]">
+              <span class="version-badge badge-gsd1">GSD-1</span>
+              <img src="screenshots/gsd-milestones.png" alt="GSD-1 Milestones with version timeline and phase ranges" class="w-full h-auto" loading="lazy" />
+            </div>
+            <p class="text-sm text-slate-500 text-center">Milestone Timeline</p>
+          </div>
+          <div class="space-y-3">
+            <div class="screenshot-wrapper rounded-xl overflow-hidden shadow-xl border border-white/[0.1]">
+              <span class="version-badge badge-gsd2">GSD-2</span>
+              <img src="screenshots/gsd2-milestones.png" alt="GSD-2 Milestones with expandable hierarchy showing slices and tasks" class="w-full h-auto" loading="lazy" />
+            </div>
+            <p class="text-sm text-slate-500 text-center">Milestones &amp; Slices</p>
+          </div>
+        </div>
+
+        <!-- Pair 3: Validation / Visualizer -->
+        <div class="grid md:grid-cols-2 gap-6 max-w-6xl mx-auto mb-8">
+          <div class="space-y-3">
+            <div class="screenshot-wrapper rounded-xl overflow-hidden shadow-xl border border-white/[0.1]">
+              <span class="version-badge badge-gsd1">GSD-1</span>
+              <img src="screenshots/gsd-validation.png" alt="GSD-1 Validation with per-task verification map and wave tracking" class="w-full h-auto" loading="lazy" />
+            </div>
+            <p class="text-sm text-slate-500 text-center">Validation &amp; Test Map</p>
+          </div>
+          <div class="space-y-3">
+            <div class="screenshot-wrapper rounded-xl overflow-hidden shadow-xl border border-white/[0.1]">
+              <span class="version-badge badge-gsd2">GSD-2</span>
+              <img src="screenshots/gsd2-visualizer.png" alt="GSD-2 Visualizer with progress tree, dependency graph, and metrics" class="w-full h-auto" loading="lazy" />
+            </div>
+            <p class="text-sm text-slate-500 text-center">7-Tab Visualizer</p>
+          </div>
+        </div>
+
+        <!-- Pair 4: UAT / Health -->
+        <div class="grid md:grid-cols-2 gap-6 max-w-6xl mx-auto mb-8">
+          <div class="space-y-3">
+            <div class="screenshot-wrapper rounded-xl overflow-hidden shadow-xl border border-white/[0.1]">
+              <span class="version-badge badge-gsd1">GSD-1</span>
+              <img src="screenshots/gsd-uat.png" alt="GSD-1 UAT with test results and pass/issue/pending status" class="w-full h-auto" loading="lazy" />
+            </div>
+            <p class="text-sm text-slate-500 text-center">User Acceptance Testing</p>
+          </div>
+          <div class="space-y-3">
+            <div class="screenshot-wrapper rounded-xl overflow-hidden shadow-xl border border-white/[0.1]">
+              <span class="version-badge badge-gsd2">GSD-2</span>
+              <img src="screenshots/gsd2-health.png" alt="GSD-2 Health with budget tracking, doctor checks, and active milestone" class="w-full h-auto" loading="lazy" />
+            </div>
+            <p class="text-sm text-slate-500 text-center">Health Monitoring</p>
+          </div>
+        </div>
+
+        <!-- Pair 5: Debug / Headless -->
+        <div class="grid md:grid-cols-2 gap-6 max-w-6xl mx-auto mb-8">
+          <div class="space-y-3">
+            <div class="screenshot-wrapper rounded-xl overflow-hidden shadow-xl border border-white/[0.1]">
+              <span class="version-badge badge-gsd1">GSD-1</span>
+              <img src="screenshots/gsd-debug.png" alt="GSD-1 Debug sessions with error types and resolution notes" class="w-full h-auto" loading="lazy" />
+            </div>
+            <p class="text-sm text-slate-500 text-center">Debug Sessions</p>
+          </div>
+          <div class="space-y-3">
+            <div class="screenshot-wrapper rounded-xl overflow-hidden shadow-xl border border-white/[0.1]">
+              <span class="version-badge badge-gsd2">GSD-2</span>
+              <img src="screenshots/gsd2-headless.png" alt="GSD-2 Headless mode with execution state and session management" class="w-full h-auto" loading="lazy" />
+            </div>
+            <p class="text-sm text-slate-500 text-center">Headless Mode</p>
+          </div>
+        </div>
+
+        <!-- Pair 6: Context / Worktrees -->
+        <div class="grid md:grid-cols-2 gap-6 max-w-6xl mx-auto">
+          <div class="space-y-3">
+            <div class="screenshot-wrapper rounded-xl overflow-hidden shadow-xl border border-white/[0.1]">
+              <span class="version-badge badge-gsd1">GSD-1</span>
+              <img src="screenshots/gsd-context.png" alt="GSD-1 Context with architectural decisions and deferred ideas" class="w-full h-auto" loading="lazy" />
+            </div>
+            <p class="text-sm text-slate-500 text-center">Phase Context &amp; Decisions</p>
+          </div>
+          <div class="space-y-3">
+            <div class="screenshot-wrapper rounded-xl overflow-hidden shadow-xl border border-white/[0.1]">
+              <span class="version-badge badge-gsd2">GSD-2</span>
+              <img src="screenshots/gsd2-worktrees.png" alt="GSD-2 Worktrees panel with active worktrees and file change counts" class="w-full h-auto" loading="lazy" />
+            </div>
+            <p class="text-sm text-slate-500 text-center">Worktrees</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Project & App Screenshots -->
+      <div>
+        <h3 class="text-xl font-bold text-white mb-2 text-center">Project Management</h3>
+        <p class="text-sm text-slate-500 text-center mb-8">Knowledge browsing, file management, todos, notifications, and more.</p>
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+          <div class="space-y-3">
+            <div class="rounded-xl overflow-hidden shadow-xl border border-white/[0.1]">
+              <img src="screenshots/project-knowledge.png" alt="Knowledge tab showing planning and documentation files with folder structure" class="w-full h-auto" loading="lazy" />
+            </div>
+            <p class="text-sm text-slate-500 text-center">Knowledge Base</p>
+          </div>
+          <div class="space-y-3">
+            <div class="rounded-xl overflow-hidden shadow-xl border border-white/[0.1]">
+              <img src="screenshots/todos.png" alt="Cross-project todo aggregation with priority badges and blocker alerts" class="w-full h-auto" loading="lazy" />
+            </div>
+            <p class="text-sm text-slate-500 text-center">Cross-Project Todos</p>
+          </div>
+          <div class="space-y-3">
+            <div class="rounded-xl overflow-hidden shadow-xl border border-white/[0.1]">
+              <img src="screenshots/notifications.png" alt="Notification center with phase completions, cost warnings, and blocker alerts" class="w-full h-auto" loading="lazy" />
+            </div>
+            <p class="text-sm text-slate-500 text-center">Notification Center</p>
+          </div>
+          <div class="space-y-3">
+            <div class="rounded-xl overflow-hidden shadow-xl border border-white/[0.1]">
+              <img src="screenshots/settings.png" alt="Settings page with theme, secrets manager, and app configuration" class="w-full h-auto" loading="lazy" />
+            </div>
+            <p class="text-sm text-slate-500 text-center">Settings &amp; Secrets</p>
+          </div>
+          <div class="space-y-3">
+            <div class="rounded-xl overflow-hidden shadow-xl border border-white/[0.1]">
+              <img src="screenshots/logs.png" alt="Application logs with level filtering, source filtering, and search" class="w-full h-auto" loading="lazy" />
+            </div>
+            <p class="text-sm text-slate-500 text-center">Application Logs</p>
+          </div>
+          <div class="space-y-3">
+            <div class="rounded-xl overflow-hidden shadow-xl border border-white/[0.1]">
+              <img src="screenshots/project-files.png" alt="Project file browser with folder tree and file listing" class="w-full h-auto" loading="lazy" />
+            </div>
+            <p class="text-sm text-slate-500 text-center">File Browser</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Privacy Section -->
+  <section id="privacy" class="py-24 lg:py-32 bg-white/[0.02] border-y border-white/[0.06]">
+    <div class="max-w-7xl mx-auto px-6">
+      <div class="text-center mb-16">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-500/10 border border-teal-500/20 text-sm text-teal-300 mb-6">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+          Privacy First
+        </div>
+        <h2 class="text-3xl md:text-5xl font-black text-white mb-4">Your data stays<br><span class="gradient-text">on your machine.</span></h2>
+        <p class="text-lg text-slate-400 max-w-2xl mx-auto">No cloud accounts, no telemetry, no subscriptions. Everything runs locally.</p>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+        <div class="text-center p-8 rounded-xl feature-card">
+          <div class="w-16 h-16 rounded-2xl bg-white/[0.06] border border-white/[0.1] flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/></svg>
+          </div>
+          <h3 class="text-lg font-bold text-white mb-2">Local SQLite</h3>
+          <p class="text-sm text-slate-500">All project data stored in a local SQLite database on your machine. No servers, no sync, no leaks.</p>
+        </div>
+
+        <div class="text-center p-8 rounded-xl feature-card">
+          <div class="w-16 h-16 rounded-2xl bg-white/[0.06] border border-white/[0.1] flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+          </div>
+          <h3 class="text-lg font-bold text-white mb-2">OS Keychain</h3>
+          <p class="text-sm text-slate-500">API keys and secrets are encrypted by your OS keychain &mdash; macOS Keychain, Windows Credential Store, or Linux Secret Service.</p>
+        </div>
+
+        <div class="text-center p-8 rounded-xl feature-card">
+          <div class="w-16 h-16 rounded-2xl bg-white/[0.06] border border-white/[0.1] flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+          </div>
+          <h3 class="text-lg font-bold text-white mb-2">Zero Telemetry</h3>
+          <p class="text-sm text-slate-500">No analytics, no tracking, no phone-home. The app works entirely offline with zero external connections.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Tech Stack Section -->
+  <section class="py-24 lg:py-32">
+    <div class="max-w-7xl mx-auto px-6">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl md:text-5xl font-black text-white mb-4">Powered by<br><span class="gradient-text">serious tech.</span></h2>
+        <p class="text-lg text-slate-400 max-w-2xl mx-auto">Not another Electron app. Built with Tauri for native performance and a tiny footprint.</p>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+        <!-- Rust Backend -->
+        <div class="feature-card rounded-xl p-6">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-lg bg-orange-500/10 flex items-center justify-center">
+              <span class="text-lg font-bold text-orange-400">Rs</span>
+            </div>
+            <div>
+              <h3 class="text-lg font-bold text-white">Rust Backend</h3>
+              <p class="text-xs text-slate-500">Tauri 2.x with Tokio async runtime</p>
+            </div>
+          </div>
+          <ul class="space-y-2 text-sm text-slate-400">
+            <li class="flex items-center gap-2"><span class="text-emerald-400">&#10004;</span> SQLite with WAL mode &amp; connection pool</li>
+            <li class="flex items-center gap-2"><span class="text-emerald-400">&#10004;</span> Native PTY for terminal sessions</li>
+            <li class="flex items-center gap-2"><span class="text-emerald-400">&#10004;</span> OS keychain for secret storage</li>
+            <li class="flex items-center gap-2"><span class="text-emerald-400">&#10004;</span> File system watcher for live sync</li>
+          </ul>
+        </div>
+
+        <!-- React Frontend -->
+        <div class="feature-card rounded-xl p-6">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-lg bg-cyan-500/10 flex items-center justify-center">
+              <span class="text-lg font-bold text-cyan-400">Rx</span>
+            </div>
+            <div>
+              <h3 class="text-lg font-bold text-white">React Frontend</h3>
+              <p class="text-xs text-slate-500">React 18 + TypeScript + Vite</p>
+            </div>
+          </div>
+          <ul class="space-y-2 text-sm text-slate-400">
+            <li class="flex items-center gap-2"><span class="text-emerald-400">&#10004;</span> TanStack Query for smart data caching</li>
+            <li class="flex items-center gap-2"><span class="text-emerald-400">&#10004;</span> shadcn/ui + Tailwind CSS design system</li>
+            <li class="flex items-center gap-2"><span class="text-emerald-400">&#10004;</span> xterm.js terminal emulator</li>
+            <li class="flex items-center gap-2"><span class="text-emerald-400">&#10004;</span> Lazy-loaded pages with code splitting</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- More Features List -->
+  <section class="py-24 lg:py-32 bg-white/[0.02] border-y border-white/[0.06]">
+    <div class="max-w-7xl mx-auto px-6">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl md:text-5xl font-black text-white mb-4">And a whole lot more.</h2>
+        <p class="text-lg text-slate-400">Here's everything else packed into GSD Vibe.</p>
+      </div>
+
+      <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-y-8 gap-x-12 max-w-5xl mx-auto">
+        <div>
+          <h4 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-brand-400"></span>
+            Project Management
+          </h4>
+          <ul class="space-y-2 text-sm text-slate-500">
+            <li>Grid &amp; list views</li>
+            <li>Favorites &amp; pinning</li>
+            <li>Import &amp; create projects</li>
+            <li>Tech stack auto-detection</li>
+            <li>Dependency auditing</li>
+            <li>Codebase health scanner</li>
+            <li>Project templates</li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-brand-400"></span>
+            GSD-2 Workflow
+          </h4>
+          <ul class="space-y-2 text-sm text-slate-500">
+            <li>Auto-sync .planning/</li>
+            <li>Milestones, slices &amp; tasks</li>
+            <li>7-tab visualizer</li>
+            <li>Headless mode monitoring</li>
+            <li>UAT &amp; validation maps</li>
+            <li>Debug session tracking</li>
+            <li>Requirements coverage</li>
+            <li>Phase research browser</li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+            Terminal
+          </h4>
+          <ul class="space-y-2 text-sm text-slate-500">
+            <li>Full PTY emulation</li>
+            <li>Multi-tab with persistence</li>
+            <li>tmux integration</li>
+            <li>Split-pane layout</li>
+            <li>Broadcast to all tabs</li>
+            <li>Command snippets</li>
+            <li>Buffer search</li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+            Git &amp; Code
+          </h4>
+          <ul class="space-y-2 text-sm text-slate-500">
+            <li>Branch management</li>
+            <li>Stage, commit, push</li>
+            <li>Diff viewer</li>
+            <li>Stash operations</li>
+            <li>Commit history with stats</li>
+            <li>Worktree management</li>
+            <li>File browser</li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
+            Knowledge
+          </h4>
+          <ul class="space-y-2 text-sm text-slate-500">
+            <li>Markdown docs browser</li>
+            <li>Full-text search</li>
+            <li>File tree navigation</li>
+            <li>Bookmarks with notes</li>
+            <li>Auto table of contents</li>
+            <li>Syntax highlighting</li>
+            <li>GFM support</li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span>
+            Tracking
+          </h4>
+          <ul class="space-y-2 text-sm text-slate-500">
+            <li>Activity feed</li>
+            <li>Decision history</li>
+            <li>Cost &amp; token tracking</li>
+            <li>Velocity analysis</li>
+            <li>Notification center</li>
+            <li>Application logs</li>
+            <li>Cross-project todos</li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-teal-400"></span>
+            Security
+          </h4>
+          <ul class="space-y-2 text-sm text-slate-500">
+            <li>OS keychain secrets</li>
+            <li>Zero cloud storage</li>
+            <li>No telemetry</li>
+            <li>Local-only data</li>
+            <li>Env var management</li>
+            <li>Predefined key templates</li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
+            UI &amp; Navigation
+          </h4>
+          <ul class="space-y-2 text-sm text-slate-500">
+            <li>Sidebar-driven navigation</li>
+            <li>Command palette (cmdk)</li>
+            <li>26+ tabbed views</li>
+            <li>Dark &amp; light themes</li>
+            <li>Keyboard shortcuts</li>
+            <li>Global search</li>
+            <li>Linear-inspired design</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Download Section -->
+  <section id="download" class="py-24 lg:py-32 relative overflow-hidden">
+    <div class="absolute inset-0 hero-glow"></div>
+    <div class="relative max-w-3xl mx-auto px-6 text-center">
+      <h2 class="text-4xl md:text-6xl font-black text-white mb-6">Ready to get<br><span class="gradient-text">shit done?</span></h2>
+      <p class="text-lg text-slate-400 mb-10 max-w-xl mx-auto">Download the app, import your projects, and start managing everything from one place.</p>
+
+      <!-- Platform download cards -->
+      <div class="grid sm:grid-cols-3 gap-4 max-w-2xl mx-auto mb-10">
+        <!-- macOS -->
+        <a href="https://github.com/jeremymcs/gsd-vibe/releases/download/v0.1.1/GSD.Vibe_0.1.1_aarch64.dmg" onclick="window.va && window.va('event', {name: 'download', data: {version: '0.1.1', platform: 'macos-aarch64'}})" class="group flex flex-col items-center gap-3 p-6 rounded-xl bg-white/[0.04] border border-white/[0.1] hover:border-brand-500/40 transition-all hover:shadow-lg hover:shadow-brand-500/10">
+          <svg class="w-8 h-8 text-slate-300 group-hover:text-white transition-colors" fill="currentColor" viewBox="0 0 24 24"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+          <div class="text-center">
+            <div class="text-sm font-semibold text-white">macOS</div>
+            <div class="text-xs text-slate-500">.dmg (Apple Silicon)</div>
+          </div>
+        </a>
+
+        <!-- Windows -->
+        <a href="https://github.com/jeremymcs/gsd-vibe/releases/download/v0.1.1/GSD.Vibe_0.1.1_x64-setup.exe" onclick="window.va && window.va('event', {name: 'download', data: {version: '0.1.1', platform: 'windows-x64'}})" class="group flex flex-col items-center gap-3 p-6 rounded-xl bg-white/[0.04] border border-white/[0.1] hover:border-brand-500/40 transition-all hover:shadow-lg hover:shadow-brand-500/10">
+          <svg class="w-8 h-8 text-slate-300 group-hover:text-white transition-colors" fill="currentColor" viewBox="0 0 24 24"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/></svg>
+          <div class="text-center">
+            <div class="text-sm font-semibold text-white">Windows</div>
+            <div class="text-xs text-slate-500">.exe (x64)</div>
+          </div>
+        </a>
+
+        <!-- Linux -->
+        <a href="https://github.com/jeremymcs/gsd-vibe/releases/download/v0.1.1/GSD.Vibe_0.1.1_amd64.deb" onclick="window.va && window.va('event', {name: 'download', data: {version: '0.1.1', platform: 'linux-deb'}})" class="group flex flex-col items-center gap-3 p-6 rounded-xl bg-white/[0.04] border border-white/[0.1] hover:border-brand-500/40 transition-all hover:shadow-lg hover:shadow-brand-500/10">
+          <svg class="w-8 h-8 text-slate-300 group-hover:text-white transition-colors" fill="currentColor" viewBox="0 0 24 24"><path d="M12.504 0c-.155 0-.315.008-.48.021-4.226.333-3.105 4.807-3.17 6.298-.076 1.092-.3 1.953-1.05 3.02-.885 1.051-2.127 2.75-2.716 4.521-.278.832-.41 1.684-.287 2.489a.424.424 0 00-.11.135c-.26.268-.45.6-.663.839-.199.199-.485.267-.797.4-.313.136-.658.269-.864.68-.09.189-.136.394-.132.602 0 .199.027.4.055.536.058.399.116.728.04.97-.249.68-.28 1.145-.106 1.484.174.334.535.47.94.601.81.2 1.91.135 2.774.6.926.466 1.866.67 2.616.47.526-.116.97-.464 1.208-.946.587-.003 1.23-.269 2.26-.334.699-.058 1.574.267 2.577.2.025.134.063.198.114.333l.003.003c.391.778 1.113 1.368 1.884 1.43.868.07 1.723-.26 2.456-.594.733-.34 1.455-.78 2.28-.67.566.075 1.268-.281 1.583-.672.318-.401.395-.96.326-1.532-.135-1.08-.588-1.963-1.33-2.43-.313-.2-.458-.53-.78-.794-.16-.136-.36-.271-.52-.44-.19-.203-.28-.608-.373-.755-.027-.065-.049-.065-.064-.064-.108.023-.265.07-.27.267 0 .133.06.267.1.4.04.132.06.27.06.399 0 .1-.019.135-.04.202-.132 0-.267-.066-.4-.2-.268-.07-.4-.335-.6-.268-.168.136-.2.468-.066.601.266.268.668.535.867.67.466.334.862.662 1.26.865l.001.001c.063.039.18.142.26.26.131.2.196.465.254.733.06.268.08.535.086.732a2.17 2.17 0 01-.065.466c-.133.066-.267.2-.4.333-.133.067-.267.135-.33.267-.067.066-.135.2-.135.333 0 .066 0 .133.067.2.133.2.333.333.533.333.267.067.467 0 .667-.133s.4-.267.533-.467c.2-.333.267-.667.267-1.066.067-.534-.066-1-.133-1.534v-.066c.2-.534.133-1.134-.133-1.534-.134-.267-.334-.467-.534-.6-.067-.133-.2-.2-.2-.333a7.457 7.457 0 00-.066-.934c-.067-.333-.134-.733-.267-1.066-.267-.6-.667-1.134-1.2-1.467-.467-.333-.667-.667-1-1.066-.333-.4-.733-.867-.933-1.4-.267-.6-.4-1.267-.534-1.934-.067-.4-.2-.667-.333-1.066-.2-.667-.467-1.267-.467-2-.133-1.334.267-2.667 1-3.534.533-.6 1.267-1 2.067-1.134.8-.133 1.733 0 2.467.467.333.2.733.467.933.733.4.467.533.934.667 1.534.133.534.333 1.2.733 1.534.267.2.533.333.8.4.267.067.533.067.733.133.2.067.333.2.533.333.267.2.4.534.533.867.067.333.133.733.067 1.067a3.65 3.65 0 01-.267.933c-.333.667-.733 1.334-1.133 1.934-.4.667-.8 1.267-1.133 1.934-.4.6-.667 1.267-.8 2-.133.533-.2 1.133-.133 1.667.067.467.2.867.533 1.2.333.333.733.533 1.2.6.4.067.867 0 1.267-.133.4-.133.733-.333 1.067-.467.933-.467 1.733-1.133 2.533-1.8.267-.267.534-.534.734-.8.2-.267.4-.534.533-.867.133-.4.2-.8.2-1.2 0-.534-.067-1.067-.267-1.534-.4-1.066-1.2-1.866-2.133-2.4-.534-.333-.867-.733-1.134-1.2-.266-.467-.466-.934-.666-1.4-.2-.467-.4-.934-.6-1.334-.2-.4-.467-.733-.867-.933a8.33 8.33 0 00-1.8-.534c-.6-.133-1.2-.2-1.734-.333A8.565 8.565 0 0012.504 0z"/></svg>
+          <div class="text-center">
+            <div class="text-sm font-semibold text-white">Linux</div>
+            <div class="text-xs text-slate-500">.deb (x64)</div>
+          </div>
+        </a>
+      </div>
+
+      <div class="text-center mb-8">
+        <a href="https://github.com/jeremymcs/gsd-vibe/releases/latest" class="text-sm text-slate-500 hover:text-slate-300 transition-colors underline underline-offset-2">View all releases on GitHub</a>
+      </div>
+
+      <!-- Requirements -->
+      <div class="max-w-2xl mx-auto mb-10 text-left">
+        <h3 class="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4 text-center">Requirements</h3>
+        <div class="space-y-3">
+          <!-- Required -->
+          <div class="rounded-xl bg-white/[0.04] border border-white/[0.08] overflow-hidden">
+            <div class="px-4 py-2 border-b border-white/[0.06] flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-red-400 shrink-0"></span>
+              <span class="text-xs font-semibold text-white uppercase tracking-wider">Required</span>
+            </div>
+            <div class="divide-y divide-white/[0.06]">
+              <div class="flex items-center justify-between px-4 py-3 gap-4">
+                <div>
+                  <a href="https://gsd.build/" target="_blank" rel="noopener noreferrer" class="text-sm font-semibold text-white hover:text-brand-300 transition-colors inline-flex items-center gap-1">
+                    gsd <svg class="w-3 h-3 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                  </a>
+                  <p class="text-xs text-slate-500 mt-0.5">The GSD CLI — powers auto-mode, preferences, diagnostics, and model listing</p>
+                </div>
+                <code class="shrink-0 text-xs bg-black/40 border border-white/[0.08] rounded-lg px-3 py-1.5 font-mono text-brand-300">npm install -g @gsd/cli</code>
+              </div>
+              <div class="flex items-center justify-between px-4 py-3 gap-4">
+                <div>
+                  <a href="https://git-scm.com/" target="_blank" rel="noopener noreferrer" class="text-sm font-semibold text-white hover:text-brand-300 transition-colors inline-flex items-center gap-1">
+                    git <svg class="w-3 h-3 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                  </a>
+                  <p class="text-xs text-slate-500 mt-0.5">Version control — git status, log, push, pull, commit, worktrees</p>
+                </div>
+                <code class="shrink-0 text-xs bg-black/40 border border-white/[0.08] rounded-lg px-3 py-1.5 font-mono text-brand-300">brew install git</code>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recommended -->
+          <div class="rounded-xl bg-white/[0.04] border border-white/[0.08] overflow-hidden">
+            <div class="px-4 py-2 border-b border-white/[0.06] flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-yellow-400 shrink-0"></span>
+              <span class="text-xs font-semibold text-white uppercase tracking-wider">Recommended</span>
+            </div>
+            <div class="divide-y divide-white/[0.06]">
+              <div class="flex items-center justify-between px-4 py-3 gap-4">
+                <div>
+                  <a href="https://github.com/tmux/tmux" target="_blank" rel="noopener noreferrer" class="text-sm font-semibold text-white hover:text-brand-300 transition-colors inline-flex items-center gap-1">
+                    tmux <svg class="w-3 h-3 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                  </a>
+                  <p class="text-xs text-slate-500 mt-0.5">Persistent terminal sessions that survive app restarts</p>
+                </div>
+                <code class="shrink-0 text-xs bg-black/40 border border-white/[0.08] rounded-lg px-3 py-1.5 font-mono text-slate-400">brew install tmux</code>
+              </div>
+            </div>
+          </div>
+
+          <!-- Optional -->
+          <div class="rounded-xl bg-white/[0.04] border border-white/[0.08] overflow-hidden">
+            <div class="px-4 py-2 border-b border-white/[0.06] flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-slate-500 shrink-0"></span>
+              <span class="text-xs font-semibold text-white uppercase tracking-wider">Optional</span>
+              <span class="text-xs text-slate-500 ml-1">— feature-gated, app works without these</span>
+            </div>
+            <div class="divide-y divide-white/[0.06]">
+              <div class="flex items-center justify-between px-4 py-3 gap-4">
+                <div>
+                  <a href="https://cli.github.com/" target="_blank" rel="noopener noreferrer" class="text-sm font-semibold text-white hover:text-brand-300 transition-colors inline-flex items-center gap-1">
+                    gh <svg class="w-3 h-3 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                  </a>
+                  <p class="text-xs text-slate-500 mt-0.5">GitHub CLI — auto PR creation on milestone merge</p>
+                </div>
+                <code class="shrink-0 text-xs bg-black/40 border border-white/[0.08] rounded-lg px-3 py-1.5 font-mono text-slate-400">brew install gh</code>
+              </div>
+              <div class="flex items-center justify-between px-4 py-3 gap-4">
+                <div>
+                  <span class="text-sm font-semibold text-white">cargo-audit</span>
+                  <p class="text-xs text-slate-500 mt-0.5">Security audits for Rust projects</p>
+                </div>
+                <code class="shrink-0 text-xs bg-black/40 border border-white/[0.08] rounded-lg px-3 py-1.5 font-mono text-slate-400">cargo install cargo-audit</code>
+              </div>
+              <div class="flex items-center justify-between px-4 py-3 gap-4">
+                <div>
+                  <a href="https://pypi.org/project/pip-audit/" target="_blank" rel="noopener noreferrer" class="text-sm font-semibold text-white hover:text-brand-300 transition-colors inline-flex items-center gap-1">
+                    pip-audit <svg class="w-3 h-3 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                  </a>
+                  <p class="text-xs text-slate-500 mt-0.5">Security audits for Python projects</p>
+                </div>
+                <code class="shrink-0 text-xs bg-black/40 border border-white/[0.08] rounded-lg px-3 py-1.5 font-mono text-slate-400">pip install pip-audit</code>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center justify-center gap-6 text-sm text-slate-500">
+        <span class="flex items-center gap-1.5">
+          <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+          Free &amp; open source
+        </span>
+        <span class="flex items-center gap-1.5">
+          <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+          No account required
+        </span>
+        <span class="flex items-center gap-1.5">
+          <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+          macOS, Linux, Windows
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="border-t border-white/[0.08] py-12">
+    <div class="max-w-7xl mx-auto px-6">
+      <div class="flex flex-col items-center gap-6">
+        <!-- Proudly Built with GSD -->
+        <a href="https://gsd.build/" class="group flex items-center gap-3 px-6 py-3 rounded-xl bg-white/[0.04] border border-white/[0.1] hover:border-brand-500/30 transition-all hover:shadow-lg hover:shadow-brand-500/5">
+          <img src="gsd-logo.svg" alt="GSD" class="h-7 w-auto opacity-70 group-hover:opacity-100 transition-opacity">
+          <div class="flex flex-col">
+            <span class="text-sm font-semibold text-white">Proudly Built with GSD</span>
+            <span class="text-xs text-slate-500">The AI-native project workflow</span>
+          </div>
+          <svg class="w-4 h-4 text-slate-500 group-hover:text-brand-400 transition-colors ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+        </a>
+        <!-- Links -->
+        <div class="flex items-center gap-6 text-sm text-slate-500">
+          <a href="https://github.com/jeremymcs/gsd-vibe/" class="hover:text-white transition-colors flex items-center gap-1.5">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            GitHub
+          </a>
+          <a href="https://gsd.build/" class="hover:text-white transition-colors">gsd.build</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Vercel Analytics -->
+  <script>
+    window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+  </script>
+  <script defer src="/_vercel/insights/script.js"></script>
+
+  <!-- Lightbox overlay -->
+  <div class="lightbox-overlay" id="lightbox">
+    <button class="lightbox-close" aria-label="Close">&times;</button>
+    <img src="" alt="" />
+  </div>
+
+  <!-- Mobile menu toggle script -->
+  <script>
+    document.getElementById('mobile-menu-btn').addEventListener('click', function() {
+      document.getElementById('mobile-menu').classList.toggle('hidden');
+    });
+    // Close mobile menu on link click
+    document.querySelectorAll('#mobile-menu a').forEach(function(link) {
+      link.addEventListener('click', function() {
+        document.getElementById('mobile-menu').classList.add('hidden');
+      });
+    });
+  </script>
+
+  <!-- Lightbox script -->
+  <script>
+    (function() {
+      var overlay = document.getElementById('lightbox');
+      var overlayImg = overlay.querySelector('img');
+
+      // Make all screenshot images clickable
+      document.querySelectorAll('img[src^="screenshots/"]').forEach(function(img) {
+        img.classList.add('lightbox-trigger');
+        img.addEventListener('click', function() {
+          overlayImg.src = this.src;
+          overlayImg.alt = this.alt;
+          overlay.classList.add('active');
+          document.body.style.overflow = 'hidden';
+        });
+      });
+
+      function closeLightbox() {
+        overlay.classList.remove('active');
+        document.body.style.overflow = '';
+      }
+
+      overlay.addEventListener('click', closeLightbox);
+      overlay.querySelector('.lightbox-close').addEventListener('click', closeLightbox);
+      overlayImg.addEventListener('click', function(e) { e.stopPropagation(); });
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeLightbox();
+      });
+    })();
+  </script>
+
+</body>
+</html>
