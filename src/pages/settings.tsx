@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+// Tabs imports removed — using sidebar layout instead
 import { ExportDataDialog, ClearDataDialog, ThemeCustomization, SecretsManager } from "@/components/settings";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -28,6 +28,7 @@ export function SettingsPage() {
   const [showExportDialog, setShowExportDialog] = useState(false);
   const [showClearDialog, setShowClearDialog] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [activeSection, setActiveSection] = useState("general");
 
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
@@ -64,37 +65,59 @@ export function SettingsPage() {
     );
   }
 
-  return (
-    <div className="h-full overflow-auto p-8 max-w-3xl">
-      {/* Header */}
-      <PageHeader
-        title="Settings"
-        description="Configure GSD Vibe preferences"
-        icon={<SettingsIcon className="h-6 w-6 text-muted-foreground" />}
-        actions={
-          hasChanges ? (
-            <Button onClick={() => void handleSave()} disabled={updateSettings.isPending}>
-              {updateSettings.isPending ? "Saving..." : "Save Changes"}
-            </Button>
-          ) : undefined
-        }
-      />
+  const sections = [
+    { id: "general", label: "General", icon: SettingsIcon },
+    { id: "appearance", label: "Appearance", icon: SettingsIcon },
+    { id: "notifications", label: "Notifications", icon: Bell },
+    { id: "data", label: "Data Management", icon: Database },
+    { id: "advanced", label: "Advanced", icon: Bug },
+    { id: "logs", label: "Logs", icon: ScrollText },
+  ];
 
-      <Tabs defaultValue="general" className="mt-6">
-        <TabsList className="mb-6">
-          <TabsTrigger value="general">General</TabsTrigger>
-          <TabsTrigger value="appearance">Appearance</TabsTrigger>
-          <TabsTrigger value="notifications">Notifications</TabsTrigger>
-          <TabsTrigger value="data">Data Management</TabsTrigger>
-          <TabsTrigger value="advanced">Advanced</TabsTrigger>
-          <TabsTrigger value="logs">
-            <ScrollText className="h-3.5 w-3.5 mr-1.5" />
-            Logs
-          </TabsTrigger>
-        </TabsList>
+  return (
+    <div className="h-full flex flex-col">
+      {/* Header */}
+      <div className="px-8 pt-8 pb-4">
+        <PageHeader
+          title="Settings"
+          description="Configure GSD Vibe preferences"
+          icon={<SettingsIcon className="h-6 w-6 text-muted-foreground" />}
+          actions={
+            hasChanges ? (
+              <Button onClick={() => void handleSave()} disabled={updateSettings.isPending}>
+                {updateSettings.isPending ? "Saving..." : "Save Changes"}
+              </Button>
+            ) : undefined
+          }
+        />
+      </div>
+
+      <div className="flex-1 min-h-0 flex">
+        {/* Sidebar */}
+        <nav className="w-52 flex-shrink-0 border-r border-border px-4 py-2 space-y-1">
+          {sections.map(({ id, label, icon: Icon }) => (
+            <button
+              key={id}
+              onClick={() => setActiveSection(id)}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                activeSection === id
+                  ? "bg-accent text-accent-foreground"
+                  : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+              }`}
+            >
+              <Icon className="h-4 w-4" />
+              {label}
+            </button>
+          ))}
+        </nav>
+
+        {/* Content */}
+        <div className="flex-1 min-h-0 overflow-y-auto p-8">
+          <div className="max-w-2xl">
 
         {/* ── General ─────────────────────────────────────── */}
-        <TabsContent value="general" className="space-y-6">
+        {activeSection === "general" && (
+          <div className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -192,15 +215,19 @@ export function SettingsPage() {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
+        </div>
+        )}
 
         {/* ── Appearance ──────────────────────────────────── */}
-        <TabsContent value="appearance" className="space-y-6">
+        {activeSection === "appearance" && (
+          <div className="space-y-6">
           <ThemeCustomization />
-        </TabsContent>
+        </div>
+        )}
 
         {/* ── Notifications ───────────────────────────────── */}
-        <TabsContent value="notifications" className="space-y-6">
+        {activeSection === "notifications" && (
+          <div className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -256,10 +283,12 @@ export function SettingsPage() {
               )}
             </CardContent>
           </Card>
-        </TabsContent>
+        </div>
+        )}
 
         {/* ── Data Management ─────────────────────────────── */}
-        <TabsContent value="data" className="space-y-6">
+        {activeSection === "data" && (
+          <div className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -327,10 +356,12 @@ export function SettingsPage() {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
+        </div>
+        )}
 
         {/* ── Advanced ────────────────────────────────────── */}
-        <TabsContent value="advanced" className="space-y-6">
+        {activeSection === "advanced" && (
+          <div className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -355,13 +386,19 @@ export function SettingsPage() {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
+        </div>
+        )}
 
         {/* ── Logs ────────────────────────────────────────── */}
-        <TabsContent value="logs" className="space-y-6">
-          <LogsContent />
-        </TabsContent>
-      </Tabs>
+        {activeSection === "logs" && (
+          <div className="space-y-6">
+            <LogsContent />
+          </div>
+        )}
+
+          </div>
+        </div>
+      </div>
 
       {/* Dialogs */}
       <ExportDataDialog
