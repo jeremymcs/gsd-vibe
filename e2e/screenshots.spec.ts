@@ -169,13 +169,13 @@ const MOCK_PROJECTS_WITH_STATS = MOCK_PROJECTS.map((p, i) => ({
 
 const MOCK_SETTINGS = {
   theme: 'dark',
-  start_on_login: false,
-  default_cost_limit: 50.0,
+  start_on_login: true,
+  default_cost_limit: 75.0,
   notifications_enabled: true,
   notify_on_complete: true,
   notify_on_error: true,
-  notify_cost_threshold: 25.0,
-  accent_color: 'blue',
+  notify_cost_threshold: 50.0,
+  accent_color: 'cyan',
   ui_density: 'comfortable',
   font_size_scale: 'medium',
   font_family: 'system',
@@ -184,7 +184,7 @@ const MOCK_SETTINGS = {
   notify_on_phase_complete: true,
   notify_on_cost_warning: true,
   debug_logging: false,
-  use_tmux: false,
+  use_tmux: true,
 };
 
 const MOCK_NOTIFICATIONS = [
@@ -505,19 +505,86 @@ function buildMockScript(): string {
           ]},
         ], total_files: 7 };
         case 'list_code_files': return { folders: [
-          { name: 'src', display_name: 'src', files: [
-            { relative_path: 'src/app/layout.tsx', display_name: 'layout.tsx', folder: 'src', size_bytes: 1200 },
-            { relative_path: 'src/app/page.tsx', display_name: 'page.tsx', folder: 'src', size_bytes: 2400 },
-            { relative_path: 'src/app/dashboard/page.tsx', display_name: 'dashboard/page.tsx', folder: 'src', size_bytes: 4800 },
-            { relative_path: 'src/lib/auth.ts', display_name: 'lib/auth.ts', folder: 'src', size_bytes: 1800 },
-            { relative_path: 'src/lib/stripe.ts', display_name: 'lib/stripe.ts', folder: 'src', size_bytes: 2200 },
+          { name: 'src/app', display_name: 'src/app', files: [
+            { relative_path: 'src/app/layout.tsx', display_name: 'layout.tsx', folder: 'src/app', size_bytes: 1200 },
+            { relative_path: 'src/app/page.tsx', display_name: 'page.tsx', folder: 'src/app', size_bytes: 2400 },
+            { relative_path: 'src/app/globals.css', display_name: 'globals.css', folder: 'src/app', size_bytes: 850 },
+          ]},
+          { name: 'src/app/dashboard', display_name: 'src/app/dashboard', files: [
+            { relative_path: 'src/app/dashboard/page.tsx', display_name: 'page.tsx', folder: 'src/app/dashboard', size_bytes: 4800 },
+            { relative_path: 'src/app/dashboard/loading.tsx', display_name: 'loading.tsx', folder: 'src/app/dashboard', size_bytes: 420 },
+          ]},
+          { name: 'src/app/billing', display_name: 'src/app/billing', files: [
+            { relative_path: 'src/app/billing/page.tsx', display_name: 'page.tsx', folder: 'src/app/billing', size_bytes: 3600 },
+            { relative_path: 'src/app/billing/checkout.tsx', display_name: 'checkout.tsx', folder: 'src/app/billing', size_bytes: 2800 },
+          ]},
+          { name: 'src/components', display_name: 'src/components', files: [
+            { relative_path: 'src/components/metrics-card.tsx', display_name: 'metrics-card.tsx', folder: 'src/components', size_bytes: 1850 },
+            { relative_path: 'src/components/sidebar.tsx', display_name: 'sidebar.tsx', folder: 'src/components', size_bytes: 3200 },
+            { relative_path: 'src/components/chart.tsx', display_name: 'chart.tsx', folder: 'src/components', size_bytes: 2400 },
+            { relative_path: 'src/components/data-table.tsx', display_name: 'data-table.tsx', folder: 'src/components', size_bytes: 4100 },
+          ]},
+          { name: 'src/lib', display_name: 'src/lib', files: [
+            { relative_path: 'src/lib/auth.ts', display_name: 'auth.ts', folder: 'src/lib', size_bytes: 1800 },
+            { relative_path: 'src/lib/stripe.ts', display_name: 'stripe.ts', folder: 'src/lib', size_bytes: 2200 },
+            { relative_path: 'src/lib/db.ts', display_name: 'db.ts', folder: 'src/lib', size_bytes: 960 },
+            { relative_path: 'src/lib/utils.ts', display_name: 'utils.ts', folder: 'src/lib', size_bytes: 540 },
+          ]},
+          { name: 'src/hooks', display_name: 'src/hooks', files: [
+            { relative_path: 'src/hooks/use-metrics.ts', display_name: 'use-metrics.ts', folder: 'src/hooks', size_bytes: 1400 },
+            { relative_path: 'src/hooks/use-auth.ts', display_name: 'use-auth.ts', folder: 'src/hooks', size_bytes: 1100 },
+          ]},
+          { name: 'src/ws', display_name: 'src/ws', files: [
+            { relative_path: 'src/ws/server.ts', display_name: 'server.ts', folder: 'src/ws', size_bytes: 3400 },
+            { relative_path: 'src/ws/client.ts', display_name: 'client.ts', folder: 'src/ws', size_bytes: 2600 },
           ]},
           { name: 'tests', display_name: 'tests', files: [
             { relative_path: 'tests/dashboard.test.tsx', display_name: 'dashboard.test.tsx', folder: 'tests', size_bytes: 3200 },
             { relative_path: 'tests/auth.test.ts', display_name: 'auth.test.ts', folder: 'tests', size_bytes: 2800 },
             { relative_path: 'tests/billing.test.ts', display_name: 'billing.test.ts', folder: 'tests', size_bytes: 3600 },
+            { relative_path: 'tests/ws.test.ts', display_name: 'ws.test.ts', folder: 'tests', size_bytes: 2100 },
           ]},
-        ], total_files: 8 };
+          { name: '.', display_name: 'Root', files: [
+            { relative_path: 'package.json', display_name: 'package.json', folder: '.', size_bytes: 1800 },
+            { relative_path: 'tsconfig.json', display_name: 'tsconfig.json', folder: '.', size_bytes: 620 },
+            { relative_path: 'next.config.js', display_name: 'next.config.js', folder: '.', size_bytes: 480 },
+            { relative_path: 'tailwind.config.ts', display_name: 'tailwind.config.ts', folder: '.', size_bytes: 1200 },
+            { relative_path: '.env.example', display_name: '.env.example', folder: '.', size_bytes: 320 },
+          ]},
+        ], total_files: 28 };
+        case 'read_project_file': return \`import { NextResponse } from "next/server";
+import Stripe from "stripe";
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: "2024-06-20",
+});
+
+export async function POST(req: Request) {
+  const { priceId, customerId } = await req.json();
+
+  try {
+    const session = await stripe.checkout.sessions.create({
+      customer: customerId,
+      line_items: [{ price: priceId, quantity: 1 }],
+      mode: "subscription",
+      success_url: \\\`\\\${process.env.NEXT_PUBLIC_URL}/billing?success=true\\\`,
+      cancel_url: \\\`\\\${process.env.NEXT_PUBLIC_URL}/billing?canceled=true\\\`,
+      subscription_data: {
+        trial_period_days: 14,
+        metadata: { customerId },
+      },
+    });
+
+    return NextResponse.json({ url: session.url });
+  } catch (err) {
+    console.error("Checkout error:", err);
+    return NextResponse.json(
+      { error: "Failed to create checkout session" },
+      { status: 500 }
+    );
+  }
+}
+\`;
         case 'search_knowledge_files': return [];
         case 'get_scanner_summary': return { available: false, overall_grade: null, scan_date: null, categories: [], reports: [], total_gaps: null, total_recommendations: null, overall_score: null, analysis_mode: null, project_phase: null, high_priority_actions: [], source: null };
         case 'get_dependency_status': return { package_manager: 'pnpm', outdated_count: 8, vulnerable_count: 2, details: { outdated: { react: { current: '18.2.0', wanted: '18.3.1', latest: '19.0.0' }, typescript: { current: '5.3.3', wanted: '5.4.5', latest: '5.6.2' }, next: { current: '14.1.0', wanted: '14.2.3', latest: '15.0.0' }, prisma: { current: '5.8.1', wanted: '5.10.2', latest: '5.10.2' }, tailwindcss: { current: '3.4.0', wanted: '3.4.4', latest: '4.0.0' }, recharts: { current: '2.10.3', wanted: '2.12.0', latest: '2.12.0' }, '@stripe/stripe-js': { current: '2.4.0', wanted: '2.5.0', latest: '3.0.0' }, 'socket.io': { current: '4.7.2', wanted: '4.7.5', latest: '4.7.5' } }, audit: { 'lodash.merge': { severity: 'high', title: 'Prototype Pollution', url: 'https://github.com/advisories/GHSA-1234' }, 'semver': { severity: 'moderate', title: 'ReDoS vulnerability', url: 'https://github.com/advisories/GHSA-5678' } } }, checked_at: '2026-02-20T14:00:00' };
@@ -834,7 +901,25 @@ test.describe('Website Screenshots', () => {
   test('Project Detail - Project tab (Files)', async ({ page }) => {
     await page.goto('/projects/proj-001?view=files');
     await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(2000);
+    // Expand the src/app/billing folder
+    const billingFolder = page.getByText('src/app/billing');
+    if (await billingFolder.count() > 0) {
+      await billingFolder.click();
+      await page.waitForTimeout(500);
+    }
+    // Also expand src/lib folder
+    const libFolder = page.getByText('src/lib');
+    if (await libFolder.count() > 0) {
+      await libFolder.click();
+      await page.waitForTimeout(500);
+    }
+    // Click on checkout.tsx to open it in editor
+    const fileItem = page.getByText('checkout.tsx');
+    if (await fileItem.count() > 0) {
+      await fileItem.click();
+      await page.waitForTimeout(2000);
+    }
     await page.screenshot({
       path: path.join(SCREENSHOT_DIR, 'project-files.png'),
       fullPage: false,
