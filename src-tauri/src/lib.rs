@@ -318,6 +318,8 @@ pub fn run() {
             commands::gsd2::gsd2_merge_worktree,
             commands::gsd2::gsd2_clean_worktrees,
             commands::gsd2::gsd2_headless_start_with_model,
+            commands::gsd2::gsd2_headless_save_session,
+            commands::gsd2::gsd2_headless_load_last_session,
             commands::gsd2::gsd2_get_doctor_report,
             commands::gsd2::gsd2_apply_doctor_fixes,
             commands::gsd2::gsd2_get_forensics_report,

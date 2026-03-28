@@ -2,7 +2,6 @@
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CircleDot } from 'lucide-react';
 import { ViewEmpty } from '@/components/shared/loading-states';
@@ -13,20 +12,16 @@ import {
   useGsd2DerivedState,
 } from '@/lib/queries';
 import type { Gsd2TaskItem } from '@/lib/tauri';
+import {
+  Gsd2StatusIcon,
+  Gsd2LoadingCard,
+  Gsd2ErrorCard,
+  StatusBadge,
+} from './gsd2-shared';
 
 interface Gsd2TasksTabProps {
   projectId: string;
   projectPath: string;
-}
-
-function StatusIcon({ status }: { status: string }) {
-  if (status === 'done') {
-    return <span className="text-status-success">✔</span>;
-  }
-  if (status === 'active') {
-    return <span className="text-yellow-600 dark:text-yellow-500 animate-pulse">▶</span>;
-  }
-  return <span className="text-muted-foreground">○</span>;
 }
 
 function getTaskStatus(task: Gsd2TaskItem, activeTaskId: string | null): 'done' | 'active' | 'pending' {
@@ -43,21 +38,13 @@ interface SliceTaskGroupProps {
   activeTaskId: string | null;
 }
 
-function SliceTaskGroup({
-  projectId,
-  milestoneId,
-  sliceId,
-  sliceTitle,
-  activeTaskId,
-}: SliceTaskGroupProps) {
+function SliceTaskGroup({ projectId, milestoneId, sliceId, sliceTitle, activeTaskId }: SliceTaskGroupProps) {
   const { data: slice, isLoading, isError } = useGsd2Slice(projectId, milestoneId, sliceId, true);
 
   if (isLoading) {
     return (
       <div className="mb-4">
-        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
-          {sliceTitle}
-        </p>
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">{sliceTitle}</p>
         <Skeleton className="h-8 w-full" />
       </div>
     );
@@ -66,22 +53,15 @@ function SliceTaskGroup({
   if (isError || !slice) {
     return (
       <div className="mb-4">
-        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
-          {sliceTitle}
-        </p>
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">{sliceTitle}</p>
         <p className="text-xs text-status-error">Failed to load tasks for this slice.</p>
       </div>
     );
   }
 
-  // Filter out done tasks — Tasks tab shows active + pending only
   const activePendingTasks = slice.tasks.filter((t) => !t.done);
+  if (activePendingTasks.length === 0) return null;
 
-  if (activePendingTasks.length === 0) {
-    return null;
-  }
-
-  // Sort: active task first, then pending
   const sortedTasks = [...activePendingTasks].sort((a, b) => {
     const aStatus = getTaskStatus(a, activeTaskId);
     const bStatus = getTaskStatus(b, activeTaskId);
@@ -97,22 +77,13 @@ function SliceTaskGroup({
       </p>
       <div className="space-y-0.5">
         {sortedTasks.map((task) => {
-          const taskStatus = getTaskStatus(task, activeTaskId);
+          const status = getTaskStatus(task, activeTaskId);
           return (
             <div key={task.id} className="flex items-center gap-2 py-2 px-3">
-              <StatusIcon status={taskStatus} />
+              <Gsd2StatusIcon status={status} />
               <span className="text-xs font-mono text-muted-foreground">{task.id}</span>
               <span className="text-sm">{task.title}</span>
-              <Badge
-                variant="outline"
-                className={
-                  taskStatus === 'active'
-                    ? 'bg-status-warning/10 text-status-warning border-status-warning/30 ml-auto text-xs'
-                    : 'bg-status-pending/10 text-status-pending border-status-pending/30 ml-auto text-xs'
-                }
-              >
-                {taskStatus === 'active' ? 'Active' : 'Pending'}
-              </Badge>
+              <StatusBadge status={status} />
             </div>
           );
         })}
@@ -127,45 +98,13 @@ interface ActiveMilestoneTasksProps {
   activeTaskId: string | null;
 }
 
-function ActiveMilestoneTasks({
-  projectId,
-  activeMilestoneId,
-  activeTaskId,
-}: ActiveMilestoneTasksProps) {
-  const { data: milestone, isLoading, isError } = useGsd2Milestone(
-    projectId,
-    activeMilestoneId,
-    true,
-  );
+function ActiveMilestoneTasks({ projectId, activeMilestoneId, activeTaskId }: ActiveMilestoneTasksProps) {
+  const { data: milestone, isLoading, isError } = useGsd2Milestone(projectId, activeMilestoneId, true);
 
-  if (isLoading) {
-    return (
-      <Card>
-        <CardContent className="p-4 space-y-2">
-          <Skeleton className="h-4 w-1/4 mb-2" />
-          <Skeleton className="h-8 w-full mb-1" />
-          <Skeleton className="h-8 w-full mb-1" />
-          <Skeleton className="h-8 w-full mb-1" />
-        </CardContent>
-      </Card>
-    );
-  }
+  if (isLoading) return <Gsd2LoadingCard rows={4} />;
+  if (isError || !milestone) return <Gsd2ErrorCard message="Failed to load tasks — check that the project path is accessible." />;
 
-  if (isError || !milestone) {
-    return (
-      <Card>
-        <CardContent className="py-8 text-center">
-          <p className="text-sm text-status-error">
-            Failed to load tasks — check that the project path is accessible.
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  // Get all non-done slices from the active milestone
   const activeSlices = milestone.slices.filter((s) => !s.done);
-
   if (activeSlices.length === 0) {
     return (
       <ViewEmpty
@@ -194,60 +133,25 @@ function ActiveMilestoneTasks({
   );
 }
 
+const emptyState = (
+  <ViewEmpty
+    icon={<CircleDot className="h-8 w-8" />}
+    message="No active or pending tasks"
+    description="All done, or no GSD-2 session has run yet"
+  />
+);
+
 export function Gsd2TasksTab({ projectId }: Gsd2TasksTabProps) {
-  const { data: milestones, isLoading: milestonesLoading, isError: milestonesError } =
-    useGsd2Milestones(projectId);
+  const { data: milestones, isLoading: milestonesLoading, isError: milestonesError } = useGsd2Milestones(projectId);
   const { data: derivedState, isLoading: stateLoading } = useGsd2DerivedState(projectId);
 
-  const isLoading = milestonesLoading || stateLoading;
-
-  if (isLoading) {
-    return (
-      <Card>
-        <CardContent className="p-4 space-y-2">
-          <Skeleton className="h-4 w-1/4 mb-2" />
-          <Skeleton className="h-8 w-full mb-1" />
-          <Skeleton className="h-8 w-full mb-1" />
-          <Skeleton className="h-8 w-full mb-1" />
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (milestonesError) {
-    return (
-      <Card>
-        <CardContent className="py-8 text-center">
-          <p className="text-sm text-status-error">
-            Failed to load tasks — check that the project path is accessible.
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (!milestones || milestones.length === 0) {
-    return (
-      <ViewEmpty
-        icon={<CircleDot className="h-8 w-8" />}
-        message="No active or pending tasks"
-        description="All done, or no GSD-2 session has run yet"
-      />
-    );
-  }
+  if (milestonesLoading || stateLoading) return <Gsd2LoadingCard rows={4} />;
+  if (milestonesError) return <Gsd2ErrorCard message="Failed to load tasks — check that the project path is accessible." />;
+  if (!milestones || milestones.length === 0) return emptyState;
 
   const activeMilestoneId = derivedState?.active_milestone_id ?? null;
   const activeTaskId = derivedState?.active_task_id ?? null;
-
-  if (!activeMilestoneId) {
-    return (
-      <ViewEmpty
-        icon={<CircleDot className="h-8 w-8" />}
-        message="No active or pending tasks"
-        description="All done, or no GSD-2 session has run yet"
-      />
-    );
-  }
+  if (!activeMilestoneId) return emptyState;
 
   return (
     <ActiveMilestoneTasks

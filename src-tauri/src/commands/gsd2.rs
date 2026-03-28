@@ -7,6 +7,7 @@
 use crate::db::Database;
 use crate::headless::HeadlessRegistryState;
 use rusqlite::params;
+use rusqlite::OptionalExtension;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::Path;
@@ -18,6 +19,92 @@ type DbState = Arc<crate::db::DbPool>;
 // ============================================================
 // Helpers (copied from gsd.rs — do NOT import across module boundary)
 // ============================================================
+
+/// Remove stale auto.lock and paused-session.json files for a project if the PID inside them is dead.
+/// Checks `.gsd/auto.lock`, `.gsd/runtime/auto.lock`, and `.gsd/runtime/paused-session.json`.
+fn clean_stale_auto_lock(project_path: &str, project_id: &str) {
+    let gsd_dir = std::path::Path::new(project_path).join(".gsd");
+
+    // Helper: check if a PID from a JSON file is dead
+    let pid_is_dead = |content: &str| -> bool {
+        if let Ok(parsed) = serde_json::from_str::<serde_json::Value>(content) {
+            parsed
+                .get("pid")
+                .and_then(|v| v.as_u64())
+                .map(|pid| {
+                    std::process::Command::new("kill")
+                        .args(["-0", &pid.to_string()])
+                        .output()
+                        .map(|o| !o.status.success())
+                        .unwrap_or(true)
+                })
+                .unwrap_or(false)
+        } else {
+            false
+        }
+    };
+
+    // Clean auto.lock files
+    let lock_paths = [
+        gsd_dir.join("auto.lock"),
+        gsd_dir.join("runtime").join("auto.lock"),
+    ];
+    for lock_path in &lock_paths {
+        if !lock_path.exists() {
+            continue;
+        }
+        if let Ok(content) = std::fs::read_to_string(lock_path) {
+            if pid_is_dead(&content) {
+                let _ = std::fs::remove_file(lock_path);
+                tracing::info!(
+                    "Removed stale {} for project {}",
+                    lock_path.display(),
+                    project_id
+                );
+            }
+        }
+    }
+
+    // Clean paused-session.json — it blocks gsd auto from starting a new session
+    let paused_path = gsd_dir.join("runtime").join("paused-session.json");
+    if paused_path.exists() {
+        let _ = std::fs::remove_file(&paused_path);
+        tracing::info!(
+            "Removed paused-session.json for project {} to allow fresh headless start",
+            project_id
+        );
+    }
+
+    // Clean proper-lockfile directory (.gsd.lock/) — OS-level lock from previous session
+    let lock_dir = std::path::Path::new(project_path).join(".gsd.lock");
+    if lock_dir.exists() && lock_dir.is_dir() {
+        let _ = std::fs::remove_dir_all(&lock_dir);
+        tracing::info!(
+            "Removed stale .gsd.lock/ directory for project {}",
+            project_id
+        );
+    }
+
+    // Also check for parallel lock dirs like ".gsd/parallel/*/auto.lock"
+    let parallel_dir = gsd_dir.join("parallel");
+    if parallel_dir.exists() {
+        if let Ok(entries) = std::fs::read_dir(&parallel_dir) {
+            for entry in entries.flatten() {
+                let lock_file = entry.path().join("auto.lock");
+                if lock_file.exists() {
+                    if let Ok(content) = std::fs::read_to_string(&lock_file) {
+                        if pid_is_dead(&content) {
+                            let _ = std::fs::remove_file(&lock_file);
+                            // Also remove the parallel lock dir for this milestone
+                            let plock_dir = entry.path().to_string_lossy().to_string() + ".lock";
+                            let _ = std::fs::remove_dir_all(&plock_dir);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 
 /// Resolve project path from DB by project_id
 fn get_project_path(db: &Database, project_id: &str) -> Result<String, String> {
@@ -1470,11 +1557,23 @@ pub async fn gsd2_headless_start(
     terminal_manager: tauri::State<'_, crate::pty::TerminalManagerState>,
     registry: tauri::State<'_, HeadlessRegistryState>,
 ) -> Result<String, String> {
-    // Check for existing session for this project
+    // Check for existing session — verify it's actually alive before blocking
     {
-        let reg = registry.lock().await;
-        if reg.session_for_project(&project_id).is_some() {
-            return Err("A headless session is already running for this project".to_string());
+        let existing_sid = {
+            let reg = registry.lock().await;
+            reg.session_for_project(&project_id)
+        };
+        if let Some(sid) = existing_sid {
+            let alive = {
+                let mut manager = terminal_manager.lock().await;
+                manager.is_active(&sid)
+            };
+            if alive {
+                return Err("A headless session is already running for this project".to_string());
+            }
+            // Stale registry entry — clean up and allow a new session to start
+            let mut reg = registry.lock().await;
+            reg.unregister(&sid);
         }
     }
 
@@ -1485,6 +1584,9 @@ pub async fn gsd2_headless_start(
     };
 
     let session_id = uuid::Uuid::new_v4().to_string();
+
+    // Clean stale auto.lock if the PID inside it is dead
+    clean_stale_auto_lock(&project_path, &project_id);
 
     // Create PTY session
     {
@@ -3925,11 +4027,23 @@ pub async fn gsd2_headless_start_with_model(
     registry: tauri::State<'_, HeadlessRegistryState>,
     terminal_manager: tauri::State<'_, crate::pty::TerminalManagerState>,
 ) -> Result<String, String> {
-    // Check for existing session for this project
+    // Check for existing session — verify it's actually alive before blocking
     {
-        let reg = registry.lock().await;
-        if reg.session_for_project(&project_id).is_some() {
-            return Err("A headless session is already running for this project".to_string());
+        let existing_sid = {
+            let reg = registry.lock().await;
+            reg.session_for_project(&project_id)
+        };
+        if let Some(sid) = existing_sid {
+            let alive = {
+                let mut manager = terminal_manager.lock().await;
+                manager.is_active(&sid)
+            };
+            if alive {
+                return Err("A headless session is already running for this project".to_string());
+            }
+            // Stale registry entry — clean up and allow a new session to start
+            let mut reg = registry.lock().await;
+            reg.unregister(&sid);
         }
     }
 
@@ -3941,6 +4055,9 @@ pub async fn gsd2_headless_start_with_model(
 
     let session_id = uuid::Uuid::new_v4().to_string();
     let command = format!("gsd headless --model {}", model);
+
+    // Clean stale auto.lock if the PID inside it is dead
+    clean_stale_auto_lock(&project_path, &project_id);
 
     // Create PTY session
     {
@@ -3962,6 +4079,77 @@ pub async fn gsd2_headless_start_with_model(
     }
 
     Ok(session_id)
+}
+
+/// Save a completed headless session (logs + chat messages) to the DB for persistence.
+#[tauri::command]
+pub async fn gsd2_headless_save_session(
+    project_id: String,
+    started_at: i64,
+    completed_at: Option<i64>,
+    status: String,
+    logs_json: String,
+    messages_json: String,
+    last_snapshot_json: Option<String>,
+    db: tauri::State<'_, DbState>,
+) -> Result<(), String> {
+    let db_guard = db.write().await;
+    db_guard.conn().execute(
+        "INSERT INTO headless_sessions (project_id, started_at, completed_at, status, logs_json, messages_json, last_snapshot_json)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+        rusqlite::params![
+            project_id,
+            started_at,
+            completed_at,
+            status,
+            logs_json,
+            messages_json,
+            last_snapshot_json,
+        ],
+    ).map_err(|e| format!("DB error saving headless session: {}", e))?;
+    Ok(())
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PersistedHeadlessSession {
+    pub id: String,
+    pub project_id: String,
+    pub started_at: i64,
+    pub completed_at: Option<i64>,
+    pub status: String,
+    pub logs_json: String,
+    pub messages_json: String,
+    pub last_snapshot_json: Option<String>,
+}
+
+/// Load the most recent persisted headless session for a project.
+#[tauri::command]
+pub async fn gsd2_headless_load_last_session(
+    project_id: String,
+    db: tauri::State<'_, DbState>,
+) -> Result<Option<PersistedHeadlessSession>, String> {
+    let db_guard = db.read().await;
+    let result = db_guard.query_row(
+        "SELECT id, project_id, started_at, completed_at, status, logs_json, messages_json, last_snapshot_json
+         FROM headless_sessions
+         WHERE project_id = ?1
+         ORDER BY started_at DESC
+         LIMIT 1",
+        rusqlite::params![project_id],
+        |row| {
+            Ok(PersistedHeadlessSession {
+                id: row.get(0)?,
+                project_id: row.get(1)?,
+                started_at: row.get(2)?,
+                completed_at: row.get(3)?,
+                status: row.get(4)?,
+                logs_json: row.get(5)?,
+                messages_json: row.get(6)?,
+                last_snapshot_json: row.get(7)?,
+            })
+        },
+    ).optional().map_err(|e| format!("DB error loading headless session: {}", e))?;
+    Ok(result)
 }
 
 // ============================================================

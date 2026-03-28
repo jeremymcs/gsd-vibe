@@ -253,9 +253,8 @@ interface Gsd2ChatTabProps {
 }
 
 export function Gsd2ChatTab({ projectId: _projectId, session }: Gsd2ChatTabProps) {
-  const { status, sessionId } = session;
+  const { status, sessionId, messages, setMessages } = session;
 
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const parserRef = useRef<PtyChatParser | null>(null);
   const unlistenRef = useRef<UnlistenFn | null>(null);
@@ -347,6 +346,24 @@ export function Gsd2ChatTab({ projectId: _projectId, session }: Gsd2ChatTabProps
         </div>
         <Badge variant="outline" className="text-xs text-muted-foreground">
           idle
+        </Badge>
+      </div>
+    );
+  }
+
+  // ── Failed with no output (fast exit — e.g. stale PID guard) ──
+  if (status === 'failed' && messages.length === 0) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center gap-3 text-center p-8">
+        <MessagesSquare className="h-10 w-10 text-status-error/40" />
+        <div>
+          <p className="text-sm font-medium text-foreground">Session failed to start</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            GSD may have exited immediately. Check the <strong>GSD</strong> tab for details — another session may already be running.
+          </p>
+        </div>
+        <Badge variant="outline" className="text-xs text-status-error border-status-error/30">
+          failed
         </Badge>
       </div>
     );

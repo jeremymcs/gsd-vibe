@@ -40,6 +40,7 @@ export { KnowledgeCapturesPanel } from './knowledge-captures-panel';
 export { Gsd2ReportsTab } from './gsd2-reports-tab';
 export { Gsd2PreferencesTab } from './gsd2-preferences-tab';
 export { Gsd2ChatTab } from './gsd2-chat-tab';
+export { Gsd2SessionTab } from './gsd2-session-tab';
 export { Gsd2FilesTab } from './gsd2-files-tab';
 export { Gsd2ActivityTab } from './gsd2-activity-tab';
 export { Gsd2RoadmapTab } from './gsd2-roadmap-tab';
@@ -49,9 +50,9 @@ export {
   Gsd2PlanningGroup,
   Gsd2MetricsGroup,
   Gsd2CommandsGroup,
-  Gsd2FilesTerminalGroup,
   Gsd2DiagnosticsGroup,
 } from './gsd2-tab-groups';
+export { SplitDocBrowser } from './split-doc-browser';
 export { Gsd2DashboardView } from './gsd2-dashboard-view';
 export { Gsd2StatusBar } from './gsd2-status-bar';
 export {

@@ -23,6 +23,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useGsdPlans, useGsdSummaries, useGsdPhaseResearchList } from '@/lib/queries';
 import { ViewError } from '@/components/shared/loading-states';
 import { cn } from '@/lib/utils';
+import { groupPlansByPhase } from '@/lib/gsd-plan-utils';
 import type { GsdPlan, GsdSummary, GsdPhaseResearch, GsdSummaryDecision } from '@/lib/tauri';
 
 interface GsdPlansTabProps {
@@ -78,12 +79,7 @@ export function GsdPlansTab({ projectId }: GsdPlansTabProps) {
   }
 
   // Group plans by phase
-  const phaseGroups = new Map<number, GsdPlan[]>();
-  for (const plan of plans ?? []) {
-    const existing = phaseGroups.get(plan.phase_number) ?? [];
-    existing.push(plan);
-    phaseGroups.set(plan.phase_number, existing);
-  }
+  const phaseGroups = groupPlansByPhase(plans ?? []);
 
   const totalPlans = (plans ?? []).length;
   const completedPlans = (plans ?? []).filter((p) =>

@@ -18,8 +18,13 @@ import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/query-keys';
 import { invalidateDependencyCache } from '@/lib/tauri';
 import {
+  PackageManagerIcon,
+  severityColor,
+  parseOutdatedPackages,
+  parseVulnerablePackages,
+} from '@/lib/dependency-utils';
+import {
   Package,
-  Box,
   RefreshCw,
   AlertTriangle,
   ShieldAlert,
@@ -32,100 +37,6 @@ import {
 interface DependencyAlertsCardProps {
   projectId: string;
   projectPath: string;
-}
-
-interface OutdatedEntry {
-  current: string;
-  wanted: string;
-  latest: string;
-}
-
-interface AuditVulnerability {
-  severity: string;
-  title?: string;
-  url?: string;
-  range?: string;
-  via?: unknown[];
-}
-
-function PackageManagerIcon({ pm, className }: { pm: string; className?: string }) {
-  switch (pm.toLowerCase()) {
-    case 'cargo':
-      return <Box className={className} />;
-    default:
-      return <Package className={className} />;
-  }
-}
-
-function severityColor(severity: string): string {
-  switch (severity.toLowerCase()) {
-    case 'critical':
-    case 'high':
-      return 'text-status-error';
-    case 'moderate':
-      return 'text-status-warning';
-    default:
-      return 'text-muted-foreground';
-  }
-}
-
-function parseOutdatedPackages(
-  details: Record<string, unknown> | null,
-): [string, OutdatedEntry][] {
-  if (!details || typeof details !== 'object') return [];
-
-  // Handle double-serialization: details may be a JSON string from cache round-trip
-  let resolved = details;
-  if (typeof resolved === 'string') {
-    try {
-      resolved = JSON.parse(resolved) as Record<string, unknown>;
-    } catch {
-      return [];
-    }
-  }
-
-  // Try details.outdated first (expected structure from npm outdated merge)
-  let outdated = resolved.outdated as Record<string, OutdatedEntry> | undefined;
-
-  // If outdated is itself a JSON string, parse it
-  if (typeof outdated === 'string') {
-    try {
-      outdated = JSON.parse(outdated) as Record<string, OutdatedEntry>;
-    } catch {
-      outdated = undefined;
-    }
-  }
-
-  // Fallback: details itself may be the outdated map (alternate structures)
-  if (!outdated || typeof outdated !== 'object' || Array.isArray(outdated)) {
-    // Check if details directly contains entries with current/wanted/latest
-    const firstValue = Object.values(resolved)[0];
-    if (firstValue && typeof firstValue === 'object' && firstValue !== null && 'current' in firstValue) {
-      outdated = resolved as unknown as Record<string, OutdatedEntry>;
-    } else {
-      return [];
-    }
-  }
-
-  return Object.entries(outdated)
-    .filter(([, v]) => v && typeof v === 'object' && 'current' in v)
-    .sort(([a], [b]) => a.localeCompare(b));
-}
-
-function parseVulnerablePackages(
-  details: Record<string, unknown> | null,
-): [string, AuditVulnerability][] {
-  if (!details) return [];
-  const audit = details.audit as Record<string, unknown> | undefined;
-  if (!audit) return [];
-  const vulns = audit.vulnerabilities as Record<string, AuditVulnerability> | undefined;
-  if (!vulns || typeof vulns !== 'object') return [];
-  return Object.entries(vulns)
-    .filter(([, v]) => v.severity && v.severity !== 'info')
-    .sort(([, a], [, b]) => {
-      const order: Record<string, number> = { critical: 0, high: 1, moderate: 2, low: 3 };
-      return (order[a.severity] ?? 4) - (order[b.severity] ?? 4);
-    });
 }
 
 export function DependencyAlertsCard({ projectId, projectPath }: DependencyAlertsCardProps) {

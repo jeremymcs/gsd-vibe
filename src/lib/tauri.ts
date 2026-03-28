@@ -2071,6 +2071,40 @@ export const gsd2CleanWorktrees = (projectId: string) =>
 export const gsd2HeadlessStartWithModel = (projectId: string, model: string) =>
   invoke<string>('gsd2_headless_start_with_model', { projectId, model });
 
+export interface PersistedHeadlessSession {
+  id: string;
+  project_id: string;
+  started_at: number;
+  completed_at: number | null;
+  status: string;
+  logs_json: string;
+  messages_json: string;
+  last_snapshot_json: string | null;
+}
+
+export const gsd2HeadlessSaveSession = (args: {
+  projectId: string;
+  startedAt: number;
+  completedAt: number | null;
+  status: string;
+  logsJson: string;
+  messagesJson: string;
+  lastSnapshotJson: string | null;
+}) =>
+  invoke<void>('gsd2_headless_save_session', {
+    projectId: args.projectId,
+    startedAt: args.startedAt,
+    completedAt: args.completedAt,
+    status: args.status,
+    logsJson: args.logsJson,
+    messagesJson: args.messagesJson,
+    lastSnapshotJson: args.lastSnapshotJson,
+  });
+
+export const gsd2HeadlessLoadLastSession = (projectId: string) =>
+  invoke<PersistedHeadlessSession | null>('gsd2_headless_load_last_session', { projectId });
+
+
 // ============================================================
 // GitHub API
 // ============================================================

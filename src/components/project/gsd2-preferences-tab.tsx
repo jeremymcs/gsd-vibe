@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { PreferencesForm, setDraftField } from '@/components/preferences';
 import { useGsd2GetPreferences, useGsd2SavePreferences } from '@/lib/queries';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Gsd2HooksPanel } from './gsd2-command-panels';
 
 export interface Gsd2PreferencesTabProps {
   projectId: string;
@@ -63,67 +65,79 @@ export function Gsd2PreferencesTab({ projectId }: Gsd2PreferencesTabProps) {
 
   return (
     <div className="h-full flex flex-col">
-      {/* Header */}
-      <div className="flex items-center justify-between px-6 py-3 border-b border-border shrink-0">
-        <div className="flex items-center gap-3">
-          <Settings2 className="w-5 h-5 text-muted-foreground" />
-          <div>
-            <h2 className="text-base font-semibold">Preferences</h2>
-            <p className="text-xs text-muted-foreground">GSD-2 configuration for this project and your global defaults</p>
+      <Tabs defaultValue="preferences" className="flex h-full flex-col">
+        <div className="flex items-center justify-between px-6 py-3 border-b border-border shrink-0">
+          <div className="flex items-center gap-3">
+            <Settings2 className="w-5 h-5 text-muted-foreground" />
+            <div>
+              <h2 className="text-base font-semibold">Settings</h2>
+              <p className="text-xs text-muted-foreground">GSD-2 configuration and hook introspection</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <TabsList className="h-8 bg-muted/50">
+              <TabsTrigger value="preferences" className="text-xs h-6 px-3">Preferences</TabsTrigger>
+              <TabsTrigger value="hooks" className="text-xs h-6 px-3">Hooks</TabsTrigger>
+            </TabsList>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => void refetch()} className="h-8 text-xs gap-1.5">
-            <RefreshCw className="w-3 h-3" /> Reload
-          </Button>
-          <Button size="sm" disabled={!dirty || saveMutation.isPending} onClick={handleSave} className="h-8 text-xs gap-1.5">
-            <Save className="w-3 h-3" />{saveMutation.isPending ? 'Saving…' : 'Save'}
-          </Button>
-        </div>
-      </div>
 
-      {/* Scope toggle */}
-      <div className="flex items-center gap-2 px-6 py-3 border-b border-border bg-muted/20 shrink-0">
-        <span className="text-xs text-muted-foreground mr-1">Editing:</span>
-        <Button variant={editScope === 'project' ? 'default' : 'outline'} size="sm"
-          className="h-7 text-xs gap-1.5" aria-pressed={editScope === 'project'}
-          onClick={() => setEditScope('project')}>
-          <FolderOpen className="w-3 h-3" />
-          Project
-          {!data.project_exists && (
-            <Badge variant="outline" className="text-[9px] px-1 py-0 ml-0.5">new</Badge>
-          )}
-        </Button>
-        <Button variant={editScope === 'global' ? 'default' : 'outline'} size="sm"
-          className="h-7 text-xs gap-1.5" aria-pressed={editScope === 'global'}
-          onClick={() => setEditScope('global')}>
-          <Globe className="w-3 h-3" />
-          Global (~/.gsd)
-          {!data.global_exists && (
-            <Badge variant="outline" className="text-[9px] px-1 py-0 ml-0.5">new</Badge>
-          )}
-        </Button>
-        <span className="text-xs text-muted-foreground ml-2">
-          {editScope === 'global'
-            ? <span className="text-yellow-600 dark:text-yellow-400">⚠ Global changes apply to all projects</span>
-            : <span>{data.project_path}</span>}
-        </span>
-        {dirty && (
-          <Badge variant="outline" className="ml-auto text-[10px] text-yellow-600 dark:text-yellow-400 border-yellow-500/40">
-            Unsaved changes
-          </Badge>
-        )}
-      </div>
+        <TabsContent value="preferences" className="flex-1 flex flex-col overflow-hidden mt-0">
+          {/* Scope toggle */}
+          <div className="flex items-center gap-2 px-6 py-3 border-b border-border bg-muted/20 shrink-0">
+            <span className="text-xs text-muted-foreground mr-1">Editing:</span>
+            <Button variant={editScope === 'project' ? 'default' : 'outline'} size="sm"
+              className="h-7 text-xs gap-1.5" aria-pressed={editScope === 'project'}
+              onClick={() => setEditScope('project')}>
+              <FolderOpen className="w-3 h-3" />
+              Project
+              {!data.project_exists && (
+                <Badge variant="outline" className="text-[9px] px-1 py-0 ml-0.5">new</Badge>
+              )}
+            </Button>
+            <Button variant={editScope === 'global' ? 'default' : 'outline'} size="sm"
+              className="h-7 text-xs gap-1.5" aria-pressed={editScope === 'global'}
+              onClick={() => setEditScope('global')}>
+              <Globe className="w-3 h-3" />
+              Global (~/.gsd)
+              {!data.global_exists && (
+                <Badge variant="outline" className="text-[9px] px-1 py-0 ml-0.5">new</Badge>
+              )}
+            </Button>
+            <span className="text-xs text-muted-foreground ml-2">
+              {editScope === 'global'
+                ? <span className="text-yellow-600 dark:text-yellow-400">⚠ Global changes apply to all projects</span>
+                : <span>{data.project_path}</span>}
+            </span>
+            <div className="ml-auto flex items-center gap-2">
+              {dirty && (
+                <Badge variant="outline" className="text-[10px] text-yellow-600 dark:text-yellow-400 border-yellow-500/40">
+                  Unsaved changes
+                </Badge>
+              )}
+              <Button variant="outline" size="sm" onClick={() => void refetch()} className="h-7 text-xs gap-1.5">
+                <RefreshCw className="w-3 h-3" /> Reload
+              </Button>
+              <Button size="sm" disabled={!dirty || saveMutation.isPending} onClick={handleSave} className="h-7 text-xs gap-1.5">
+                <Save className="w-3 h-3" />{saveMutation.isPending ? 'Saving…' : 'Save'}
+              </Button>
+            </div>
+          </div>
+          <PreferencesForm
+            draft={draft}
+            onChange={handleChange}
+            scopes={editScope === 'project' ? scopes : {}}
+            dirty={dirty}
+            saving={saveMutation.isPending}
+            saveLabel={editScope === 'global' ? 'Global' : 'Project'}
+            onSave={handleSave}
+          />
+        </TabsContent>
 
-      <PreferencesForm
-        draft={draft}
-        onChange={handleChange}
-        scopes={editScope === 'project' ? scopes : {}}
-        dirty={dirty}
-        saving={saveMutation.isPending}
-        saveLabel={editScope === 'global' ? 'Global' : 'Project'}
-        onSave={handleSave}
-      />
+        <TabsContent value="hooks" className="flex-1 overflow-hidden mt-0">
+          <Gsd2HooksPanel projectId={projectId} projectPath="" />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

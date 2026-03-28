@@ -25,6 +25,7 @@ import {
   useGsd2RecoveryInfo,
 } from '@/lib/queries';
 import { formatCost, formatTokenCount, formatDuration } from '@/lib/utils';
+import { phaseBadgeClass, classifyPhase, HistorySummaryCards } from './gsd2-shared';
 
 // ─── Shared Loading / Error / Empty helpers ───────────────────────────────────
 
@@ -72,17 +73,6 @@ function PanelWrapper({ title, icon: Icon, children }: { title: string; icon: Re
   );
 }
 
-function phaseBadgeClass(phase: string): string {
-  switch (phase) {
-    case 'execution':    return 'bg-status-success/15 text-status-success border-status-success/30';
-    case 'completion':   return 'bg-status-info/15 text-status-info border-status-info/30';
-    case 'planning':     return 'bg-status-warning/15 text-status-warning border-status-warning/30';
-    case 'research':     return 'bg-primary/15 text-primary border-primary/30';
-    case 'reassessment': return 'bg-muted text-muted-foreground border-border';
-    default:             return 'bg-muted text-muted-foreground border-border';
-  }
-}
-
 // ─── 1. History Panel ─────────────────────────────────────────────────────────
 
 export function Gsd2HistoryPanel({ projectId }: PanelProps) {
@@ -99,28 +89,17 @@ export function Gsd2HistoryPanel({ projectId }: PanelProps) {
   return (
     <PanelWrapper title="History" icon={History}>
       {/* Totals row */}
-      <div className="grid grid-cols-4 gap-2 p-3 pb-0">
-        {[
-          ['Cost', formatCost(totals.total_cost)],
-          ['Tokens', formatTokenCount(totals.total_tokens)],
-          ['Units', String(totals.units)],
-          ['Duration', formatDuration(totals.duration_ms)],
-        ].map(([label, value]) => (
-          <Card key={label} className="py-0">
-            <CardContent className="p-2 text-center">
-              <p className="text-base font-semibold tabular-nums">{value}</p>
-              <p className="text-[10px] text-muted-foreground">{label}</p>
-            </CardContent>
-          </Card>
-        ))}
+      <div className="p-3 pb-0">
+        <HistorySummaryCards totals={totals} />
       </div>
       {/* Unit rows */}
       <div className="p-3 space-y-1">
         {units.map((unit) => {
+          const phase = classifyPhase(unit.unit_type);
           const duration = unit.finished_at > 0 ? unit.finished_at - unit.started_at : 0;
           return (
             <div key={unit.id} className="flex items-center gap-2 rounded border border-border/40 bg-muted/10 px-2.5 py-1.5 text-xs hover:bg-muted/30 transition-colors">
-              <Badge variant="outline" className={`shrink-0 text-[10px] px-1 py-0 ${phaseBadgeClass(unit.unit_type.includes('execute') ? 'execution' : unit.unit_type.includes('plan') ? 'planning' : unit.unit_type.includes('complete') ? 'completion' : unit.unit_type.includes('research') ? 'research' : 'execution')}`}>
+              <Badge variant="outline" className={`shrink-0 text-[10px] px-1 py-0 ${phaseBadgeClass(phase)}`}>
                 {unit.unit_type.split('-')[0]}
               </Badge>
               <span className="flex-1 truncate font-mono text-foreground/80" title={unit.id}>{unit.id}</span>

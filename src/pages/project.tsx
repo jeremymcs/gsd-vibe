@@ -33,19 +33,11 @@ import {
   EnvVarsTab,
   Gsd2HealthTab,
   Gsd2WorktreesTab,
-  Gsd2HeadlessTab,
-  Gsd2ChatTab,
   Gsd2StatusBar,
-  Gsd2VisualizerTab,
-  Gsd2MilestonesTab,
-  Gsd2SlicesTab,
-  Gsd2TasksTab,
   DoctorPanel,
   ForensicsPanel,
   SkillHealthPanel,
   KnowledgeCapturesPanel,
-  Gsd2ReportsTab,
-  Gsd2DashboardView,
   Gsd2PreferencesTab,
   Gsd2SessionBrowser,
   GitView,
@@ -56,6 +48,7 @@ import {
   Gsd2CommandsGroup,
   Gsd2DiagnosticsGroup,
 } from "@/components/project";
+import { Gsd2SessionTab } from "@/components/project/gsd2-session-tab";
 import { ShellView } from "@/components/terminal";
 import { watchProjectFiles } from "@/lib/tauri";
 import { useGsdFileWatcher } from "@/hooks/use-gsd-file-watcher";
@@ -116,7 +109,7 @@ export function ProjectPage() {
   useGsdFileWatcher(id!, project?.path ?? '', showGsdTab, handleGsdSync);
 
   // Headless session state — lifted to page level so logs survive view navigation
-  const headlessSession = useHeadlessSession();
+  const headlessSession = useHeadlessSession(id ?? '');
 
   // Start file watcher for GSD projects on mount
   useEffect(() => {
@@ -202,7 +195,7 @@ export function ProjectPage() {
         {/* All other views render conditionally */}
         {activeView !== 'shell' && (() => {
           // Tab-group views and full-height views need h-full with no padding/scroll wrapper
-          const isFullHeight = activeView.startsWith('gsd2-group-') || activeView === 'gsd2-chat' || activeView === 'git' || activeView === 'gsd2-sessions';
+          const isFullHeight = activeView.startsWith('gsd2-group-') || activeView === 'gsd2-headless' || activeView === 'git' || activeView === 'gsd2-sessions';
           return isFullHeight ? (
             <div key={activeView} className="h-full overflow-hidden animate-fade-in">
               <ViewRenderer
@@ -294,38 +287,24 @@ function ViewRenderer({
       return <GitView projectId={projectId} projectPath={projectPath} />;
 
     // GSD-2 views
-    case 'gsd2-dashboard':
-      return <Gsd2DashboardView projectId={projectId} projectPath={projectPath} />;
     case 'gsd2-health':
       return <Gsd2HealthTab projectId={projectId} projectPath={projectPath} />;
     case 'gsd2-headless':
-      return <Gsd2HeadlessTab projectId={projectId} projectPath={projectPath} session={headlessSession} />;
-    case 'gsd2-chat':
-      return <Gsd2ChatTab projectId={projectId} projectPath={projectPath} session={headlessSession} />;
+      return <Gsd2SessionTab projectId={projectId} projectPath={projectPath} session={headlessSession} />;
     case 'gsd2-worktrees':
       return <Gsd2WorktreesTab projectId={projectId} projectPath={projectPath} />;
     case 'gsd2-sessions':
       return <Gsd2SessionBrowser projectId={projectId} projectPath={projectPath} />;
-    case 'gsd2-visualizer':
-      return <Gsd2VisualizerTab projectId={projectId} projectPath={projectPath} />;
-    case 'gsd2-milestones':
-      return <Gsd2MilestonesTab projectId={projectId} projectPath={projectPath} />;
-    case 'gsd2-slices':
-      return <Gsd2SlicesTab projectId={projectId} projectPath={projectPath} />;
-    case 'gsd2-tasks':
-      return <Gsd2TasksTab projectId={projectId} projectPath={projectPath} />;
-    case 'gsd2-reports':
-      return <Gsd2ReportsTab projectId={projectId} projectPath={projectPath} />;
     case 'gsd2-preferences':
       return <Gsd2PreferencesTab projectId={projectId} projectPath={projectPath} />;
+    case 'gsd2-knowledge-captures':
+      return <KnowledgeCapturesPanel projectId={projectId} projectPath={projectPath} />;
     case 'gsd2-doctor':
       return <DoctorPanel projectId={projectId} projectPath={projectPath} />;
     case 'gsd2-forensics':
       return <ForensicsPanel projectId={projectId} projectPath={projectPath} />;
     case 'gsd2-skill-health':
       return <SkillHealthPanel projectId={projectId} projectPath={projectPath} />;
-    case 'gsd2-knowledge-captures':
-      return <KnowledgeCapturesPanel projectId={projectId} projectPath={projectPath} />;
 
     // GSD-2 tab groups
     case 'gsd2-group-progress':

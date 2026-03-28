@@ -36,18 +36,16 @@ export function Gsd2HeadlessTab({ projectId, session }: Gsd2HeadlessTabProps) {
     setSessionId,
     setStatus,
     clearLogs,
+    loadPersistedSession,
   } = session;
 
-  const headlessQuery = useGsd2HeadlessQuery(projectId, status === 'idle');
-  const modelsQuery = useGsd2ListModels();
-  const startMutation = useGsd2HeadlessStart();
-  const startWithModelMutation = useGsd2HeadlessStartWithModel();
-  const stopMutation = useGsd2HeadlessStop();
+  // Track current status in a ref so async timers can read the live value
+  const statusRef = useRef(status);
+  useEffect(() => { statusRef.current = status; }, [status]);
 
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  // On mount: recover any session already running in the registry
+  // On mount: load last persisted session, then check for any live session
   useEffect(() => {
+    void loadPersistedSession(projectId);
     void gsd2HeadlessGetSession(projectId).then(sid => {
       if (sid && !sessionId) {
         setSessionId(sid);
@@ -56,6 +54,14 @@ export function Gsd2HeadlessTab({ projectId, session }: Gsd2HeadlessTabProps) {
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId]);
+
+  const headlessQuery = useGsd2HeadlessQuery(projectId, status === 'idle');
+  const modelsQuery = useGsd2ListModels();
+  const startMutation = useGsd2HeadlessStart();
+  const startWithModelMutation = useGsd2HeadlessStartWithModel();
+  const stopMutation = useGsd2HeadlessStop();
+
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom when new log entries arrive
   useEffect(() => {
@@ -70,6 +76,16 @@ export function Gsd2HeadlessTab({ projectId, session }: Gsd2HeadlessTabProps) {
     try {
       const sid = await startMutation.mutateAsync(projectId);
       setSessionId(sid);
+      // Safety net: if GSD exits immediately (e.g. stale PID guard), the PTY exit
+      // event fires before listeners attach. Poll the registry after 3s — if our
+      // session is gone, mark it failed so the UI doesn't stay stuck on 'running'.
+      setTimeout(() => {
+        void gsd2HeadlessGetSession(projectId).then((liveSid) => {
+          if (liveSid !== sid) {
+            if (statusRef.current === 'running') setStatus('failed');
+          }
+        });
+      }, 3000);
     } catch {
       setStatus('failed');
     }
@@ -85,6 +101,15 @@ export function Gsd2HeadlessTab({ projectId, session }: Gsd2HeadlessTabProps) {
       const sid = await gsd2HeadlessGetSession(projectId);
       if (sid) {
         setSessionId(sid);
+        setTimeout(() => {
+          void gsd2HeadlessGetSession(projectId).then((liveSid) => {
+            if (liveSid !== sid) {
+              if (statusRef.current === 'running') setStatus('failed');
+            }
+          });
+        }, 3000);
+      } else {
+        setStatus('failed');
       }
     } catch {
       setStatus('failed');

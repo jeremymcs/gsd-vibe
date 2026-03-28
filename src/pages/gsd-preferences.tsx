@@ -54,24 +54,26 @@ export function GsdPreferencesPage() {
 
   return (
     <div className="h-full flex flex-col">
-      <PageHeader
-        title="Global GSD Preferences"
-        description={data.global_path}
-        icon={<Globe className="w-5 h-5 text-purple-500" />}
-        actions={
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => void refetch()} className="h-8 text-xs gap-1.5">
-              <RefreshCw className="w-3 h-3" /> Reload
-            </Button>
-            <Button size="sm" disabled={!dirty || saveMutation.isPending} onClick={handleSave} className="h-8 text-xs gap-1.5">
-              <Save className="w-3 h-3" />{saveMutation.isPending ? 'Saving…' : 'Save'}
-            </Button>
-          </div>
-        }
-      />
+      <div className="px-8 pt-6 pb-4 shrink-0">
+        <PageHeader
+          title="Global GSD Preferences"
+          description={data.global_path}
+          icon={<Globe className="w-5 h-5 text-purple-500" />}
+          actions={
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={() => void refetch()} className="h-8 text-xs gap-1.5">
+                <RefreshCw className="w-3 h-3" /> Reload
+              </Button>
+              <Button size="sm" disabled={!dirty || saveMutation.isPending} onClick={handleSave} className="h-8 text-xs gap-1.5">
+                <Save className="w-3 h-3" />{saveMutation.isPending ? 'Saving…' : 'Save'}
+              </Button>
+            </div>
+          }
+        />
+      </div>
 
       {/* Scope note */}
-      <div className="px-6 py-2.5 border-b border-border bg-purple-500/5 shrink-0 flex items-center gap-2">
+      <div className="px-8 py-2.5 border-b border-border bg-purple-500/5 shrink-0 flex items-center gap-2">
         <Globe className="w-3.5 h-3.5 text-purple-500 shrink-0" />
         <p className="text-xs text-muted-foreground">
           These settings apply to <strong>all projects</strong>. Project-level preferences in{' '}
