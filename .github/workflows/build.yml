@@ -19,11 +19,8 @@ jobs:
       matrix:
         include:
           - platform: macos-latest
-            target: aarch64-apple-darwin
-            label: macOS-ARM64
-          - platform: macos-13
-            target: x86_64-apple-darwin
-            label: macOS-x64
+            target: universal-apple-darwin
+            label: macOS-Universal
           - platform: windows-latest
             target: x86_64-pc-windows-msvc
             label: Windows-x64
@@ -42,6 +39,11 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
+
+      # Universal macOS build requires both ARM and Intel targets
+      - name: Add x86_64 target for universal build
+        if: matrix.target == 'universal-apple-darwin'
+        run: rustup target add x86_64-apple-darwin aarch64-apple-darwin
 
       - name: Rust cache
         uses: swatinem/rust-cache@v2
@@ -83,7 +85,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tagName: ${{ github.ref_name }}
-          releaseName: 'Track Your Shit ${{ github.ref_name }}'
+          releaseName: 'GSD Vibe ${{ github.ref_name }}'
           releaseBody: 'See the assets below to download for your platform.'
           releaseDraft: true
           prerelease: false
