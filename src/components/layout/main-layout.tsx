@@ -2,7 +2,7 @@
 // Context-aware sidebar: global nav or project-scoped nav
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
-import { ReactNode, useState, useEffect, useMemo, lazy, Suspense } from 'react';
+import { ReactNode, useState, useEffect, useRef, useMemo, lazy, Suspense } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useTerminalContext } from '@/contexts/terminal-context';
@@ -26,14 +26,14 @@ import {
 } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
 import {
-  SquareTerminal,
-  ChevronDown,
-  ChevronUp,
   PanelLeftClose,
   PanelLeftOpen,
   Search,
   FolderOpen,
   ArrowLeft,
+  SquareTerminal,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { modKey } from '@/hooks/use-keyboard-shortcuts';
 import { KeyboardShortcutsProvider } from './keyboard-shortcuts-provider';
@@ -75,6 +75,7 @@ export function MainLayout({ children }: MainLayoutProps) {
 
   // Determine if user is on the project shell view
   const activeView = searchParams.get('view') ?? searchParams.get('tab') ?? '';
+
   const isProjectShellView = isProjectRoute && activeView === 'shell';
 
   const { shellPanelCollapsed, setShellPanelCollapsed, headlessRunning } = useTerminalContext();
@@ -124,6 +125,23 @@ export function MainLayout({ children }: MainLayoutProps) {
   useEffect(() => {
     localStorage.setItem("sidebar-collapsed", String(sidebarCollapsed));
   }, [sidebarCollapsed]);
+
+  // Auto-open bottom terminal when entering Session view, restore when leaving
+  const isSessionView = isProjectRoute && activeView === 'gsd2-headless';
+  const prevCollapsedRef = useRef(shellPanelCollapsed);
+  useEffect(() => {
+    if (isSessionView && shellPanelCollapsed) {
+      prevCollapsedRef.current = true;
+      setShellPanelCollapsed(false);
+    }
+    return () => {
+      // Restore collapsed state when leaving Session view
+      if (isSessionView && prevCollapsedRef.current) {
+        setShellPanelCollapsed(true);
+        prevCollapsedRef.current = false;
+      }
+    };
+  }, [isSessionView]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Navigate to a project view
   const goToView = (viewId: string) => {
@@ -189,51 +207,30 @@ export function MainLayout({ children }: MainLayoutProps) {
             // ── Global logo ──
             <div
               className={cn(
-                "h-24 flex items-center border-b border-border/40 transition-all duration-300",
-                sidebarCollapsed ? "px-0 justify-center" : "px-6"
+                "h-14 flex items-center justify-center border-b border-border/40 transition-all duration-300",
               )}
             >
-              {sidebarCollapsed ? (
-                <div 
-                  className="relative cursor-pointer flex items-center justify-center w-full h-full" 
-                  onClick={() => navigate("/")}
-                >
-                  {/* Miniature version of the Shard V for collapsed state */}
-                  <svg viewBox="0 0 512 512" className="w-9 h-9 drop-shadow-sm">
-                    <defs>
-                      <linearGradient id="shard-light-mini" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stop-color="#22d3ee" />
-                        <stop offset="100%" stop-color="#0ea5e9" />
-                      </linearGradient>
-                      <linearGradient id="shard-shadow-mini" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stop-color="#0891b2" />
-                        <stop offset="100%" stop-color="#075985" />
-                      </linearGradient>
-                    </defs>
-                    <path d="M 256 415 L 116 105 L 196 105 L 256 265 Z" fill="url(#shard-shadow-mini)" />
-                    <path d="M 256 415 L 396 105 L 316 105 L 256 265 Z" fill="url(#shard-light-mini)" />
-                  </svg>
-                </div>
-              ) : (
-                <div 
-                  className="flex flex-col items-center gap-1 w-full cursor-pointer"
-                  onClick={() => navigate("/")}
-                >
-                  <img 
-                    src="/gsd-logo.svg" 
-                    alt="Vibe" 
-                    className="h-10 w-full max-w-[120px] object-contain drop-shadow-sm" 
-                  />
-                  <div className="flex flex-col items-center text-center">
-                    <span className="text-[16px] font-bold tracking-[0.3em] uppercase text-foreground/90">
-                      Vibe
+              <button
+                type="button"
+                onClick={() => navigate("/")}
+                className="cursor-pointer select-none group"
+              >
+                {sidebarCollapsed ? (
+                  <span className="text-sm font-mono font-bold text-foreground/80 group-hover:text-foreground transition-colors">
+                    gsd
+                  </span>
+                ) : (
+                  <div className="flex items-center gap-0">
+                    <span className="text-sm font-mono font-bold text-foreground/80 group-hover:text-foreground transition-colors">
+                      gsd
                     </span>
-                    <span className="text-[9px] font-medium tracking-[0.4em] uppercase text-muted-foreground/40 -mt-0.5 whitespace-nowrap">
-                      GSD Ecosystem
+                    <span className="text-sm font-mono text-muted-foreground/40 mx-1">/</span>
+                    <span className="text-sm font-mono font-normal text-muted-foreground/60 group-hover:text-muted-foreground transition-colors">
+                      vibe
                     </span>
                   </div>
-                </div>
-              )}
+                )}
+              </button>
             </div>
           )}
 
@@ -501,9 +498,7 @@ export function MainLayout({ children }: MainLayoutProps) {
             <button
               className={cn(
                 "relative flex items-center gap-2 px-4 py-2 border-t cursor-pointer select-none flex-shrink-0 w-full transition-all duration-200 group",
-                shellPanelCollapsed
-                  ? "border-border/50 bg-muted/30 hover:bg-muted/50"
-                  : "border-border/50 bg-muted/30 hover:bg-muted/50"
+                "border-border/50 bg-muted/30 hover:bg-muted/50"
               )}
               onClick={() => setShellPanelCollapsed(!shellPanelCollapsed)}
               aria-label={shellPanelCollapsed ? "Expand shell panel" : "Collapse shell panel"}
@@ -531,12 +526,12 @@ export function MainLayout({ children }: MainLayoutProps) {
             </button>
           )}
 
-          {/* Persistent shell panel - always mounted, visible based on state */}
+          {/* Persistent shell panel - always mounted, hidden on shell view to avoid collision */}
           <div className={cn(
             "flex-shrink-0 transition-all duration-200",
             isShellRoute
               ? "flex-1"
-              : shellPanelCollapsed || isProjectShellView
+              : isProjectShellView || shellPanelCollapsed
                 ? "h-0 invisible"
                 : "h-[300px]"
           )}>

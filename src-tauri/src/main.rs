@@ -5,5 +5,5 @@
 #![cfg_attr(all(not(debug_assertions)), windows_subsystem = "windows")]
 
 fn main() {
-    gsd_vibeflow_lib::run()
+    gsd_vibe_lib::run()
 }

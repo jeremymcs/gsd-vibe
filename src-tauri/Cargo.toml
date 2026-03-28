@@ -2,7 +2,7 @@
 # Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 [package]
-name = "gsd-vibeflow"
+name = "gsd-vibe"
 version = "0.1.1"
 description = "GSD Vibe - Desktop app for managing Claude Code projects"
 authors = ["Jeremy McSpadden <jeremy@fluxlabs.net>"]
@@ -12,7 +12,7 @@ license = "MIT"
 [features]
 
 [lib]
-name = "gsd_vibeflow_lib"
+name = "gsd_vibe_lib"
 crate-type = ["lib", "cdylib", "staticlib"]
 
 [build-dependencies]
