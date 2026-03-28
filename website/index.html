@@ -56,6 +56,34 @@
   </script>
 
   <style>
+    /* Screenshot version badges */
+    .screenshot-wrapper {
+      position: relative;
+    }
+    .version-badge {
+      position: absolute;
+      top: 0.75rem;
+      right: 0.75rem;
+      padding: 0.25rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      z-index: 10;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    }
+    .badge-gsd1 {
+      background: rgba(251,146,60,0.85);
+      color: #000;
+      border: 1px solid rgba(251,146,60,0.6);
+    }
+    .badge-gsd2 {
+      background: rgba(124,207,255,0.85);
+      color: #000;
+      border: 1px solid rgba(124,207,255,0.6);
+    }
     /* Custom styles that Tailwind can't do inline */
     .gradient-text {
       background: linear-gradient(135deg, #7ccfff 0%, #a0e5ff 50%, #ffffff 100%);
@@ -551,90 +579,123 @@
         <p class="text-lg text-slate-400 max-w-2xl mx-auto">Real screenshots from the app &mdash; not mockups.</p>
       </div>
 
-      <!-- GSD-2 Screenshots -->
+      <!-- GSD-1 vs GSD-2 Side-by-Side Comparison -->
       <div class="mb-16">
-        <h3 class="text-xl font-bold text-white mb-2 text-center">GSD-2 Features</h3>
-        <p class="text-sm text-slate-500 text-center mb-8">Dashboard, visualizer, health monitoring, milestones, headless mode, and worktrees.</p>
-        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-          <div class="space-y-3">
-            <div class="rounded-xl overflow-hidden shadow-xl border border-white/[0.1]">
-              <img src="screenshots/gsd2-dashboard.png" alt="GSD-2 Dashboard showing current unit, slice progress, phase breakdown, activity feed, and health widget" class="w-full h-auto" loading="lazy" />
-            </div>
-            <p class="text-sm text-slate-500 text-center">GSD-2 Dashboard</p>
-          </div>
-          <div class="space-y-3">
-            <div class="rounded-xl overflow-hidden shadow-xl border border-white/[0.1]">
-              <img src="screenshots/gsd2-visualizer.png" alt="GSD-2 Visualizer with progress tree showing milestones, slices, and task status across 7 tabs" class="w-full h-auto" loading="lazy" />
-            </div>
-            <p class="text-sm text-slate-500 text-center">7-Tab Visualizer</p>
-          </div>
-          <div class="space-y-3">
-            <div class="rounded-xl overflow-hidden shadow-xl border border-white/[0.1]">
-              <img src="screenshots/gsd2-health.png" alt="GSD-2 Health view showing budget tracking, active milestone progress, and doctor checks" class="w-full h-auto" loading="lazy" />
-            </div>
-            <p class="text-sm text-slate-500 text-center">Health Monitoring</p>
-          </div>
-          <div class="space-y-3">
-            <div class="rounded-xl overflow-hidden shadow-xl border border-white/[0.1]">
-              <img src="screenshots/gsd2-milestones.png" alt="GSD-2 Milestones view with expandable milestone hierarchy showing slices and tasks" class="w-full h-auto" loading="lazy" />
-            </div>
-            <p class="text-sm text-slate-500 text-center">Milestones &amp; Slices</p>
-          </div>
-          <div class="space-y-3">
-            <div class="rounded-xl overflow-hidden shadow-xl border border-white/[0.1]">
-              <img src="screenshots/gsd2-headless.png" alt="GSD-2 Headless mode showing execution state, next action, and session management" class="w-full h-auto" loading="lazy" />
-            </div>
-            <p class="text-sm text-slate-500 text-center">Headless Mode</p>
-          </div>
-          <div class="space-y-3">
-            <div class="rounded-xl overflow-hidden shadow-xl border border-white/[0.1]">
-              <img src="screenshots/gsd2-worktrees.png" alt="GSD-2 Worktrees panel showing active worktrees with file change counts" class="w-full h-auto" loading="lazy" />
-            </div>
-            <p class="text-sm text-slate-500 text-center">Worktrees</p>
-          </div>
+        <h3 class="text-xl font-bold text-white mb-2 text-center">GSD-1 vs GSD-2</h3>
+        <p class="text-sm text-slate-500 text-center mb-4">See how the app adapts to each GSD version. Different sidebar, different capabilities.</p>
+        <div class="flex items-center justify-center gap-4 mb-8">
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wide" style="background:rgba(251,146,60,0.85);color:#000;">GSD-1</span>
+          <span class="text-slate-600 text-sm">Phase-based workflow</span>
+          <span class="text-slate-700 mx-2">|</span>
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wide" style="background:rgba(124,207,255,0.85);color:#000;">GSD-2</span>
+          <span class="text-slate-600 text-sm">Milestone &rarr; Slice &rarr; Task hierarchy</span>
         </div>
-      </div>
 
-      <!-- GSD Workflow Screenshots -->
-      <div class="mb-16">
-        <h3 class="text-xl font-bold text-white mb-2 text-center">GSD Workflow</h3>
-        <p class="text-sm text-slate-500 text-center mb-8">Plans, context, validation, UAT, milestones, and debug sessions.</p>
-        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+        <!-- Pair 1: Main View -->
+        <div class="grid md:grid-cols-2 gap-6 max-w-6xl mx-auto mb-8">
           <div class="space-y-3">
-            <div class="rounded-xl overflow-hidden shadow-xl border border-white/[0.1]">
-              <img src="screenshots/gsd-plans.png" alt="GSD Plans tab showing phase plans with tasks, timing data, and completion summaries" class="w-full h-auto" loading="lazy" />
+            <div class="screenshot-wrapper rounded-xl overflow-hidden shadow-xl border border-white/[0.1]">
+              <span class="version-badge badge-gsd1">GSD-1</span>
+              <img src="screenshots/gsd-plans.png" alt="GSD-1 Plans view with phase-based plan tracking" class="w-full h-auto" loading="lazy" />
             </div>
             <p class="text-sm text-slate-500 text-center">Plans &amp; Summaries</p>
           </div>
           <div class="space-y-3">
-            <div class="rounded-xl overflow-hidden shadow-xl border border-white/[0.1]">
-              <img src="screenshots/gsd-context.png" alt="GSD Context tab showing architectural decisions and deferred ideas per phase" class="w-full h-auto" loading="lazy" />
+            <div class="screenshot-wrapper rounded-xl overflow-hidden shadow-xl border border-white/[0.1]">
+              <span class="version-badge badge-gsd2">GSD-2</span>
+              <img src="screenshots/gsd2-dashboard.png" alt="GSD-2 Dashboard with current unit, slice progress, and health widget" class="w-full h-auto" loading="lazy" />
             </div>
-            <p class="text-sm text-slate-500 text-center">Phase Context &amp; Decisions</p>
+            <p class="text-sm text-slate-500 text-center">Dashboard &amp; Activity</p>
           </div>
+        </div>
+
+        <!-- Pair 2: Milestones -->
+        <div class="grid md:grid-cols-2 gap-6 max-w-6xl mx-auto mb-8">
           <div class="space-y-3">
-            <div class="rounded-xl overflow-hidden shadow-xl border border-white/[0.1]">
-              <img src="screenshots/gsd-validation.png" alt="GSD Validation tab showing per-task verification map with pass/fail status and wave tracking" class="w-full h-auto" loading="lazy" />
-            </div>
-            <p class="text-sm text-slate-500 text-center">Validation &amp; Test Map</p>
-          </div>
-          <div class="space-y-3">
-            <div class="rounded-xl overflow-hidden shadow-xl border border-white/[0.1]">
-              <img src="screenshots/gsd-uat.png" alt="GSD UAT tab showing user acceptance test results with pass/issue/pending status" class="w-full h-auto" loading="lazy" />
-            </div>
-            <p class="text-sm text-slate-500 text-center">User Acceptance Testing</p>
-          </div>
-          <div class="space-y-3">
-            <div class="rounded-xl overflow-hidden shadow-xl border border-white/[0.1]">
-              <img src="screenshots/gsd-milestones.png" alt="GSD Milestones tab showing version timeline with current milestone and phase ranges" class="w-full h-auto" loading="lazy" />
+            <div class="screenshot-wrapper rounded-xl overflow-hidden shadow-xl border border-white/[0.1]">
+              <span class="version-badge badge-gsd1">GSD-1</span>
+              <img src="screenshots/gsd-milestones.png" alt="GSD-1 Milestones with version timeline and phase ranges" class="w-full h-auto" loading="lazy" />
             </div>
             <p class="text-sm text-slate-500 text-center">Milestone Timeline</p>
           </div>
           <div class="space-y-3">
-            <div class="rounded-xl overflow-hidden shadow-xl border border-white/[0.1]">
-              <img src="screenshots/gsd-debug.png" alt="GSD Debug tab showing active and resolved debug sessions with error types" class="w-full h-auto" loading="lazy" />
+            <div class="screenshot-wrapper rounded-xl overflow-hidden shadow-xl border border-white/[0.1]">
+              <span class="version-badge badge-gsd2">GSD-2</span>
+              <img src="screenshots/gsd2-milestones.png" alt="GSD-2 Milestones with expandable hierarchy showing slices and tasks" class="w-full h-auto" loading="lazy" />
+            </div>
+            <p class="text-sm text-slate-500 text-center">Milestones &amp; Slices</p>
+          </div>
+        </div>
+
+        <!-- Pair 3: Validation / Visualizer -->
+        <div class="grid md:grid-cols-2 gap-6 max-w-6xl mx-auto mb-8">
+          <div class="space-y-3">
+            <div class="screenshot-wrapper rounded-xl overflow-hidden shadow-xl border border-white/[0.1]">
+              <span class="version-badge badge-gsd1">GSD-1</span>
+              <img src="screenshots/gsd-validation.png" alt="GSD-1 Validation with per-task verification map and wave tracking" class="w-full h-auto" loading="lazy" />
+            </div>
+            <p class="text-sm text-slate-500 text-center">Validation &amp; Test Map</p>
+          </div>
+          <div class="space-y-3">
+            <div class="screenshot-wrapper rounded-xl overflow-hidden shadow-xl border border-white/[0.1]">
+              <span class="version-badge badge-gsd2">GSD-2</span>
+              <img src="screenshots/gsd2-visualizer.png" alt="GSD-2 Visualizer with progress tree, dependency graph, and metrics" class="w-full h-auto" loading="lazy" />
+            </div>
+            <p class="text-sm text-slate-500 text-center">7-Tab Visualizer</p>
+          </div>
+        </div>
+
+        <!-- Pair 4: UAT / Health -->
+        <div class="grid md:grid-cols-2 gap-6 max-w-6xl mx-auto mb-8">
+          <div class="space-y-3">
+            <div class="screenshot-wrapper rounded-xl overflow-hidden shadow-xl border border-white/[0.1]">
+              <span class="version-badge badge-gsd1">GSD-1</span>
+              <img src="screenshots/gsd-uat.png" alt="GSD-1 UAT with test results and pass/issue/pending status" class="w-full h-auto" loading="lazy" />
+            </div>
+            <p class="text-sm text-slate-500 text-center">User Acceptance Testing</p>
+          </div>
+          <div class="space-y-3">
+            <div class="screenshot-wrapper rounded-xl overflow-hidden shadow-xl border border-white/[0.1]">
+              <span class="version-badge badge-gsd2">GSD-2</span>
+              <img src="screenshots/gsd2-health.png" alt="GSD-2 Health with budget tracking, doctor checks, and active milestone" class="w-full h-auto" loading="lazy" />
+            </div>
+            <p class="text-sm text-slate-500 text-center">Health Monitoring</p>
+          </div>
+        </div>
+
+        <!-- Pair 5: Debug / Headless -->
+        <div class="grid md:grid-cols-2 gap-6 max-w-6xl mx-auto mb-8">
+          <div class="space-y-3">
+            <div class="screenshot-wrapper rounded-xl overflow-hidden shadow-xl border border-white/[0.1]">
+              <span class="version-badge badge-gsd1">GSD-1</span>
+              <img src="screenshots/gsd-debug.png" alt="GSD-1 Debug sessions with error types and resolution notes" class="w-full h-auto" loading="lazy" />
             </div>
             <p class="text-sm text-slate-500 text-center">Debug Sessions</p>
+          </div>
+          <div class="space-y-3">
+            <div class="screenshot-wrapper rounded-xl overflow-hidden shadow-xl border border-white/[0.1]">
+              <span class="version-badge badge-gsd2">GSD-2</span>
+              <img src="screenshots/gsd2-headless.png" alt="GSD-2 Headless mode with execution state and session management" class="w-full h-auto" loading="lazy" />
+            </div>
+            <p class="text-sm text-slate-500 text-center">Headless Mode</p>
+          </div>
+        </div>
+
+        <!-- Pair 6: Context / Worktrees -->
+        <div class="grid md:grid-cols-2 gap-6 max-w-6xl mx-auto">
+          <div class="space-y-3">
+            <div class="screenshot-wrapper rounded-xl overflow-hidden shadow-xl border border-white/[0.1]">
+              <span class="version-badge badge-gsd1">GSD-1</span>
+              <img src="screenshots/gsd-context.png" alt="GSD-1 Context with architectural decisions and deferred ideas" class="w-full h-auto" loading="lazy" />
+            </div>
+            <p class="text-sm text-slate-500 text-center">Phase Context &amp; Decisions</p>
+          </div>
+          <div class="space-y-3">
+            <div class="screenshot-wrapper rounded-xl overflow-hidden shadow-xl border border-white/[0.1]">
+              <span class="version-badge badge-gsd2">GSD-2</span>
+              <img src="screenshots/gsd2-worktrees.png" alt="GSD-2 Worktrees panel with active worktrees and file change counts" class="w-full h-auto" loading="lazy" />
+            </div>
+            <p class="text-sm text-slate-500 text-center">Worktrees</p>
           </div>
         </div>
       </div>

@@ -972,4 +972,24 @@ test.describe('Website Screenshots', () => {
       fullPage: false,
     });
   });
+
+  test('Project Detail - GSD-2 Slices', async ({ page }) => {
+    await page.goto('/projects/proj-001?view=gsd2-slices');
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(3000);
+    await page.screenshot({
+      path: path.join(SCREENSHOT_DIR, 'gsd2-slices.png'),
+      fullPage: false,
+    });
+  });
+
+  test('Project Detail - GSD-2 Tasks', async ({ page }) => {
+    await page.goto('/projects/proj-001?view=gsd2-tasks');
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(3000);
+    await page.screenshot({
+      path: path.join(SCREENSHOT_DIR, 'gsd2-tasks.png'),
+      fullPage: false,
+    });
+  });
 });
