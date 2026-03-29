@@ -3342,8 +3342,6 @@ pub async fn gsd2_get_visualizer_data(
     // --- Build rich milestone tree ---
     let mut all_changelog: Vec<ChangelogEntry2> = Vec::new();
     let mut total_slices: u32 = 0;
-    let mut completed_units: u32 = units.iter().filter(|u| u.finished_at > 0).count() as u32;
-    let _ = completed_units;
     let completed_units_count = units.iter().filter(|u| u.finished_at > 0).count() as u32;
 
     let rich_milestones: Vec<VisualizerMilestone2> = raw_milestones.iter().map(|m| {
@@ -6036,7 +6034,7 @@ footer{border-top:1px solid var(--border-1);padding:16px 32px}
 
 // ─── Section builders ──────────────────────────────────────────────────────────
 
-fn build_summary_section(data: &ReportData<'_>, generated: &str) -> String {
+fn build_summary_section(data: &ReportData<'_>, _generated: &str) -> String {
     let total_slices: usize = data.milestones.iter().map(|m| m.slices.len()).sum();
     let done_slices: usize = data.milestones.iter()
         .flat_map(|m| m.slices.iter())
@@ -6969,7 +6967,7 @@ fn build_index_html(index: &ReportsIndex) -> String {
 
     let latest = sorted.last();
     let overall_pct = latest.map(|e| {
-        if e.total_slices > 0 { (e.done_slices * 100 / e.total_slices) } else { 0 }
+        if e.total_slices > 0 { e.done_slices * 100 / e.total_slices } else { 0 }
     }).unwrap_or(0);
 
     // Build TOC groups by milestone
