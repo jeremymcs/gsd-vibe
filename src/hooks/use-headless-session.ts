@@ -1,10 +1,12 @@
-// GSD VibeFlow - Headless Session Hook
+// GSD Vibe - Headless Session Hook
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { onPtyOutput, onPtyExit, gsd2HeadlessUnregister } from '@/lib/tauri';
+import type React from 'react';
+import { onPtyOutput, onPtyExit, gsd2HeadlessUnregister, gsd2HeadlessSaveSession, gsd2HeadlessLoadLastSession } from '@/lib/tauri';
 import type { HeadlessSnapshot, PtyOutputEvent, PtyExitEvent } from '@/lib/tauri';
 import type { UnlistenFn } from '@tauri-apps/api/event';
+import type { ChatMessage } from '@/lib/pty-chat-parser';
 
 export type HeadlessStatus = 'idle' | 'running' | 'complete' | 'failed';
 
@@ -19,60 +21,101 @@ export interface UseHeadlessSessionReturn {
   status: HeadlessStatus;
   sessionId: string | null;
   logs: HeadlessLogRow[];
+  messages: ChatMessage[];
   lastSnapshot: HeadlessSnapshot | null;
   startedAt: string | null;
   completedAt: string | null;
   setSessionId: (id: string | null) => void;
   setStatus: (status: HeadlessStatus) => void;
+  setMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>;
+  exitReason: string | null;
   clearLogs: () => void;
+  loadPersistedSession: (projectId: string) => Promise<void>;
 }
 
-export function useHeadlessSession(): UseHeadlessSessionReturn {
+export function useHeadlessSession(projectId: string): UseHeadlessSessionReturn {
   const [status, setStatus] = useState<HeadlessStatus>('idle');
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [logs, setLogs] = useState<HeadlessLogRow[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [lastSnapshot, setLastSnapshot] = useState<HeadlessSnapshot | null>(null);
   const [startedAt, setStartedAt] = useState<string | null>(null);
   const [completedAt, setCompletedAt] = useState<string | null>(null);
+  const [exitReason, setExitReason] = useState<string | null>(null);
   const bufferRef = useRef('');
+  // Keep refs to latest logs/messages/snapshot for use in the PTY exit handler
+  const logsRef = useRef<HeadlessLogRow[]>([]);
+  const messagesRef = useRef<ChatMessage[]>([]);
+  const snapshotRef = useRef<HeadlessSnapshot | null>(null);
+  const startedAtMsRef = useRef<number | null>(null);
+
+  useEffect(() => { logsRef.current = logs; }, [logs]);
+  useEffect(() => { messagesRef.current = messages; }, [messages]);
+  useEffect(() => { snapshotRef.current = lastSnapshot; }, [lastSnapshot]);
 
   const clearLogs = useCallback(() => {
     setLogs([]);
+    setMessages([]);
     setLastSnapshot(null);
+    setExitReason(null);
     bufferRef.current = '';
   }, []);
 
-  // Strip ANSI/VT escape sequences from a string.
-  // Covers: CSI (ESC[...), OSC (ESC]...), character set (ESC( ESC)), keypad mode (ESC= ESC>),
-  // and all other Fe/Fs two-char sequences.
-  const stripAnsi = (str: string): string =>
-    str
-      // CSI sequences: ESC [ ... final
-      .replace(/\x1b\[[0-9;?<>=!]*[A-Za-z@`]/g, '')
-      // OSC sequences: ESC ] ... BEL
-      .replace(/\x1b\][^\x07]*\x07/g, '')
-      // Character set designations: ESC ( ) * + followed by a char
-      .replace(/\x1b[()#*+][A-Za-z0-9=<>]/g, '')
-      // Two-char nF sequences: ESC 0x20-0x2F then 0x30-0x7E
-      .replace(/\x1b[\x20-\x2f][\x30-\x7e]/g, '')
-      // Single-char Fe sequences: ESC 0x40-0x5F (includes @,A-Z,[\]^_)
-      .replace(/\x1b[\x40-\x5f]/g, '')
-      // Keypad / other short sequences: ESC = ESC > ESC ~ etc.
-      .replace(/\x1b[=>~]/g, '')
-      // Stray ESC followed by anything remaining
-      .replace(/\x1b./g, '');
+  // Load the last persisted session from DB (called on mount by the tab)
+  const loadPersistedSession = useCallback(async (projectId: string) => {
+    try {
+      const saved = await gsd2HeadlessLoadLastSession(projectId);
+      if (!saved) return;
+      const parsedLogs: HeadlessLogRow[] = JSON.parse(saved.logs_json);
+      const parsedMessages: ChatMessage[] = JSON.parse(saved.messages_json);
+      const parsedSnapshot: HeadlessSnapshot | null = saved.last_snapshot_json
+        ? JSON.parse(saved.last_snapshot_json)
+        : null;
+      setLogs(parsedLogs);
+      setMessages(parsedMessages);
+      setLastSnapshot(parsedSnapshot);
+      setStatus(saved.status as HeadlessStatus);
+      setStartedAt(new Date(saved.started_at).toISOString());
+      setCompletedAt(saved.completed_at ? new Date(saved.completed_at).toISOString() : null);
+    } catch {
+      // Best-effort — don't surface errors for persisted session loading
+    }
+  }, []);
+
+  // Strip ANSI/VT escape sequences from a string — matches pty-chat-parser's stripAnsi.
+  const stripAnsi = (str: string): string => {
+    let s = str;
+    // Charset designators: ESC ( X, ESC ) X, ESC * X, ESC + X (3-char sequences)
+    s = s.replace(/\x1b[()*.+][A-Z0-9<>]/gi, '');
+    // OSC: \x1b] ... (\x07 or \x1b\)
+    s = s.replace(/\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)/g, '');
+    // DCS / PM / APC: \x1bP, \x1b^, \x1b_ ... \x1b\
+    s = s.replace(/\x1b[P^_][^\x1b]*\x1b\\/g, '');
+    // CSI: \x1b[ ... final byte (0x40–0x7e)
+    s = s.replace(/\x1b\[[0-9;:<=>?]*[ -/]*[@-~]/g, '');
+    // SS2 / SS3: \x1b(N|O) + one char
+    s = s.replace(/\x1b[NO]./g, '');
+    // All remaining ESC + one char
+    s = s.replace(/\x1b./g, '');
+    // Stray lone \x1b
+    s = s.replace(/\x1b/g, '');
+    // \r followed by content overwrites the current line — keep tail only
+    s = s.replace(/[^\n]*\r([^\n])/g, '$1');
+    // Remaining bare \r
+    s = s.replace(/\r/g, '');
+    // 8-bit C1 CSI (0x9b) sequences
+    s = s.replace(/\x9b[0-9;]*[@-~]/g, '');
+    return s;
+  };
 
   // Process a complete JSON line from PTY output
   const processLine = useCallback((line: string) => {
     const trimmed = stripAnsi(line).trim();
     if (!trimmed) return;
-    // Skip terminal status bar / shell prompt artifacts (box-drawing lines, DA responses).
-    // All meaningful gsd headless output starts with '[' (e.g. [headless], [gsd], [status]).
-    // Non-JSON lines that don't start with '[' are terminal noise.
-    const looksLikeTagged = trimmed.startsWith('[');
-    let isJson = false;
-    try { JSON.parse(trimmed); isJson = true; } catch { /* not json */ }
-    if (!looksLikeTagged && !isJson) return;
+    // Skip obvious terminal noise: DA responses, charset designators, bare control chars
+    if (/^[\x00-\x1f\x7f]+$/.test(trimmed)) return;
+    // Skip tmux/shell prompt-only lines (e.g. "$ " or "% ")
+    if (/^[%$#>]\s*$/.test(trimmed)) return;
     try {
       const parsed = JSON.parse(trimmed);
       // Only treat as a headless snapshot if it has the expected shape
@@ -141,10 +184,37 @@ export function useHeadlessSession(): UseHeadlessSessionReturn {
         }
         const exitStatus = event.exit_code === 0 ? 'complete' : 'failed';
         setStatus(exitStatus as HeadlessStatus);
-        setCompletedAt(new Date().toISOString());
+        const now = new Date();
+        setCompletedAt(now.toISOString());
+
+        // Build exit reason from last few log entries
+        const recentLogs = logsRef.current.slice(-5);
+        const reasonLines = recentLogs
+          .filter(r => r.raw)
+          .map(r => r.state)
+          .filter(Boolean);
+        const reason = reasonLines.length > 0
+          ? reasonLines.join(' | ')
+          : event.exit_code === 0
+            ? 'Session completed normally (exit code 0)'
+            : `Session exited with code ${event.exit_code}`;
+        setExitReason(reason);
         // Unregister from the Rust registry so a new session can start
         void gsd2HeadlessUnregister(sessionId);
         setSessionId(null);
+
+        // Persist session to DB using current ref values
+        if (startedAtMsRef.current !== null) {
+          void gsd2HeadlessSaveSession({
+            projectId,
+            startedAt: startedAtMsRef.current,
+            completedAt: now.getTime(),
+            status: exitStatus,
+            logsJson: JSON.stringify(logsRef.current),
+            messagesJson: JSON.stringify(messagesRef.current),
+            lastSnapshotJson: snapshotRef.current ? JSON.stringify(snapshotRef.current) : null,
+          });
+        }
       });
     };
 
@@ -157,11 +227,13 @@ export function useHeadlessSession(): UseHeadlessSessionReturn {
     };
   }, [sessionId, processLine]);
 
-  // When sessionId is set and status becomes 'running', record startedAt
+  // When sessionId is set, record startedAt
   const wrappedSetSessionId = useCallback((id: string | null) => {
     setSessionId(id);
     if (id) {
-      setStartedAt(new Date().toISOString());
+      const now = Date.now();
+      startedAtMsRef.current = now;
+      setStartedAt(new Date(now).toISOString());
       setCompletedAt(null);
     }
   }, []);
@@ -170,11 +242,16 @@ export function useHeadlessSession(): UseHeadlessSessionReturn {
     status,
     sessionId,
     logs,
+    messages,
     lastSnapshot,
     startedAt,
     completedAt,
+    exitReason,
     setSessionId: wrappedSetSessionId,
     setStatus,
+    setMessages,
     clearLogs,
+    loadPersistedSession,
   };
 }
+

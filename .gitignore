@@ -3,6 +3,7 @@ node_modules/
 
 # Build outputs
 dist/
+build/
 src-tauri/target/
 
 # IDE
@@ -10,6 +11,7 @@ src-tauri/target/
 .idea/
 *.swp
 *.swo
+*.code-workspace
 
 # OS
 .DS_Store
@@ -22,25 +24,39 @@ Thumbs.db
 .env
 .env.local
 .env.*.local
+!.env.example
 
 # Tauri
 src-tauri/Cargo.lock
 
-# ── GSD baseline (auto-generated) ──
-.gsd
-*~
-*.code-workspace
-.env.*
-!.env.example
-.next/
-build/
+# GSD artifacts (auto-generated, agent-only)
+.gsd/
+.planning/
+.plans/
+*.plan
+*.planning
+
+# Misc dev artifacts
+tmp/
+.cache/
+coverage/
+.bg-shell/
+.claude/
+playwright-report/
+test-results/
 __pycache__/
 *.pyc
 .venv/
 venv/
-target/
 vendor/
 coverage/
 .cache/
 tmp/
 .bg-shell/
+*~
+
+# ── GSD baseline (auto-generated) ──
+.gsd
+.env.*
+.next/
+target/
