@@ -12,6 +12,7 @@ import {
   Rocket,
   Wrench,
   Sparkles,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -37,6 +38,7 @@ import { cn } from "@/lib/utils";
 interface FirstLaunchWizardProps {
   className?: string;
   onComplete?: (status: OnboardingStatus) => void;
+  onCancel?: () => void;
 }
 
 type WizardStep = "dependencies" | "api-keys" | "mode";
@@ -354,7 +356,7 @@ function ModeStep({
   );
 }
 
-export function FirstLaunchWizard({ className, onComplete }: FirstLaunchWizardProps) {
+export function FirstLaunchWizard({ className, onComplete, onCancel }: FirstLaunchWizardProps) {
   const [step, setStep] = useState<WizardStep>("dependencies");
   const [selectedMode, setSelectedMode] = useState<OnboardingUserMode>("expert");
   const [apiKeyInputs, setApiKeyInputs] = useState<Record<OnboardingProvider, string>>({
@@ -377,12 +379,18 @@ export function FirstLaunchWizard({ className, onComplete }: FirstLaunchWizardPr
     }
   }, [onboardingStatus.data?.user_mode]);
 
-  const stepIndex = useMemo(() => STEPS.findIndex((entry) => entry.id === step), [step]);
+  // Handle Escape key to close wizard
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !markComplete.isPending && onCancel) {
+        onCancel();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [markComplete.isPending, onCancel]);
 
-  const canContinueFromKeys = Boolean(
-    onboardingStatus.data?.has_api_keys ||
-    Object.values(validationResults).some((result) => result?.stored),
-  );
+  const stepIndex = useMemo(() => STEPS.findIndex((entry) => entry.id === step), [step]);
 
   const dependencyError = dependencies.error instanceof Error ? dependencies.error.message : null;
 
@@ -412,14 +420,29 @@ export function FirstLaunchWizard({ className, onComplete }: FirstLaunchWizardPr
     <div className={cn("fixed inset-0 z-50 flex items-center justify-center bg-background/90 p-4", className)}>
       <Card className="w-full max-w-3xl border-border/60 shadow-xl">
         <CardHeader>
-          <div className="mb-2 flex items-center gap-2 text-primary">
-            <Wrench className="h-5 w-5" />
-            <span className="text-xs font-semibold uppercase tracking-wider">First-launch setup</span>
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1">
+              <div className="mb-2 flex items-center gap-2 text-primary">
+                <Wrench className="h-5 w-5" />
+                <span className="text-xs font-semibold uppercase tracking-wider">First-launch setup</span>
+              </div>
+              <CardTitle>Welcome to GSD VibeFlow</CardTitle>
+              <CardDescription>
+                We'll verify local tooling, secure your API keys, and set your default interface mode.
+              </CardDescription>
+            </div>
+            {onCancel && (
+              <button
+                type="button"
+                onClick={onCancel}
+                disabled={markComplete.isPending}
+                className="rounded p-1 hover:bg-muted disabled:opacity-50"
+                aria-label="Close wizard"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            )}
           </div>
-          <CardTitle>Welcome to GSD VibeFlow</CardTitle>
-          <CardDescription>
-            We’ll verify local tooling, secure your API keys, and set your default interface mode.
-          </CardDescription>
           <WizardStepIndicator step={step} />
         </CardHeader>
 
@@ -457,38 +480,61 @@ export function FirstLaunchWizard({ className, onComplete }: FirstLaunchWizardPr
           )}
         </CardContent>
 
-        <CardFooter className="justify-between gap-2 border-t border-border/60 pt-4">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => setStep(STEPS[Math.max(0, stepIndex - 1)].id)}
-            disabled={stepIndex === 0 || markComplete.isPending}
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
-          </Button>
+        <CardFooter className="flex items-center justify-between gap-2 border-t border-border/60 pt-4">
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setStep(STEPS[Math.max(0, stepIndex - 1)].id)}
+              disabled={stepIndex === 0 || markComplete.isPending}
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back
+            </Button>
+            {step === "api-keys" && onCancel && (
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={onCancel}
+                disabled={markComplete.isPending}
+              >
+                Cancel
+              </Button>
+            )}
+          </div>
 
-          {step !== "mode" ? (
-            <Button
-              type="button"
-              onClick={() => setStep(STEPS[Math.min(STEPS.length - 1, stepIndex + 1)].id)}
-              disabled={step === "api-keys" && !canContinueFromKeys}
-            >
-              Next
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          ) : (
-            <Button
-              type="button"
-              onClick={() => {
-                void handleFinish();
-              }}
-              disabled={markComplete.isPending}
-            >
-              {markComplete.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle2 className="mr-2 h-4 w-4" />}
-              Complete setup
-            </Button>
-          )}
+          <div className="flex gap-2">
+            {step === "api-keys" && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setStep(STEPS[Math.min(STEPS.length - 1, stepIndex + 1)].id)}
+              >
+                Skip
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            )}
+            {step !== "mode" && step !== "api-keys" ? (
+              <Button
+                type="button"
+                onClick={() => setStep(STEPS[Math.min(STEPS.length - 1, stepIndex + 1)].id)}
+              >
+                Next
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            ) : step === "api-keys" ? null : (
+              <Button
+                type="button"
+                onClick={() => {
+                  void handleFinish();
+                }}
+                disabled={markComplete.isPending}
+              >
+                {markComplete.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle2 className="mr-2 h-4 w-4" />}
+                Complete setup
+              </Button>
+            )}
+          </div>
         </CardFooter>
 
         {markComplete.isError && (
