@@ -17,8 +17,8 @@ import {
   Plus,
   Settings,
 } from 'lucide-react';
-import { navLinks } from '@/lib/navigation';
-import { useGlobalSearch, useProject } from '@/lib/queries';
+import { getVisibleNavLinks } from '@/lib/navigation';
+import { useGlobalSearch, useProject, useSettings } from '@/lib/queries';
 import {
   getRecentSearches,
   addRecentSearch,
@@ -50,18 +50,24 @@ export function CommandPalette({ onOpenChange }: CommandPaletteProps) {
   const { data: project } = useProject(projectId ?? '');
   const [searchParams] = useSearchParams();
   const currentView = searchParams.get('view') ?? searchParams.get('tab') ?? 'overview';
+  const { data: settings } = useSettings();
+  const userMode = settings?.user_mode ?? 'expert';
 
   // Compute visible project views
   const viewCtx: ProjectViewContext = useMemo(() => {
     const hasPlanning = project?.tech_stack?.has_planning ?? false;
     const isGsd2 = project?.gsd_version === 'gsd2';
     const isGsd1 = hasPlanning && !isGsd2;
-    return { isGsd2, isGsd1 };
-  }, [project]);
+    return { isGsd2, isGsd1, userMode };
+  }, [project, userMode]);
 
   const visibleViews = useMemo(
     () => (projectId ? getVisibleViews(viewCtx) : []),
     [projectId, viewCtx]
+  );
+  const visibleNavLinks = useMemo(
+    () => getVisibleNavLinks(userMode),
+    [userMode]
   );
 
   // Debounce search input
@@ -287,7 +293,7 @@ export function CommandPalette({ onOpenChange }: CommandPaletteProps) {
             {/* Pages group */}
             {showPages && (
               <Command.Group heading="Pages">
-                {navLinks
+                {visibleNavLinks
                   .filter(
                     (link) =>
                       !effectiveQuery ||

@@ -11,6 +11,7 @@ pub mod gsd2;
 pub mod knowledge;
 pub mod logs;
 pub mod notifications;
+pub mod onboarding;
 pub mod projects;
 pub mod pty;
 pub mod search;

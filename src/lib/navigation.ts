@@ -1,4 +1,4 @@
-// GSD VibeFlow - Shared Navigation Configuration
+// GSD Vibe - Shared Navigation Configuration
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import {
@@ -7,6 +7,7 @@ import {
   Terminal,
   Bell,
   Settings,
+  Settings2,
   LucideIcon,
 } from 'lucide-react';
 
@@ -32,6 +33,7 @@ export const navigation: NavigationItem[] = [
 
   { type: 'section', label: 'System' },
   { type: 'link', name: 'Notifications', href: '/notifications', icon: Bell },
+  { type: 'link', name: 'GSD Preferences', href: '/gsd-preferences', icon: Settings2 },
   { type: 'link', name: 'Settings', href: '/settings', icon: Settings },
 ];
 
@@ -39,3 +41,19 @@ export const navigation: NavigationItem[] = [
 export const navLinks: NavItem[] = navigation.filter(
   (item): item is NavItem => item.type === 'link'
 );
+
+/**
+ * Compatibility helper used by command palette and layout code paths.
+ * This branch does not hide any global nav links by mode.
+ */
+export function getVisibleNavLinks(_userMode: string): NavItem[] {
+  return navLinks;
+}
+
+/**
+ * Compatibility helper used by layout code paths.
+ * This branch keeps all section/link items visible.
+ */
+export function getVisibleNavigation(_userMode: string): NavigationItem[] {
+  return navigation;
+}

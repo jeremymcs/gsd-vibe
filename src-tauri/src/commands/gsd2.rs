@@ -15,6 +15,15 @@ use std::time::Duration;
 
 type DbState = Arc<crate::db::DbPool>;
 
+const HEADLESS_KEYCHAIN_SERVICE_PRIMARY: &str = "io.gsd.vibeflow";
+const HEADLESS_KEYCHAIN_SERVICE_LEGACY: &str = "net.fluxlabs.track-your-shit";
+const HEADLESS_ENV_KEYS: &[&str] = &[
+    "ANTHROPIC_API_KEY",
+    "OPENAI_API_KEY",
+    "OPENROUTER_API_KEY",
+    "GITHUB_TOKEN",
+];
+
 // ============================================================
 // Helpers (copied from gsd.rs — do NOT import across module boundary)
 // ============================================================
@@ -28,6 +37,79 @@ fn get_project_path(db: &Database, project_id: &str) -> Result<String, String> {
             |row| row.get::<_, String>(0),
         )
         .map_err(|e| format!("Project not found: {}", e))
+}
+
+fn shell_single_quote(value: &str) -> String {
+    format!("'{}'", value.replace('\'', "'\\''"))
+}
+
+fn read_keychain_secret(service: &str, key: &str) -> Option<String> {
+    let entry = keyring::Entry::new(service, key).ok()?;
+    match entry.get_password() {
+        Ok(secret) if !secret.trim().is_empty() => Some(secret),
+        _ => None,
+    }
+}
+
+fn resolve_headless_env_values() -> HashMap<String, String> {
+    let mut values = HashMap::new();
+
+    for key in HEADLESS_ENV_KEYS {
+        let value = read_keychain_secret(HEADLESS_KEYCHAIN_SERVICE_PRIMARY, key)
+            .or_else(|| read_keychain_secret(HEADLESS_KEYCHAIN_SERVICE_LEGACY, key))
+            .or_else(|| std::env::var(key).ok())
+            .filter(|secret| !secret.trim().is_empty());
+
+        if let Some(secret) = value {
+            values.insert((*key).to_string(), secret);
+        }
+    }
+
+    values
+}
+
+fn build_headless_command(model: Option<&str>, env_values: &HashMap<String, String>) -> String {
+    let mut env_prefix: Vec<String> = Vec::new();
+
+    for key in HEADLESS_ENV_KEYS {
+        if let Some(value) = env_values.get(*key) {
+            env_prefix.push(format!("{}={}", key, shell_single_quote(value)));
+        }
+    }
+
+    let mut command = "gsd headless".to_string();
+    if let Some(model_name) = model {
+        command.push_str(" --model ");
+        command.push_str(&shell_single_quote(model_name));
+    }
+
+    if env_prefix.is_empty() {
+        command
+    } else {
+        format!("{} {}", env_prefix.join(" "), command)
+    }
+}
+
+fn build_headless_command_with_env(model: Option<&str>) -> String {
+    let env_values = resolve_headless_env_values();
+    let injected_keys: Vec<String> = HEADLESS_ENV_KEYS
+        .iter()
+        .filter(|key| env_values.contains_key(**key))
+        .map(|key| (*key).to_string())
+        .collect();
+
+    if injected_keys.is_empty() {
+        tracing::warn!(
+            "No API keys found in keychain/env for headless execution; gsd may fail authentication"
+        );
+    } else {
+        tracing::info!(
+            keys = ?injected_keys,
+            "Injecting API keys into headless PTY environment from keychain/env"
+        );
+    }
+
+    build_headless_command(model, &env_values)
 }
 
 /// Parse YAML-like frontmatter from markdown content.
@@ -1485,18 +1567,26 @@ pub async fn gsd2_headless_start(
     };
 
     let session_id = uuid::Uuid::new_v4().to_string();
+    let command = build_headless_command_with_env(None);
 
     // Create PTY session
     {
         let mut manager = terminal_manager.lock().await;
-        manager.create_session(
-            &app,
-            session_id.clone(),
-            &project_path,
-            Some("gsd headless"),
-            80,
-            24,
-        )?;
+        manager
+            .create_session(
+                &app,
+                session_id.clone(),
+                &project_path,
+                Some(&command),
+                80,
+                24,
+            )
+            .map_err(|e| {
+                format!(
+                    "Failed to start headless execution. Ensure GSD CLI is installed and API keys are configured in Settings → Secrets. {}",
+                    e
+                )
+            })?;
     }
 
     // Register in headless registry
@@ -3812,6 +3902,194 @@ pub struct GsdModelEntry {
     pub name: String,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Gsd2PlanPreviewSlice {
+    pub id: String,
+    pub title: String,
+    pub goal: String,
+    pub risk: Option<String>,
+    pub depends_on: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Gsd2PlanPreviewMilestone {
+    pub title: String,
+    pub summary: String,
+    pub slices: Vec<Gsd2PlanPreviewSlice>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Gsd2PlanPreview {
+    pub intent: String,
+    pub milestone: Gsd2PlanPreviewMilestone,
+}
+
+fn extract_assistant_text_from_gsd_jsonl(stdout: &str) -> Option<String> {
+    for line in stdout.lines().rev() {
+        let trimmed = line.trim();
+        if trimmed.is_empty() {
+            continue;
+        }
+        let Ok(val): Result<serde_json::Value, _> = serde_json::from_str(trimmed) else {
+            continue;
+        };
+        if val.get("type").and_then(|v| v.as_str()) != Some("agent_end") {
+            continue;
+        }
+
+        let messages = val.get("messages")?.as_array()?;
+        for msg in messages.iter().rev() {
+            if msg.get("role").and_then(|v| v.as_str()) != Some("assistant") {
+                continue;
+            }
+            let content = msg.get("content")?.as_array()?;
+            for item in content.iter().rev() {
+                if item.get("type").and_then(|v| v.as_str()) == Some("text") {
+                    if let Some(text) = item.get("text").and_then(|v| v.as_str()) {
+                        let cleaned = text.trim().to_string();
+                        if !cleaned.is_empty() {
+                            return Some(cleaned);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    None
+}
+
+fn extract_json_block(text: &str) -> Option<String> {
+    let trimmed = text.trim();
+
+    // Prefer fenced ```json blocks if present.
+    if let Some(start) = trimmed.find("```json") {
+        let after = &trimmed[start + 7..];
+        if let Some(end) = after.find("```") {
+            let candidate = after[..end].trim();
+            if !candidate.is_empty() {
+                return Some(candidate.to_string());
+            }
+        }
+    }
+    if let Some(start) = trimmed.find("```") {
+        let after = &trimmed[start + 3..];
+        if let Some(end) = after.find("```") {
+            let candidate = after[..end].trim();
+            if !candidate.is_empty() {
+                return Some(candidate.to_string());
+            }
+        }
+    }
+
+    // Fall back to first object-looking span.
+    if let (Some(start), Some(end)) = (trimmed.find('{'), trimmed.rfind('}')) {
+        if end > start {
+            return Some(trimmed[start..=end].to_string());
+        }
+    }
+
+    None
+}
+
+fn parse_plan_preview_from_value(
+    intent: &str,
+    value: &serde_json::Value,
+) -> Result<Gsd2PlanPreview, String> {
+    let milestone = value.get("milestone").unwrap_or(value);
+
+    let title = milestone
+        .get("title")
+        .and_then(|v| v.as_str())
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+        .unwrap_or("Planned Milestone")
+        .to_string();
+
+    let summary = milestone
+        .get("summary")
+        .or_else(|| milestone.get("description"))
+        .and_then(|v| v.as_str())
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+        .unwrap_or("AI-generated plan preview")
+        .to_string();
+
+    let slices_val = milestone
+        .get("slices")
+        .and_then(|v| v.as_array())
+        .ok_or_else(|| "Plan preview response is missing milestone.slices[]".to_string())?;
+
+    if slices_val.is_empty() {
+        return Err("Plan preview response returned no slices".to_string());
+    }
+
+    let mut slices: Vec<Gsd2PlanPreviewSlice> = Vec::new();
+    for (idx, slice) in slices_val.iter().enumerate() {
+        let id = slice
+            .get("id")
+            .and_then(|v| v.as_str())
+            .map(str::trim)
+            .filter(|s| !s.is_empty())
+            .map(|s| s.to_string())
+            .unwrap_or_else(|| format!("S{:02}", idx + 1));
+
+        let title = slice
+            .get("title")
+            .and_then(|v| v.as_str())
+            .map(str::trim)
+            .filter(|s| !s.is_empty())
+            .map(|s| s.to_string())
+            .unwrap_or_else(|| format!("Slice {}", idx + 1));
+
+        let goal = slice
+            .get("goal")
+            .or_else(|| slice.get("summary"))
+            .or_else(|| slice.get("description"))
+            .and_then(|v| v.as_str())
+            .map(str::trim)
+            .filter(|s| !s.is_empty())
+            .unwrap_or("Define implementation scope and verification steps")
+            .to_string();
+
+        let risk = slice
+            .get("risk")
+            .and_then(|v| v.as_str())
+            .map(str::trim)
+            .filter(|s| !s.is_empty())
+            .map(|s| s.to_string());
+
+        let depends_on = slice
+            .get("depends_on")
+            .or_else(|| slice.get("dependencies"))
+            .and_then(|v| v.as_array())
+            .map(|arr| {
+                arr.iter()
+                    .filter_map(|v| v.as_str())
+                    .map(|s| s.trim().to_string())
+                    .filter(|s| !s.is_empty())
+                    .collect::<Vec<String>>()
+            })
+            .unwrap_or_default();
+
+        slices.push(Gsd2PlanPreviewSlice {
+            id,
+            title,
+            goal,
+            risk,
+            depends_on,
+        });
+    }
+
+    Ok(Gsd2PlanPreview {
+        intent: intent.to_string(),
+        milestone: Gsd2PlanPreviewMilestone {
+            title,
+            summary,
+            slices,
+        },
+    })
+}
+
 /// List available GSD models by running `gsd --list-models [search]`.
 #[tauri::command]
 pub async fn gsd2_list_models(
@@ -3861,6 +4139,49 @@ pub async fn gsd2_list_models(
     }
 
     Ok(entries)
+}
+
+/// Generate an AI plan preview from free-text intent for guided project creation.
+/// Uses `gsd --mode json --no-session -p` and returns normalized milestone/slice DTOs.
+#[tauri::command]
+pub async fn gsd2_generate_plan_preview(intent: String) -> Result<Gsd2PlanPreview, String> {
+    let intent = intent.trim().to_string();
+    if intent.is_empty() {
+        return Err("Intent must not be empty".to_string());
+    }
+
+    let prompt = format!(
+        "You are generating a concise implementation plan preview for a software project wizard. \
+Return ONLY valid JSON with this exact shape (no markdown fences): \
+{{\"milestone\":{{\"title\":\"string\",\"summary\":\"string\",\"slices\":[{{\"id\":\"S01\",\"title\":\"string\",\"goal\":\"string\",\"risk\":\"low|medium|high\",\"depends_on\":[\"S00\"]}}]}}}}. \
+Rules: include 2-6 slices, keep goals concrete, and dependencies only on prior slices. \
+User intent: {}",
+        intent
+    );
+
+    let output = std::process::Command::new("gsd")
+        .args(["--mode", "json", "--no-session", "-p", &prompt])
+        .output()
+        .map_err(|e| format!("Failed to run gsd for plan preview: {}", e))?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
+        let stdout = String::from_utf8_lossy(&output.stdout).trim().to_string();
+        let detail = if !stderr.is_empty() { stderr } else { stdout };
+        return Err(format!("gsd plan preview failed: {}", detail));
+    }
+
+    let stdout = String::from_utf8_lossy(&output.stdout).to_string();
+    let assistant_text = extract_assistant_text_from_gsd_jsonl(&stdout)
+        .ok_or_else(|| "Unable to extract assistant response from gsd output".to_string())?;
+
+    let json_text = extract_json_block(&assistant_text)
+        .ok_or_else(|| "Assistant response did not contain a JSON object".to_string())?;
+
+    let value: serde_json::Value = serde_json::from_str(&json_text)
+        .map_err(|e| format!("Failed to parse plan preview JSON: {}", e))?;
+
+    parse_plan_preview_from_value(&intent, &value)
 }
 
 /// Merge a worktree via `gsd worktree merge {name}`.
@@ -3933,19 +4254,26 @@ pub async fn gsd2_headless_start_with_model(
     };
 
     let session_id = uuid::Uuid::new_v4().to_string();
-    let command = format!("gsd headless --model {}", model);
+    let command = build_headless_command_with_env(Some(&model));
 
     // Create PTY session
     {
         let mut manager = terminal_manager.lock().await;
-        manager.create_session(
-            &app,
-            session_id.clone(),
-            &project_path,
-            Some(&command),
-            80,
-            24,
-        )?;
+        manager
+            .create_session(
+                &app,
+                session_id.clone(),
+                &project_path,
+                Some(&command),
+                80,
+                24,
+            )
+            .map_err(|e| {
+                format!(
+                    "Failed to start headless execution. Ensure GSD CLI is installed and API keys are configured in Settings → Secrets. {}",
+                    e
+                )
+            })?;
     }
 
     // Register in headless registry
@@ -4860,6 +5188,73 @@ pub async fn gsd2_resolve_capture(
 mod tests {
     use super::*;
     use std::fs;
+
+    // ---- plan preview parsing helpers ----
+
+    #[test]
+    fn extract_assistant_text_from_gsd_jsonl_reads_agent_end_payload() {
+        let jsonl = r#"{"type":"agent_end","messages":[{"role":"assistant","content":[{"type":"text","text":"{\"milestone\":{\"title\":\"Build\",\"summary\":\"Sum\",\"slices\":[{\"id\":\"S01\",\"title\":\"One\",\"goal\":\"Goal\",\"depends_on\":[]} ]}}"}]}]}"#;
+        let extracted = extract_assistant_text_from_gsd_jsonl(jsonl).unwrap();
+        assert!(extracted.contains("\"milestone\""));
+    }
+
+    #[test]
+    fn extract_json_block_handles_fenced_json() {
+        let text = "```json\n{\"milestone\":{\"title\":\"Build\",\"summary\":\"Sum\",\"slices\":[{\"title\":\"One\",\"goal\":\"Goal\"}]}}\n```";
+        let json = extract_json_block(text).unwrap();
+        assert!(json.starts_with('{'));
+        assert!(json.ends_with('}'));
+    }
+
+    #[test]
+    fn parse_plan_preview_from_value_normalizes_missing_fields() {
+        let value = serde_json::json!({
+            "milestone": {
+                "title": "Launch Wizard",
+                "summary": "Preview",
+                "slices": [
+                    { "title": "Collect intent", "goal": "Capture text" },
+                    { "id": "S02", "title": "Render cards", "goal": "Show milestone/slice cards", "dependencies": ["S01"] }
+                ]
+            }
+        });
+
+        let parsed = parse_plan_preview_from_value("build wizard", &value).unwrap();
+        assert_eq!(parsed.intent, "build wizard");
+        assert_eq!(parsed.milestone.title, "Launch Wizard");
+        assert_eq!(parsed.milestone.slices.len(), 2);
+        assert_eq!(parsed.milestone.slices[0].id, "S01");
+        assert_eq!(parsed.milestone.slices[1].depends_on, vec!["S01"]);
+    }
+
+    // ---- headless command build helpers ----
+
+    #[test]
+    fn build_headless_command_without_env_returns_base_command() {
+        let env_values = HashMap::new();
+        let command = build_headless_command(None, &env_values);
+        assert_eq!(command, "gsd headless");
+    }
+
+    #[test]
+    fn build_headless_command_includes_model_and_env_assignments() {
+        let mut env_values = HashMap::new();
+        env_values.insert("OPENAI_API_KEY".to_string(), "sk-test".to_string());
+        env_values.insert("ANTHROPIC_API_KEY".to_string(), "anthropic'value".to_string());
+
+        let command = build_headless_command(Some("gpt-4.1-mini"), &env_values);
+        assert!(command.contains("OPENAI_API_KEY='sk-test'"));
+        assert!(command.contains("ANTHROPIC_API_KEY='anthropic'\\''value'"));
+        assert!(command.ends_with("gsd headless --model 'gpt-4.1-mini'"));
+    }
+
+    #[test]
+    fn shell_single_quote_escapes_embedded_quotes() {
+        assert_eq!(
+            shell_single_quote("a'b'c"),
+            "'a'\\''b'\\''c'".to_string()
+        );
+    }
 
     // ---- parse_roadmap_slices ----
 

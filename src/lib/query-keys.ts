@@ -30,6 +30,10 @@ export const queryKeys = {
   // Settings
   settings: () => ["settings"] as const,
 
+  // First-launch onboarding
+  onboardingStatus: () => ["onboarding", "status"] as const,
+  onboardingDependencies: () => ["onboarding", "dependencies"] as const,
+
   // App Logs
   appLogs: (filters: AppLogFilters) => ["app-logs", filters] as const,
   allAppLogs: () => ["app-logs"] as const,
@@ -101,6 +105,8 @@ export const queryKeys = {
 
   // GSD-2
   gsd2Health: (projectId: string) => ['gsd2', 'health', projectId] as const,
+  gsd2Models: (search?: string) => ['gsd2', 'models', search ?? ''] as const,
+  gsd2PlanPreview: (intent: string) => ['gsd2', 'plan-preview', intent] as const,
   gsd2Worktrees: (projectId: string) => ['gsd2', 'worktrees', projectId] as const,
   gsd2WorktreeDiff: (projectId: string, name: string) => ['gsd2', 'worktree-diff', projectId, name] as const,
   gsd2HeadlessQuery: (projectId: string) => ['gsd2', 'headless', 'query', projectId] as const,

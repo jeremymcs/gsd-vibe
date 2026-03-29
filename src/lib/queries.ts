@@ -476,6 +476,58 @@ export const useUpdateSettings = () => {
   });
 };
 
+// First-launch onboarding
+export const useOnboardingStatus = () =>
+  useQuery({
+    queryKey: queryKeys.onboardingStatus(),
+    queryFn: api.onboardingGetStatus,
+    staleTime: 30_000,
+  });
+
+export const useOnboardingDependencies = (enabled = true) =>
+  useQuery({
+    queryKey: queryKeys.onboardingDependencies(),
+    queryFn: api.onboardingDetectDependencies,
+    enabled,
+    staleTime: 60_000,
+  });
+
+export const useOnboardingValidateAndStoreApiKey = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ provider, apiKey }: { provider: api.OnboardingProvider; apiKey: string }) =>
+      api.onboardingValidateAndStoreApiKey(provider, apiKey),
+    onSuccess: (result) => {
+      if (result.valid && result.stored) {
+        toast.success(`${result.provider} key saved securely`);
+      } else {
+        toast.error(`Failed to validate ${result.provider} key`, {
+          description: result.message,
+        });
+      }
+      void queryClient.invalidateQueries({ queryKey: queryKeys.onboardingStatus() });
+    },
+    onError: (error) => {
+      toast.error("Failed to validate API key", { description: getErrorMessage(error) });
+    },
+  });
+};
+
+export const useOnboardingMarkComplete = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (userMode: api.OnboardingUserMode) => api.onboardingMarkComplete(userMode),
+    onSuccess: () => {
+      toast.success("Onboarding completed");
+      void queryClient.invalidateQueries({ queryKey: queryKeys.onboardingStatus() });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.settings() });
+    },
+    onError: (error) => {
+      toast.error("Failed to complete onboarding", { description: getErrorMessage(error) });
+    },
+  });
+};
+
 // Data Management
 export const useExportData = () => {
   return useMutation({
@@ -1172,6 +1224,22 @@ export const useGsd2Health = (projectId: string, enabled = true) =>
     staleTime: 5_000,
   });
 
+export const useGsd2Models = (search?: string, enabled = true) =>
+  useQuery({
+    queryKey: queryKeys.gsd2Models(search),
+    queryFn: () => api.gsd2ListModels(search),
+    enabled,
+    staleTime: 60_000,
+  });
+
+export const useGsd2GeneratePlanPreview = () =>
+  useMutation({
+    mutationFn: (intent: string) => api.gsd2GeneratePlanPreview(intent),
+    onError: (error) => {
+      toast.error('Failed to generate plan preview', { description: getErrorMessage(error) });
+    },
+  });
+
 // GSD-2 Worktrees
 export const useGsd2Worktrees = (projectId: string) =>
   useQuery({
@@ -1232,6 +1300,20 @@ export const useGsd2HeadlessStart = () => {
       toast.error('Failed to start headless session', { description: getErrorMessage(error) });
     },
     onSuccess: (_data, projectId) => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.gsd2HeadlessQuery(projectId) });
+    },
+  });
+};
+
+export const useGsd2HeadlessStartWithModel = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ projectId, model }: { projectId: string; model: string }) =>
+      api.gsd2HeadlessStartWithModel(projectId, model),
+    onError: (error) => {
+      toast.error('Failed to start headless session with model', { description: getErrorMessage(error) });
+    },
+    onSuccess: (_data, { projectId }) => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.gsd2HeadlessQuery(projectId) });
     },
   });

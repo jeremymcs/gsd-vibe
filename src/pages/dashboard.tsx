@@ -13,13 +13,13 @@ import {
   List,
 } from 'lucide-react';
 import { useQueries } from '@tanstack/react-query';
-import { useProjectsWithStats } from '@/lib/queries';
+import { useProjectsWithStats, useSettings } from '@/lib/queries';
 import { queryKeys } from '@/lib/query-keys';
 import * as api from '@/lib/tauri';
 import type { GitInfo } from '@/lib/tauri';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ProjectWizardDialog } from '@/components/projects';
+import { ProjectWizardDialog, GuidedProjectWizard } from '@/components/projects';
 import { StatusBar, ProjectCard, ProjectRow } from '@/components/dashboard';
 import { PageHeader } from '@/components/layout/page-header';
 import { cn } from '@/lib/utils';
@@ -40,6 +40,8 @@ export function Dashboard() {
   const [activeFilter, setActiveFilter] = useState<FilterTab>('all');
 
   const { data: projects, isLoading } = useProjectsWithStats();
+  const { data: settings } = useSettings();
+  const userMode = settings?.user_mode ?? 'expert';
 
   // Batch git queries for all projects
   const gitQueries = useQueries({
@@ -255,10 +257,17 @@ export function Dashboard() {
         )}
       </div>
 
-      <ProjectWizardDialog
-        open={addProjectOpen}
-        onOpenChange={setAddProjectOpen}
-      />
+      {userMode === 'guided' ? (
+        <GuidedProjectWizard
+          open={addProjectOpen}
+          onOpenChange={setAddProjectOpen}
+        />
+      ) : (
+        <ProjectWizardDialog
+          open={addProjectOpen}
+          onOpenChange={setAddProjectOpen}
+        />
+      )}
     </div>
   );
 }

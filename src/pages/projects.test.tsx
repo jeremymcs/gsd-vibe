@@ -12,6 +12,7 @@ import * as queries from "@/lib/queries";
 // Mock the queries - match what the component actually uses
 vi.mock("@/lib/queries", () => ({
   useProjectsWithStats: vi.fn(),
+  useSettings: vi.fn(() => ({ data: { user_mode: "expert" } })),
   useUpdateProject: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
   useDeleteProject: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
 }));
@@ -20,6 +21,8 @@ vi.mock("@/lib/queries", () => ({
 vi.mock("@/components/projects", () => ({
   ProjectWizardDialog: ({ open }: { open: boolean }) =>
     open ? <div data-testid="import-dialog">Add Project Dialog</div> : null,
+  GuidedProjectWizard: ({ open }: { open: boolean }) =>
+    open ? <div data-testid="guided-dialog">Guided Project Dialog</div> : null,
   ProjectCard: ({ project }: { project: { id: string; name: string; status: string; tech_stack?: { framework?: string; language?: string } | null } }) => (
     <a href={`/projects/${project.id}`} data-testid={`project-card-${project.id}`}>
       <span data-testid={`project-name-${project.id}`}>{project.name}</span>
@@ -179,11 +182,36 @@ describe("ProjectsPage", () => {
     expect(searchInput).toHaveValue("");
   });
 
-  it("opens add project dialog when Add Project button is clicked", async () => {
+  it("opens guided wizard when user mode is guided", async () => {
     vi.mocked(queries.useProjectsWithStats).mockReturnValue({
       data: [],
       isLoading: false,
     } as ReturnType<typeof queries.useProjectsWithStats>);
+
+    vi.mocked(queries.useSettings).mockReturnValue({
+      data: { user_mode: "guided" },
+    } as ReturnType<typeof queries.useSettings>);
+
+    const user = userEvent.setup();
+    render(<ProjectsPage />);
+
+    const addButtons = screen.getAllByText("Add Project");
+    await user.click(addButtons[0]);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("guided-dialog")).toBeInTheDocument();
+    });
+  });
+
+  it("opens expert wizard when user mode is expert", async () => {
+    vi.mocked(queries.useProjectsWithStats).mockReturnValue({
+      data: [],
+      isLoading: false,
+    } as ReturnType<typeof queries.useProjectsWithStats>);
+
+    vi.mocked(queries.useSettings).mockReturnValue({
+      data: { user_mode: "expert" },
+    } as ReturnType<typeof queries.useSettings>);
 
     const user = userEvent.setup();
     render(<ProjectsPage />);

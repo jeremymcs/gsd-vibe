@@ -105,6 +105,25 @@ export function SettingsPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
+                <Label htmlFor="settings-interface-mode" className="block text-sm font-medium mb-2">Interface Mode</Label>
+                <p className="text-xs text-muted-foreground mb-2">
+                  Guided mode provides a simplified experience. Expert mode shows all features.
+                </p>
+                <Select
+                  value={formData.user_mode}
+                  onValueChange={(value) => handleChange("user_mode", value)}
+                >
+                  <SelectTrigger id="settings-interface-mode">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="guided">Guided — Simplified, wizard-driven interface</SelectItem>
+                    <SelectItem value="expert">Expert — Full power UI with all features</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
                 <Label htmlFor="settings-theme" className="block text-sm font-medium mb-2">Theme</Label>
                 <Select
                   value={theme}

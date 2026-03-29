@@ -1,7 +1,7 @@
 // GSD VibeFlow - Main App Component
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "sonner";
 import { MainLayout } from "./components/layout/main-layout";
@@ -20,6 +20,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Loader2 } from "lucide-react";
+import { FirstLaunchWizard } from "@/components/onboarding";
+import { useOnboardingStatus } from "@/lib/queries";
+import type { OnboardingStatus } from "@/lib/tauri";
 
 // Lazy-loaded page components for route-level code splitting
 const ProjectPage = lazy(() => import("./pages/project").then(m => ({ default: m.ProjectPage })));
@@ -34,6 +37,17 @@ function PageLoader() {
   return (
     <div className="flex items-center justify-center h-full min-h-[200px]">
       <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+    </div>
+  );
+}
+
+function StartupGateLoader() {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/90 p-4">
+      <div className="text-center">
+        <Loader2 className="mx-auto mb-3 h-8 w-8 animate-spin text-primary" />
+        <p className="text-sm text-muted-foreground">Checking first-launch status…</p>
+      </div>
     </div>
   );
 }
@@ -76,6 +90,27 @@ function CloseWarningDialog() {
 }
 
 function App() {
+  const onboardingStatus = useOnboardingStatus();
+  const [onboardingCompletedLocally, setOnboardingCompletedLocally] = useState(false);
+
+  useEffect(() => {
+    if (onboardingStatus.data?.completed) {
+      setOnboardingCompletedLocally(true);
+    }
+  }, [onboardingStatus.data?.completed]);
+
+  const shouldBlockForOnboarding =
+    !onboardingCompletedLocally && onboardingStatus.data?.completed === false;
+
+  const shouldShowStartupLoader =
+    !onboardingCompletedLocally && onboardingStatus.isLoading;
+
+  const handleOnboardingComplete = (status: OnboardingStatus) => {
+    if (status.completed) {
+      setOnboardingCompletedLocally(true);
+    }
+  };
+
   return (
     <ErrorBoundary label="Application">
       <TerminalProvider>
@@ -98,6 +133,8 @@ function App() {
             </ErrorBoundary>
           </MainLayout>
           <CloseWarningDialog />
+          {shouldShowStartupLoader && <StartupGateLoader />}
+          {shouldBlockForOnboarding && <FirstLaunchWizard onComplete={handleOnboardingComplete} />}
           <Toaster
             position="bottom-right"
             toastOptions={{

@@ -694,3 +694,7 @@ When a multi-step action (e.g., scaffold → import → navigate) needs the resu
 ### File watcher query invalidation must cover all related keys (M010)
 
 When `.gsd/` files change, invalidate all related TanStack Query keys in one pass (gsd2History, gsd2GitSummary, gsd2Inspect, gsd2UndoInfo, gsd2RecoveryInfo, gsd2Hooks, gsd2ReportsIndex). Missing even one key causes stale data in the corresponding view. Consolidate invalidation in one place in `use-gsd-file-watcher.ts`.
+
+### Nested worktree shadow-copy trap: prefer active src/, recover by syncing from `.gsd/worktrees/<MID>/src/`
+
+In M012/S03/T03, guided wizard work from prior tasks existed under `.gsd/worktrees/M012/src/...` while the active compile path was `src/...`. Symptoms: features appear "missing" after build and imports fail in active files even though the code exists elsewhere in the same checkout. Recovery pattern: `find . -name <expected-file>` to confirm duplication, then copy the known task files from nested `.gsd/worktrees/<MID>/src/` into active `src/` and re-run `pnpm build`. Do this before debugging component logic; otherwise you can end up fixing the wrong tree.

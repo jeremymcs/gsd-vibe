@@ -64,6 +64,16 @@ describe("queryKeys", () => {
     });
   });
 
+  describe("onboarding", () => {
+    it("generates key for onboarding status", () => {
+      expect(queryKeys.onboardingStatus()).toEqual(["onboarding", "status"]);
+    });
+
+    it("generates key for onboarding dependency detection", () => {
+      expect(queryKeys.onboardingDependencies()).toEqual(["onboarding", "dependencies"]);
+    });
+  });
+
   describe("key uniqueness", () => {
     it("generates unique keys across different resources", () => {
       const keys = [

@@ -53,6 +53,7 @@ import {
   useProject,
   useGsdSync,
   useDeleteProject,
+  useSettings,
 } from "@/lib/queries";
 import { truncatePath } from "@/lib/utils";
 import { resolveViewFromTab } from "@/lib/project-views";
@@ -65,6 +66,8 @@ export function ProjectPage() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const { data: project, isLoading: projectLoading } = useProject(id!);
+  const { data: settings } = useSettings();
+  const userMode = settings?.user_mode ?? 'expert';
   const syncProject = useGsdSync();
   const deleteProject = useDeleteProject();
 
@@ -74,7 +77,7 @@ export function ProjectPage() {
   const showGsdTab = isGsd2 || isGsd1;
 
   // Resolve active view from ?view= or legacy ?tab= param
-  const viewCtx = useMemo(() => ({ isGsd2, isGsd1 }), [isGsd2, isGsd1]);
+  const viewCtx = useMemo(() => ({ isGsd2, isGsd1, userMode }), [isGsd2, isGsd1, userMode]);
   const rawView = searchParams.get('view') ?? searchParams.get('tab') ?? null;
   const activeView = useMemo(
     () => resolveViewFromTab(rawView, viewCtx),

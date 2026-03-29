@@ -1,4 +1,4 @@
-// GSD VibeFlow - Breadcrumb Navigation
+// GSD Vibe - Breadcrumb Navigation
 // Shows Home > ProjectName > ActiveView with view label from project-views registry
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
@@ -30,7 +30,7 @@ function useProjectGsdContext(id: string | undefined) {
   const hasPlanning = data?.tech_stack?.has_planning ?? false;
   const isGsd2 = data?.gsd_version === 'gsd2';
   const isGsd1 = hasPlanning && !isGsd2;
-  return { isGsd2, isGsd1 };
+  return { isGsd2, isGsd1, userMode: 'expert' as const };
 }
 
 function BookmarkPopover({ projectId }: { projectId: string }) {

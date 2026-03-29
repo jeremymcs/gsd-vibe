@@ -59,6 +59,7 @@ pub async fn get_settings(db: tauri::State<'_, DbState>) -> Result<Settings, Str
                 "debug_logging" => settings.debug_logging = value == "true",
                 // Terminal persistence
                 "use_tmux" => settings.use_tmux = value == "true",
+                "user_mode" => settings.user_mode = value,
                 _ => {}
             }
         }
@@ -152,6 +153,7 @@ pub async fn update_settings(
 
     // Terminal persistence
     upsert("use_tmux", &settings.use_tmux.to_string()).map_err(|e| e.to_string())?;
+    upsert("user_mode", &settings.user_mode).map_err(|e| e.to_string())?;
 
     Ok(settings)
 }
@@ -238,6 +240,7 @@ pub async fn import_settings(
     upsert("notify_on_cost_warning", &settings.notify_on_cost_warning.to_string()).map_err(|e| e.to_string())?;
     upsert("debug_logging", &settings.debug_logging.to_string()).map_err(|e| e.to_string())?;
     upsert("use_tmux", &settings.use_tmux.to_string()).map_err(|e| e.to_string())?;
+    upsert("user_mode", &settings.user_mode).map_err(|e| e.to_string())?;
 
     tracing::info!("Settings imported from {:?}", file_path);
     Ok(settings)

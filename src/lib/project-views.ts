@@ -29,6 +29,8 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 
+export const DEFAULT_VIEW = 'overview';
+
 export interface ProjectView {
   id: string;
   label: string;
@@ -40,6 +42,8 @@ export interface ProjectView {
   gsd1Only?: boolean;
   /** Show only when project has any GSD planning */
   gsdOnly?: boolean;
+  /** Hide this view in guided mode */
+  expertOnly?: boolean;
 }
 
 /**
@@ -61,14 +65,14 @@ export const projectViews: ProjectView[] = [
   { id: 'gsd2-headless', label: 'Headless', icon: Play, section: 'GSD', gsd2Only: true },
   { id: 'gsd2-worktrees', label: 'Worktrees', icon: GitBranch, section: 'GSD', gsd2Only: true },
   { id: 'gsd2-visualizer', label: 'Visualizer', icon: BarChart3, section: 'GSD', gsd2Only: true },
-  { id: 'gsd2-milestones', label: 'Milestones', icon: Flag, section: 'GSD', gsd2Only: true },
-  { id: 'gsd2-slices', label: 'Slices', icon: Layers, section: 'GSD', gsd2Only: true },
-  { id: 'gsd2-tasks', label: 'Tasks', icon: CheckSquare, section: 'GSD', gsd2Only: true },
-  { id: 'gsd2-doctor', label: 'Doctor', icon: Stethoscope, section: 'Diagnostics', gsd2Only: true },
-  { id: 'gsd2-forensics', label: 'Forensics', icon: Search, section: 'Diagnostics', gsd2Only: true },
-  { id: 'gsd2-skill-health', label: 'Skill Health', icon: Brain, section: 'Diagnostics', gsd2Only: true },
-  { id: 'gsd2-knowledge-captures', label: 'Knowledge', icon: BookOpen, section: 'Diagnostics', gsd2Only: true },
-  { id: 'gsd2-reports', label: 'Reports', icon: FileText, section: 'GSD', gsd2Only: true },
+  { id: 'gsd2-milestones', label: 'Milestones', icon: Flag, section: 'GSD', gsd2Only: true, expertOnly: true },
+  { id: 'gsd2-slices', label: 'Slices', icon: Layers, section: 'GSD', gsd2Only: true, expertOnly: true },
+  { id: 'gsd2-tasks', label: 'Tasks', icon: CheckSquare, section: 'GSD', gsd2Only: true, expertOnly: true },
+  { id: 'gsd2-doctor', label: 'Doctor', icon: Stethoscope, section: 'Diagnostics', gsd2Only: true, expertOnly: true },
+  { id: 'gsd2-forensics', label: 'Forensics', icon: Search, section: 'Diagnostics', gsd2Only: true, expertOnly: true },
+  { id: 'gsd2-skill-health', label: 'Skill Health', icon: Brain, section: 'Diagnostics', gsd2Only: true, expertOnly: true },
+  { id: 'gsd2-knowledge-captures', label: 'Knowledge', icon: BookOpen, section: 'Diagnostics', gsd2Only: true, expertOnly: true },
+  { id: 'gsd2-reports', label: 'Reports', icon: FileText, section: 'GSD', gsd2Only: true, expertOnly: true },
 
   // --- GSD-1 ---
   { id: 'gsd-plans', label: 'Plans', icon: FileText, section: 'GSD', gsd1Only: true },
@@ -84,14 +88,16 @@ export const projectViews: ProjectView[] = [
 export interface ProjectViewContext {
   isGsd2: boolean;
   isGsd1: boolean;
+  userMode: string;
 }
 
-/** Filter views based on project GSD version */
+/** Filter views based on project GSD version and current user mode */
 export function getVisibleViews(ctx: ProjectViewContext): ProjectView[] {
   return projectViews.filter((v) => {
     if (v.gsd2Only && !ctx.isGsd2) return false;
     if (v.gsd1Only && !ctx.isGsd1) return false;
     if (v.gsdOnly && !ctx.isGsd2 && !ctx.isGsd1) return false;
+    if (v.expertOnly && ctx.userMode !== 'expert') return false;
     return true;
   });
 }
@@ -124,18 +130,23 @@ const TAB_TO_VIEW: Record<string, string> = {
 };
 
 export function resolveViewFromTab(tab: string | null, ctx: ProjectViewContext): string {
-  if (!tab) return 'overview';
+  if (!tab) return DEFAULT_VIEW;
 
   // Direct view ID match
-  const allIds = new Set(projectViews.map((v) => v.id));
-  if (allIds.has(tab)) return tab;
+  const directView = projectViews.find((view) => view.id === tab);
+  if (directView) {
+    if (directView.expertOnly && ctx.userMode !== 'expert') return DEFAULT_VIEW;
+    return tab;
+  }
 
   // Legacy ?tab= mapping
   if (tab === 'gsd') {
-    return ctx.isGsd2 ? 'gsd2-dashboard' : ctx.isGsd1 ? 'gsd-plans' : 'overview';
+    return ctx.isGsd2 ? 'gsd2-dashboard' : ctx.isGsd1 ? 'gsd-plans' : DEFAULT_VIEW;
   }
 
-  return TAB_TO_VIEW[tab] ?? 'overview';
-}
+  const resolved = TAB_TO_VIEW[tab] ?? DEFAULT_VIEW;
+  const resolvedView = projectViews.find((view) => view.id === resolved);
+  if (resolvedView?.expertOnly && ctx.userMode !== 'expert') return DEFAULT_VIEW;
 
-export const DEFAULT_VIEW = 'overview';
+  return resolved;
+}

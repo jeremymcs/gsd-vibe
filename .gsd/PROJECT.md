@@ -37,4 +37,5 @@ See `.gsd/REQUIREMENTS.md` for the explicit capability contract, requirement sta
 - [x] M008: GSD-2 Feature Parity (Data Layer)
 - [x] M006: GSD-2 Feature Parity (Interactive Surfaces)
 - [x] M009: Visual Redesign & Navigation Overhaul
-- [ ] M010: Feature Maximization — Dashboard, Templates & Rendering Fixes
+- [x] M010: Feature Maximization — Dashboard, Templates & Rendering Fixes
+- [ ] M012: Guided Mode — Wizard-Driven Experience for New Users

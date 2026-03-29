@@ -691,7 +691,161 @@ This file is the explicit capability and coverage contract for the project.
 - Validation: Slice S04: All 7 inline empty-state blocks across 5 GSD-2 tab files (milestones-tab, slices-tab, tasks-tab 3x, reports-tab, activity-tab) replaced with ViewEmpty component showing domain-appropriate icons (Map, Layers, CircleDot, FileText, Activity), concise messages, and contextual descriptions. Verified via grep -c ViewEmpty across all files returns ≥2 uses each. All 159 JS tests pass; build clean with 0 TypeScript errors."
 - Notes: Carried forward from R043 (M005). ViewSkeleton/ViewError exist in shared/loading-states.tsx but ViewEmpty needs verification.
 
+### R128 — Global Guided/Expert mode toggle persisted in settings DB
+- Class: core-capability
+- Status: active
+- Description: A global app setting that switches the entire UI between Guided mode (simplified, wizard-driven) and Expert mode (full power UI). Persisted in SQLite settings table, instant toggle with no data loss.
+- Why it matters: Entry point for the dual-mode experience — everything else depends on this setting existing
+- Source: user
+- Primary owning slice: M012/S01
+- Supporting slices: none
+- Validation: unmapped
+- Notes: Default to Guided for first-launch, Expert for existing users with projects
+
+### R129 — First-launch wizard detects Node.js, git, and gsd/pi CLI presence
+- Class: core-capability
+- Status: active
+- Description: On first launch, detect whether Node.js, git, and gsd/pi CLI are installed. Show version info for found tools, install guidance (copyable commands) for missing ones.
+- Why it matters: Novice users don't know what prerequisites are needed — the app must tell them
+- Source: user
+- Primary owning slice: M012/S02
+- Supporting slices: none
+- Validation: unmapped
+- Notes: Extends existing get_environment_info pattern in git.rs. Detection only, no auto-install.
+
+### R130 — First-launch wizard guides provider API key setup with validation
+- Class: core-capability
+- Status: active
+- Description: First-launch wizard includes a step to configure the user's preferred AI provider API key. Provider-agnostic (not Anthropic-only). Validates the key works before proceeding.
+- Why it matters: Without a working API key, nothing else in the app works — this must be verified upfront
+- Source: user
+- Primary owning slice: M012/S02
+- Supporting slices: none
+- Validation: unmapped
+- Notes: Store in OS keychain. Leverage existing keyring crate usage.
+
+### R131 — First-launch wizard offers Guided/Expert mode choice
+- Class: core-capability
+- Status: active
+- Description: Final step of first-launch wizard lets user choose Guided or Expert mode with clear descriptions of each.
+- Why it matters: Sets the user's initial experience — wrong default means immediate confusion
+- Source: user
+- Primary owning slice: M012/S02
+- Supporting slices: M012/S01
+- Validation: unmapped
+- Notes: none
+
+### R132 — First-launch detection prevents wizard from showing on every app open
+- Class: quality-attribute
+- Status: active
+- Description: First-launch wizard only shows once. Subsequent app opens skip directly to the normal UI. A flag in the settings DB tracks completion.
+- Why it matters: Showing setup on every launch would be infuriating
+- Source: inferred
+- Primary owning slice: M012/S02
+- Supporting slices: none
+- Validation: unmapped
+- Notes: none
+
+### R133 — Guided project creation: template → describe → visual plan review → approve → build
+- Class: core-capability
+- Status: active
+- Description: In Guided mode, new project flow walks user through template selection, free-text project description, AI-generated plan shown as visual summary (milestone title, slice list, scope), approve/adjust, then auto-mode starts building.
+- Why it matters: This is the core novice experience — zero-to-building without CLI knowledge
+- Source: user
+- Primary owning slice: M012/S03
+- Supporting slices: M012/S01
+- Validation: unmapped
+- Notes: Builds on existing project-wizard-dialog.tsx template selection and headless start commands
+
+### R134 — Plan review shows visual summary not raw markdown
+- Class: quality-attribute
+- Status: active
+- Description: When AI generates a plan during guided project creation, user sees milestone title, slice list with descriptions, and estimated scope — not raw ROADMAP.md markdown.
+- Why it matters: Raw markdown is intimidating for novice users — visual summary respects their context
+- Source: user
+- Primary owning slice: M012/S03
+- Supporting slices: none
+- Validation: unmapped
+- Notes: none
+
+### R135 — Guided project view with action panel and collapsible terminal
+- Class: core-capability
+- Status: active
+- Description: In Guided mode, opening a project shows a simplified progress view with an action panel (Start Building, Pause, Resume buttons) and a collapsible terminal panel at the bottom. Status header explains current activity. No /gsd commands needed.
+- Why it matters: This is what makes Guided mode a real mode, not just hidden sidebar items
+- Source: user
+- Primary owning slice: M012/S04
+- Supporting slices: M012/S01
+- Validation: unmapped
+- Notes: Terminal visible by default but collapsible. Action panel wires to existing headless start/stop commands.
+
+### R136 — Guided mode sidebar shows reduced navigation
+- Class: quality-attribute
+- Status: active
+- Description: In Guided mode, the sidebar shows only essential views — Dashboard, active project progress, Settings. No diagnostics, forensics, worktrees, or other expert-level views.
+- Why it matters: 26 sidebar views overwhelm novice users — reduced nav focuses attention
+- Source: inferred
+- Primary owning slice: M012/S04
+- Supporting slices: none
+- Validation: unmapped
+- Notes: none
+
+### R137 — Expert mode preserves current full UI unchanged
+- Class: constraint
+- Status: active
+- Description: Expert mode is the current full UI with all views, nav rail, and capabilities. No existing functionality removed or changed.
+- Why it matters: Existing power users must not lose anything when guided mode is added
+- Source: user
+- Primary owning slice: M012/S01
+- Supporting slices: none
+- Validation: unmapped
+- Notes: none
+
+### R138 — Mode switch is instant toggle in settings with no re-onboarding
+- Class: quality-attribute
+- Status: active
+- Description: Switching between Guided and Expert mode is an instant toggle in settings. No confirmation dialogs, no re-onboarding, no data loss. Just a UI presentation change.
+- Why it matters: Friction on mode switching means users never try the other mode
+- Source: user
+- Primary owning slice: M012/S01
+- Supporting slices: none
+- Validation: unmapped
+- Notes: none
+
+### R139 — Dependency detection shows install guidance not auto-install
+- Class: constraint
+- Status: active
+- Description: When first-launch wizard detects missing tools, it shows copyable install commands (e.g., brew install node). It does NOT attempt to auto-install anything.
+- Why it matters: Auto-installing system tools is dangerous and breaks trust — guide, don't act
+- Source: user
+- Primary owning slice: M012/S02
+- Supporting slices: none
+- Validation: unmapped
+- Notes: none
+
 ## Deferred
+
+### R140 — Bundled build ships Node.js and CLI tools inside the app bundle
+- Class: differentiator
+- Status: deferred
+- Description: A build variant that packages Node.js, gsd CLI, and other dependencies inside the Tauri app bundle so users need zero external installs.
+- Why it matters: True zero-dependency install for the most novice users
+- Source: user
+- Primary owning slice: none
+- Supporting slices: none
+- Validation: unmapped
+- Notes: User explicitly deferred to backlog
+
+### R141 — "Describe a change" mid-project action in guided mode
+- Class: core-capability
+- Status: deferred
+- Description: An action panel button in guided mode that lets users describe desired changes mid-project, feeding into the GSD discussion flow.
+- Why it matters: Without this, users can only start/pause — they can't steer mid-project from guided mode
+- Source: inferred
+- Primary owning slice: none
+- Supporting slices: none
+- Validation: unmapped
+- Notes: Deferred because the GSD discussion flow is currently CLI-driven — needs more design work
 
 ### R051 — Full accessibility audit with VoiceOver/NVDA testing
 - Class: compliance/security
@@ -834,10 +988,24 @@ This file is the explicit capability and coverage contract for the project.
 | R125 | core-capability | active | M010/S04 | none | unmapped |
 | R126 | quality-attribute | validated | M010/S04 | none | Slice S04: All 7 inline empty-state blocks across 5 GSD-2 tab files (milestones-tab, slices-tab, tasks-tab 3x, reports-tab, activity-tab) replaced with ViewEmpty component showing domain-appropriate icons (Map, Layers, CircleDot, FileText, Activity), concise messages, and contextual descriptions. Verified via grep -c ViewEmpty across all files returns ≥2 uses each. All 159 JS tests pass; build clean with 0 TypeScript errors." |
 | R127 | operability | active | M010/S04 | none | unmapped |
+| R128 | core-capability | active | M012/S01 | none | unmapped |
+| R129 | core-capability | active | M012/S02 | none | unmapped |
+| R130 | core-capability | active | M012/S02 | none | unmapped |
+| R131 | core-capability | active | M012/S02 | M012/S01 | unmapped |
+| R132 | quality-attribute | active | M012/S02 | none | unmapped |
+| R133 | core-capability | active | M012/S03 | M012/S01 | unmapped |
+| R134 | quality-attribute | active | M012/S03 | none | unmapped |
+| R135 | core-capability | active | M012/S04 | M012/S01 | unmapped |
+| R136 | quality-attribute | active | M012/S04 | none | unmapped |
+| R137 | constraint | active | M012/S01 | none | unmapped |
+| R138 | quality-attribute | active | M012/S01 | none | unmapped |
+| R139 | constraint | active | M012/S02 | none | unmapped |
+| R140 | differentiator | deferred | none | none | unmapped |
+| R141 | core-capability | deferred | none | none | unmapped |
 
 ## Coverage Summary
 
-- Active requirements: 28
-- Mapped to slices: 28
+- Active requirements: 40
+- Mapped to slices: 40
 - Validated: 35 (R001, R040, R041, R042, R044, R045, R046, R047, R048, R049, R050, R061, R066, R068, R069, R078, R079, R080, R081, R082, R083, R084, R085, R086, R087, R088, R112, R113, R114, R115, R116, R117, R118, R119, R126)
 - Unmapped active requirements: 0

@@ -193,6 +193,38 @@ export interface Settings {
   debug_logging: boolean;
   // Terminal persistence
   use_tmux: boolean;
+  user_mode: string;
+}
+
+// First-launch onboarding
+export type OnboardingUserMode = "guided" | "expert";
+export type OnboardingProvider = "anthropic" | "openai" | "github" | "openrouter";
+
+export interface OnboardingStatus {
+  completed: boolean;
+  completed_at: string | null;
+  user_mode: OnboardingUserMode;
+  has_api_keys: boolean;
+}
+
+export interface DependencyCheck {
+  name: string;
+  installed: boolean;
+  version: string | null;
+  message: string | null;
+}
+
+export interface DependencyDetectionResult {
+  checked_at: string;
+  dependencies: DependencyCheck[];
+}
+
+export interface ApiKeyValidationResult {
+  provider: string;
+  key_name: string;
+  valid: boolean;
+  stored: boolean;
+  message: string;
 }
 
 export interface ProjectDocs {
@@ -461,6 +493,25 @@ export const onMarkdownIndexProgress = (
 export const getSettings = () => invoke<Settings>("get_settings");
 export const updateSettings = (settings: Settings) =>
   invoke<Settings>("update_settings", { settings });
+
+// First-launch onboarding
+export const onboardingGetStatus = () =>
+  invoke<OnboardingStatus>("onboarding_get_status");
+
+export const onboardingDetectDependencies = () =>
+  invoke<DependencyDetectionResult>("onboarding_detect_dependencies");
+
+export const onboardingValidateAndStoreApiKey = (
+  provider: OnboardingProvider,
+  apiKey: string,
+) =>
+  invoke<ApiKeyValidationResult>("onboarding_validate_and_store_api_key", {
+    provider,
+    apiKey,
+  });
+
+export const onboardingMarkComplete = (userMode: OnboardingUserMode) =>
+  invoke<OnboardingStatus>("onboarding_mark_complete", { userMode });
 
 // Data Management
 export interface ExportOptions {
@@ -1277,6 +1328,37 @@ export const gsdGetUatByPhase = (projectId: string, phaseNumber: string) =>
 export const gsd2GetHealth = (projectId: string) =>
   invoke<Gsd2Health>('gsd2_get_health', { projectId });
 
+export interface Gsd2ModelEntry {
+  provider: string;
+  id: string;
+  name: string;
+}
+
+export interface Gsd2PlanPreviewSlice {
+  id: string;
+  title: string;
+  goal: string;
+  risk: string | null;
+  depends_on: string[];
+}
+
+export interface Gsd2PlanPreviewMilestone {
+  title: string;
+  summary: string;
+  slices: Gsd2PlanPreviewSlice[];
+}
+
+export interface Gsd2PlanPreview {
+  intent: string;
+  milestone: Gsd2PlanPreviewMilestone;
+}
+
+export const gsd2ListModels = (search?: string) =>
+  invoke<Gsd2ModelEntry[]>('gsd2_list_models', { search });
+
+export const gsd2GeneratePlanPreview = (intent: string) =>
+  invoke<Gsd2PlanPreview>('gsd2_generate_plan_preview', { intent });
+
 export interface WorktreeInfo {
   name: string;
   branch: string;
@@ -1498,6 +1580,9 @@ export const gsd2HeadlessUnregister = (sessionId: string) =>
 
 export const gsd2HeadlessStart = (projectId: string) =>
   invoke<string>('gsd2_headless_start', { projectId });
+
+export const gsd2HeadlessStartWithModel = (projectId: string, model: string) =>
+  invoke<string>('gsd2_headless_start_with_model', { projectId, model });
 
 export const gsd2HeadlessStop = (sessionId: string) =>
   invoke<void>('gsd2_headless_stop', { sessionId });

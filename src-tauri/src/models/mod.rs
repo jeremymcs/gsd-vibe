@@ -93,6 +93,7 @@ pub struct Settings {
     pub debug_logging: bool,
     // Terminal persistence
     pub use_tmux: bool,
+    pub user_mode: String,
 }
 
 impl Default for Settings {
@@ -125,6 +126,7 @@ impl Default for Settings {
             debug_logging: false,
             // Terminal persistence defaults
             use_tmux: true,
+            user_mode: "expert".to_string(),
         }
     }
 }

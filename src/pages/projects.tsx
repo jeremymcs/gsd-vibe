@@ -13,9 +13,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ProjectWizardDialog, ProjectCard, BulkProjectBar } from "@/components/projects";
+import { ProjectWizardDialog, GuidedProjectWizard, ProjectCard, BulkProjectBar } from "@/components/projects";
 import { SkeletonProjectItem } from "@/components/ui/skeleton";
-import { useProjectsWithStats, useUpdateProject, useDeleteProject } from "@/lib/queries";
+import { useProjectsWithStats, useUpdateProject, useDeleteProject, useSettings } from "@/lib/queries";
 import { getProjectType, type ProjectType } from "@/lib/design-tokens";
 import { PageHeader } from "@/components/layout/page-header";
 
@@ -29,6 +29,8 @@ export function ProjectsPage() {
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const { data: projects, isLoading } = useProjectsWithStats();
+  const { data: settings } = useSettings();
+  const userMode = settings?.user_mode ?? "expert";
   const updateProject = useUpdateProject();
   const deleteProject = useDeleteProject();
 
@@ -247,10 +249,17 @@ export function ProjectsPage() {
         </CardContent>
       </Card>
 
-      <ProjectWizardDialog
-        open={addProjectOpen}
-        onOpenChange={setAddProjectOpen}
-      />
+      {userMode === "guided" ? (
+        <GuidedProjectWizard
+          open={addProjectOpen}
+          onOpenChange={setAddProjectOpen}
+        />
+      ) : (
+        <ProjectWizardDialog
+          open={addProjectOpen}
+          onOpenChange={setAddProjectOpen}
+        />
+      )}
     </div>
   );
 }

@@ -153,6 +153,11 @@ pub fn run() {
             commands::settings::update_settings,
             commands::settings::reset_settings,
             commands::settings::import_settings,
+            // Onboarding commands
+            commands::onboarding::onboarding_get_status,
+            commands::onboarding::onboarding_detect_dependencies,
+            commands::onboarding::onboarding_validate_and_store_api_key,
+            commands::onboarding::onboarding_mark_complete,
             // Data commands
             commands::data::export_data,
             commands::data::clear_all_data,
@@ -300,6 +305,7 @@ pub fn run() {
             commands::gsd2::gsd2_doctor,
             commands::gsd2::gsd2_list_sessions,
             commands::gsd2::gsd2_list_models,
+            commands::gsd2::gsd2_generate_plan_preview,
             commands::gsd2::gsd2_merge_worktree,
             commands::gsd2::gsd2_clean_worktrees,
             commands::gsd2::gsd2_headless_start_with_model,

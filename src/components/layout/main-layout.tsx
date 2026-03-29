@@ -1,4 +1,4 @@
-// GSD VibeFlow - Main Layout Component
+// GSD Vibe - Main Layout Component
 // Context-aware sidebar: global nav or project-scoped nav
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
@@ -85,7 +85,10 @@ export function MainLayout({ children }: MainLayoutProps) {
   const hasPlanning = project?.tech_stack?.has_planning ?? false;
   const isGsd2 = project?.gsd_version === 'gsd2';
   const isGsd1 = hasPlanning && !isGsd2;
-  const viewCtx: ProjectViewContext = useMemo(() => ({ isGsd2, isGsd1 }), [isGsd2, isGsd1]);
+  const viewCtx: ProjectViewContext = useMemo(
+    () => ({ isGsd2, isGsd1, userMode: 'expert' }),
+    [isGsd2, isGsd1]
+  );
   const viewSections = useMemo(() => getViewSections(viewCtx), [viewCtx]);
 
   // GSD-2 health for status indicator
@@ -202,7 +205,7 @@ export function MainLayout({ children }: MainLayoutProps) {
                 <div className="flex flex-col items-center gap-1 w-full pt-3">
                   <img src="/gsd-logo.svg" alt="GSD" className="h-8 w-full max-w-[160px] object-contain" />
                   <span className="text-[13px] font-semibold tracking-[0.2em] uppercase text-muted-foreground/70">
-                    VibeFlow
+                    GSD Vibe
                   </span>
                 </div>
               )}
@@ -275,14 +278,14 @@ export function MainLayout({ children }: MainLayoutProps) {
                               : "gap-3 px-3 py-1.5",
                             isActive
                               ? "text-foreground"
-                              : "text-muted-foreground/70 hover:text-foreground hover:bg-muted/50"
+                              : "text-muted-foreground/50 hover:text-muted-foreground hover:bg-muted/30"
                           )}
                         >
                           {isActive && !sidebarCollapsed && (
-                            <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-4 rounded-full bg-gsd-cyan" />
+                            <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-4 rounded-full bg-primary/80" />
                           )}
                           {isActive && sidebarCollapsed && (
-                            <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-gsd-cyan" />
+                            <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary/80" />
                           )}
                           <Icon className="h-[18px] w-[18px] flex-shrink-0" />
                           {!sidebarCollapsed && (
