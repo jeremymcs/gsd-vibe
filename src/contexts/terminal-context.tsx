@@ -70,6 +70,14 @@ interface TerminalContextValue {
   /** Set global terminal font size */
   setTerminalFontSize: (size: number) => void;
 
+  // Headless session persistence across view navigation
+  /** Whether a headless GSD session is currently running */
+  headlessRunning: boolean;
+  /** The PTY session ID of the running headless session */
+  headlessSessionId: string | null;
+  /** Set headless session state */
+  setHeadlessState: (running: boolean, sessionId: string | null) => void;
+
   // Persistent shell panel state
   /** Project ID for the persistent shell panel */
   shellProjectId: string | null;
@@ -111,6 +119,15 @@ const TerminalContext = createContext<TerminalContextValue | null>(null);
 export function TerminalProvider({ children }: { children: ReactNode }) {
   // Global terminal font size
   const [terminalFontSize, setTerminalFontSize] = useState(14);
+
+  // Headless session state — persists across view navigation
+  const [headlessRunning, setHeadlessRunning] = useState(false);
+  const [headlessSessionId, setHeadlessSessionId] = useState<string | null>(null);
+  const setHeadlessState = useCallback((running: boolean, sessionId: string | null) => {
+    setHeadlessRunning(running);
+    setHeadlessSessionId(sessionId);
+  }, []);
+
   // Map of projectId -> ProjectTerminals
   const [terminals, setTerminals] = useState<Map<string, ProjectTerminals>>(new Map());
   // Map of projectId -> working directory path
@@ -673,6 +690,10 @@ export function TerminalProvider({ children }: { children: ReactNode }) {
     setTabTmuxSession,
     terminalFontSize,
     setTerminalFontSize: handleSetTerminalFontSize,
+    // Headless session
+    headlessRunning,
+    headlessSessionId,
+    setHeadlessState,
     // Persistent shell panel state
     shellProjectId,
     shellProjectPath,

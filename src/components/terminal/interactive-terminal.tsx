@@ -109,6 +109,8 @@ export interface InteractiveTerminalProps {
   isBroadcasting?: boolean;
   /** SH-05: Callback to write to all broadcast terminals */
   onBroadcastWrite?: (data: string) => void;
+  /** Suppress keyboard input (headless read-only terminal) */
+  readOnly?: boolean;
 }
 
 /**
@@ -141,6 +143,7 @@ export const InteractiveTerminal = forwardRef<InteractiveTerminalRef, Interactiv
       visible = true,
       isBroadcasting = false,
       onBroadcastWrite,
+      readOnly = false,
     },
     ref
   ) {
@@ -465,6 +468,7 @@ export const InteractiveTerminal = forwardRef<InteractiveTerminalRef, Interactiv
       // Both paths: Update indirection maps with current React refs
       if (key) {
         terminalInputWriters.set(key, (data: string) => {
+          if (readOnly) return; // suppress all keyboard input
           if (broadcastWriteRef.current) {
             broadcastWriteRef.current(data);
           } else {
@@ -476,6 +480,7 @@ export const InteractiveTerminal = forwardRef<InteractiveTerminalRef, Interactiv
             setShowSearch(true);
             return false;
           }
+          if (readOnly) return false; // block all other keys
           return true;
         });
       }

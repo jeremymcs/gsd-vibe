@@ -1232,6 +1232,15 @@ export const useGsd2Models = (search?: string, enabled = true) =>
     staleTime: 60_000,
   });
 
+// Alias for backward compatibility (session tab uses this name)
+export const useGsd2ListModels = () =>
+  useQuery({
+    queryKey: ['gsd2', 'models'],
+    queryFn: () => api.gsd2ListModels(),
+    staleTime: 10 * 60 * 1000,
+    retry: false,
+  });
+
 export const useGsd2GeneratePlanPreview = () =>
   useMutation({
     mutationFn: (intent: string) => api.gsd2GeneratePlanPreview(intent),

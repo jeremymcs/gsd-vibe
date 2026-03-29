@@ -192,23 +192,30 @@ export function MainLayout({ children }: MainLayoutProps) {
             // ── Global logo ──
             <div
               className={cn(
-                "h-20 flex items-start border-b border-border/40",
-                sidebarCollapsed ? "px-3 justify-center" : "px-5"
+                "h-14 flex items-center justify-center border-b border-border/40 transition-all duration-300",
               )}
             >
-              {sidebarCollapsed ? (
-                <div className="flex flex-col items-center gap-0.5">
-                  <span className="text-[10px] font-bold text-foreground font-mono leading-none">GSD</span>
-                  <span className="text-[8px] font-semibold text-muted-foreground/60 tracking-widest uppercase leading-none">VF</span>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center gap-1 w-full pt-3">
-                  <img src="/gsd-logo.svg" alt="GSD" className="h-8 w-full max-w-[160px] object-contain" />
-                  <span className="text-[13px] font-semibold tracking-[0.2em] uppercase text-muted-foreground/70">
-                    GSD Vibe
+              <button
+                type="button"
+                onClick={() => navigate("/")}
+                className="cursor-pointer select-none group"
+              >
+                {sidebarCollapsed ? (
+                  <span className="text-sm font-mono font-bold text-foreground/80 group-hover:text-foreground transition-colors">
+                    gsd
                   </span>
-                </div>
-              )}
+                ) : (
+                  <div className="flex items-center gap-0">
+                    <span className="text-sm font-mono font-bold text-foreground/80 group-hover:text-foreground transition-colors">
+                      gsd
+                    </span>
+                    <span className="text-sm font-mono text-muted-foreground/40 mx-1">/</span>
+                    <span className="text-sm font-mono font-normal text-muted-foreground/60 group-hover:text-muted-foreground transition-colors">
+                      vibe
+                    </span>
+                  </div>
+                )}
+              </button>
             </div>
           )}
 
