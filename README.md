@@ -1,4 +1,4 @@
-# GSD VibeFlow
+# GSD Vibe
 <!-- Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net> -->
 
 A native desktop application for managing [Claude Code](https://claude.ai/code) projects. Built with Tauri 2 (Rust + React).
