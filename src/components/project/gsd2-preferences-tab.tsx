@@ -2,7 +2,7 @@
 // Full preferences editor with scope-aware fields, nested object handling, and hooks CRUD
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
-import { useState, useCallback, type ReactNode } from 'react';
+import { useState, useEffect, useCallback, type ReactNode } from 'react';
 import {
   Settings2,
   RefreshCw,
@@ -447,11 +447,13 @@ export function Gsd2PreferencesTab({ projectPath }: Gsd2PreferencesTabProps) {
   const [draft, setDraft] = useState<Record<string, unknown>>({});
   const [dirty, setDirty] = useState(false);
 
-  // Initialize draft when data loads
-  if (data && Object.keys(draft).length === 0) {
+  // Initialize draft when data loads or scope changes
+  useEffect(() => {
+    if (!data) return;
     const source = editScope === 'global' ? data.global_raw : data.project_raw;
     setDraft({ ...source });
-  }
+    setDirty(false);
+  }, [data, editScope]);
 
   const handleChange = useCallback(
     (key: string, value: unknown) => {
