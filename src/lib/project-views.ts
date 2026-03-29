@@ -26,6 +26,7 @@ import {
   ClipboardCheck,
   ShieldCheck,
   Bug,
+  Settings2,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -73,6 +74,7 @@ export const projectViews: ProjectView[] = [
   { id: 'gsd2-skill-health', label: 'Skill Health', icon: Brain, section: 'Diagnostics', gsd2Only: true, expertOnly: true },
   { id: 'gsd2-knowledge-captures', label: 'Knowledge', icon: BookOpen, section: 'Diagnostics', gsd2Only: true, expertOnly: true },
   { id: 'gsd2-reports', label: 'Reports', icon: FileText, section: 'GSD', gsd2Only: true, expertOnly: true },
+  { id: 'gsd2-preferences', label: 'Preferences', icon: Settings2, section: 'GSD', gsd2Only: true, expertOnly: true },
 
   // --- GSD-1 ---
   { id: 'gsd-plans', label: 'Plans', icon: FileText, section: 'GSD', gsd1Only: true },

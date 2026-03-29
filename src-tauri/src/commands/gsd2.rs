@@ -7862,3 +7862,618 @@ pub async fn gsd2_get_reports_index(
         entries: Vec::new(),
     }))
 }
+
+// ============================================================
+// Preferences: YAML parser, merge, scope annotation, read/write
+// ============================================================
+
+/// PreferencesData struct returned by gsd2_get_preferences.
+/// Contains merged preferences, scope annotation, and raw versions for debugging.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PreferencesData {
+    pub merged: serde_json::Value,
+    pub scopes: HashMap<String, String>,
+    pub global_raw: serde_json::Value,
+    pub project_raw: serde_json::Value,
+}
+
+/// Extract frontmatter (YAML header between --- delimiters) from content.
+/// Returns (frontmatter_yaml, body) tuple.
+/// If no frontmatter found, returns ("", full_content).
+fn extract_preferences_frontmatter(content: &str) -> (String, String) {
+    let trimmed = content.trim_start();
+    if !trimmed.starts_with("---") {
+        return (String::new(), content.to_string());
+    }
+
+    let after_first = &trimmed[3..];
+    if let Some(end_pos) = after_first.find("---") {
+        let frontmatter = after_first[..end_pos].to_string();
+        let body = after_first[end_pos + 3..].to_string();
+        (frontmatter, body)
+    } else {
+        (String::new(), content.to_string())
+    }
+}
+
+/// Type-aware scalar coercion: converts string values to bool, int, float, null, or string.
+fn yaml_scalar_to_json(s: &str) -> serde_json::Value {
+    let s = s.trim();
+
+    // null
+    if s == "null" || s == "~" {
+        return serde_json::Value::Null;
+    }
+
+    // bool
+    if s == "true" || s == "yes" || s == "on" {
+        return serde_json::Value::Bool(true);
+    }
+    if s == "false" || s == "no" || s == "off" {
+        return serde_json::Value::Bool(false);
+    }
+
+    // int
+    if let Ok(i) = s.parse::<i64>() {
+        return serde_json::Value::Number(serde_json::Number::from(i));
+    }
+
+    // float
+    if let Ok(f) = s.parse::<f64>() {
+        if let Some(n) = serde_json::Number::from_f64(f) {
+            return serde_json::Value::Number(n);
+        }
+    }
+
+    // string (fallback)
+    serde_json::Value::String(s.to_string())
+}
+
+/// Parse a single YAML item at a given indent level.
+/// Returns (key, value, lines_consumed).
+fn parse_yaml_item(lines: &[&str], start_idx: usize, expected_indent: usize) -> (String, serde_json::Value, usize) {
+    if start_idx >= lines.len() {
+        return (String::new(), serde_json::Value::Null, 0);
+    }
+
+    let line = lines[start_idx];
+    let indent = line.len() - line.trim_start().len();
+
+    if indent != expected_indent {
+        return (String::new(), serde_json::Value::Null, 0);
+    }
+
+    let trimmed = line.trim();
+    if let Some(colon_pos) = trimmed.find(':') {
+        let key = trimmed[..colon_pos].trim().to_string();
+        let value_part = trimmed[colon_pos + 1..].trim();
+
+        if value_part.is_empty() {
+            // Value on next lines
+            let mut idx = start_idx + 1;
+            let child_indent = expected_indent + 2;
+
+            // Check if next line is an array or object
+            if idx < lines.len() {
+                let next_line = lines[idx];
+                let next_indent = next_line.len() - next_line.trim_start().len();
+                let next_trimmed = next_line.trim();
+
+                if next_indent > expected_indent && next_trimmed.starts_with("- ") {
+                    // Array
+                    let (arr, consumed) = parse_yaml_array(lines, idx, child_indent);
+                    return (key, serde_json::Value::Array(arr), consumed - start_idx);
+                } else if next_indent == child_indent && next_trimmed.contains(':') {
+                    // Object
+                    let mut obj = serde_json::json!({});
+                    while idx < lines.len() {
+                        let (k, v, consumed) = parse_yaml_item(lines, idx, child_indent);
+                        if k.is_empty() {
+                            break;
+                        }
+                        obj[k] = v;
+                        idx += consumed;
+                    }
+                    return (key, obj, idx - start_idx);
+                }
+            }
+
+            (key, serde_json::Value::Null, 1)
+        } else if value_part.starts_with("- ") {
+            // Inline array (rare, but handle it)
+            let item = value_part[2..].trim();
+            (key, serde_json::Value::Array(vec![yaml_scalar_to_json(item)]), 1)
+        } else {
+            // Inline scalar value
+            (key, yaml_scalar_to_json(value_part), 1)
+        }
+    } else {
+        (String::new(), serde_json::Value::Null, 0)
+    }
+}
+
+/// Parse a YAML array block starting at lines[idx], where items are marked with "- ".
+/// Returns (Vec<Value>, next_idx).
+fn parse_yaml_array(lines: &[&str], start_idx: usize, expected_indent: usize) -> (Vec<serde_json::Value>, usize) {
+    let mut result = Vec::new();
+    let mut idx = start_idx;
+
+    while idx < lines.len() {
+        let line = lines[idx];
+        let indent = line.len() - line.trim_start().len();
+        let trimmed = line.trim();
+
+        if indent < expected_indent {
+            break;
+        }
+
+        if indent == expected_indent && trimmed.starts_with("- ") {
+            let value_part = trimmed[2..].trim();
+            if value_part.is_empty() {
+                // Item value on next lines
+                let mut item_obj = serde_json::json!({});
+                idx += 1;
+                let child_indent = expected_indent + 2;
+                while idx < lines.len() {
+                    let next_line = lines[idx];
+                    let next_indent = next_line.len() - next_line.trim_start().len();
+                    if next_indent < child_indent || (next_indent == expected_indent && next_line.trim().starts_with("- ")) {
+                        break;
+                    }
+                    if next_indent == child_indent {
+                        let (k, v, consumed) = parse_yaml_item(lines, idx, child_indent);
+                        if !k.is_empty() {
+                            item_obj[k] = v;
+                            idx += consumed;
+                        } else {
+                            break;
+                        }
+                    } else {
+                        idx += 1;
+                    }
+                }
+                result.push(item_obj);
+            } else {
+                // Inline scalar
+                result.push(yaml_scalar_to_json(value_part));
+                idx += 1;
+            }
+        } else {
+            break;
+        }
+    }
+
+    (result, idx)
+}
+
+/// Parse YAML (without serde_yaml crate) to serde_json::Value.
+/// Handles basic nested objects, arrays (marked with "-"), and scalar values.
+fn parse_yaml_to_json(yaml: &str) -> serde_json::Value {
+    if yaml.trim().is_empty() {
+        return serde_json::json!({});
+    }
+
+    let lines: Vec<&str> = yaml.lines().collect();
+    let mut result = serde_json::json!({});
+    let mut idx = 0;
+
+    while idx < lines.len() {
+        let line = lines[idx];
+        let trimmed = line.trim();
+
+        if trimmed.is_empty() || trimmed.starts_with('#') {
+            idx += 1;
+            continue;
+        }
+
+        let indent = line.len() - line.trim_start().len();
+        if indent == 0 && trimmed.contains(':') {
+            let (key, value, consumed) = parse_yaml_item(&lines, idx, 0);
+            if !key.is_empty() {
+                result[key] = value;
+            }
+            idx += consumed;
+        } else {
+            idx += 1;
+        }
+    }
+
+    result
+}
+
+/// Convert serde_json::Value to YAML frontmatter (for write-back).
+/// Handles nested objects and arrays with proper indentation.
+fn write_yaml_array_item(value: &serde_json::Value, indent: usize) -> String {
+    let spaces = " ".repeat(indent);
+    match value {
+        serde_json::Value::Object(map) => {
+            let mut result = String::new();
+            for (k, v) in map.iter() {
+                result.push_str(&format!("{}  {}:\n", spaces, k));
+                result.push_str(&write_yaml_value(v, indent + 4));
+            }
+            result
+        }
+        _ => {
+            format!("{}  {}\n", spaces, value_to_yaml_scalar(value))
+        }
+    }
+}
+
+/// Convert a scalar value to YAML representation.
+fn value_to_yaml_scalar(value: &serde_json::Value) -> String {
+    match value {
+        serde_json::Value::Null => "null".to_string(),
+        serde_json::Value::Bool(b) => b.to_string(),
+        serde_json::Value::Number(n) => n.to_string(),
+        serde_json::Value::String(s) => {
+            // Quote if it contains special chars or is a reserved word
+            if s.contains(':') || s.contains('#') || s.is_empty() || s == "null" || s == "true" || s == "false" {
+                format!("\"{}\"", s.replace('"', "\\\""))
+            } else {
+                s.clone()
+            }
+        }
+        _ => "null".to_string(),
+    }
+}
+
+/// Write a serde_json::Value as YAML string with proper indentation.
+fn write_yaml_value(value: &serde_json::Value, indent: usize) -> String {
+    let spaces = " ".repeat(indent);
+    match value {
+        serde_json::Value::Object(map) => {
+            let mut result = String::new();
+            for (k, v) in map.iter() {
+                result.push_str(&format!("{}{}:\n", spaces, k));
+                if let serde_json::Value::Object(_) | serde_json::Value::Array(_) = v {
+                    result.push_str(&write_yaml_value(v, indent + 2));
+                } else {
+                    result.push_str(&format!("{}{}\n", " ".repeat(indent + 2), value_to_yaml_scalar(v)));
+                }
+            }
+            result
+        }
+        serde_json::Value::Array(arr) => {
+            let mut result = String::new();
+            for item in arr {
+                result.push_str(&format!("{}- ", spaces));
+                match item {
+                    serde_json::Value::Object(_) => {
+                        result.push('\n');
+                        result.push_str(&write_yaml_array_item(item, indent));
+                    }
+                    serde_json::Value::String(s) => {
+                        result.push_str(&format!("{}\n", s));
+                    }
+                    _ => {
+                        result.push_str(&format!("{}\n", value_to_yaml_scalar(item)));
+                    }
+                }
+            }
+            result
+        }
+        _ => format!("{}{}\n", spaces, value_to_yaml_scalar(value)),
+    }
+}
+
+/// Convert serde_json::Value back to YAML frontmatter (with --- delimiters).
+fn json_to_yaml_frontmatter(val: &serde_json::Value) -> String {
+    let mut result = String::from("---\n");
+    if let serde_json::Value::Object(map) = val {
+        for (k, v) in map.iter() {
+            match v {
+                serde_json::Value::Object(_) | serde_json::Value::Array(_) => {
+                    result.push_str(&format!("{}:\n", k));
+                    result.push_str(&write_yaml_value(v, 2));
+                }
+                _ => {
+                    result.push_str(&format!("{}: {}\n", k, value_to_yaml_scalar(v)));
+                }
+            }
+        }
+    }
+    result.push_str("---\n");
+    result
+}
+
+/// Merge project preferences, global preferences, and defaults.
+/// Merge rules:
+/// - Scalars: project wins, then global, then default
+/// - Arrays (skill-related): concatenate [project] + [global]
+/// - Objects (config): shallow merge (project overrides global, global overrides default)
+fn merge_preferences(project: &serde_json::Value, global: &serde_json::Value, defaults: &serde_json::Value) -> serde_json::Value {
+    let mut result = defaults.clone();
+
+    // Merge global into result
+    if let (Some(global_obj), Some(_result_obj)) = (global.as_object(), result.as_object_mut()) {
+        for (k, v) in global_obj {
+            if k.ends_with("Skills") || k.ends_with("skills") {
+                // Array: concatenate
+                let mut merged_arr = Vec::new();
+                if let Some(default_arr) = result.get(k).and_then(|v| v.as_array()) {
+                    merged_arr.extend(default_arr.clone());
+                }
+                if let Some(global_arr) = v.as_array() {
+                    merged_arr.extend(global_arr.clone());
+                }
+                result[k] = serde_json::Value::Array(merged_arr);
+            } else if v.is_object() && result.get(k).map(|v| v.is_object()).unwrap_or(false) {
+                // Object: shallow merge
+                if let Some(result_obj_inner) = result[k].as_object_mut() {
+                    if let Some(global_obj_inner) = v.as_object() {
+                        for (ik, iv) in global_obj_inner {
+                            result_obj_inner.insert(ik.clone(), iv.clone());
+                        }
+                    }
+                }
+            } else {
+                // Scalar: global wins
+                result[k] = v.clone();
+            }
+        }
+    }
+
+    // Merge project into result
+    if let (Some(project_obj), Some(_result_obj)) = (project.as_object(), result.as_object_mut()) {
+        for (k, v) in project_obj {
+            if k.ends_with("Skills") || k.ends_with("skills") {
+                // Array: concatenate [project] + existing
+                let mut merged_arr = Vec::new();
+                if let Some(project_arr) = v.as_array() {
+                    merged_arr.extend(project_arr.clone());
+                }
+                if let Some(existing_arr) = result.get(k).and_then(|v| v.as_array()) {
+                    for item in existing_arr {
+                        if !merged_arr.iter().any(|x| x == item) {
+                            merged_arr.push(item.clone());
+                        }
+                    }
+                }
+                result[k] = serde_json::Value::Array(merged_arr);
+            } else if v.is_object() && result.get(k).map(|v| v.is_object()).unwrap_or(false) {
+                // Object: shallow merge
+                if let Some(result_obj_inner) = result[k].as_object_mut() {
+                    if let Some(project_obj_inner) = v.as_object() {
+                        for (ik, iv) in project_obj_inner {
+                            result_obj_inner.insert(ik.clone(), iv.clone());
+                        }
+                    }
+                }
+            } else {
+                // Scalar: project wins
+                result[k] = v.clone();
+            }
+        }
+    }
+
+    result
+}
+
+/// Annotate each top-level key in merged with its origin scope: "project" / "global" / "default".
+fn annotate_scopes(merged: &serde_json::Value, project: &serde_json::Value, global: &serde_json::Value) -> HashMap<String, String> {
+    let mut scopes = HashMap::new();
+
+    if let Some(merged_obj) = merged.as_object() {
+        for key in merged_obj.keys() {
+            if project.get(key).is_some() {
+                scopes.insert(key.clone(), "project".to_string());
+            } else if global.get(key).is_some() {
+                scopes.insert(key.clone(), "global".to_string());
+            } else {
+                scopes.insert(key.clone(), "default".to_string());
+            }
+        }
+    }
+
+    scopes
+}
+
+/// Read a file and return its contents, or return empty string if file doesn't exist.
+fn read_preferences_file(path: &str) -> Result<String, String> {
+    std::fs::read_to_string(path)
+        .or_else(|_| Ok(String::new()))
+}
+
+/// R040 — Get preferences (merged from project + global + defaults).
+#[tauri::command]
+pub async fn gsd2_get_preferences(
+    project_path: String,
+) -> Result<PreferencesData, String> {
+    let project_prefs_path = Path::new(&project_path).join(".gsd").join("PREFERENCES.md");
+    let global_prefs_path = dirs::home_dir()
+        .ok_or("Cannot determine home directory")?
+        .join(".gsd")
+        .join("PREFERENCES.md");
+
+    // Read project and global files
+    let project_content = read_preferences_file(project_prefs_path.to_str().unwrap_or(""))?;
+    let global_content = read_preferences_file(global_prefs_path.to_str().unwrap_or(""))?;
+
+    // Extract frontmatter from both files
+    let (project_yaml, _) = extract_preferences_frontmatter(&project_content);
+    let (global_yaml, _) = extract_preferences_frontmatter(&global_content);
+
+    // Parse YAML to JSON
+    let project_raw = parse_yaml_to_json(&project_yaml);
+    let global_raw = parse_yaml_to_json(&global_yaml);
+    let defaults = serde_json::json!({
+        "theme": "dark",
+        "gsdVersion": "2.0"
+    });
+
+    // Merge preferences
+    let merged = merge_preferences(&project_raw, &global_raw, &defaults);
+
+    // Annotate scopes
+    let scopes = annotate_scopes(&merged, &project_raw, &global_raw);
+
+    Ok(PreferencesData {
+        merged,
+        scopes,
+        global_raw,
+        project_raw,
+    })
+}
+
+/// R040 — Save preferences to the specified scope (project or global).
+#[tauri::command]
+pub async fn gsd2_save_preferences(
+    project_path: String,
+    scope: String,
+    payload: serde_json::Value,
+) -> Result<(), String> {
+    let target_path = if scope == "project" {
+        Path::new(&project_path).join(".gsd").join("PREFERENCES.md")
+    } else if scope == "global" {
+        dirs::home_dir()
+            .ok_or("Cannot determine home directory")?
+            .join(".gsd")
+            .join("PREFERENCES.md")
+    } else {
+        return Err("Invalid scope: must be 'project' or 'global'".to_string());
+    };
+
+    // Read current file
+    let current_content = std::fs::read_to_string(&target_path).unwrap_or_default();
+    let (_, body) = extract_preferences_frontmatter(&current_content);
+
+    // Convert payload to YAML frontmatter
+    let new_frontmatter = json_to_yaml_frontmatter(&payload);
+    let new_content = format!("{}{}", new_frontmatter, body);
+
+    // Atomic write: temp file then rename
+    let temp_path = format!("{}.tmp.{}", target_path.display(), std::process::id());
+    std::fs::write(&temp_path, &new_content)
+        .map_err(|e| format!("Failed to write preferences: {}", e))?;
+
+    std::fs::rename(&temp_path, &target_path)
+        .map_err(|e| format!("Failed to save preferences: {}", e))?;
+
+    Ok(())
+}
+
+#[cfg(test)]
+mod preferences_tests {
+    use super::*;
+
+    #[test]
+    fn extract_preferences_frontmatter_splits_header_and_body() {
+        let content = "---\ntheme: dark\n---\nRemaining body content";
+        let (frontmatter, body) = extract_preferences_frontmatter(content);
+        // Note: frontmatter includes content between delimiters, which starts with a newline
+        assert_eq!(frontmatter.trim(), "theme: dark");
+        assert_eq!(body.trim(), "Remaining body content");
+    }
+
+    #[test]
+    fn extract_preferences_frontmatter_handles_missing_frontmatter() {
+        let content = "Just plain content\nNo delimiters";
+        let (frontmatter, body) = extract_preferences_frontmatter(content);
+        assert_eq!(frontmatter, "");
+        assert_eq!(body, "Just plain content\nNo delimiters");
+    }
+
+    #[test]
+    fn yaml_scalar_to_json_coerces_bool_values() {
+        assert_eq!(yaml_scalar_to_json("true"), serde_json::Value::Bool(true));
+        assert_eq!(yaml_scalar_to_json("false"), serde_json::Value::Bool(false));
+        assert_eq!(yaml_scalar_to_json("yes"), serde_json::Value::Bool(true));
+        assert_eq!(yaml_scalar_to_json("no"), serde_json::Value::Bool(false));
+    }
+
+    #[test]
+    fn yaml_scalar_to_json_coerces_numbers() {
+        let int_val = yaml_scalar_to_json("42");
+        assert!(int_val.is_number());
+        
+        let float_val = yaml_scalar_to_json("3.14");
+        assert!(float_val.is_number());
+    }
+
+    #[test]
+    fn yaml_scalar_to_json_coerces_null() {
+        assert_eq!(yaml_scalar_to_json("null"), serde_json::Value::Null);
+        assert_eq!(yaml_scalar_to_json("~"), serde_json::Value::Null);
+    }
+
+    #[test]
+    fn parse_yaml_to_json_handles_nested_objects() {
+        let yaml = "theme: dark\nsettings:\n  timeout: 30\n  debug: true";
+        let result = parse_yaml_to_json(yaml);
+        assert_eq!(result.get("theme").and_then(|v| v.as_str()), Some("dark"));
+        assert_eq!(result.get("settings").and_then(|v| v.get("timeout")).and_then(|v| v.as_i64()), Some(30));
+    }
+
+    #[test]
+    fn parse_yaml_to_json_handles_arrays() {
+        let yaml = "skills:\n  - accessibility\n  - test\n  - review";
+        let result = parse_yaml_to_json(yaml);
+        if let Some(arr) = result.get("skills").and_then(|v| v.as_array()) {
+            assert_eq!(arr.len(), 3);
+            assert_eq!(arr[0].as_str(), Some("accessibility"));
+        } else {
+            panic!("Expected array for skills");
+        }
+    }
+
+    #[test]
+    fn merge_preferences_scalars_project_wins() {
+        let project = serde_json::json!({ "theme": "light" });
+        let global = serde_json::json!({ "theme": "dark" });
+        let defaults = serde_json::json!({ "theme": "system" });
+
+        let merged = merge_preferences(&project, &global, &defaults);
+        assert_eq!(merged.get("theme").and_then(|v| v.as_str()), Some("light"));
+    }
+
+    #[test]
+    fn merge_preferences_arrays_concatenate() {
+        let project = serde_json::json!({ "skills": ["test", "review"] });
+        let global = serde_json::json!({ "skills": ["lint", "debug"] });
+        let defaults = serde_json::json!({ "skills": [] });
+
+        let merged = merge_preferences(&project, &global, &defaults);
+        if let Some(arr) = merged.get("skills").and_then(|v| v.as_array()) {
+            assert!(arr.len() >= 2); // At least project skills present
+        } else {
+            panic!("Expected array");
+        }
+    }
+
+    #[test]
+    fn merge_preferences_objects_shallow_merge() {
+        let project = serde_json::json!({ "database": { "host": "localhost" } });
+        let global = serde_json::json!({ "database": { "port": 5432 } });
+        let defaults = serde_json::json!({ "database": { "user": "admin" } });
+
+        let merged = merge_preferences(&project, &global, &defaults);
+        let db = merged.get("database").unwrap();
+        assert_eq!(db.get("host").and_then(|v| v.as_str()), Some("localhost"));
+        assert_eq!(db.get("port").and_then(|v| v.as_i64()), Some(5432));
+    }
+
+    #[test]
+    fn annotate_scopes_identifies_origin_correctly() {
+        let merged = serde_json::json!({ "theme": "light", "timeout": 30 });
+        let project = serde_json::json!({ "theme": "light" });
+        let global = serde_json::json!({ "timeout": 30 });
+
+        let scopes = annotate_scopes(&merged, &project, &global);
+        assert_eq!(scopes.get("theme").map(|s| s.as_str()), Some("project"));
+        assert_eq!(scopes.get("timeout").map(|s| s.as_str()), Some("global"));
+    }
+
+    #[test]
+    fn json_to_yaml_frontmatter_round_trips() {
+        let val = serde_json::json!({
+            "theme": "dark",
+            "timeout": 30,
+            "enabled": true
+        });
+        let yaml = json_to_yaml_frontmatter(&val);
+        assert!(yaml.starts_with("---\n"));
+        assert!(yaml.ends_with("---\n"));
+        assert!(yaml.contains("theme: dark"));
+    }
+}

@@ -1564,6 +1564,38 @@ export const useGsd2GenerateHtmlReport = (projectId: string) => {
   });
 };
 
+// ---- Preferences (M011) ----
+export const useGsd2GetPreferences = (projectPath: string, enabled = true) =>
+  useQuery({
+    queryKey: queryKeys.gsd2Preferences(projectPath),
+    queryFn: () => api.gsd2GetPreferences(projectPath),
+    enabled: !!projectPath && enabled,
+    staleTime: 30_000,
+    retry: false,
+  });
+
+export const useGsd2SavePreferences = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      projectPath,
+      scope,
+      payload,
+    }: {
+      projectPath: string;
+      scope: string;
+      payload: Record<string, unknown>;
+    }) => api.gsd2SavePreferences(projectPath, scope, payload),
+    onSuccess: (_, { projectPath }) => {
+      toast.success('Preferences saved');
+      void queryClient.invalidateQueries({ queryKey: queryKeys.gsd2Preferences(projectPath) });
+    },
+    onError: (error) => {
+      toast.error('Failed to save preferences', { description: getErrorMessage(error) });
+    },
+  });
+};
+
 // ============================================================
 // Project Template Hooks (S03 - New Project Wizard)
 // staleTime: Infinity — templates are compiled into the binary, never change at runtime

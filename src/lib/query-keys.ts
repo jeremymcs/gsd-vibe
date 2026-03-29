@@ -129,4 +129,5 @@ export const queryKeys = {
   gsd2GitSummary: (projectId: string) => ['gsd2', 'git-summary', projectId] as const,
   gsd2Export: (projectId: string) => ['gsd2', 'export', projectId] as const,
   gsd2ReportsIndex: (projectId: string) => ['gsd2', 'reports-index', projectId] as const,
+  gsd2Preferences: (path?: string) => ['gsd2', 'preferences', path] as const,
 };

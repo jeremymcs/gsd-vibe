@@ -318,6 +318,8 @@ pub fn run() {
             commands::gsd2::gsd2_resolve_capture,
             commands::gsd2::gsd2_generate_html_report,
             commands::gsd2::gsd2_get_reports_index,
+            commands::gsd2::gsd2_get_preferences,
+            commands::gsd2::gsd2_save_preferences,
             // Secrets / OS keychain commands
             commands::secrets::set_secret,
             commands::secrets::get_secret,

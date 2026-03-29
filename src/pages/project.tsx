@@ -44,6 +44,7 @@ import {
   KnowledgeCapturesPanel,
   Gsd2ReportsTab,
   Gsd2DashboardView,
+  Gsd2PreferencesTab,
 } from "@/components/project";
 import { TerminalTabs } from "@/components/terminal";
 import { watchProjectFiles } from "@/lib/tauri";
@@ -292,6 +293,8 @@ function ViewRenderer({
       return <KnowledgeCapturesPanel projectId={projectId} projectPath={projectPath} />;
     case 'gsd2-reports':
       return <Gsd2ReportsTab projectId={projectId} projectPath={projectPath} />;
+    case 'gsd2-preferences':
+      return <Gsd2PreferencesTab projectId={projectId} projectPath={projectPath} />;
 
     // GSD-1 views
     case 'gsd-plans':

@@ -38,6 +38,7 @@ export { Gsd2TasksTab } from './gsd2-tasks-tab';
 export { DoctorPanel, ForensicsPanel, SkillHealthPanel } from './diagnostics-panels';
 export { KnowledgeCapturesPanel } from './knowledge-captures-panel';
 export { Gsd2ReportsTab } from './gsd2-reports-tab';
+export { Gsd2PreferencesTab } from './gsd2-preferences-tab';
 export { Gsd2ChatTab } from './gsd2-chat-tab';
 export { Gsd2FilesTab } from './gsd2-files-tab';
 export { Gsd2ActivityTab } from './gsd2-activity-tab';

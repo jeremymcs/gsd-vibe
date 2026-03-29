@@ -2031,6 +2031,30 @@ export const gsd2GenerateHtmlReport = (projectId: string) =>
 export const gsd2GetReportsIndex = (projectId: string) =>
   invoke<ReportsIndex>('gsd2_get_reports_index', { projectId });
 
+// ---- Preferences (M011) ----
+export interface PreferencesHookEntry {
+  name: string;
+  action: string;
+  event: string;
+  prompt?: string;
+  prepend?: string;
+  append?: string;
+  enabled: boolean;
+}
+
+export interface PreferencesData {
+  merged: Record<string, unknown>;
+  scopes: Record<string, string>;
+  global_raw: Record<string, unknown>;
+  project_raw: Record<string, unknown>;
+}
+
+export const gsd2GetPreferences = (projectPath: string) =>
+  invoke<PreferencesData>('gsd2_get_preferences', { projectPath });
+
+export const gsd2SavePreferences = (projectPath: string, scope: string, payload: Record<string, unknown>) =>
+  invoke<void>('gsd2_save_preferences', { projectPath, scope, payload });
+
 // ============================================================
 // Project Template Types + Invoke Wrappers (S03 - New Project Wizard)
 // ============================================================
