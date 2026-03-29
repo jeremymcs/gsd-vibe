@@ -2,7 +2,7 @@
 // Left: status bar + terminal + command bar + input. Right: milestone tree.
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import {
   Play, Square, Zap, SkipForward, RotateCcw,
   Send, Target, Layers, CheckCircle2, Circle, Loader2,
@@ -47,10 +47,19 @@ export function Gsd2SessionTab({ projectId, projectPath }: Gsd2SessionTabProps) 
   const inputRef = useRef<HTMLInputElement>(null);
   const { data: health } = useGsd2Health(projectId);
   const modelsQuery = useGsd2ListModels();
-  const { terminalFontSize, headlessRunning, headlessSessionId, setHeadlessState } = useTerminalContext();
+  const { terminalFontSize, setShellPanelCollapsed, setShellProject, headlessRunning, headlessSessionId, setHeadlessState } = useTerminalContext();
 
-  // Note: auto-expand of bottom terminal panel is handled by main-layout.tsx
-  // when activeView === 'gsd2-headless'
+  // Auto-expand the bottom terminal panel on Session view, restore on leave
+  useEffect(() => {
+    const wasCollapsed = localStorage.getItem("shell-panel-collapsed") === "true";
+    setShellPanelCollapsed(false);
+    setShellProject(projectId, projectPath);
+    return () => {
+      if (wasCollapsed) {
+        setShellPanelCollapsed(true);
+      }
+    };
+  }, [setShellPanelCollapsed, setShellProject, projectId, projectPath]);
 
   const providers = Array.from(new Set((modelsQuery.data ?? []).map((m) => m.provider)));
 

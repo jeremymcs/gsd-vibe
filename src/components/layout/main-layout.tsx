@@ -2,7 +2,7 @@
 // Context-aware sidebar: global nav or project-scoped nav
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
-import { ReactNode, useState, useEffect, useMemo, lazy, Suspense } from 'react';
+import { ReactNode, useState, useEffect, useRef, useMemo, lazy, Suspense } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useTerminalContext } from '@/contexts/terminal-context';
@@ -26,14 +26,14 @@ import {
 } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
 import {
-  SquareTerminal,
-  ChevronDown,
-  ChevronUp,
   PanelLeftClose,
   PanelLeftOpen,
   Search,
   FolderOpen,
   ArrowLeft,
+  SquareTerminal,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { modKey } from '@/hooks/use-keyboard-shortcuts';
 import { KeyboardShortcutsProvider } from './keyboard-shortcuts-provider';
@@ -75,9 +75,10 @@ export function MainLayout({ children }: MainLayoutProps) {
 
   // Determine if user is on the project shell view
   const activeView = searchParams.get('view') ?? searchParams.get('tab') ?? '';
+
   const isProjectShellView = isProjectRoute && activeView === 'shell';
 
-  const { shellPanelCollapsed, setShellPanelCollapsed } = useTerminalContext();
+  const { shellPanelCollapsed, setShellPanelCollapsed, headlessRunning } = useTerminalContext();
   const { data: unreadCount } = useUnreadNotificationCount();
   const { data: projectsWithStats } = useProjectsWithStats();
 
@@ -85,10 +86,7 @@ export function MainLayout({ children }: MainLayoutProps) {
   const hasPlanning = project?.tech_stack?.has_planning ?? false;
   const isGsd2 = project?.gsd_version === 'gsd2';
   const isGsd1 = hasPlanning && !isGsd2;
-  const viewCtx: ProjectViewContext = useMemo(
-    () => ({ isGsd2, isGsd1, userMode: 'expert' }),
-    [isGsd2, isGsd1]
-  );
+  const viewCtx: ProjectViewContext = useMemo(() => ({ isGsd2, isGsd1 }), [isGsd2, isGsd1]);
   const viewSections = useMemo(() => getViewSections(viewCtx), [viewCtx]);
 
   // GSD-2 health for status indicator
@@ -127,6 +125,23 @@ export function MainLayout({ children }: MainLayoutProps) {
   useEffect(() => {
     localStorage.setItem("sidebar-collapsed", String(sidebarCollapsed));
   }, [sidebarCollapsed]);
+
+  // Auto-open bottom terminal when entering Session view, restore when leaving
+  const isSessionView = isProjectRoute && activeView === 'gsd2-headless';
+  const prevCollapsedRef = useRef(shellPanelCollapsed);
+  useEffect(() => {
+    if (isSessionView && shellPanelCollapsed) {
+      prevCollapsedRef.current = true;
+      setShellPanelCollapsed(false);
+    }
+    return () => {
+      // Restore collapsed state when leaving Session view
+      if (isSessionView && prevCollapsedRef.current) {
+        setShellPanelCollapsed(true);
+        prevCollapsedRef.current = false;
+      }
+    };
+  }, [isSessionView]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Navigate to a project view
   const goToView = (viewId: string) => {
@@ -301,6 +316,10 @@ export function MainLayout({ children }: MainLayoutProps) {
                               {/* GSD status dot on Health view */}
                               {view.id === 'gsd2-health' && gsdStatusColor && (
                                 <span className={cn('ml-auto w-2 h-2 rounded-full flex-shrink-0', gsdStatusColor)} />
+                              )}
+                              {/* Blinking green dot when headless session is running */}
+                              {view.id === 'gsd2-headless' && headlessRunning && (
+                                <span className="ml-auto w-2 h-2 rounded-full flex-shrink-0 bg-green-500 animate-pulse" />
                               )}
                             </>
                           )}
@@ -479,9 +498,7 @@ export function MainLayout({ children }: MainLayoutProps) {
             <button
               className={cn(
                 "relative flex items-center gap-2 px-4 py-2 border-t cursor-pointer select-none flex-shrink-0 w-full transition-all duration-200 group",
-                shellPanelCollapsed
-                  ? "border-border/50 bg-muted/30 hover:bg-muted/50"
-                  : "border-border/50 bg-muted/30 hover:bg-muted/50"
+                "border-border/50 bg-muted/30 hover:bg-muted/50"
               )}
               onClick={() => setShellPanelCollapsed(!shellPanelCollapsed)}
               aria-label={shellPanelCollapsed ? "Expand shell panel" : "Collapse shell panel"}
@@ -509,12 +526,12 @@ export function MainLayout({ children }: MainLayoutProps) {
             </button>
           )}
 
-          {/* Persistent shell panel - always mounted, visible based on state */}
+          {/* Persistent shell panel - always mounted, hidden on shell view to avoid collision */}
           <div className={cn(
             "flex-shrink-0 transition-all duration-200",
             isShellRoute
               ? "flex-1"
-              : shellPanelCollapsed || isProjectShellView
+              : isProjectShellView || shellPanelCollapsed
                 ? "h-0 invisible"
                 : "h-[300px]"
           )}>
