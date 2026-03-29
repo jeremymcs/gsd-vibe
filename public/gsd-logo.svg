@@ -1,17 +1,28 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="200 700 1600 700" width="1600" height="700">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- GSD VibeFlow - App logo: cyan V on dark background -->
+  <!-- Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net> -->
   <defs>
-    <style>
-      .logo { font-family: 'SF Mono', 'Fira Code', 'JetBrains Mono', 'Courier New', monospace; fill: #7dcfff; }
-    </style>
+    <linearGradient id="v-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0cb4ce"/>
+      <stop offset="50%" stop-color="#22d3ee"/>
+      <stop offset="100%" stop-color="#06b6d4"/>
+    </linearGradient>
+    <linearGradient id="v-shine" x1="30%" y1="0%" x2="70%" y2="100%">
+      <stop offset="0%" stop-color="#67e8f9"/>
+      <stop offset="100%" stop-color="#0891b2"/>
+    </linearGradient>
   </defs>
 
-  <!-- GSD ASCII Logo - centered -->
-  <g transform="translate(1000, 1000)">
-    <text class="logo" font-size="108" text-anchor="middle" y="-225" xml:space="preserve">  ██████╗ ███████╗██████╗ </text>
-    <text class="logo" font-size="108" text-anchor="middle" y="-105" xml:space="preserve"> ██╔════╝ ██╔════╝██╔══██╗</text>
-    <text class="logo" font-size="108" text-anchor="middle" y="15" xml:space="preserve"> ██║  ███╗███████╗██║  ██║</text>
-    <text class="logo" font-size="108" text-anchor="middle" y="135" xml:space="preserve"> ██║   ██║╚════██║██║  ██║</text>
-    <text class="logo" font-size="108" text-anchor="middle" y="255" xml:space="preserve"> ╚██████╔╝███████║██████╔╝</text>
-    <text class="logo" font-size="108" text-anchor="middle" y="375" xml:space="preserve">  ╚═════╝ ╚══════╝╚═════╝ </text>
-  </g>
+  <!-- Dark background with rounded corners -->
+  <rect x="0" y="0" width="512" height="512" rx="80" ry="80" fill="#0a1628"/>
+
+  <!-- V letterform — left stroke -->
+  <polygon points="120,100 210,100 272,340 182,340" fill="url(#v-shine)"/>
+  <!-- V letterform — right stroke -->
+  <polygon points="302,100 392,100 330,340 240,340" fill="url(#v-grad)"/>
+  <!-- V bottom point merge -->
+  <polygon points="182,340 240,340 330,340 272,340 256,400" fill="url(#v-grad)"/>
+
+  <!-- Subtle underline accent -->
+  <rect x="176" y="430" width="160" height="6" rx="3" fill="#0cb4ce" opacity="0.5"/>
 </svg>

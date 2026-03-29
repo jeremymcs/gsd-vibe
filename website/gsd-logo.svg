@@ -1,32 +1,28 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <!-- GSD Vibe - App icon: bold GSD logomark on black with cyan accent -->
+  <!-- GSD VibeFlow - App logo: cyan V on dark background -->
   <!-- Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net> -->
+  <defs>
+    <linearGradient id="v-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0cb4ce"/>
+      <stop offset="50%" stop-color="#22d3ee"/>
+      <stop offset="100%" stop-color="#06b6d4"/>
+    </linearGradient>
+    <linearGradient id="v-shine" x1="30%" y1="0%" x2="70%" y2="100%">
+      <stop offset="0%" stop-color="#67e8f9"/>
+      <stop offset="100%" stop-color="#0891b2"/>
+    </linearGradient>
+  </defs>
 
-  <!-- Pure black background — no rounding (Tauri handles macOS corners) -->
-  <rect x="0" y="0" width="512" height="512" fill="#000000"/>
+  <!-- Dark background with rounded corners -->
+  <rect x="0" y="0" width="512" height="512" rx="80" ry="80" fill="#0a1628"/>
 
-  <!-- Bold "GSD" text — white, geometric sans-serif, ~70% canvas width -->
-  <!-- Vertically centered with slight upward bias to leave room for accent underline -->
-  <text
-    x="256"
-    y="275"
-    text-anchor="middle"
-    dominant-baseline="middle"
-    font-family="Arial, Helvetica, sans-serif"
-    font-weight="800"
-    font-size="195"
-    letter-spacing="4"
-    fill="#FFFFFF"
-  >GSD</text>
+  <!-- V letterform — left stroke -->
+  <polygon points="120,100 210,100 272,340 182,340" fill="url(#v-shine)"/>
+  <!-- V letterform — right stroke -->
+  <polygon points="302,100 392,100 330,340 240,340" fill="url(#v-grad)"/>
+  <!-- V bottom point merge -->
+  <polygon points="182,340 240,340 330,340 272,340 256,400" fill="url(#v-grad)"/>
 
-  <!-- Cyan accent underline: hsl(189 94% 43%) = #0cb4ce -->
-  <!-- Approximately 65% of canvas width, centered, 7px tall, 30px below text baseline -->
-  <rect
-    x="89"
-    y="335"
-    width="334"
-    height="8"
-    rx="4"
-    fill="#0cb4ce"
-  />
+  <!-- Subtle underline accent -->
+  <rect x="176" y="430" width="160" height="6" rx="3" fill="#0cb4ce" opacity="0.5"/>
 </svg>
