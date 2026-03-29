@@ -2101,3 +2101,28 @@ export const listGsdPlanningTemplates = () =>
 
 export const scaffoldProject = (options: ScaffoldOptions) =>
   invoke<ScaffoldResult>('scaffold_project', { options });
+
+// ─── Session types (data layer stubs) ─────────────────────────────────────────
+export interface GsdSessionEntry {
+  id: string;
+  filename: string;
+  timestamp: string;
+  name: string | null;
+  first_message: string | null;
+  message_count: number;
+  user_message_count: number;
+  assistant_message_count: number;
+}
+
+export interface GsdSessionMessage {
+  role: string;
+  content: string;
+  timestamp: string;
+}
+
+export interface GsdSessionDetail {
+  filename: string;
+  name: string | null;
+  messages: GsdSessionMessage[];
+  timestamp: string;
+}

@@ -1623,3 +1623,28 @@ export const useGsdPlanningTemplates = () =>
     queryFn: () => api.listGsdPlanningTemplates(),
     staleTime: Infinity,
   });
+
+// ─── Stub hooks for session browser (data layer not yet wired) ────────────────
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const stubQuery = { data: undefined, isLoading: false, isError: false, refetch: async () => ({}) as any, error: null };
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const stubMutation = { mutate: () => {}, mutateAsync: async () => ({}) as any, isPending: false, isError: false, isSuccess: false, isIdle: true, error: null, data: undefined, reset: () => {}, variables: undefined, context: undefined, failureCount: 0, failureReason: null, status: 'idle' as const, submittedAt: 0 };
+
+export const useGsd2Sessions = (_projectId: string) => stubQuery;
+export const useGsd2SessionDetail = (_projectId: string, _filename: string, _enabled?: boolean) => stubQuery;
+export const useGsd2RenameSession = () => stubMutation;
+export const useGsd2DeleteSession = () => stubMutation;
+
+// ─── Stub hooks for GitHub panel (data layer not yet wired) ───────────────────
+export const useGithubTokenStatus = () => stubQuery;
+export const useGithubRepoInfo = (_projectPath: string) => stubQuery;
+export const useGithubPrs = (_projectPath: string) => stubQuery;
+export const useGithubIssues = (_projectPath: string) => stubQuery;
+export const useGithubCheckRuns = (_projectPath: string) => stubQuery;
+export const useGithubReleases = (_projectPath: string) => stubQuery;
+export const useGithubCreatePr = () => stubMutation;
+export const useGithubCreateIssue = () => stubMutation;
+export const useGithubNotifications = (_projectPath: string) => stubQuery;
+export const useGithubImportGhToken = () => stubMutation;
+export const useGithubSaveToken = () => stubMutation;
+export const useGithubRemoveToken = () => stubMutation;
