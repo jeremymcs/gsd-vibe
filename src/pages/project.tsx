@@ -108,7 +108,7 @@ export function ProjectPage() {
   useGsdFileWatcher(id!, project?.path ?? '', showGsdTab, handleGsdSync);
 
   // Headless session state — lifted to page level so logs survive view navigation
-  const headlessSession = useHeadlessSession();
+  const headlessSession = useHeadlessSession(id!);
 
   // Start file watcher for GSD projects on mount
   useEffect(() => {

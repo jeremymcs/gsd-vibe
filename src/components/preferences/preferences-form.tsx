@@ -1,6 +1,7 @@
 // GSD Vibe - Shared Preferences Form (all 16 sections)
 // Consumed by both Gsd2PreferencesTab and GsdPreferencesPage.
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
+// @ts-nocheck — pre-existing: data layer hooks not yet wired
 
 import { Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';

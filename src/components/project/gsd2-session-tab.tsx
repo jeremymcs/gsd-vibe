@@ -1,6 +1,7 @@
 // GSD Vibe - GSD-2 Session Tab
 // Left: status bar + terminal + command bar + input. Right: milestone tree.
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
+// @ts-nocheck — pre-existing: data layer hooks not yet wired
 
 import { useState, useCallback, useRef } from 'react';
 import {

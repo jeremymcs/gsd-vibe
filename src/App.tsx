@@ -111,6 +111,10 @@ function App() {
     }
   };
 
+  const handleOnboardingCancel = () => {
+    setOnboardingCompletedLocally(true);
+  };
+
   return (
     <ErrorBoundary label="Application">
       <TerminalProvider>
@@ -134,7 +138,7 @@ function App() {
           </MainLayout>
           <CloseWarningDialog />
           {shouldShowStartupLoader && <StartupGateLoader />}
-          {shouldBlockForOnboarding && <FirstLaunchWizard onComplete={handleOnboardingComplete} />}
+          {shouldBlockForOnboarding && <FirstLaunchWizard onComplete={handleOnboardingComplete} onCancel={handleOnboardingCancel} />}
           <Toaster
             position="bottom-right"
             toastOptions={{

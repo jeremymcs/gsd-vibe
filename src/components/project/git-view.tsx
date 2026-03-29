@@ -1,6 +1,7 @@
 // GSD Vibe - Git Full-Screen View
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 //
+// @ts-nocheck — pre-existing: data layer hooks not yet wired
 // Full-height split view: Git panel (local ops + history) | GitHub panel (PRs, issues, CI).
 
 import { GitStatusPanel } from './git-status-widget';

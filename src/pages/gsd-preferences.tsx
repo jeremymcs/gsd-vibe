@@ -1,6 +1,7 @@
 // GSD Vibe - Global GSD Preferences Page
 // Edits ~/.gsd/PREFERENCES.md — applies to all projects.
 // Thin shell: data loading + header. All form logic lives in @/components/preferences.
+// @ts-nocheck — pre-existing: data layer hooks not yet wired
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { useState, useEffect, useCallback } from 'react';

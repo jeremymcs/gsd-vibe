@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/select';
 import { Play, Square } from 'lucide-react';
 import type { HeadlessLogRow, UseHeadlessSessionReturn } from '@/hooks/use-headless-session';
-import { useGsd2HeadlessQuery, useGsd2HeadlessStart, useGsd2HeadlessStop, useGsd2ListModels, useGsd2HeadlessStartWithModel } from '@/lib/queries';
+import { useGsd2HeadlessQuery, useGsd2HeadlessStart, useGsd2HeadlessStop, useGsd2Models, useGsd2HeadlessStartWithModel } from '@/lib/queries';
 import { gsd2HeadlessGetSession } from '@/lib/tauri';
 import { formatCost, formatRelativeTime } from '@/lib/utils';
 
@@ -57,7 +57,7 @@ export function Gsd2HeadlessTab({ projectId, session }: Gsd2HeadlessTabProps) {
   }, [projectId]);
 
   const headlessQuery = useGsd2HeadlessQuery(projectId, status === 'idle');
-  const modelsQuery = useGsd2ListModels();
+  const modelsQuery = useGsd2Models();
   const startMutation = useGsd2HeadlessStart();
   const startWithModelMutation = useGsd2HeadlessStartWithModel();
   const stopMutation = useGsd2HeadlessStop();
@@ -210,18 +210,18 @@ export function Gsd2HeadlessTab({ projectId, session }: Gsd2HeadlessTabProps) {
             </SelectTrigger>
             <SelectContent>
               {modelsQuery.data && 
-                modelsQuery.data.reduce((acc, model) => {
+                modelsQuery.data.reduce((acc: string[], model: { provider: string }) => {
                   const provider = model.provider;
-                  if (!acc.find(p => p === provider)) {
+                  if (!acc.find((p: string) => p === provider)) {
                     acc.push(provider);
                   }
                   return acc;
-                }, [] as string[]).map((provider) => (
+                }, [] as string[]).map((provider: string) => (
                   <div key={provider}>
                     <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
                       {provider}
                     </div>
-                    {modelsQuery.data?.filter(m => m.provider === provider).map((model) => (
+                    {modelsQuery.data?.filter((m: { provider: string }) => m.provider === provider).map((model: { id: string; name: string; provider: string }) => (
                       <SelectItem key={model.id} value={model.id}>
                         {model.name} ({model.id})
                       </SelectItem>

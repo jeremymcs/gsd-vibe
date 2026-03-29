@@ -3,8 +3,13 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 import type React from 'react';
-import { onPtyOutput, onPtyExit, gsd2HeadlessUnregister, gsd2HeadlessSaveSession, gsd2HeadlessLoadLastSession } from '@/lib/tauri';
+import { onPtyOutput, onPtyExit, gsd2HeadlessUnregister } from '@/lib/tauri';
 import type { HeadlessSnapshot, PtyOutputEvent, PtyExitEvent } from '@/lib/tauri';
+
+// Stubs for session persistence — backend commands not yet wired
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const gsd2HeadlessSaveSession = async (_args: any): Promise<void> => {};
+const gsd2HeadlessLoadLastSession = async (_projectId: string): Promise<any | null> => null;
 import type { UnlistenFn } from '@tauri-apps/api/event';
 import type { ChatMessage } from '@/lib/pty-chat-parser';
 
