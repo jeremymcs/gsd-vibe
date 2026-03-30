@@ -32,6 +32,7 @@ const ProjectsPage = lazy(() => import("./pages/projects").then(m => ({ default:
 const LogsPage = lazy(() => import("./pages/logs").then(m => ({ default: m.LogsPage })));
 const NotificationsPage = lazy(() => import("./pages/notifications").then(m => ({ default: m.NotificationsPage })));
 const TodosPage = lazy(() => import("./pages/todos").then(m => ({ default: m.TodosPage })));
+const GsdPreferencesPage = lazy(() => import("./pages/gsd-preferences").then(m => ({ default: m.GsdPreferencesPage })));
 
 function PageLoader() {
   return (
@@ -124,6 +125,7 @@ function App() {
                   <Route path="/projects/:id" element={<ProjectPage />} />
                   <Route path="/todos" element={<TodosPage />} />
                   <Route path="/settings" element={<SettingsPage />} />
+                  <Route path="/gsd-preferences" element={<GsdPreferencesPage />} />
                   <Route path="/terminal" element={<ShellAsTerminalPage />} />
                   <Route path="/terminal/:projectId" element={<ShellAsTerminalPage />} />
                   <Route path="/logs" element={<LogsPage />} />
