@@ -37,11 +37,31 @@ export function SettingsPage() {
   }, [settings, formData]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
+  const handleInstantModeChange = (value: Settings["user_mode"]) => {
+    if (!formData) return;
+
+    const previousMode = formData.user_mode;
+    const nextFormData = { ...formData, user_mode: value };
+    setFormData(nextFormData);
+
+    const persistedSettings: Settings = settings
+      ? { ...settings, user_mode: value }
+      : nextFormData;
+
+    void updateSettings.mutateAsync(persistedSettings).catch(() => {
+      setFormData({ ...nextFormData, user_mode: previousMode });
+    });
+  };
+
   const handleChange = <K extends keyof Settings>(key: K, value: Settings[K]) => {
     if (!formData) return;
     if (key === "theme") {
       setTheme(value as Theme);
       setFormData({ ...formData, [key]: value });
+      return;
+    }
+    if (key === "user_mode") {
+      handleInstantModeChange(value);
       return;
     }
     setFormData({ ...formData, [key]: value });

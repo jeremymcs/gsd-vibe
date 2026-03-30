@@ -10,11 +10,13 @@ A single native desktop app that gives full visibility and control over GSD-2 ma
 
 ## Current State
 
-Full GSD-2 feature parity across data and UI layers is complete (M008 + M006). The app has 40 Rust backend commands, a 7-tab visualizer (1,280 lines), HTML report generator, chat mode with PTY parsing (790-line parser), 15 sidebar views for GSD-2 projects with 5 tab-groups nesting ~26 total views, persistent status bar, file watcher, and all prior functionality (health, headless, worktrees, milestones, slices, tasks, diagnostics, knowledge/captures, session browsing, settings).
+Full GSD-2 feature parity across data and UI layers is complete (M008 + M006). The app has 40+ Rust backend commands, a 7-tab visualizer (1,280 lines), HTML report generator, chat mode with PTY parsing (790-line parser), 15 sidebar views for GSD-2 projects with 5 tab-groups nesting ~26 total views, persistent status bar, file watcher, and all prior functionality (health, headless, worktrees, milestones, slices, tasks, diagnostics, knowledge/captures, session browsing, settings).
 
 Visual redesign complete (M009): cool-blue 220° palette, desaturated status colors, flat single-variant cards, thin-border sidebar with text-only nav, tightened animations, dead CSS cleanup. Both dark and light themes calibrated.
 
 M010 complete: Full 6-section project-pulse dashboard (active unit with live timer, 4 metric cards, slice progress, phase breakdown, activity feed, git status). 11 project templates with multi-step creation wizard (template → GSD planning → details → scaffold → auto-import). Rust markdown stripping (bold/italic/code/underline) and one-liner extraction from SUMMARY.md body. Consistent ViewEmpty empty states across all GSD-2 tabs. File watcher invalidates all GSD-2 query keys on .gsd/ changes.
+
+M012 in progress (Guided Mode): S01 (Mode Infrastructure) delivered guided/expert toggle in settings with instant UI mode switching. S02 (First-Launch Wizard) complete — first-launch setup wizard with parallel dependency detection (8 CLI tools), provider API key validation/storage via OS keychain (Anthropic, OpenAI, GitHub, OpenRouter), and Guided/Expert mode selection. App startup gates on onboarding completion flag. S03-S05 pending.
 
 ## Architecture / Key Patterns
 

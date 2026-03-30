@@ -57,6 +57,7 @@ export {
   Gsd2DiagnosticsGroup,
 } from './gsd2-tab-groups';
 export { Gsd2DashboardView } from './gsd2-dashboard-view';
+export { GuidedProjectView } from './guided-project-view';
 export { Gsd2StatusBar } from './gsd2-status-bar';
 export {
   Gsd2HistoryPanel,

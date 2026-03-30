@@ -466,12 +466,23 @@ export const useUpdateSettings = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: api.updateSettings,
+    onMutate: async (nextSettings) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.settings() });
+      const previousSettings = queryClient.getQueryData<api.Settings>(queryKeys.settings());
+      queryClient.setQueryData(queryKeys.settings(), nextSettings);
+      return { previousSettings };
+    },
     onSuccess: () => {
       toast.success("Settings saved");
-      void queryClient.invalidateQueries({ queryKey: queryKeys.settings() });
     },
-    onError: (error) => {
+    onError: (error, _variables, context) => {
+      if (context?.previousSettings) {
+        queryClient.setQueryData(queryKeys.settings(), context.previousSettings);
+      }
       toast.error("Failed to update settings", { description: getErrorMessage(error) });
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.settings() });
     },
   });
 };
@@ -1232,15 +1243,6 @@ export const useGsd2Models = (search?: string, enabled = true) =>
     staleTime: 60_000,
   });
 
-// Alias for backward compatibility (session tab uses this name)
-export const useGsd2ListModels = () =>
-  useQuery({
-    queryKey: ['gsd2', 'models'],
-    queryFn: () => api.gsd2ListModels(),
-    staleTime: 10 * 60 * 1000,
-    retry: false,
-  });
-
 export const useGsd2GeneratePlanPreview = () =>
   useMutation({
     mutationFn: (intent: string) => api.gsd2GeneratePlanPreview(intent),
@@ -1573,38 +1575,6 @@ export const useGsd2GenerateHtmlReport = (projectId: string) => {
   });
 };
 
-// ---- Preferences (M011) ----
-export const useGsd2GetPreferences = (projectPath: string, enabled = true) =>
-  useQuery({
-    queryKey: queryKeys.gsd2Preferences(projectPath),
-    queryFn: () => api.gsd2GetPreferences(projectPath),
-    enabled: !!projectPath && enabled,
-    staleTime: 30_000,
-    retry: false,
-  });
-
-export const useGsd2SavePreferences = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({
-      projectPath,
-      scope,
-      payload,
-    }: {
-      projectPath: string;
-      scope: string;
-      payload: Record<string, unknown>;
-    }) => api.gsd2SavePreferences(projectPath, scope, payload),
-    onSuccess: (_, { projectPath }) => {
-      toast.success('Preferences saved');
-      void queryClient.invalidateQueries({ queryKey: queryKeys.gsd2Preferences(projectPath) });
-    },
-    onError: (error) => {
-      toast.error('Failed to save preferences', { description: getErrorMessage(error) });
-    },
-  });
-};
-
 // ============================================================
 // Project Template Hooks (S03 - New Project Wizard)
 // staleTime: Infinity — templates are compiled into the binary, never change at runtime
@@ -1623,28 +1593,3 @@ export const useGsdPlanningTemplates = () =>
     queryFn: () => api.listGsdPlanningTemplates(),
     staleTime: Infinity,
   });
-
-// ─── Stub hooks for session browser (data layer not yet wired) ────────────────
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const stubQuery = { data: undefined, isLoading: false, isError: false, refetch: async () => ({}) as any, error: null };
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const stubMutation = { mutate: () => {}, mutateAsync: async () => ({}) as any, isPending: false, isError: false, isSuccess: false, isIdle: true, error: null, data: undefined, reset: () => {}, variables: undefined, context: undefined, failureCount: 0, failureReason: null, status: 'idle' as const, submittedAt: 0 };
-
-export const useGsd2Sessions = (_projectId: string) => stubQuery;
-export const useGsd2SessionDetail = (_projectId: string, _filename: string, _enabled?: boolean) => stubQuery;
-export const useGsd2RenameSession = () => stubMutation;
-export const useGsd2DeleteSession = () => stubMutation;
-
-// ─── Stub hooks for GitHub panel (data layer not yet wired) ───────────────────
-export const useGithubTokenStatus = () => stubQuery;
-export const useGithubRepoInfo = (_projectPath: string) => stubQuery;
-export const useGithubPrs = (_projectPath: string) => stubQuery;
-export const useGithubIssues = (_projectPath: string) => stubQuery;
-export const useGithubCheckRuns = (_projectPath: string) => stubQuery;
-export const useGithubReleases = (_projectPath: string) => stubQuery;
-export const useGithubCreatePr = () => stubMutation;
-export const useGithubCreateIssue = () => stubMutation;
-export const useGithubNotifications = (_projectPath: string) => stubQuery;
-export const useGithubImportGhToken = () => stubMutation;
-export const useGithubSaveToken = () => stubMutation;
-export const useGithubRemoveToken = () => stubMutation;

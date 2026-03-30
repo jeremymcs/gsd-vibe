@@ -43,17 +43,44 @@ export const navLinks: NavItem[] = navigation.filter(
 );
 
 /**
- * Compatibility helper used by command palette and layout code paths.
- * This branch does not hide any global nav links by mode.
+ * Return global nav links visible for the active user mode.
+ * Guided mode hides advanced global entries.
  */
-export function getVisibleNavLinks(_userMode: string): NavItem[] {
+export function getVisibleNavLinks(userMode: string): NavItem[] {
+  if (userMode === 'guided') {
+    return navLinks.filter((item) => item.name !== 'Todos' && item.name !== 'GSD Preferences');
+  }
+
   return navLinks;
 }
 
 /**
- * Compatibility helper used by layout code paths.
- * This branch keeps all section/link items visible.
+ * Return sectioned navigation visible for the active user mode.
+ * Guided mode prunes hidden links and drops now-empty sections.
  */
-export function getVisibleNavigation(_userMode: string): NavigationItem[] {
-  return navigation;
+export function getVisibleNavigation(userMode: string): NavigationItem[] {
+  const visibleLinks = getVisibleNavLinks(userMode);
+  const visibleHrefs = new Set(visibleLinks.map((item) => item.href));
+  const result: NavigationItem[] = [];
+
+  for (let i = 0; i < navigation.length; i += 1) {
+    const item = navigation[i];
+
+    if (item.type === 'section') {
+      const hasVisibleLinkInSection = navigation
+        .slice(i + 1)
+        .some((next) => next.type === 'link' && visibleHrefs.has(next.href));
+
+      if (hasVisibleLinkInSection) {
+        result.push(item);
+      }
+      continue;
+    }
+
+    if (visibleHrefs.has(item.href)) {
+      result.push(item);
+    }
+  }
+
+  return result;
 }

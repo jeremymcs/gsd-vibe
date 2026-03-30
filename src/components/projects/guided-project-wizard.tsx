@@ -323,7 +323,7 @@ export function GuidedProjectWizard({ open, onOpenChange }: GuidedProjectWizardP
       });
 
       handleOpenChange(false);
-      void navigate(`/projects/${importedProjectId}?view=gsd2-headless`);
+      void navigate(`/projects/${importedProjectId}?view=overview`);
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);
       setStartError(msg);
@@ -333,7 +333,7 @@ export function GuidedProjectWizard({ open, onOpenChange }: GuidedProjectWizardP
           description: "Opening project so you can start headless manually.",
         });
         handleOpenChange(false);
-        void navigate(`/projects/${importedProjectId}`);
+        void navigate(`/projects/${importedProjectId}?view=overview`);
       }
     } finally {
       setIsStarting(false);

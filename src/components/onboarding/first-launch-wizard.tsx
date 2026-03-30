@@ -394,6 +394,10 @@ export function FirstLaunchWizard({ className, onComplete, onCancel }: FirstLaun
 
   const dependencyError = dependencies.error instanceof Error ? dependencies.error.message : null;
 
+  const hasAnyStoredKey =
+    Boolean(onboardingStatus.data?.has_api_keys) ||
+    Object.values(validationResults).some((r) => r?.stored);
+
   const handleValidate = async (provider: OnboardingProvider) => {
     const candidate = apiKeyInputs[provider]?.trim();
     if (!candidate) return;
@@ -504,16 +508,6 @@ export function FirstLaunchWizard({ className, onComplete, onCancel }: FirstLaun
           </div>
 
           <div className="flex gap-2">
-            {step === "api-keys" && (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setStep(STEPS[Math.min(STEPS.length - 1, stepIndex + 1)].id)}
-              >
-                Skip
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            )}
             {step !== "mode" && step !== "api-keys" ? (
               <Button
                 type="button"
@@ -522,7 +516,16 @@ export function FirstLaunchWizard({ className, onComplete, onCancel }: FirstLaun
                 Next
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
-            ) : step === "api-keys" ? null : (
+            ) : step === "api-keys" ? (
+              <Button
+                type="button"
+                onClick={() => setStep(STEPS[Math.min(STEPS.length - 1, stepIndex + 1)].id)}
+                disabled={!hasAnyStoredKey}
+              >
+                Next
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            ) : (
               <Button
                 type="button"
                 onClick={() => {

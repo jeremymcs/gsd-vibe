@@ -5,7 +5,7 @@
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { ChevronRight, Home, Bookmark, BookOpen } from 'lucide-react';
 import { navLinks } from '@/lib/navigation';
-import { useProject, useKnowledgeBookmarks } from '@/lib/queries';
+import { useProject, useKnowledgeBookmarks, useSettings } from '@/lib/queries';
 import { NotificationBell } from '@/components/notifications';
 import {
   Popover,
@@ -27,10 +27,13 @@ function useProjectName(id: string | undefined): string | null {
 
 function useProjectGsdContext(id: string | undefined) {
   const { data } = useProject(id ?? '');
+  const { data: settings } = useSettings();
   const hasPlanning = data?.tech_stack?.has_planning ?? false;
   const isGsd2 = data?.gsd_version === 'gsd2';
   const isGsd1 = hasPlanning && !isGsd2;
-  return { isGsd2, isGsd1, userMode: 'expert' as const };
+  const userMode = settings?.user_mode ?? 'expert';
+
+  return { isGsd2, isGsd1, userMode };
 }
 
 function BookmarkPopover({ projectId }: { projectId: string }) {

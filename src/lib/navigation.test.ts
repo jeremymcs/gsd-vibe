@@ -16,7 +16,7 @@ function onlyLinkNames(items: NavigationItem[]): string[] {
 }
 
 describe('navigation mode filtering', () => {
-  it('hides Todos in guided mode', () => {
+  it('hides advanced links in guided mode', () => {
     const visible = getVisibleNavigation('guided');
     const names = onlyLinkNames(visible);
 
@@ -27,7 +27,23 @@ describe('navigation mode filtering', () => {
     const visible = getVisibleNavigation('expert');
     const names = onlyLinkNames(visible);
 
-    expect(names).toEqual(['Home', 'Todos', 'Terminal', 'Notifications', 'Settings']);
+    expect(names).toEqual([
+      'Home',
+      'Todos',
+      'Terminal',
+      'Notifications',
+      'GSD Preferences',
+      'Settings',
+    ]);
+  });
+
+  it('drops empty sections after guided filtering', () => {
+    const visible = getVisibleNavigation('guided');
+    const sections = visible
+      .filter((item) => item.type === 'section')
+      .map((item) => item.label);
+
+    expect(sections).toEqual(['Workspace', 'System']);
   });
 
   it('returns only visible links from getVisibleNavLinks', () => {
@@ -40,5 +56,6 @@ describe('navigation mode filtering', () => {
     const labels = navLinks.map((link) => link.name);
 
     expect(labels).toContain('Todos');
+    expect(labels).toContain('GSD Preferences');
   });
 });

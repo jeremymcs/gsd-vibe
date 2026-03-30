@@ -698,3 +698,19 @@ When `.gsd/` files change, invalidate all related TanStack Query keys in one pas
 ### Nested worktree shadow-copy trap: prefer active src/, recover by syncing from `.gsd/worktrees/<MID>/src/`
 
 In M012/S03/T03, guided wizard work from prior tasks existed under `.gsd/worktrees/M012/src/...` while the active compile path was `src/...`. Symptoms: features appear "missing" after build and imports fail in active files even though the code exists elsewhere in the same checkout. Recovery pattern: `find . -name <expected-file>` to confirm duplication, then copy the known task files from nested `.gsd/worktrees/<MID>/src/` into active `src/` and re-run `pnpm build`. Do this before debugging component logic; otherwise you can end up fixing the wrong tree.
+
+## Wizard footer button rendering must match test expectations
+
+In `first-launch-wizard.tsx`, the api-keys step must render a gated "Next" button (disabled when no API key is stored, enabled once at least one is stored). The original T03 implementation rendered `null` for the advance button on api-keys (only offering Skip), which caused T05's test assertions for `getByRole("button", { name: /^Next$/i })` to fail with "Unable to find" errors. The fix: derive `hasAnyStoredKey` at the parent component level from both `onboardingStatus.data?.has_api_keys` and `Object.values(validationResults).some(r => r?.stored)`, then conditionally disable the Next button based on that flag. Always ensure wizard footer button presence matches test queries.
+
+## Vitest + jest-dom in this repo: explicitly `expect.extend(matchers)` in setup.ts
+
+With Vitest 4 in this project, `import "@testing-library/jest-dom/vitest"` alone was not consistently registering matchers in worktree runs (`toBeInTheDocument`, `toHaveClass`, etc. reported as `Invalid Chai property`). The stable fix is to import `@testing-library/jest-dom/matchers` and call `expect.extend(matchers)` directly in `src/test/setup.ts`. This also unblocks path-filtered verification commands that still execute the full suite.
+
+## Vitest path filtering in GSD worktrees may resolve project root to main checkout
+
+When running a single test file from a GSD worktree, `pnpm exec vitest run <path>` can resolve Vitest root to the main checkout (`~/Github/gsd-vibe`) instead of the active worktree path, which causes false "No test files found" failures for worktree-only test files. Force the root explicitly: `pnpm exec vitest run --root . <path>`. If the command still reports main-checkout paths in the RUN banner, treat the result as environment drift and re-run with explicit `--root .`.
+
+## Playwright in worktree: full-suite command may resolve stale main-checkout specs
+
+In this environment, `pnpm exec playwright test` resolved `e2e/*.spec.ts` from the main checkout path (`~/Github/gsd-vibe/e2e/...`) even while executing from the worktree (`.gsd/worktrees/<id>`). This can produce misleading failures against stale files that are not the current task edits. Validation of worktree changes remained reliable when running explicit file paths (e.g., `pnpm exec playwright test e2e/navigation.spec.ts e2e/projects.spec.ts e2e/guided-flow.spec.ts`).
