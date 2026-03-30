@@ -4,7 +4,8 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { canSafelyClose, forceCloseAll, type ActiveProcessInfo } from "@/lib/tauri";
+import { canSafelyClose, forceCloseAll, saveTerminalSessions, type ActiveProcessInfo, type SaveTerminalSessionInput } from "@/lib/tauri";
+import { useTerminalContext } from "@/contexts/terminal-context";
 
 interface UseCloseWarningReturn {
   showWarning: boolean;
@@ -16,6 +17,47 @@ interface UseCloseWarningReturn {
 export function useCloseWarning(): UseCloseWarningReturn {
   const [showWarning, setShowWarning] = useState(false);
   const [processInfo, setProcessInfo] = useState<ActiveProcessInfo | null>(null);
+  const { getAllTerminals, getProjectPaths } = useTerminalContext();
+
+  const saveTerminalSessionsBeforeClose = useCallback(async () => {
+    try {
+      const terminals = getAllTerminals();
+      const projectPaths = getProjectPaths();
+      const sessions: SaveTerminalSessionInput[] = [];
+      let sortOrder = 0;
+
+      terminals.forEach((projectTerminals, projectId) => {
+        const workDir = projectPaths.get(projectId);
+        if (!workDir) return;
+
+        for (const tab of projectTerminals.tabs) {
+          if (tab.isExited) continue;
+          
+          // Map command to tab type
+          let tabType = "shell";
+          if (tab.command?.includes("--dangerously-skip-permissions")) {
+            tabType = "yolo";
+          } else if (tab.command?.includes("claude")) {
+            tabType = "claude";
+          }
+
+          sessions.push({
+            project_id: projectId,
+            tab_name: tab.label,
+            tab_type: tabType,
+            working_directory: workDir,
+            sort_order: sortOrder++,
+            tmux_session: tab.tmuxSession ?? undefined,
+          });
+        }
+      });
+
+      await saveTerminalSessions(sessions);
+    } catch (error) {
+      // Continue with close even if save fails
+      console.warn("Failed to save terminal sessions during close:", error);
+    }
+  }, [getAllTerminals, getProjectPaths]);
 
   const handleCancel = useCallback(() => {
     setShowWarning(false);
@@ -24,13 +66,15 @@ export function useCloseWarning(): UseCloseWarningReturn {
 
   const handleForceClose = useCallback(async () => {
     try {
+      // Save terminal sessions before force closing
+      await saveTerminalSessionsBeforeClose();
       await forceCloseAll();
       const window = getCurrentWindow();
       await window.destroy();
     } catch {
       // Force close is best-effort; window may already be closing
     }
-  }, []);
+  }, [saveTerminalSessionsBeforeClose]);
 
   useEffect(() => {
     let unlisten: (() => void) | undefined;
@@ -44,6 +88,8 @@ export function useCloseWarning(): UseCloseWarningReturn {
         try {
           const info = await canSafelyClose();
           if (info.can_close) {
+            // Save terminal sessions before safe close
+            await saveTerminalSessionsBeforeClose();
             // Safe to close, destroy the window
             await window.destroy();
           } else {

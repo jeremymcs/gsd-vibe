@@ -65,3 +65,5 @@ export {
   Gsd2GitPanel,
   Gsd2RecoveryPanel,
 } from './gsd2-command-panels';
+export { Gsd2SessionsTab } from './gsd2-sessions-tab';
+export { Gsd2PreferencesTab } from './gsd2-preferences-tab';

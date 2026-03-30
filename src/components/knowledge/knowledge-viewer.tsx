@@ -12,8 +12,9 @@ import { KnowledgeSearch } from './knowledge-search';
 import { KnowledgeToc } from './knowledge-toc';
 import { KnowledgeBookmarks } from './knowledge-bookmarks';
 import { KnowledgeGraph } from './knowledge-graph';
+import { KnowledgeGraphTable } from './knowledge-graph-table';
 import { MarkdownRenderer } from './markdown-renderer';
-import { FileQuestion, GitBranch, Loader2, Bookmark } from 'lucide-react';
+import { FileQuestion, GitBranch, Loader2, Bookmark, Table2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
@@ -34,7 +35,7 @@ interface KnowledgeViewerProps {
 export function KnowledgeViewer({ project }: KnowledgeViewerProps) {
   const [activeFile, setActiveFile] = useState<string>('');
   const [showBookmarks, setShowBookmarks] = useState(false);
-  const [viewMode, setViewMode] = useState<'content' | 'graph'>('content');
+  const [viewMode, setViewMode] = useState<'content' | 'graph' | 'table'>('content');
   const [isWatching, setIsWatching] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ path: string; name: string } | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -190,6 +191,15 @@ export function KnowledgeViewer({ project }: KnowledgeViewerProps) {
           Graph
         </Button>
         <Button
+          variant={viewMode === 'table' ? 'secondary' : 'outline'}
+          size="sm"
+          className="gap-1 flex-shrink-0"
+          onClick={() => setViewMode(viewMode === 'table' ? 'content' : 'table')}
+        >
+          <Table2 className="h-4 w-4" />
+          Table
+        </Button>
+        <Button
           variant={showBookmarks ? 'secondary' : 'outline'}
           size="sm"
           className="gap-1 flex-shrink-0"
@@ -204,6 +214,16 @@ export function KnowledgeViewer({ project }: KnowledgeViewerProps) {
       {viewMode === 'graph' ? (
         <div className="flex-1 min-h-0 border rounded-lg bg-card overflow-hidden">
           <KnowledgeGraph
+            projectPath={project.path}
+            onSelectFile={(filePath) => {
+              setActiveFile(filePath);
+              setViewMode('content');
+            }}
+          />
+        </div>
+      ) : viewMode === 'table' ? (
+        <div className="flex-1 min-h-0 border rounded-lg bg-card overflow-hidden">
+          <KnowledgeGraphTable
             projectPath={project.path}
             onSelectFile={(filePath) => {
               setActiveFile(filePath);

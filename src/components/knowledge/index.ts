@@ -7,5 +7,6 @@ export { KnowledgeSearch } from './knowledge-search';
 export { KnowledgeToc } from './knowledge-toc';
 export { KnowledgeBookmarks } from './knowledge-bookmarks';
 export { KnowledgeGraph } from './knowledge-graph';
+export { KnowledgeGraphTable } from './knowledge-graph-table';
 export { MarkdownRenderer } from './markdown-renderer';
 export { CodeBlock } from './code-block';

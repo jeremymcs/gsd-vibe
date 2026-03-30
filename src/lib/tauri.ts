@@ -114,6 +114,124 @@ export interface GitLogEntry {
   deletions: number;
 }
 
+// GitHub integration types
+export interface GitHubTokenStatus {
+  configured: boolean;
+}
+
+export interface GitHubLabel {
+  id: number | null;
+  name: string;
+  color: string;
+  description: string | null;
+}
+
+export interface GitHubUser {
+  login: string;
+  avatar_url: string | null;
+  html_url: string;
+}
+
+export interface GitHubRepoInfo {
+  name: string;
+  full_name: string;
+  description: string | null;
+  private: boolean;
+  default_branch: string;
+  open_issues_count: number;
+  stargazers_count: number;
+  forks_count: number;
+  html_url: string;
+  clone_url: string;
+  pushed_at: string | null;
+  visibility: string;
+}
+
+export interface GitHubPR {
+  number: number;
+  title: string;
+  state: string;
+  user_login: string;
+  user_avatar_url: string | null;
+  body: string | null;
+  created_at: string;
+  updated_at: string;
+  html_url: string;
+  head_ref: string;
+  base_ref: string;
+  draft: boolean;
+  mergeable: boolean | null;
+  review_decision: string | null;
+  labels: GitHubLabel[];
+  assignees: GitHubUser[];
+  additions: number | null;
+  deletions: number | null;
+  changed_files: number | null;
+  comments: number;
+  review_comments: number;
+}
+
+export interface GitHubReview {
+  id: number;
+  user_login: string;
+  state: string;
+  body: string | null;
+  submitted_at: string | null;
+  html_url: string;
+}
+
+export interface GitHubIssue {
+  number: number;
+  title: string;
+  state: string;
+  user_login: string;
+  body: string | null;
+  created_at: string;
+  updated_at: string;
+  closed_at: string | null;
+  html_url: string;
+  labels: GitHubLabel[];
+  assignees: GitHubUser[];
+  comments: number;
+  milestone_title: string | null;
+}
+
+export interface GitHubCheckRun {
+  id: number;
+  name: string;
+  status: string;
+  conclusion: string | null;
+  started_at: string | null;
+  completed_at: string | null;
+  html_url: string;
+  app_name: string;
+}
+
+export interface GitHubRelease {
+  id: number;
+  tag_name: string;
+  name: string | null;
+  body: string | null;
+  draft: boolean;
+  prerelease: boolean;
+  created_at: string;
+  published_at: string | null;
+  html_url: string;
+  tarball_url: string;
+  zipball_url: string;
+  assets_count: number;
+}
+
+export interface GitHubNotification {
+  id: string;
+  reason: string;
+  unread: boolean;
+  title: string;
+  type_: string;
+  updated_at: string;
+  html_url: string | null;
+}
+
 export interface TechStack {
   framework: string | null;
   language: string | null;
@@ -421,6 +539,47 @@ export const getGitTags = (projectPath: string) =>
 export const getScannerSummary = (path: string) =>
   invoke<ScannerSummary>("get_scanner_summary", { path });
 export const toggleFavorite = (projectId: string) => invoke<boolean>("toggle_favorite", { projectId });
+
+// GitHub
+export const githubGetTokenStatus = () =>
+  invoke<GitHubTokenStatus>("github_get_token_status");
+export const githubGetRepoInfo = (projectPath: string) =>
+  invoke<GitHubRepoInfo>("github_get_repo_info", { projectPath });
+export const githubListPrs = (projectPath: string, state?: string) =>
+  invoke<GitHubPR[]>("github_list_prs", { projectPath, state });
+export const githubCreatePr = (
+  projectPath: string,
+  title: string,
+  body: string,
+  head: string,
+  base: string,
+  draft: boolean,
+) =>
+  invoke<GitHubPR>("github_create_pr", { projectPath, title, body, head, base, draft });
+export const githubGetPrReviews = (projectPath: string, prNumber: number) =>
+  invoke<GitHubReview[]>("github_get_pr_reviews", { projectPath, prNumber });
+export const githubListIssues = (projectPath: string, state?: string, labels?: string) =>
+  invoke<GitHubIssue[]>("github_list_issues", { projectPath, state, labels });
+export const githubCreateIssue = (
+  projectPath: string,
+  title: string,
+  body: string,
+  labels: string[],
+  assignees: string[],
+) =>
+  invoke<GitHubIssue>("github_create_issue", { projectPath, title, body, labels, assignees });
+export const githubListCheckRuns = (projectPath: string, gitRef: string) =>
+  invoke<GitHubCheckRun[]>("github_list_check_runs", { projectPath, gitRef });
+export const githubListReleases = (projectPath: string) =>
+  invoke<GitHubRelease[]>("github_list_releases", { projectPath });
+export const githubListRepoNotifications = (projectPath: string) =>
+  invoke<GitHubNotification[]>("github_list_repo_notifications", { projectPath });
+export const githubImportGhToken = () =>
+  invoke<string>("github_import_gh_token");
+export const githubSaveToken = (token: string) =>
+  invoke<void>("github_save_token", { token });
+export const githubRemoveToken = () =>
+  invoke<void>("github_remove_token");
 
 // File System
 export const detectTechStack = (path: string) => invoke<TechStack>("detect_tech_stack", { path });
@@ -2102,9 +2261,17 @@ export const listGsdPlanningTemplates = () =>
 export const scaffoldProject = (options: ScaffoldOptions) =>
   invoke<ScaffoldResult>('scaffold_project', { options });
 
-// ─── Session types (data layer stubs) ─────────────────────────────────────────
+// ─── Session types ─────────────────────────────────────────────────────────────
+// Backend returns raw lines from `gsd sessions` output; parsing is done client-side.
 export interface GsdSessionEntry {
-  id: string;
+  raw: string;
+}
+
+/**
+ * Parsed/normalized session entry — produced by parseSessionEntry().
+ * Fields are best-effort from the raw line; unknowns are null / 0.
+ */
+export interface ParsedSessionEntry {
   filename: string;
   timestamp: string;
   name: string | null;
@@ -2112,6 +2279,7 @@ export interface GsdSessionEntry {
   message_count: number;
   user_message_count: number;
   assistant_message_count: number;
+  raw: string;
 }
 
 export interface GsdSessionMessage {
@@ -2126,3 +2294,6 @@ export interface GsdSessionDetail {
   messages: GsdSessionMessage[];
   timestamp: string;
 }
+
+export const gsd2ListSessions = (projectId: string) =>
+  invoke<GsdSessionEntry[]>('gsd2_list_sessions', { projectId });

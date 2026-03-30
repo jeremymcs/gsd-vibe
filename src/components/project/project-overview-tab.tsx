@@ -10,7 +10,7 @@ import { RequirementsCard } from './requirements-card';
 import { VisionCard } from './vision-card';
 import { RoadmapProgressCard } from './roadmap-progress-card';
 import type { Project } from '@/lib/tauri';
-import { useGsdState, useGsdTodos, useGsdConfig, useGsdSync } from '@/lib/queries';
+import { useGsdState, useGsdTodos, useGsdConfig, useGsdSync, useScannerSummary, useEnvironmentInfo } from '@/lib/queries';
 import {
   CheckSquare,
   AlertTriangle,
@@ -19,7 +19,10 @@ import {
   Gauge,
   Timer,
   GitBranch,
+  Search,
+  Monitor,
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface ProjectOverviewTabProps {
   project: Project;
@@ -56,6 +59,12 @@ export function ProjectOverviewTab({
 
         {/* Requirements Coverage (REQUIREMENTS.md) */}
         {isGsd1 && <RequirementsCard projectId={project.id} />}
+
+        {/* Scanner Summary (non-GSD projects) */}
+        {!isGsd1 && <ScannerSummaryCard projectPath={project.path} />}
+
+        {/* Environment Info (non-GSD projects) */}
+        {!isGsd1 && <EnvironmentInfoCard projectPath={project.path} />}
 
         {/* Git Status */}
         <GitStatusWidget projectPath={project.path} />
@@ -261,6 +270,249 @@ function GsdStateCard({ projectId }: { projectId: string }) {
         {!pos && !config && (
           <p className="text-xs text-muted-foreground">No GSD state found. Run /gsd:progress to update.</p>
         )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// --- Scanner Summary Card (for non-GSD projects) ---
+
+function ScannerSummaryCard({ projectPath }: { projectPath: string }) {
+  const { data: summary, isLoading, error } = useScannerSummary(projectPath);
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-sm">
+            <Search className="h-4 w-4 text-muted-foreground" />
+            Tech Stack
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center py-8">
+            <div className="text-xs text-muted-foreground">Scanning...</div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error || !summary) {
+    return (
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-sm">
+            <Search className="h-4 w-4 text-muted-foreground" />
+            Tech Stack
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-xs text-muted-foreground text-center py-4">
+            Scanner not available
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="flex items-center gap-2 text-sm">
+          <Search className="h-4 w-4 text-muted-foreground" />
+          Project Scanner
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {/* Categories */}
+        {summary.categories && summary.categories.length > 0 && (
+          <div>
+            <div className="text-xs font-medium mb-1">Categories</div>
+            <div className="space-y-1">
+              {summary.categories.slice(0, 4).map((cat, i) => (
+                <div key={i} className="flex items-center justify-between text-xs p-1.5 bg-muted/50 rounded">
+                  <span className="font-medium">{cat.name}</span>
+                  <span className={cn(
+                    'px-1.5 py-0.5 rounded text-[10px] font-medium',
+                    cat.grade === 'A' ? 'bg-green-500/20 text-green-700' :
+                    cat.grade === 'B' ? 'bg-blue-500/20 text-blue-700' :
+                    cat.grade === 'C' ? 'bg-yellow-500/20 text-yellow-700' :
+                    'bg-red-500/20 text-red-700'
+                  )}>
+                    {cat.grade}
+                  </span>
+                </div>
+              ))}
+              {summary.categories.length > 4 && (
+                <div className="text-xs text-muted-foreground/60">
+                  +{summary.categories.length - 4} more categories
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Overall grade */}
+        {summary.overall_grade && (
+          <div className="flex items-center justify-between pt-2 border-t">
+            <span className="text-xs font-medium">Overall Grade</span>
+            <span className={cn(
+              'px-2 py-1 rounded text-sm font-bold',
+              summary.overall_grade === 'A' ? 'bg-green-500/20 text-green-700' :
+              summary.overall_grade === 'B' ? 'bg-blue-500/20 text-blue-700' :
+              summary.overall_grade === 'C' ? 'bg-yellow-500/20 text-yellow-700' :
+              'bg-red-500/20 text-red-700'
+            )}>
+              {summary.overall_grade}
+            </span>
+          </div>
+        )}
+
+        {/* High priority actions - show more items */}
+        {summary.high_priority_actions && summary.high_priority_actions.length > 0 && (
+          <div className="pt-2 border-t">
+            <div className="text-xs font-medium mb-1 text-orange-700">Priority Actions</div>
+            <div className="space-y-0.5">
+              {summary.high_priority_actions.slice(0, 5).map((action, i) => (
+                <div key={i} className="text-xs text-muted-foreground p-1 bg-orange-500/10 rounded">
+                  • {action}
+                </div>
+              ))}
+              {summary.high_priority_actions.length > 5 && (
+                <div className="text-xs text-muted-foreground/60">
+                  +{summary.high_priority_actions.length - 5} more actions
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Stats - gaps and recommendations */}
+        {((summary.total_gaps !== undefined && summary.total_gaps !== null) || 
+          (summary.total_recommendations !== undefined && summary.total_recommendations !== null)) && (
+          <div className="border-t pt-2">
+            <div className="text-xs font-medium mb-2">Summary Stats</div>
+            <div className="grid grid-cols-2 gap-3">
+              {(summary.total_gaps !== undefined && summary.total_gaps !== null) && (
+                <div className="flex items-center justify-between p-2 bg-red-500/10 rounded">
+                  <span className="text-xs text-muted-foreground">Gaps</span>
+                  <span className="text-xs font-bold text-red-700">{summary.total_gaps}</span>
+                </div>
+              )}
+              {(summary.total_recommendations !== undefined && summary.total_recommendations !== null) && (
+                <div className="flex items-center justify-between p-2 bg-blue-500/10 rounded">
+                  <span className="text-xs text-muted-foreground">Recommendations</span>
+                  <span className="text-xs font-bold text-blue-700">{summary.total_recommendations}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// --- Environment Info Card (for non-GSD projects) ---
+
+function EnvironmentInfoCard({ projectPath }: { projectPath: string }) {
+  const { data: envInfo, isLoading, error } = useEnvironmentInfo(projectPath);
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-sm">
+            <Monitor className="h-4 w-4 text-muted-foreground" />
+            Environment Info
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center py-8">
+            <div className="text-xs text-muted-foreground">Loading...</div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error || !envInfo) {
+    return (
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-sm">
+            <Monitor className="h-4 w-4 text-muted-foreground" />
+            Environment Info
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-xs text-muted-foreground text-center py-4">
+            Environment info not available
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="flex items-center gap-2 text-sm">
+          <Monitor className="h-4 w-4 text-muted-foreground" />
+          Environment Info
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {/* Working Directory */}
+        <div>
+          <div className="text-xs text-muted-foreground mb-1">Working Directory</div>
+          <div className="text-xs font-mono bg-muted/50 p-2 rounded break-all">
+            {envInfo.working_directory}
+          </div>
+        </div>
+
+        {/* Git Branch */}
+        {envInfo.git_branch && (
+          <div>
+            <div className="text-xs text-muted-foreground mb-1">Git Branch</div>
+            <div className="flex items-center gap-1.5">
+              <GitBranch className="h-3 w-3 text-muted-foreground" />
+              <span className="text-xs font-medium">{envInfo.git_branch}</span>
+            </div>
+          </div>
+        )}
+
+        {/* Runtime Versions */}
+        <div className="space-y-2">
+          <div className="text-xs text-muted-foreground">Runtime Versions</div>
+          <div className="grid grid-cols-1 gap-2">
+            {envInfo.node_version && (
+              <div className="flex items-center justify-between text-xs p-1.5 bg-muted/50 rounded">
+                <span className="text-muted-foreground">Node.js</span>
+                <span className="font-medium">{envInfo.node_version}</span>
+              </div>
+            )}
+            {envInfo.python_version && (
+              <div className="flex items-center justify-between text-xs p-1.5 bg-muted/50 rounded">
+                <span className="text-muted-foreground">Python</span>
+                <span className="font-medium">{envInfo.python_version}</span>
+              </div>
+            )}
+            {envInfo.rust_version && (
+              <div className="flex items-center justify-between text-xs p-1.5 bg-muted/50 rounded">
+                <span className="text-muted-foreground">Rust</span>
+                <span className="font-medium">{envInfo.rust_version}</span>
+              </div>
+            )}
+          </div>
+          
+          {!envInfo.node_version && !envInfo.python_version && !envInfo.rust_version && (
+            <div className="text-xs text-muted-foreground text-center py-2">
+              No runtime versions detected
+            </div>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
