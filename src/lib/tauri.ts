@@ -2265,13 +2265,6 @@ export const scaffoldProject = (options: ScaffoldOptions) =>
 // Backend returns raw lines from `gsd sessions` output; parsing is done client-side.
 export interface GsdSessionEntry {
   raw: string;
-}
-
-/**
- * Parsed/normalized session entry — produced by parseSessionEntry().
- * Fields are best-effort from the raw line; unknowns are null / 0.
- */
-export interface ParsedSessionEntry {
   filename: string;
   timestamp: string;
   name: string | null;
@@ -2279,8 +2272,13 @@ export interface ParsedSessionEntry {
   message_count: number;
   user_message_count: number;
   assistant_message_count: number;
-  raw: string;
 }
+
+/**
+ * Parsed/normalized session entry — now returned directly by the backend.
+ * Alias for GsdSessionEntry for backwards compatibility.
+ */
+export type ParsedSessionEntry = GsdSessionEntry;
 
 export interface GsdSessionMessage {
   role: string;

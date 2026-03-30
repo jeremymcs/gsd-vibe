@@ -1736,63 +1736,10 @@ export const useGithubRemoveToken = () => {
 // GSD-2 Sessions (M013 / S02)
 // ============================================================
 
-/**
- * Parse a raw `gsd sessions` output line into a structured entry.
- *
- * The `gsd sessions` command outputs lines in a variety of formats depending on
- * gsd version, but typically resembles:
- *   2024-01-15T12:34:56Z  session-abc123.jsonl  "My session name"  42 msgs (10u/32a)
- *
- * This parser is intentionally tolerant: it extracts what it can and falls back
- * gracefully when a field is missing or the format changes.
- */
-export function parseSessionEntry(entry: api.GsdSessionEntry): api.ParsedSessionEntry {
-  const raw = entry.raw;
-
-  // Attempt to extract an ISO-8601 timestamp at the start of the line.
-  const tsMatch = raw.match(/(\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:?\d{2})?)/);
-  const timestamp = tsMatch ? tsMatch[1] : '';
-
-  // Attempt to extract a .jsonl or .json filename.
-  const filenameMatch = raw.match(/(\S+\.jsonl?\b)/);
-  const filename = filenameMatch ? filenameMatch[1] : raw.trim().split(/\s+/)[0] ?? raw.trim();
-
-  // Attempt to extract a quoted session name.
-  const nameMatch = raw.match(/"([^"]+)"/);
-  const name = nameMatch ? nameMatch[1] : null;
-
-  // Attempt to extract total message count: "42 msgs" or "42 messages".
-  const totalMatch = raw.match(/(\d+)\s+msg/i);
-  const message_count = totalMatch ? parseInt(totalMatch[1], 10) : 0;
-
-  // Attempt to extract user/assistant breakdown: "(10u/32a)" or "10u 32a".
-  const breakdownMatch = raw.match(/\((\d+)u\/(\d+)a\)/i) ?? raw.match(/(\d+)u\s+(\d+)a/i);
-  const user_message_count = breakdownMatch ? parseInt(breakdownMatch[1], 10) : 0;
-  const assistant_message_count = breakdownMatch ? parseInt(breakdownMatch[2], 10) : 0;
-
-  // First message preview: anything in square brackets or after a long dash.
-  const firstMsgMatch = raw.match(/\[([^\]]{3,})\]/) ?? raw.match(/—\s+(.+)$/);
-  const first_message = firstMsgMatch ? firstMsgMatch[1].trim() : null;
-
-  return {
-    filename,
-    timestamp,
-    name,
-    first_message,
-    message_count,
-    user_message_count,
-    assistant_message_count,
-    raw,
-  };
-}
-
 export const useGsd2Sessions = (projectId: string, enabled = true) =>
   useQuery({
     queryKey: queryKeys.gsd2Sessions(projectId),
-    queryFn: async () => {
-      const raw = await api.gsd2ListSessions(projectId);
-      return raw.map(parseSessionEntry);
-    },
+    queryFn: () => api.gsd2ListSessions(projectId),
     enabled: !!projectId && enabled,
     staleTime: 30_000,
     refetchOnWindowFocus: false,
@@ -1804,9 +1751,9 @@ export const useGsd2Sessions = (projectId: string, enabled = true) =>
 
 export const useGsd2Preferences = (projectPath: string | undefined, enabled = true) =>
   useQuery({
-    queryKey: queryKeys.gsd2Preferences(projectPath),
-    queryFn: () => api.gsd2GetPreferences(projectPath!),
-    enabled: !!projectPath && enabled,
+    queryKey: queryKeys.gsd2Preferences(projectPath ?? ''),
+    queryFn: () => api.gsd2GetPreferences(projectPath ?? ''),
+    enabled,
     staleTime: 60_000,
   });
 

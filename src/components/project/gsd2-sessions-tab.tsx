@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ViewEmpty } from '@/components/shared/loading-states';
 import { useGsd2Sessions } from '@/lib/queries';
-import type { ParsedSessionEntry } from '@/lib/tauri';
+import type { GsdSessionEntry } from '@/lib/tauri';
 
 interface Gsd2SessionsTabProps {
   projectId: string;
@@ -30,7 +30,7 @@ function formatTimestamp(ts: string): string {
 }
 
 interface SessionRowProps {
-  session: ParsedSessionEntry;
+  session: GsdSessionEntry;
 }
 
 function SessionRow({ session }: SessionRowProps) {

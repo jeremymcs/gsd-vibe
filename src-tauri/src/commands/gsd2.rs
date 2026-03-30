@@ -3858,9 +3858,27 @@ pub async fn gsd2_doctor(
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GsdSessionEntry {
     pub raw: String,
+    pub filename: String,
+    pub timestamp: String,
+    pub name: Option<String>,
+    pub first_message: Option<String>,
+    pub message_count: i32,
+    pub user_message_count: i32,
+    pub assistant_message_count: i32,
 }
 
-/// List past GSD sessions for a project by running `gsd sessions`.
+/// Derive the session directory name from a project path.
+/// Convention: strip leading '/', replace '/' ':' '\' with '-', wrap in '--'.
+fn derive_session_dir_name(path: &str) -> String {
+    let stripped = path.strip_prefix('/').unwrap_or(path);
+    let replaced = stripped
+        .replace('/', "-")
+        .replace('\\', "-")
+        .replace(':', "-");
+    format!("--{}--", replaced)
+}
+
+/// List past GSD sessions for a project by reading JSONL session files directly.
 #[tauri::command]
 pub async fn gsd2_list_sessions(
     db: tauri::State<'_, DbState>,
@@ -3871,28 +3889,158 @@ pub async fn gsd2_list_sessions(
         get_project_path(&db_guard, &project_id)?
     };
 
-    let output = std::process::Command::new("gsd")
-        .arg("sessions")
-        .current_dir(&project_path)
-        .output()
-        .map_err(|e| format!("Failed to run gsd sessions: {}", e))?;
+    // Resolve session directory: ~/.gsd/sessions/{derived_dir_name}/
+    let home = dirs::home_dir().ok_or("Cannot determine home directory")?;
+    let dir_name = derive_session_dir_name(&project_path);
+    let sessions_dir = home.join(".gsd").join("sessions").join(&dir_name);
 
-    let stdout = String::from_utf8_lossy(&output.stdout);
-
-    if stdout.contains("No sessions found") {
+    if !sessions_dir.is_dir() {
         return Ok(Vec::new());
     }
 
-    let entries: Vec<GsdSessionEntry> = stdout
-        .lines()
-        .filter(|line| {
-            let t = line.trim();
-            !t.is_empty() && !t.contains("Loading sessions")
-        })
-        .map(|line| GsdSessionEntry { raw: line.to_string() })
+    let mut files: Vec<std::path::PathBuf> = std::fs::read_dir(&sessions_dir)
+        .map_err(|e| format!("Failed to read sessions dir: {}", e))?
+        .filter_map(|e| e.ok())
+        .map(|e| e.path())
+        .filter(|p| p.extension().map_or(false, |ext| ext == "jsonl"))
         .collect();
 
+    // Sort descending by filename (filenames start with ISO timestamp)
+    files.sort_by(|a, b| b.file_name().cmp(&a.file_name()));
+
+    let mut entries = Vec::new();
+
+    for path in &files {
+        let fname = path
+            .file_name()
+            .unwrap_or_default()
+            .to_string_lossy()
+            .to_string();
+
+        // Extract timestamp from filename: 2026-03-21T22-53-21-898Z_UUID.jsonl
+        let ts_part = fname.split('_').next().unwrap_or("");
+        // Convert filename timestamp to ISO: replace the dashes in time portion
+        // Format: 2026-03-21T22-53-21-898Z → 2026-03-21T22:53:21.898Z
+        let timestamp = if ts_part.len() >= 24 {
+            // 2026-03-21T22-53-21-898Z
+            let date = &ts_part[..10]; // 2026-03-21
+            let rest = &ts_part[10..]; // T22-53-21-898Z
+            let time_part = rest
+                .replacen('-', ":", 1)  // T22:53-21-898Z
+                .replacen('-', ":", 1)  // T22:53:21-898Z
+                .replacen('-', ".", 1); // T22:53:21.898Z
+            format!("{}{}", date, time_part)
+        } else {
+            ts_part.to_string()
+        };
+
+        // Read the file and parse line by line
+        let content = match std::fs::read_to_string(path) {
+            Ok(c) => c,
+            Err(_) => continue,
+        };
+
+        let mut name: Option<String> = None;
+        let mut first_message: Option<String> = None;
+        let mut message_count: i32 = 0;
+        let mut user_count: i32 = 0;
+        let mut assistant_count: i32 = 0;
+
+        for line in content.lines() {
+            let trimmed = line.trim();
+            if trimmed.is_empty() {
+                continue;
+            }
+            let val: serde_json::Value = match serde_json::from_str(trimmed) {
+                Ok(v) => v,
+                Err(_) => continue,
+            };
+
+            let line_type = val.get("type").and_then(|v| v.as_str()).unwrap_or("");
+
+            match line_type {
+                "session_info" => {
+                    // Last session_info entry wins (rename semantics)
+                    if let Some(n) = val.get("name").and_then(|v| v.as_str()) {
+                        if !n.is_empty() {
+                            name = Some(n.to_string());
+                        }
+                    }
+                }
+                "message" => {
+                    let role = val
+                        .get("message")
+                        .and_then(|m| m.get("role"))
+                        .and_then(|r| r.as_str())
+                        .unwrap_or("");
+
+                    match role {
+                        "user" => {
+                            user_count += 1;
+                            message_count += 1;
+                            // Capture first user message text
+                            if first_message.is_none() {
+                                first_message = extract_message_text(&val);
+                            }
+                        }
+                        "assistant" => {
+                            assistant_count += 1;
+                            message_count += 1;
+                        }
+                        _ => {
+                            // toolResult, etc — count but don't categorize
+                            message_count += 1;
+                        }
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        entries.push(GsdSessionEntry {
+            raw: format!(
+                "{} ({} msgs) {}",
+                timestamp,
+                message_count,
+                name.as_deref().unwrap_or("")
+            ),
+            filename: fname,
+            timestamp,
+            name,
+            first_message,
+            message_count,
+            user_message_count: user_count,
+            assistant_message_count: assistant_count,
+        });
+    }
+
     Ok(entries)
+}
+
+/// Extract the first text content from a message JSON value.
+fn extract_message_text(val: &serde_json::Value) -> Option<String> {
+    let content = val.get("message")?.get("content")?;
+
+    // Content can be a string or an array of content blocks
+    if let Some(s) = content.as_str() {
+        let trimmed = s.trim();
+        if !trimmed.is_empty() {
+            return Some(trimmed.chars().take(200).collect());
+        }
+    }
+
+    if let Some(arr) = content.as_array() {
+        for block in arr {
+            if let Some(text) = block.get("text").and_then(|t| t.as_str()) {
+                let trimmed = text.trim();
+                if !trimmed.is_empty() {
+                    return Some(trimmed.chars().take(200).collect());
+                }
+            }
+        }
+    }
+
+    None
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -8280,14 +8428,20 @@ fn read_preferences_file(path: &str) -> Result<String, String> {
 pub async fn gsd2_get_preferences(
     project_path: String,
 ) -> Result<PreferencesData, String> {
-    let project_prefs_path = Path::new(&project_path).join(".gsd").join("PREFERENCES.md");
     let global_prefs_path = dirs::home_dir()
         .ok_or("Cannot determine home directory")?
         .join(".gsd")
         .join("PREFERENCES.md");
 
-    // Read project and global files
-    let project_content = read_preferences_file(project_prefs_path.to_str().unwrap_or(""))?;
+    // Read project prefs only when a non-empty project path is provided
+    let project_content = if project_path.is_empty() {
+        String::new()
+    } else {
+        let project_prefs_path = Path::new(&project_path).join(".gsd").join("PREFERENCES.md");
+        read_preferences_file(project_prefs_path.to_str().unwrap_or(""))?
+    };
+
+    // Global prefs always read
     let global_content = read_preferences_file(global_prefs_path.to_str().unwrap_or(""))?;
 
     // Extract frontmatter from both files
@@ -8297,10 +8451,7 @@ pub async fn gsd2_get_preferences(
     // Parse YAML to JSON
     let project_raw = parse_yaml_to_json(&project_yaml);
     let global_raw = parse_yaml_to_json(&global_yaml);
-    let defaults = serde_json::json!({
-        "theme": "dark",
-        "gsdVersion": "2.0"
-    });
+    let defaults = serde_json::json!({});
 
     // Merge preferences
     let merged = merge_preferences(&project_raw, &global_raw, &defaults);
