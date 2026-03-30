@@ -30,24 +30,24 @@ import {
   GsdUatTab,
   DependenciesTab,
   KnowledgeTab,
-  GitHubPanel,
   EnvVarsTab,
   Gsd2HealthTab,
   Gsd2WorktreesTab,
-  Gsd2HeadlessTab,
-  Gsd2VisualizerTab,
-  Gsd2MilestonesTab,
-  Gsd2SlicesTab,
-  Gsd2TasksTab,
   DoctorPanel,
   ForensicsPanel,
   SkillHealthPanel,
   KnowledgeCapturesPanel,
   Gsd2ReportsTab,
-  Gsd2DashboardView,
   GuidedProjectView,
+  Gsd2SessionTab,
   Gsd2SessionsTab,
   Gsd2PreferencesTab,
+  GitView,
+  Gsd2ProgressGroup,
+  Gsd2PlanningGroup,
+  Gsd2MetricsGroup,
+  Gsd2CommandsGroup,
+  Gsd2DiagnosticsGroup,
 } from "@/components/project";
 import { TerminalTabs } from "@/components/terminal";
 import { watchProjectFiles } from "@/lib/tauri";
@@ -277,42 +277,44 @@ function ViewRenderer({
       return <DependenciesTab projectId={projectId} projectPath={projectPath} />;
     case 'knowledge':
       return <KnowledgeTab projectId={projectId} />;
-    case 'github':
-      return <GitHubPanel projectId={projectId} projectPath={projectPath} />;
     case 'envvars':
       return <EnvVarsTab projectId={projectId} projectPath={projectPath} />;
+    case 'git':
+      return <GitView projectId={projectId} projectPath={projectPath} />;
 
     // GSD-2 views
-    case 'gsd2-dashboard':
-      return <Gsd2DashboardView projectId={projectId} projectPath={projectPath} />;
     case 'gsd2-health':
       return <Gsd2HealthTab projectId={projectId} projectPath={projectPath} />;
     case 'gsd2-headless':
-      return <Gsd2HeadlessTab projectId={projectId} projectPath={projectPath} session={headlessSession} />;
+      return <Gsd2SessionTab projectId={projectId} projectPath={projectPath} session={headlessSession} />;
     case 'gsd2-worktrees':
       return <Gsd2WorktreesTab projectId={projectId} projectPath={projectPath} />;
-    case 'gsd2-visualizer':
-      return <Gsd2VisualizerTab projectId={projectId} projectPath={projectPath} />;
-    case 'gsd2-milestones':
-      return <Gsd2MilestonesTab projectId={projectId} projectPath={projectPath} />;
-    case 'gsd2-slices':
-      return <Gsd2SlicesTab projectId={projectId} projectPath={projectPath} />;
-    case 'gsd2-tasks':
-      return <Gsd2TasksTab projectId={projectId} projectPath={projectPath} />;
+    case 'gsd2-sessions':
+      return <Gsd2SessionsTab projectId={projectId} projectPath={projectPath} />;
+    case 'gsd2-preferences':
+      return <Gsd2PreferencesTab projectId={projectId} projectPath={projectPath} />;
+    case 'gsd2-knowledge-captures':
+      return <KnowledgeCapturesPanel projectId={projectId} projectPath={projectPath} />;
     case 'gsd2-doctor':
       return <DoctorPanel projectId={projectId} projectPath={projectPath} />;
     case 'gsd2-forensics':
       return <ForensicsPanel projectId={projectId} projectPath={projectPath} />;
     case 'gsd2-skill-health':
       return <SkillHealthPanel projectId={projectId} projectPath={projectPath} />;
-    case 'gsd2-knowledge-captures':
-      return <KnowledgeCapturesPanel projectId={projectId} projectPath={projectPath} />;
     case 'gsd2-reports':
       return <Gsd2ReportsTab projectId={projectId} projectPath={projectPath} />;
-    case 'gsd2-sessions':
-      return <Gsd2SessionsTab projectId={projectId} projectPath={projectPath} />;
-    case 'gsd2-preferences':
-      return <Gsd2PreferencesTab projectId={projectId} projectPath={projectPath} />;
+
+    // GSD-2 tab groups
+    case 'gsd2-group-progress':
+      return <Gsd2ProgressGroup projectId={projectId} projectPath={projectPath} />;
+    case 'gsd2-group-planning':
+      return <Gsd2PlanningGroup projectId={projectId} projectPath={projectPath} />;
+    case 'gsd2-group-metrics':
+      return <Gsd2MetricsGroup projectId={projectId} projectPath={projectPath} />;
+    case 'gsd2-group-commands':
+      return <Gsd2CommandsGroup projectId={projectId} projectPath={projectPath} />;
+    case 'gsd2-group-diagnostics':
+      return <Gsd2DiagnosticsGroup projectId={projectId} projectPath={projectPath} />;
 
     // GSD-1 views
     case 'gsd-plans':
