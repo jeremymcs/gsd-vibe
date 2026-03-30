@@ -1593,3 +1593,46 @@ export const useGsdPlanningTemplates = () =>
     queryFn: () => api.listGsdPlanningTemplates(),
     staleTime: Infinity,
   });
+
+// ─── Stub hooks for GitHub panel (data layer not yet wired) ───────────────────
+const stubQuery = {
+  data: null,
+  isLoading: false,
+  isFetching: false,
+  isError: false,
+  error: null,
+  status: 'success' as const,
+  isPending: false,
+  isSuccess: true,
+};
+
+const stubMutation = {
+  mutate: () => {},
+  mutateAsync: async () => {},
+  isPending: false,
+  isError: false,
+  isSuccess: false,
+  isIdle: true,
+  error: null,
+  data: null,
+  status: 'idle' as const,
+  reset: () => {},
+  variables: undefined,
+  context: undefined,
+  failureCount: 0,
+  failureReason: null,
+  submittedAt: null,
+};
+
+export const useGithubTokenStatus = () => stubQuery;
+export const useGithubRepoInfo = (_projectPath: string) => stubQuery;
+export const useGithubPrs = (_projectPath: string) => stubQuery;
+export const useGithubIssues = (_projectPath: string) => stubQuery;
+export const useGithubCheckRuns = (_projectPath: string) => stubQuery;
+export const useGithubReleases = (_projectPath: string) => stubQuery;
+export const useGithubCreatePr = () => stubMutation;
+export const useGithubCreateIssue = () => stubMutation;
+export const useGithubNotifications = (_projectPath: string) => stubQuery;
+export const useGithubImportGhToken = () => stubMutation;
+export const useGithubSaveToken = () => stubMutation;
+export const useGithubRemoveToken = () => stubMutation;

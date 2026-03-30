@@ -61,7 +61,7 @@ export function SettingsPage() {
       return;
     }
     if (key === "user_mode") {
-      handleInstantModeChange(value);
+      handleInstantModeChange(value as string);
       return;
     }
     setFormData({ ...formData, [key]: value });

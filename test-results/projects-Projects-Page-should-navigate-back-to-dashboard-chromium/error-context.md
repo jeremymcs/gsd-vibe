@@ -1,0 +1,89 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - complementary [ref=e4]:
+      - generic [ref=e6]:
+        - img "GSD" [ref=e7]
+        - generic [ref=e8]: GSD Vibe
+      - button "Open command palette" [ref=e9] [cursor=pointer]:
+        - img [ref=e10]
+        - generic [ref=e13]: Search...
+        - generic [ref=e14]: ⌘K
+      - navigation "Sidebar navigation" [ref=e15]:
+        - generic [ref=e16]: Workspace
+        - button "Home" [ref=e17] [cursor=pointer]:
+          - img [ref=e18]
+          - generic [ref=e23]: Home
+        - button "Todos" [ref=e24] [cursor=pointer]:
+          - img [ref=e25]
+          - generic [ref=e28]: Todos
+        - button "Terminal" [ref=e29] [cursor=pointer]:
+          - img [ref=e30]
+          - generic [ref=e32]: Terminal
+        - generic [ref=e33]: System
+        - button "Notifications" [ref=e34] [cursor=pointer]:
+          - img [ref=e35]
+          - generic [ref=e38]: Notifications
+        - button "GSD Preferences" [ref=e39] [cursor=pointer]:
+          - img [ref=e40]
+          - generic [ref=e43]: GSD Preferences
+        - button "Settings" [ref=e44] [cursor=pointer]:
+          - img [ref=e45]
+          - generic [ref=e48]: Settings
+      - generic [ref=e49]:
+        - button "Collapse sidebar" [ref=e50] [cursor=pointer]:
+          - generic [ref=e51]:
+            - img [ref=e52]
+            - generic [ref=e55]: Collapse
+        - generic [ref=e57]: v0.1.1
+    - main [ref=e58]:
+      - generic [ref=e59]:
+        - navigation "Breadcrumb" [ref=e60]:
+          - link "Home" [ref=e62] [cursor=pointer]:
+            - /url: /
+            - img [ref=e63]
+            - generic [ref=e66]: Home
+          - generic [ref=e67]:
+            - img [ref=e68]
+            - generic [ref=e70]: Projects
+        - button "Notifications" [ref=e72] [cursor=pointer]:
+          - img [ref=e73]
+      - generic [ref=e77]:
+        - generic [ref=e78]:
+          - generic [ref=e79]:
+            - heading "Projects" [level=1] [ref=e80]:
+              - img [ref=e81]
+              - text: Projects
+            - paragraph [ref=e83]: Manage and browse all your projects
+          - button "Add Project" [ref=e85] [cursor=pointer]:
+            - img [ref=e86]
+            - text: Add Project
+        - generic [ref=e89]:
+          - generic [ref=e91]:
+            - img [ref=e92]
+            - textbox "Search by name, path, or description..." [ref=e95]
+          - combobox [ref=e97] [cursor=pointer]:
+            - generic: All Status
+            - img [ref=e98]
+          - combobox [ref=e101] [cursor=pointer]:
+            - generic: All Types
+            - img [ref=e102]
+        - generic [ref=e104]:
+          - heading "0 projects" [level=3] [ref=e106]
+          - generic [ref=e108]:
+            - img [ref=e110]
+            - heading "No Projects Yet" [level=3] [ref=e112]
+            - paragraph [ref=e113]: Import a GSD project to get started
+            - button "Add Project" [ref=e115] [cursor=pointer]:
+              - img [ref=e116]
+              - text: Add Project
+      - button "Expand shell panel" [ref=e117] [cursor=pointer]:
+        - img [ref=e118]
+        - generic [ref=e121]: Terminal
+        - generic [ref=e122]: Click to open
+        - img [ref=e123]
+      - option "Select project..." [selected]
+  - region "Notifications alt+T"
+```
