@@ -312,6 +312,127 @@ This file is the explicit capability and coverage contract for the project.
 - Validation: unmapped
 - Notes: New components should include basic render tests where appropriate
 
+### R142 — GitHub integration end-to-end
+- Class: core-capability
+- Status: active
+- Description: Register all 13 GitHub backend commands in lib.rs, add TypeScript types/wrappers in tauri.ts, replace all 13 stub hooks in queries.ts with real TanStack Query hooks, add nav-rail entry, remove @ts-nocheck from github-panel.tsx, verify panel renders live GitHub data
+- Why it matters: 967 lines of fully implemented Rust backend (PRs, issues, check runs, releases, repo info, notifications, token management) are completely dead — zero commands registered, all frontend hooks are stubs
+- Source: execution
+- Primary owning slice: M013/S01
+- Supporting slices: none
+- Validation: unmapped
+- Notes: The GitHub panel component (721 lines) already exists with full UI. Risk: panel was written against stub data, may need type fixes when real data flows through.
+
+### R143 — GSD-2 session browser nav-rail view
+- Class: core-capability
+- Status: active
+- Description: Add session browser as a nav-rail view listing past GSD sessions with metadata (message count, timestamp, name), rename capability, search/filter
+- Why it matters: gsd2_list_sessions command is registered and working but has no UI surface — session history is invisible to the user
+- Source: execution
+- Primary owning slice: M013/S02
+- Supporting slices: none
+- Validation: unmapped
+- Notes: Backend already parses gsd sessions CLI output into structured GsdSessionEntry objects
+
+### R144 — GSD-2 preferences editor as project view
+- Class: core-capability
+- Status: active
+- Description: Add project-scoped GSD-2 preferences editor view using existing gsd2_get_preferences/gsd2_save_preferences commands, showing merged values with scope badges (global/project/default)
+- Why it matters: Preferences commands exist and are registered but have no UI — users must edit preferences.md manually
+- Source: execution
+- Primary owning slice: M013/S02
+- Supporting slices: none
+- Validation: unmapped
+- Notes: PreferencesData returns merged values + scopes HashMap for per-field origin badges
+
+### R145 — GSD-2 dashboard data expansion
+- Class: core-capability
+- Status: active
+- Description: Expand dashboard with knowledge entry count, captures pending count, decisions summary, requirements coverage, critical path indicator from VisualizerData2 fields already being fetched but not displayed
+- Why it matters: Dashboard fetches full VisualizerData2 but only renders 8 of 16 fields — knowledge, captures, health details, stats, critical_path are all available but invisible
+- Source: inferred
+- Primary owning slice: M013/S03
+- Supporting slices: none
+- Validation: unmapped
+- Notes: No new backend calls needed — all data is in the existing vizQuery response
+
+### R146 — Knowledge tab search, bookmarks, and graph
+- Class: core-capability
+- Status: active
+- Description: Expand knowledge tab with search bar (useKnowledgeSearch), bookmarks panel (useKnowledgeBookmarks with create/delete), and knowledge graph node/edge display (useKnowledgeGraph)
+- Why it matters: Knowledge tab is 195 lines showing only file tree + content viewer. Three fully-implemented features (search, bookmarks, graph) have hooks and backend commands but zero UI
+- Source: execution
+- Primary owning slice: M013/S04
+- Supporting slices: none
+- Validation: unmapped
+- Notes: Graph visualization deferred to simple list/table view rather than requiring a graph library (D3/react-flow). Full graph viz deferred per R153.
+
+### R147 — Visualizer unused data surfacing
+- Class: core-capability
+- Status: active
+- Description: Wire knowledge, captures, health, stats, and timeline fields from VisualizerData2 into appropriate visualizer tabs — knowledge/captures counts in Progress tab, health details in Agent tab, stats (missing summaries, changelog) in Changes tab, timeline entries in Timeline tab
+- Why it matters: Visualizer renders 8 of 16 available VisualizerData2 fields — half the backend data is computed but never displayed
+- Source: inferred
+- Primary owning slice: M013/S03
+- Supporting slices: none
+- Validation: unmapped
+- Notes: All data is already returned by gsd2_get_visualizer_data — purely frontend rendering work
+
+### R148 — GSD-1 view expansion with unused hooks
+- Class: core-capability
+- Status: active
+- Description: Wire useGsdMilestoneAudits into milestones tab, useGsdVerification into verification tab, useGsdPhaseResearch/useGsdPhaseSummaries/useGsdPhasePlans into their respective tabs, useGsdUatByPhase/useGsdValidationByPhase into UAT/validation tabs
+- Why it matters: 10 GSD-1 hooks are defined with working backend commands but never referenced in any component — GSD-1 views show less data than available
+- Source: execution
+- Primary owning slice: M013/S05
+- Supporting slices: none
+- Validation: unmapped
+- Notes: GSD-1 views are used by older projects. Expansion is straightforward — hooks exist, just need component wiring.
+
+### R149 — Top-level dashboard aggregate metrics
+- Class: core-capability
+- Status: active
+- Description: Expand top-level dashboard status bar with aggregate cost/tokens across all GSD-2 projects, active agent count, and recent cross-project activity summary
+- Why it matters: Dashboard status bar currently shows only project count, todo count, and GSD project count — misses cost/activity data that's already queryable per-project
+- Source: inferred
+- Primary owning slice: M013/S06
+- Supporting slices: none
+- Validation: unmapped
+- Notes: Requires batching gsd2_get_health or gsd2_get_visualizer_data across projects — watch for N+1 query issues
+
+### R150 — Project overview expansion for non-GSD projects
+- Class: core-capability
+- Status: active
+- Description: Expand non-GSD project overview with environment info (useEnvironmentInfo), scanner summary (useScannerSummary), and richer tech stack detail
+- Why it matters: Non-GSD project overview shows only git status, dependency alerts, activity feed, and a basic details card — useEnvironmentInfo and useScannerSummary hooks exist but are never used
+- Source: inferred
+- Primary owning slice: M013/S06
+- Supporting slices: none
+- Validation: unmapped
+- Notes: useScannerSummary returns grade, gaps, recommendations, scores — rich data for a health card
+
+### R151 — Wire all remaining unused API functions
+- Class: quality-attribute
+- Status: active
+- Description: Wire terminal session save/restore (saveTerminalSessions/restoreTerminalSessions), snippet reordering (reorderScriptFavorites), tmux session listing (ptyCheckTmux/ptyListTmux), project docs reader (readProjectDocs), and tech stack detection refresh (detectTechStack) to appropriate UI surfaces
+- Why it matters: These API functions are implemented, typed, and exported but never called — representing dead capability
+- Source: execution
+- Primary owning slice: M013/S05
+- Supporting slices: none
+- Validation: unmapped
+- Notes: Terminal session persistence is especially valuable — save on app close, restore on app open
+
+### R152 — No regressions from M013 feature expansion
+- Class: constraint
+- Status: active
+- Description: pnpm build exits 0, all existing tests pass, cargo check --lib clean, no TypeScript errors
+- Why it matters: Feature expansion that breaks the build is not shippable
+- Source: constraint
+- Primary owning slice: M013/all
+- Supporting slices: none
+- Validation: unmapped
+- Notes: GitHub panel @ts-nocheck removal may surface type issues that need resolution
+
 ## Validated
 
 ### R001 — Untitled
@@ -825,6 +946,17 @@ This file is the explicit capability and coverage contract for the project.
 
 ## Deferred
 
+### R153 — Knowledge graph interactive visualization
+- Class: differentiator
+- Status: deferred
+- Description: Full interactive graph visualization of knowledge base nodes and edges using a graph library (d3-force, react-flow, or custom SVG) with zoom, pan, and click-to-navigate
+- Why it matters: The knowledge graph API returns nodes and edges but rendering them as an interactive graph requires a visualization library dependency decision
+- Source: research
+- Primary owning slice: none
+- Supporting slices: none
+- Validation: unmapped
+- Notes: M013/S04 surfaces graph data as a simple list/table view instead. Full interactive graph deferred until a graph library is chosen.
+
 ### R140 — Bundled build ships Node.js and CLI tools inside the app bundle
 - Class: differentiator
 - Status: deferred
@@ -1002,10 +1134,22 @@ This file is the explicit capability and coverage contract for the project.
 | R139 | constraint | active | M012/S02 | none | unmapped |
 | R140 | differentiator | deferred | none | none | unmapped |
 | R141 | core-capability | deferred | none | none | unmapped |
+| R142 | core-capability | active | M013/S01 | none | unmapped |
+| R143 | core-capability | active | M013/S02 | none | unmapped |
+| R144 | core-capability | active | M013/S02 | none | unmapped |
+| R145 | core-capability | active | M013/S03 | none | unmapped |
+| R146 | core-capability | active | M013/S04 | none | unmapped |
+| R147 | core-capability | active | M013/S03 | none | unmapped |
+| R148 | core-capability | active | M013/S05 | none | unmapped |
+| R149 | core-capability | active | M013/S06 | none | unmapped |
+| R150 | core-capability | active | M013/S06 | none | unmapped |
+| R151 | quality-attribute | active | M013/S05 | none | unmapped |
+| R152 | constraint | active | M013/all | none | unmapped |
+| R153 | differentiator | deferred | none | none | unmapped |
 
 ## Coverage Summary
 
-- Active requirements: 40
-- Mapped to slices: 40
+- Active requirements: 51
+- Mapped to slices: 51
 - Validated: 35 (R001, R040, R041, R042, R044, R045, R046, R047, R048, R049, R050, R061, R066, R068, R069, R078, R079, R080, R081, R082, R083, R084, R085, R086, R087, R088, R112, R113, R114, R115, R116, R117, R118, R119, R126)
 - Unmapped active requirements: 0

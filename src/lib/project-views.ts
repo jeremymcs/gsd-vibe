@@ -12,6 +12,7 @@ import {
   Activity,
   Play,
   GitBranch,
+  Github,
   BarChart3,
   Flag,
   Layers,
@@ -26,6 +27,8 @@ import {
   ClipboardCheck,
   ShieldCheck,
   Bug,
+  MessageSquare,
+  Settings,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -56,6 +59,7 @@ export const projectViews: ProjectView[] = [
   { id: 'files', label: 'Files', icon: FolderTree, section: 'Core' },
   { id: 'dependencies', label: 'Dependencies', icon: Package, section: 'Core' },
   { id: 'knowledge', label: 'Knowledge', icon: ClipboardList, section: 'Core' },
+  { id: 'github', label: 'GitHub', icon: Github, section: 'Core' },
   { id: 'shell', label: 'Shell', icon: SquareTerminal, section: 'Core' },
   { id: 'envvars', label: 'Env Vars', icon: Key, section: 'Core' },
 
@@ -73,6 +77,8 @@ export const projectViews: ProjectView[] = [
   { id: 'gsd2-skill-health', label: 'Skill Health', icon: Brain, section: 'Diagnostics', gsd2Only: true, expertOnly: true },
   { id: 'gsd2-knowledge-captures', label: 'Knowledge', icon: BookOpen, section: 'Diagnostics', gsd2Only: true, expertOnly: true },
   { id: 'gsd2-reports', label: 'Reports', icon: FileText, section: 'GSD', gsd2Only: true, expertOnly: true },
+  { id: 'gsd2-sessions', label: 'Sessions', icon: MessageSquare, section: 'GSD', gsd2Only: true },
+  { id: 'gsd2-preferences', label: 'Preferences', icon: Settings, section: 'GSD', gsd2Only: true },
 
   // --- GSD-1 ---
   { id: 'gsd-plans', label: 'Plans', icon: FileText, section: 'GSD', gsd1Only: true },

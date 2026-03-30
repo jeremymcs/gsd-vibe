@@ -1594,45 +1594,240 @@ export const useGsdPlanningTemplates = () =>
     staleTime: Infinity,
   });
 
-// ─── Stub hooks for GitHub panel (data layer not yet wired) ───────────────────
-const stubQuery = {
-  data: null,
-  isLoading: false,
-  isFetching: false,
-  isError: false,
-  error: null,
-  status: 'success' as const,
-  isPending: false,
-  isSuccess: true,
+// GitHub
+export const useGithubTokenStatus = () =>
+  useQuery({
+    queryKey: queryKeys.github.tokenStatus(),
+    queryFn: api.githubGetTokenStatus,
+  });
+
+export const useGithubRepoInfo = (projectPath: string) =>
+  useQuery({
+    queryKey: queryKeys.github.repoInfo(projectPath),
+    queryFn: () => api.githubGetRepoInfo(projectPath),
+    enabled: !!projectPath,
+    staleTime: 60_000,
+  });
+
+export const useGithubPrs = (projectPath: string, state = 'open', enabled = true) =>
+  useQuery({
+    queryKey: queryKeys.github.prs(projectPath, state),
+    queryFn: () => api.githubListPrs(projectPath, state),
+    enabled: !!projectPath && enabled,
+    staleTime: 30_000,
+  });
+
+export const useGithubIssues = (projectPath: string, state = 'open', enabled = true, labels?: string) =>
+  useQuery({
+    queryKey: queryKeys.github.issues(projectPath, state, labels),
+    queryFn: () => api.githubListIssues(projectPath, state, labels),
+    enabled: !!projectPath && enabled,
+    staleTime: 30_000,
+  });
+
+export const useGithubCheckRuns = (projectPath: string, gitRef: string, enabled = true) =>
+  useQuery({
+    queryKey: queryKeys.github.checkRuns(projectPath, gitRef),
+    queryFn: () => api.githubListCheckRuns(projectPath, gitRef),
+    enabled: !!projectPath && !!gitRef && enabled,
+    staleTime: 20_000,
+    refetchInterval: 30_000,
+  });
+
+export const useGithubReleases = (projectPath: string, enabled = true) =>
+  useQuery({
+    queryKey: queryKeys.github.releases(projectPath),
+    queryFn: () => api.githubListReleases(projectPath),
+    enabled: !!projectPath && enabled,
+    staleTime: 120_000,
+  });
+
+export const useGithubNotifications = (projectPath: string, enabled = true) =>
+  useQuery({
+    queryKey: queryKeys.github.notifications(projectPath),
+    queryFn: () => api.githubListRepoNotifications(projectPath),
+    enabled: !!projectPath && enabled,
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+  });
+
+export const useGithubCreatePr = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      projectPath,
+      title,
+      body,
+      head,
+      base,
+      draft,
+    }: {
+      projectPath: string;
+      title: string;
+      body: string;
+      head: string;
+      base: string;
+      draft: boolean;
+    }) => api.githubCreatePr(projectPath, title, body, head, base, draft),
+    onSuccess: (_, { projectPath }) => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.github.all() });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.github.prs(projectPath) });
+    },
+  });
 };
 
-const stubMutation = {
-  mutate: () => {},
-  mutateAsync: async () => {},
-  isPending: false,
-  isError: false,
-  isSuccess: false,
-  isIdle: true,
-  error: null,
-  data: null,
-  status: 'idle' as const,
-  reset: () => {},
-  variables: undefined,
-  context: undefined,
-  failureCount: 0,
-  failureReason: null,
-  submittedAt: null,
+export const useGithubCreateIssue = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      projectPath,
+      title,
+      body,
+      labels,
+      assignees,
+    }: {
+      projectPath: string;
+      title: string;
+      body: string;
+      labels: string[];
+      assignees: string[];
+    }) => api.githubCreateIssue(projectPath, title, body, labels, assignees),
+    onSuccess: (_, { projectPath }) => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.github.all() });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.github.issues(projectPath) });
+    },
+  });
 };
 
-export const useGithubTokenStatus = () => stubQuery;
-export const useGithubRepoInfo = (_projectPath: string) => stubQuery;
-export const useGithubPrs = (_projectPath: string) => stubQuery;
-export const useGithubIssues = (_projectPath: string) => stubQuery;
-export const useGithubCheckRuns = (_projectPath: string) => stubQuery;
-export const useGithubReleases = (_projectPath: string) => stubQuery;
-export const useGithubCreatePr = () => stubMutation;
-export const useGithubCreateIssue = () => stubMutation;
-export const useGithubNotifications = (_projectPath: string) => stubQuery;
-export const useGithubImportGhToken = () => stubMutation;
-export const useGithubSaveToken = () => stubMutation;
-export const useGithubRemoveToken = () => stubMutation;
+export const useGithubImportGhToken = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: api.githubImportGhToken,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.github.all() });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.github.tokenStatus() });
+    },
+  });
+};
+
+export const useGithubSaveToken = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (token: string) => api.githubSaveToken(token),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.github.all() });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.github.tokenStatus() });
+    },
+  });
+};
+
+export const useGithubRemoveToken = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: api.githubRemoveToken,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.github.all() });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.github.tokenStatus() });
+    },
+  });
+};
+
+// ============================================================
+// GSD-2 Sessions (M013 / S02)
+// ============================================================
+
+/**
+ * Parse a raw `gsd sessions` output line into a structured entry.
+ *
+ * The `gsd sessions` command outputs lines in a variety of formats depending on
+ * gsd version, but typically resembles:
+ *   2024-01-15T12:34:56Z  session-abc123.jsonl  "My session name"  42 msgs (10u/32a)
+ *
+ * This parser is intentionally tolerant: it extracts what it can and falls back
+ * gracefully when a field is missing or the format changes.
+ */
+export function parseSessionEntry(entry: api.GsdSessionEntry): api.ParsedSessionEntry {
+  const raw = entry.raw;
+
+  // Attempt to extract an ISO-8601 timestamp at the start of the line.
+  const tsMatch = raw.match(/(\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:?\d{2})?)/);
+  const timestamp = tsMatch ? tsMatch[1] : '';
+
+  // Attempt to extract a .jsonl or .json filename.
+  const filenameMatch = raw.match(/(\S+\.jsonl?\b)/);
+  const filename = filenameMatch ? filenameMatch[1] : raw.trim().split(/\s+/)[0] ?? raw.trim();
+
+  // Attempt to extract a quoted session name.
+  const nameMatch = raw.match(/"([^"]+)"/);
+  const name = nameMatch ? nameMatch[1] : null;
+
+  // Attempt to extract total message count: "42 msgs" or "42 messages".
+  const totalMatch = raw.match(/(\d+)\s+msg/i);
+  const message_count = totalMatch ? parseInt(totalMatch[1], 10) : 0;
+
+  // Attempt to extract user/assistant breakdown: "(10u/32a)" or "10u 32a".
+  const breakdownMatch = raw.match(/\((\d+)u\/(\d+)a\)/i) ?? raw.match(/(\d+)u\s+(\d+)a/i);
+  const user_message_count = breakdownMatch ? parseInt(breakdownMatch[1], 10) : 0;
+  const assistant_message_count = breakdownMatch ? parseInt(breakdownMatch[2], 10) : 0;
+
+  // First message preview: anything in square brackets or after a long dash.
+  const firstMsgMatch = raw.match(/\[([^\]]{3,})\]/) ?? raw.match(/—\s+(.+)$/);
+  const first_message = firstMsgMatch ? firstMsgMatch[1].trim() : null;
+
+  return {
+    filename,
+    timestamp,
+    name,
+    first_message,
+    message_count,
+    user_message_count,
+    assistant_message_count,
+    raw,
+  };
+}
+
+export const useGsd2Sessions = (projectId: string, enabled = true) =>
+  useQuery({
+    queryKey: queryKeys.gsd2Sessions(projectId),
+    queryFn: async () => {
+      const raw = await api.gsd2ListSessions(projectId);
+      return raw.map(parseSessionEntry);
+    },
+    enabled: !!projectId && enabled,
+    staleTime: 30_000,
+    refetchOnWindowFocus: false,
+  });
+
+// ============================================================
+// GSD-2 Preferences (M013 / S02)
+// ============================================================
+
+export const useGsd2Preferences = (projectPath: string | undefined, enabled = true) =>
+  useQuery({
+    queryKey: queryKeys.gsd2Preferences(projectPath),
+    queryFn: () => api.gsd2GetPreferences(projectPath!),
+    enabled: !!projectPath && enabled,
+    staleTime: 60_000,
+  });
+
+export const useGsd2SavePreferences = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      projectPath,
+      scope,
+      payload,
+    }: {
+      projectPath: string;
+      scope: string;
+      payload: Record<string, unknown>;
+    }) => api.gsd2SavePreferences(projectPath, scope, payload),
+    onSuccess: (_data, { projectPath }) => {
+      toast.success('Preferences saved');
+      void queryClient.invalidateQueries({ queryKey: queryKeys.gsd2Preferences(projectPath) });
+    },
+    onError: (error) => {
+      toast.error('Failed to save preferences', { description: getErrorMessage(error) });
+    },
+  });
+};

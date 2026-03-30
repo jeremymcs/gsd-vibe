@@ -17,6 +17,18 @@ export const queryKeys = {
   gitBranches: (path: string) => ["git-branches", path] as const,
   gitTags: (path: string) => ["git-tags", path] as const,
 
+  // GitHub
+  github: {
+    all: () => ["github"] as const,
+    tokenStatus: () => ["github", "token-status"] as const,
+    repoInfo: (projectPath: string) => ["github", "repo-info", projectPath] as const,
+    prs: (projectPath: string, state?: string) => ["github", "prs", projectPath, state] as const,
+    issues: (projectPath: string, state?: string, labels?: string) => ["github", "issues", projectPath, state, labels] as const,
+    checkRuns: (projectPath: string, gitRef: string) => ["github", "check-runs", projectPath, gitRef] as const,
+    releases: (projectPath: string) => ["github", "releases", projectPath] as const,
+    notifications: (projectPath: string) => ["github", "notifications", projectPath] as const,
+  },
+
   // Activity
   activity: (projectId?: string, limit?: number) => ["activity", projectId, limit] as const,
   allActivity: () => ["activity"] as const,
@@ -130,4 +142,5 @@ export const queryKeys = {
   gsd2Export: (projectId: string) => ['gsd2', 'export', projectId] as const,
   gsd2ReportsIndex: (projectId: string) => ['gsd2', 'reports-index', projectId] as const,
   gsd2Preferences: (path?: string) => ['gsd2', 'preferences', path] as const,
+  gsd2Sessions: (projectId: string) => ['gsd2', 'sessions', projectId] as const,
 };

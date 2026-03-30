@@ -30,6 +30,7 @@ import {
   GsdUatTab,
   DependenciesTab,
   KnowledgeTab,
+  GitHubPanel,
   EnvVarsTab,
   Gsd2HealthTab,
   Gsd2WorktreesTab,
@@ -45,6 +46,8 @@ import {
   Gsd2ReportsTab,
   Gsd2DashboardView,
   GuidedProjectView,
+  Gsd2SessionsTab,
+  Gsd2PreferencesTab,
 } from "@/components/project";
 import { TerminalTabs } from "@/components/terminal";
 import { watchProjectFiles } from "@/lib/tauri";
@@ -274,6 +277,8 @@ function ViewRenderer({
       return <DependenciesTab projectId={projectId} projectPath={projectPath} />;
     case 'knowledge':
       return <KnowledgeTab projectId={projectId} />;
+    case 'github':
+      return <GitHubPanel projectId={projectId} projectPath={projectPath} />;
     case 'envvars':
       return <EnvVarsTab projectId={projectId} projectPath={projectPath} />;
 
@@ -304,6 +309,10 @@ function ViewRenderer({
       return <KnowledgeCapturesPanel projectId={projectId} projectPath={projectPath} />;
     case 'gsd2-reports':
       return <Gsd2ReportsTab projectId={projectId} projectPath={projectPath} />;
+    case 'gsd2-sessions':
+      return <Gsd2SessionsTab projectId={projectId} projectPath={projectPath} />;
+    case 'gsd2-preferences':
+      return <Gsd2PreferencesTab projectId={projectId} projectPath={projectPath} />;
 
     // GSD-1 views
     case 'gsd-plans':
