@@ -1,14 +1,20 @@
 // GSD VibeFlow - Project Row (dashboard list item)
-// Compact single-row layout with live GSD stats
+// Compact single-row layout with live GSD stats, cost, and status
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Star, GitBranch, Clock, AlertTriangle, CheckSquare } from 'lucide-react';
+import { Star, GitBranch, Clock, AlertTriangle, CheckSquare, DollarSign } from 'lucide-react';
 import { useToggleFavorite, useGsdTodos } from '@/lib/queries';
-import { formatRelativeTime, cn } from '@/lib/utils';
-import { getProjectType, projectTypeConfig } from '@/lib/design-tokens';
+import { formatRelativeTime, formatCost, cn } from '@/lib/utils';
+import {
+  getStatusClasses,
+  getProjectType,
+  projectTypeConfig,
+  type Status,
+} from '@/lib/design-tokens';
 import type { ProjectWithStats, GitInfo } from '@/lib/tauri';
+import { Badge } from '@/components/ui/badge';
 import {
   Tooltip,
   TooltipContent,
@@ -83,6 +89,16 @@ export const ProjectRow = React.memo(function ProjectRow({
         </span>
       </div>
 
+      {/* Status badge */}
+      <span
+        className={cn(
+          'text-[9px] px-1.5 py-0.5 rounded-full shrink-0',
+          getStatusClasses(project.status as Status).combined
+        )}
+      >
+        {project.status}
+      </span>
+
       {/* Type badge */}
       <span
         className={cn(
@@ -92,6 +108,17 @@ export const ProjectRow = React.memo(function ProjectRow({
       >
         {typeConfig.label}
       </span>
+
+      {/* GSD version badge */}
+      {(project.gsd_version === 'gsd2' || project.gsd_version === 'gsd1') && (
+        <Badge
+          variant={project.gsd_version === 'gsd2' ? 'subtle-cyan' : 'secondary'}
+          size="sm"
+          className="shrink-0"
+        >
+          {project.gsd_version === 'gsd2' ? 'GSD-2' : 'GSD-1'}
+        </Badge>
+      )}
 
       {/* GSD stats — blocker + todo count */}
       {hasGsd && (
@@ -118,8 +145,8 @@ export const ProjectRow = React.memo(function ProjectRow({
         </div>
       )}
 
-      {/* Progress */}
-      <div className="flex items-center gap-2 w-[130px] shrink-0">
+      {/* Progress — tasks + phases */}
+      <div className="flex items-center gap-2 w-[160px] shrink-0">
         {progressPct !== null && fp ? (
           <>
             <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
@@ -131,6 +158,11 @@ export const ProjectRow = React.memo(function ProjectRow({
             <span className="text-[10px] text-muted-foreground whitespace-nowrap tabular-nums">
               {fp.completed_tasks}/{fp.total_tasks}
             </span>
+            {fp.total_phases > 0 && (
+              <span className="text-[9px] text-muted-foreground/60 whitespace-nowrap tabular-nums">
+                {fp.completed_phases}/{fp.total_phases}p
+              </span>
+            )}
           </>
         ) : (
           <span className="text-[10px] text-muted-foreground">
@@ -158,6 +190,14 @@ export const ProjectRow = React.memo(function ProjectRow({
           </span>
         ) : null}
       </div>
+
+      {/* Cost */}
+      {project.total_cost > 0 && (
+        <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground shrink-0">
+          <DollarSign className="h-3 w-3 shrink-0" />
+          {formatCost(project.total_cost)}
+        </span>
+      )}
 
       {/* Last activity */}
       <div className="ml-auto shrink-0">

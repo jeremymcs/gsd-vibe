@@ -1,5 +1,5 @@
 // GSD VibeFlow - Shared Project Card Component
-// Enriched card with stats, git info, progress, costs, and favorites
+// Enriched card with stats, git info, progress, costs, todos, and favorites
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { Link, useNavigate } from 'react-router-dom';
@@ -10,6 +10,9 @@ import {
   GitBranch,
   DollarSign,
   Clock,
+  AlertTriangle,
+  CheckSquare,
+  Layers,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -20,7 +23,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { useGitInfo, useToggleFavorite } from '@/lib/queries';
+import { useGitInfo, useToggleFavorite, useGsdTodos } from '@/lib/queries';
 import { formatCost, formatRelativeTime, truncatePath, cn } from '@/lib/utils';
 import {
   getStatusClasses,
@@ -41,6 +44,13 @@ export function ProjectCard({ project, showDescription, selected, onToggleSelect
   const navigate = useNavigate();
   const { data: gitInfo } = useGitInfo(project.path);
   const toggleFavorite = useToggleFavorite();
+  const hasGsd = !!project.tech_stack?.has_planning;
+
+  // Live GSD todos for blocker/todo counts
+  const { data: todos } = useGsdTodos(hasGsd ? project.id : '', 'pending');
+  const pendingTodos = todos ?? [];
+  const blockerCount = pendingTodos.filter((t) => t.is_blocker).length;
+  const todoCount = pendingTodos.length;
 
   const handleQuickAction = (
     e: React.MouseEvent,
@@ -70,12 +80,11 @@ export function ProjectCard({ project, showDescription, selected, onToggleSelect
   const projectType = getProjectType(project.tech_stack);
   const typeConfig = projectTypeConfig[projectType];
 
+  const fp = project.roadmap_progress;
   const progressPct =
-    project.roadmap_progress && project.roadmap_progress.total_tasks > 0
+    fp && fp.total_tasks > 0
       ? Math.round(
-          (project.roadmap_progress.completed_tasks /
-            project.roadmap_progress.total_tasks) *
-            100
+          (fp.completed_tasks / fp.total_tasks) * 100
         )
       : 0;
 
@@ -117,18 +126,6 @@ export function ProjectCard({ project, showDescription, selected, onToggleSelect
           <h3 className="font-semibold truncate">
             {project.name}
           </h3>
-
-          {false && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span className="relative flex h-2.5 w-2.5 shrink-0">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-status-success opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-status-success" />
-                </span>
-              </TooltipTrigger>
-              <TooltipContent>Execution running</TooltipContent>
-            </Tooltip>
-          )}
 
           {/* Project type badge */}
           <Tooltip>
@@ -194,7 +191,7 @@ export function ProjectCard({ project, showDescription, selected, onToggleSelect
         </p>
       )}
 
-      {/* Row 4: Tech stack badges + Git branch */}
+      {/* Row 4: Tech stack badges + Git branch + GSD info */}
       <div className="flex items-center gap-2 mt-2 ml-8 flex-wrap">
         {project.tech_stack?.framework && (
           <span className="text-xs bg-muted px-2 py-0.5 rounded">
@@ -237,26 +234,55 @@ export function ProjectCard({ project, showDescription, selected, onToggleSelect
             {project.gsd_version === 'gsd2' ? 'GSD-2' : 'GSD-1'}
           </Badge>
         )}
+        {project.tech_stack?.gsd_phase_count != null && (
+          <span className="inline-flex items-center gap-1 text-xs text-muted-foreground bg-muted/60 border border-border/50 rounded px-2 py-0.5">
+            <Layers className="h-3 w-3" />
+            {project.tech_stack.gsd_phase_count}{' '}
+            {project.tech_stack.gsd_phase_count === 1 ? 'phase' : 'phases'}
+          </span>
+        )}
+        {blockerCount > 0 && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="inline-flex items-center gap-1 text-xs font-semibold text-status-error bg-status-error/10 border border-status-error/20 rounded px-2 py-0.5">
+                <AlertTriangle className="h-3 w-3" />
+                {blockerCount} {blockerCount === 1 ? 'blocker' : 'blockers'}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>
+              {blockerCount} blocking {blockerCount === 1 ? 'todo' : 'todos'} need attention
+            </TooltipContent>
+          </Tooltip>
+        )}
+        {todoCount > 0 && (
+          <span className="inline-flex items-center gap-1 text-xs text-muted-foreground bg-muted/60 border border-border/50 rounded px-2 py-0.5">
+            <CheckSquare className="h-3 w-3" />
+            {todoCount} {todoCount === 1 ? 'todo' : 'todos'}
+          </span>
+        )}
       </div>
 
       {/* Row 5: Progress bar + Cost + Last activity */}
       <div className="flex items-center gap-3 mt-2.5 ml-8">
-        {/* Roadmap progress */}
-        {project.roadmap_progress &&
-          project.roadmap_progress.total_tasks > 0 && (
-            <div className="flex items-center gap-2 flex-1 min-w-0">
-              <Progress
-                value={progressPct}
-                variant="default"
-                size="sm"
-                className="flex-1 max-w-[140px]"
-              />
-              <span className="text-xs text-muted-foreground whitespace-nowrap">
-                {project.roadmap_progress.completed_tasks}/
-                {project.roadmap_progress.total_tasks} tasks
+        {/* Roadmap progress — tasks + phases */}
+        {fp && fp.total_tasks > 0 && (
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <Progress
+              value={progressPct}
+              variant="default"
+              size="sm"
+              className="flex-1 max-w-[140px]"
+            />
+            <span className="text-xs text-muted-foreground whitespace-nowrap tabular-nums">
+              {fp.completed_tasks}/{fp.total_tasks} tasks
+            </span>
+            {fp.total_phases > 0 && (
+              <span className="text-[10px] text-muted-foreground/60 whitespace-nowrap tabular-nums">
+                ({fp.completed_phases}/{fp.total_phases} phases)
               </span>
-            </div>
-          )}
+            )}
+          </div>
+        )}
 
         <div className="flex items-center gap-2 ml-auto shrink-0">
           {/* Cost badge */}

@@ -1,15 +1,25 @@
 // GSD VibeFlow - Project Card (dashboard grid item)
-// Enhanced with live GSD todo/blocker/phase data
+// Enriched card with stats, git info, progress, costs, and live GSD data
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Star, GitBranch, Clock, AlertTriangle, CheckSquare } from 'lucide-react';
-import { useToggleFavorite, useGsdTodos } from '@/lib/queries';
-import { formatRelativeTime, cn } from '@/lib/utils';
 import {
+  Star,
+  GitBranch,
+  Clock,
+  AlertTriangle,
+  CheckSquare,
+  DollarSign,
+  Layers,
+} from 'lucide-react';
+import { useToggleFavorite, useGsdTodos } from '@/lib/queries';
+import { formatRelativeTime, formatCost, cn } from '@/lib/utils';
+import {
+  getStatusClasses,
   getProjectType,
   projectTypeConfig,
+  type Status,
 } from '@/lib/design-tokens';
 import type { ProjectWithStats, GitInfo } from '@/lib/tauri';
 import { Card, CardContent } from '@/components/ui/card';
@@ -21,7 +31,7 @@ import {
 } from '@/components/ui/tooltip';
 
 // Fixed card height so every card is identical regardless of content
-const CARD_HEIGHT = 210;
+const CARD_HEIGHT = 240;
 
 interface ProjectCardProps {
   project: ProjectWithStats;
@@ -65,7 +75,7 @@ export const ProjectCard = React.memo(function ProjectCard({
         className="flex flex-col overflow-hidden"
         style={{ height: CARD_HEIGHT }}
       >
-        {/* Header: star + name + type badge */}
+        {/* Header: star + name + status + type badge */}
         <div className="flex items-center gap-2 px-4 pt-4 pb-0">
           <button
             onClick={handleStar}
@@ -91,6 +101,14 @@ export const ProjectCard = React.memo(function ProjectCard({
           <h3 className="font-semibold text-foreground truncate flex-1 text-sm">
             {project.name}
           </h3>
+          <span
+            className={cn(
+              'text-[10px] px-1.5 py-0.5 rounded-full shrink-0',
+              getStatusClasses(project.status as Status).combined
+            )}
+          >
+            {project.status}
+          </span>
           <Tooltip>
             <TooltipTrigger asChild>
               <span
@@ -113,8 +131,24 @@ export const ProjectCard = React.memo(function ProjectCard({
             {project.description || <span className="text-muted-foreground/40">No description</span>}
           </p>
 
+          {/* Tech stack badges */}
+          {(project.tech_stack?.framework || project.tech_stack?.language) && (
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {project.tech_stack.framework && (
+                <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded">
+                  {project.tech_stack.framework}
+                </span>
+              )}
+              {project.tech_stack.language && (
+                <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded">
+                  {project.tech_stack.language}
+                </span>
+              )}
+            </div>
+          )}
+
           {/* Stats row */}
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 flex-wrap">
             {hasGsd ? (
               <>
                 {(project.gsd_version === 'gsd2' || project.gsd_version === 'gsd1') && (
@@ -127,6 +161,7 @@ export const ProjectCard = React.memo(function ProjectCard({
                 )}
                 {project.tech_stack?.gsd_phase_count != null && (
                   <span className="inline-flex items-center gap-1 text-[10px] font-medium text-muted-foreground bg-muted/60 border border-border/50 rounded px-1.5 py-0.5">
+                    <Layers className="h-2.5 w-2.5" />
                     {project.tech_stack.gsd_phase_count}{' '}
                     {project.tech_stack.gsd_phase_count === 1 ? 'phase' : 'phases'}
                   </span>
@@ -158,7 +193,7 @@ export const ProjectCard = React.memo(function ProjectCard({
             )}
           </div>
 
-          {/* Progress */}
+          {/* Progress — tasks + phases */}
           <div className="flex items-center gap-3">
             {progressPct !== null && fp ? (
               <div className="flex-1 flex items-center gap-2">
@@ -171,6 +206,11 @@ export const ProjectCard = React.memo(function ProjectCard({
                 <span className="text-xs text-muted-foreground whitespace-nowrap tabular-nums">
                   {fp.completed_tasks}/{fp.total_tasks}
                 </span>
+                {fp.total_phases > 0 && (
+                  <span className="text-[10px] text-muted-foreground/60 whitespace-nowrap tabular-nums">
+                    ({fp.completed_phases}/{fp.total_phases} phases)
+                  </span>
+                )}
               </div>
             ) : (
               <span className="text-xs text-muted-foreground/60">No roadmap</span>
@@ -178,7 +218,7 @@ export const ProjectCard = React.memo(function ProjectCard({
           </div>
         </CardContent>
 
-        {/* Footer: git + activity — pinned to bottom */}
+        {/* Footer: git + cost + activity — pinned to bottom */}
         <div className="flex items-center gap-3 text-xs text-muted-foreground px-4 pb-3 pt-2 mt-auto">
           {gitInfo?.has_git && gitInfo.branch ? (
             <span
@@ -194,6 +234,14 @@ export const ProjectCard = React.memo(function ProjectCard({
               </span>
             </span>
           ) : null}
+
+          {project.total_cost > 0 && (
+            <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground">
+              <DollarSign className="h-3 w-3 shrink-0" />
+              {formatCost(project.total_cost)}
+            </span>
+          )}
+
           {project.last_activity_at && (
             <span className="inline-flex items-center gap-1 ml-auto">
               <Clock className="h-3 w-3 shrink-0" />
