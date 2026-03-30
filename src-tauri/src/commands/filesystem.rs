@@ -927,10 +927,20 @@ pub async fn read_project_docs(path: String) -> Result<Option<ProjectDocs>, Stri
     }
 
     // Priority chain for documentation
-    // 1. .planning/PROJECT.md
+    // 1. .planning/PROJECT.md (GSD-1)
     let project_md_path = base_path.join(".planning/PROJECT.md");
     if project_md_path.exists() {
         if let Ok(content) = std::fs::read_to_string(&project_md_path) {
+            if let Some(docs) = parse_project_md(&content) {
+                return Ok(Some(docs));
+            }
+        }
+    }
+
+    // 2. .gsd/PROJECT.md (GSD-2)
+    let gsd_project_md_path = base_path.join(".gsd/PROJECT.md");
+    if gsd_project_md_path.exists() {
+        if let Ok(content) = std::fs::read_to_string(&gsd_project_md_path) {
             if let Some(docs) = parse_project_md(&content) {
                 return Ok(Some(docs));
             }
@@ -1012,8 +1022,8 @@ fn parse_project_md(content: &str) -> Option<ProjectDocs> {
 
     if description.is_some() || goal.is_some() {
         return Some(ProjectDocs {
-            description,
-            goal,
+            description: description.map(|d| strip_markdown_inline(&d)),
+            goal: goal.map(|g| strip_markdown_inline(&g)),
             source: "PROJECT.md".to_string(),
         });
     }
@@ -1026,9 +1036,28 @@ fn parse_readme(content: &str) -> Option<ProjectDocs> {
     let lines: Vec<&str> = content.lines().collect();
     let mut description_lines = Vec::new();
     let mut in_paragraph = false;
+    let mut in_html_comment = false;
 
     for line in lines {
         let trimmed = line.trim();
+
+        // Track multi-line HTML comments
+        if in_html_comment {
+            if trimmed.contains("-->") {
+                in_html_comment = false;
+            }
+            continue;
+        }
+
+        // Skip single-line HTML comments: <!-- ... -->
+        if trimmed.starts_with("<!--") {
+            if !trimmed.contains("-->") || trimmed.ends_with("<!--") {
+                // Multi-line comment starts here
+                in_html_comment = true;
+            }
+            // Either way, skip this line
+            continue;
+        }
 
         // Skip empty lines before first paragraph
         if trimmed.is_empty() {
@@ -1052,6 +1081,11 @@ fn parse_readme(content: &str) -> Option<ProjectDocs> {
             continue;
         }
 
+        // Skip HTML tags (e.g. <div>, <p>, <br/>)
+        if trimmed.starts_with('<') {
+            continue;
+        }
+
         // Start collecting paragraph
         in_paragraph = true;
         description_lines.push(trimmed);
@@ -1059,11 +1093,13 @@ fn parse_readme(content: &str) -> Option<ProjectDocs> {
 
     if !description_lines.is_empty() {
         let description = description_lines.join(" ");
+        // Strip markdown formatting for clean plain-text description
+        let cleaned = strip_markdown_inline(&description);
         // Limit to reasonable length
-        let truncated = if description.len() > 500 {
-            format!("{}...", &description[..497])
+        let truncated = if cleaned.len() > 500 {
+            format!("{}...", &cleaned[..497])
         } else {
-            description
+            cleaned
         };
 
         return Some(ProjectDocs {
@@ -1074,6 +1110,69 @@ fn parse_readme(content: &str) -> Option<ProjectDocs> {
     }
 
     None
+}
+
+/// Strip common markdown inline formatting from a string for plain-text display.
+/// Handles: **bold**, *italic*, __bold__, _italic_, `code`, ~~strikethrough~~
+fn strip_markdown_inline(s: &str) -> String {
+    let mut result = s.to_string();
+    // Bold/italic: ** or __ (bold first, then single)
+    // Replace **text** and __text__ patterns
+    while let Some(start) = result.find("**") {
+        if let Some(end) = result[start + 2..].find("**") {
+            let end_abs = start + 2 + end;
+            let inner = result[start + 2..end_abs].to_string();
+            result = format!("{}{}{}", &result[..start], inner, &result[end_abs + 2..]);
+        } else {
+            break;
+        }
+    }
+    while let Some(start) = result.find("__") {
+        if let Some(end) = result[start + 2..].find("__") {
+            let end_abs = start + 2 + end;
+            let inner = result[start + 2..end_abs].to_string();
+            result = format!("{}{}{}", &result[..start], inner, &result[end_abs + 2..]);
+        } else {
+            break;
+        }
+    }
+    // Strikethrough: ~~text~~
+    while let Some(start) = result.find("~~") {
+        if let Some(end) = result[start + 2..].find("~~") {
+            let end_abs = start + 2 + end;
+            let inner = result[start + 2..end_abs].to_string();
+            result = format!("{}{}{}", &result[..start], inner, &result[end_abs + 2..]);
+        } else {
+            break;
+        }
+    }
+    // Inline code: `text`
+    while let Some(start) = result.find('`') {
+        if let Some(end) = result[start + 1..].find('`') {
+            let end_abs = start + 1 + end;
+            let inner = result[start + 1..end_abs].to_string();
+            result = format!("{}{}{}", &result[..start], inner, &result[end_abs + 1..]);
+        } else {
+            break;
+        }
+    }
+    // Single * and _ for italic (be careful not to strip word_with_underscores)
+    // Only strip *text* where * is at word boundary
+    while let Some(start) = result.find('*') {
+        if let Some(end) = result[start + 1..].find('*') {
+            let end_abs = start + 1 + end;
+            let inner = result[start + 1..end_abs].to_string();
+            result = format!("{}{}{}", &result[..start], inner, &result[end_abs + 1..]);
+        } else {
+            break;
+        }
+    }
+    result
+}
+
+/// Public wrapper for strip_markdown_inline, used from projects.rs fallback path
+pub fn strip_markdown_inline_pub(s: &str) -> String {
+    strip_markdown_inline(s)
 }
 
 /// Parse package.json for description field

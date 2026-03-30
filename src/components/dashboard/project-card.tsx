@@ -20,6 +20,9 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 
+// Fixed card height so every card is identical regardless of content
+const CARD_HEIGHT = 210;
+
 interface ProjectCardProps {
   project: ProjectWithStats;
   gitInfo: GitInfo | null;
@@ -58,9 +61,12 @@ export const ProjectCard = React.memo(function ProjectCard({
 
   return (
     <Link to={`/projects/${project.id}`} className="block">
-      <Card className="h-full">
-        {/* Header */}
-        <div className="flex items-center gap-2 p-4 pb-0">
+      <Card
+        className="flex flex-col overflow-hidden"
+        style={{ height: CARD_HEIGHT }}
+      >
+        {/* Header: star + name + type badge */}
+        <div className="flex items-center gap-2 px-4 pt-4 pb-0">
           <button
             onClick={handleStar}
             className={cn(
@@ -100,68 +106,59 @@ export const ProjectCard = React.memo(function ProjectCard({
           </Tooltip>
         </div>
 
-        <CardContent className="p-4 pt-3 space-y-3">
-          {/* Description */}
-          {project.description && (
-            <p className="text-xs text-muted-foreground line-clamp-2">
-              {project.description}
-            </p>
-          )}
+        {/* Body: description + stats + progress (flex-1 to fill) */}
+        <CardContent className="px-4 pt-2 pb-0 flex-1 flex flex-col gap-2 overflow-hidden">
+          {/* Description — always present */}
+          <p className="text-xs text-muted-foreground line-clamp-2">
+            {project.description || <span className="text-muted-foreground/40">No description</span>}
+          </p>
 
-          {/* GSD live stats row — only for GSD projects */}
-          {hasGsd && (
-            <div className="flex items-center gap-2 flex-wrap">
-              {/* GSD version badge */}
-              {(project.gsd_version === 'gsd2' || project.gsd_version === 'gsd1') && (
-                <Badge
-                  variant={project.gsd_version === 'gsd2' ? 'subtle-cyan' : 'secondary'}
-                  size="sm"
-                >
-                  {project.gsd_version === 'gsd2' ? 'GSD-2' : 'GSD-1'}
-                </Badge>
-              )}
+          {/* Stats row */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {hasGsd ? (
+              <>
+                {(project.gsd_version === 'gsd2' || project.gsd_version === 'gsd1') && (
+                  <Badge
+                    variant={project.gsd_version === 'gsd2' ? 'subtle-cyan' : 'secondary'}
+                    size="sm"
+                  >
+                    {project.gsd_version === 'gsd2' ? 'GSD-2' : 'GSD-1'}
+                  </Badge>
+                )}
+                {project.tech_stack?.gsd_phase_count != null && (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-medium text-muted-foreground bg-muted/60 border border-border/50 rounded px-1.5 py-0.5">
+                    {project.tech_stack.gsd_phase_count}{' '}
+                    {project.tech_stack.gsd_phase_count === 1 ? 'phase' : 'phases'}
+                  </span>
+                )}
+                {blockerCount > 0 && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-status-error bg-status-error/10 border border-status-error/20 rounded px-1.5 py-0.5">
+                        <AlertTriangle className="h-2.5 w-2.5" />
+                        {blockerCount} {blockerCount === 1 ? 'blocker' : 'blockers'}
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {blockerCount} blocking {blockerCount === 1 ? 'todo' : 'todos'} need attention
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+                {todoCount > 0 ? (
+                  <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground bg-muted/60 border border-border/50 rounded px-1.5 py-0.5">
+                    <CheckSquare className="h-2.5 w-2.5" />
+                    {todoCount} {todoCount === 1 ? 'todo' : 'todos'}
+                  </span>
+                ) : blockerCount === 0 ? (
+                  <span className="text-[10px] text-muted-foreground/60">No open todos</span>
+                ) : null}
+              </>
+            ) : (
+              <span className="text-[10px] text-muted-foreground/60">No planning data</span>
+            )}
+          </div>
 
-              {/* Phase count badge */}
-              {project.tech_stack?.gsd_phase_count != null && (
-                <span className="inline-flex items-center gap-1 text-[10px] font-medium text-muted-foreground bg-muted/60 border border-border/50 rounded px-1.5 py-0.5">
-                  {project.tech_stack.gsd_phase_count}{' '}
-                  {project.tech_stack.gsd_phase_count === 1 ? 'phase' : 'phases'}
-                </span>
-              )}
-
-              {/* Blocker chip — high priority, shown before todo count */}
-              {blockerCount > 0 && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-status-error bg-status-error/10 border border-status-error/20 rounded px-1.5 py-0.5">
-                      <AlertTriangle className="h-2.5 w-2.5" />
-                      {blockerCount} {blockerCount === 1 ? 'blocker' : 'blockers'}
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {blockerCount} blocking {blockerCount === 1 ? 'todo' : 'todos'} need attention
-                  </TooltipContent>
-                </Tooltip>
-              )}
-
-              {/* Todo count chip */}
-              {todoCount > 0 && (
-                <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground bg-muted/60 border border-border/50 rounded px-1.5 py-0.5">
-                  <CheckSquare className="h-2.5 w-2.5" />
-                  {todoCount} {todoCount === 1 ? 'todo' : 'todos'}
-                </span>
-              )}
-
-              {/* No todos: clean state */}
-              {todoCount === 0 && blockerCount === 0 && (
-                <span className="text-[10px] text-muted-foreground/60">
-                  No open todos
-                </span>
-              )}
-            </div>
-          )}
-
-          {/* Progress row */}
+          {/* Progress */}
           <div className="flex items-center gap-3">
             {progressPct !== null && fp ? (
               <div className="flex-1 flex items-center gap-2">
@@ -176,41 +173,34 @@ export const ProjectCard = React.memo(function ProjectCard({
                 </span>
               </div>
             ) : (
-              !hasGsd && (
-                <span className="text-xs text-muted-foreground flex-1">
-                  No roadmap
-                </span>
-              )
-            )}
-          </div>
-
-          {/* Info row: git, activity */}
-          <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
-            {/* Git */}
-            {gitInfo?.has_git && gitInfo.branch ? (
-              <span
-                className={cn(
-                  'inline-flex items-center gap-1 truncate max-w-[120px]',
-                  gitInfo.is_dirty && 'text-status-warning'
-                )}
-              >
-                <GitBranch className="h-3 w-3 shrink-0" />
-                <span className="truncate">
-                  {gitInfo.branch}
-                  {gitInfo.is_dirty ? ' *' : ''}
-                </span>
-              </span>
-            ) : null}
-
-            {/* Last activity */}
-            {project.last_activity_at && (
-              <span className="inline-flex items-center gap-1 ml-auto">
-                <Clock className="h-3 w-3 shrink-0" />
-                {formatRelativeTime(project.last_activity_at)}
-              </span>
+              <span className="text-xs text-muted-foreground/60">No roadmap</span>
             )}
           </div>
         </CardContent>
+
+        {/* Footer: git + activity — pinned to bottom */}
+        <div className="flex items-center gap-3 text-xs text-muted-foreground px-4 pb-3 pt-2 mt-auto">
+          {gitInfo?.has_git && gitInfo.branch ? (
+            <span
+              className={cn(
+                'inline-flex items-center gap-1 truncate max-w-[120px]',
+                gitInfo.is_dirty && 'text-status-warning'
+              )}
+            >
+              <GitBranch className="h-3 w-3 shrink-0" />
+              <span className="truncate">
+                {gitInfo.branch}
+                {gitInfo.is_dirty ? ' *' : ''}
+              </span>
+            </span>
+          ) : null}
+          {project.last_activity_at && (
+            <span className="inline-flex items-center gap-1 ml-auto">
+              <Clock className="h-3 w-3 shrink-0" />
+              {formatRelativeTime(project.last_activity_at)}
+            </span>
+          )}
+        </div>
       </Card>
     </Link>
   );

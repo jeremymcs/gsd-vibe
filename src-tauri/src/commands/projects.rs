@@ -353,16 +353,17 @@ pub async fn import_project_enhanced(
                 let project_md_path = std::path::Path::new(&path).join(".planning/PROJECT.md");
                 if project_md_path.exists() {
                     if let Ok(content) = std::fs::read_to_string(&project_md_path) {
-                        // Use first non-empty, non-heading line as a fallback description
+                        // Use first non-empty, non-heading, non-comment line as a fallback description
                         let fallback_desc: Option<String> = content
                             .lines()
                             .map(|l| l.trim())
-                            .find(|l| !l.is_empty() && !l.starts_with('#'))
+                            .find(|l| !l.is_empty() && !l.starts_with('#') && !l.starts_with("<!--"))
                             .map(|l| {
-                                if l.len() > 200 {
-                                    format!("{}...", &l[..197])
+                                let cleaned = crate::commands::filesystem::strip_markdown_inline_pub(l);
+                                if cleaned.len() > 200 {
+                                    format!("{}...", &cleaned[..197])
                                 } else {
-                                    l.to_string()
+                                    cleaned
                                 }
                             });
                         if let Some(ref desc_text) = fallback_desc {

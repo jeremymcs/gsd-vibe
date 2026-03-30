@@ -217,14 +217,11 @@ export function Dashboard() {
 
             {/* Grid view */}
             {viewMode === 'grid' && filteredProjects.length > 0 && (
-              <div 
-                className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"
-                style={{ gridAutoRows: '1fr' }}
-              >
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                 {filteredProjects.map((project, index) => (
                   <div
                     key={project.id}
-                    className="animate-stagger-in flex"
+                    className="animate-stagger-in"
                     style={{ animationDelay: `${Math.min(index * 50, 1000)}ms` }}
                   >
                     <ProjectCard

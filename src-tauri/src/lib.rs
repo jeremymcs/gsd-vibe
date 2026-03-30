@@ -114,6 +114,15 @@ pub fn run() {
             let watcher_manager = commands::watcher::WatcherManager::new();
             app.manage(Arc::new(Mutex::new(watcher_manager)));
 
+            // Spawn background task to refresh stale project descriptions
+            // (fixes HTML comments, raw markdown markers stored from previous imports)
+            let pool_for_refresh = pool.clone();
+            tauri::async_runtime::spawn(async move {
+                if let Err(e) = refresh_stale_descriptions(pool_for_refresh).await {
+                    tracing::warn!("Description refresh failed (non-fatal): {}", e);
+                }
+            });
+
             tracing::info!("GSD VibeFlow initialized");
             Ok(())
         })
@@ -320,6 +329,20 @@ pub fn run() {
             commands::gsd2::gsd2_get_reports_index,
             commands::gsd2::gsd2_get_preferences,
             commands::gsd2::gsd2_save_preferences,
+            // GitHub commands
+            commands::github::github_get_token_status,
+            commands::github::github_get_repo_info,
+            commands::github::github_list_prs,
+            commands::github::github_create_pr,
+            commands::github::github_get_pr_reviews,
+            commands::github::github_list_issues,
+            commands::github::github_create_issue,
+            commands::github::github_list_check_runs,
+            commands::github::github_list_releases,
+            commands::github::github_list_repo_notifications,
+            commands::github::github_import_gh_token,
+            commands::github::github_save_token,
+            commands::github::github_remove_token,
             // Secrets / OS keychain commands
             commands::secrets::set_secret,
             commands::secrets::get_secret,
@@ -334,6 +357,67 @@ pub fn run() {
         ])
         .run(tauri::generate_context!())
         .expect("error while running GSD VibeFlow");
+}
+
+/// Re-read descriptions for projects whose stored description contains HTML comments
+/// or raw markdown formatting. Runs once at startup, non-blocking.
+async fn refresh_stale_descriptions(pool: Arc<DbPool>) -> Result<(), String> {
+    use rusqlite::params;
+
+    // Read all projects with their current descriptions
+    let projects: Vec<(String, Option<String>, String)> = {
+        let conn = pool.read().await;
+        let mut stmt = conn
+            .prepare("SELECT id, description, path FROM projects")
+            .map_err(|e: rusqlite::Error| e.to_string())?;
+        let rows = stmt.query_map([], |row: &rusqlite::Row| {
+            Ok((
+                row.get::<_, String>(0)?,
+                row.get::<_, Option<String>>(1)?,
+                row.get::<_, String>(2)?,
+            ))
+        })
+        .map_err(|e: rusqlite::Error| e.to_string())?;
+        rows.filter_map(|r: Result<(String, Option<String>, String), rusqlite::Error>| r.ok())
+            .collect()
+    };
+
+    let mut updated = 0u32;
+    for (id, desc, path) in &projects {
+        let needs_refresh = match desc.as_deref() {
+            Some(d) => {
+                d.contains("<!--")
+                    || d.contains("-->")
+                    || d.contains("**")
+                    || d.contains("__")
+                    || d.contains("~~")
+            }
+            None => false,
+        };
+
+        if !needs_refresh {
+            continue;
+        }
+
+        // Re-read docs from disk using the same priority chain as import
+        if let Ok(Some(docs)) =
+            commands::filesystem::read_project_docs(path.to_string()).await
+        {
+            if let Some(ref new_desc) = docs.description {
+                let db = pool.write().await;
+                let _ = db.conn().execute(
+                    "UPDATE projects SET description = ?1, updated_at = datetime('now') WHERE id = ?2",
+                    params![new_desc, id],
+                );
+                updated += 1;
+            }
+        }
+    }
+
+    if updated > 0 {
+        tracing::info!("Refreshed {} stale project descriptions", updated);
+    }
+    Ok(())
 }
 
 #[cfg(test)]
