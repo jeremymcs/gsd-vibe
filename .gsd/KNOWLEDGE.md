@@ -714,3 +714,61 @@ When running a single test file from a GSD worktree, `pnpm exec vitest run <path
 ## Playwright in worktree: full-suite command may resolve stale main-checkout specs
 
 In this environment, `pnpm exec playwright test` resolved `e2e/*.spec.ts` from the main checkout path (`~/Github/gsd-vibe/e2e/...`) even while executing from the worktree (`.gsd/worktrees/<id>`). This can produce misleading failures against stale files that are not the current task edits. Validation of worktree changes remained reliable when running explicit file paths (e.g., `pnpm exec playwright test e2e/navigation.spec.ts e2e/projects.spec.ts e2e/guided-flow.spec.ts`).
+
+## M013 Cross-Cutting Lessons: Feature Coverage Maximization
+
+### Design patterns established early replicate successfully across slices
+
+The GitHub integration pipeline patterns (Tauri command registration, TanStack Query namespace strategy, panel-to-navigation routing) established in S01 were successfully reused in S02 (GSD-2 views) without modification. When a slice establishes patterns in foundational code, subsequent slices should explicitly call out reuse vs reimplementation. This provides early signal if a pattern isn't generalizing correctly.
+
+### Reuse-first data sourcing eliminates API boundary bloat
+
+S03 sourced all dashboard widgets from existing VisualizerData and InspectData hooks rather than adding new backend endpoints. This proved more maintainable than creating new API boundaries. Guideline: before adding a new `#[tauri::command]`, audit whether the data can be derived from existing commands via client-side transformation. This keeps the API surface stable and reduces backend maintenance burden.
+
+### Client-side parser for unstructured backend output
+
+The `parseSessionEntry` function in S02 parses raw GSD-2 session lines using regex and string operations without modifying the backend schema. This pattern bridges mismatches between unstructured backend output and strongly-typed frontend data. Future work that encounters similar schema-evolution gaps should use this pattern: a standalone, independently-testable parser function that normalizes backend strings into typed structures.
+
+### Draft state + draftInitialized flag is the essential pattern for edit forms
+
+S02's preferences editor uses `draftInitialized` flag to prevent re-render loops when synchronizing mutable state with query data. This pattern (explicitly documented in KNOWLEDGE.md at M011) should be required for all future form components that bind to server state. No form component should render without this guard.
+
+### HTML tables with Tailwind CSS are a viable alternative to shadcn/ui Table
+
+S04 used semantic HTML `<table>` elements with Tailwind CSS styling instead of importing shadcn/ui Table components (which weren't available in the project). The resulting KnowledgeGraphTable component is maintainable, accessible, and visually consistent with the design system. When a design system component is missing, semantic HTML + utility CSS is preferable to creating a custom component library.
+
+### Scope badge color convention should be documented for reuse
+
+S02 established a color convention for merged settings: green (project), blue (global), neutral/outline (default). This convention should be documented in KNOWLEDGE.md for future multi-scope settings surfaces (preferences, rules, shortcuts, etc.). Clear visual hierarchy reduces cognitive load for users managing cross-scope overrides.
+
+### Terminal session persistence via browser storage save/restore is effective for lightweight state
+
+S05 wired terminal sessions to persist across app restarts via `useClose Warning.ts` save/restore pattern. This works well for session state but doesn't scale to large session histories. Future work: if session counts exceed 50-100, migrate to database-backed storage. The pattern is proven; only the scale changes.
+
+### Dual-view toggles reduce cognitive load for complex data structures
+
+S04's nodes/edges toggle in KnowledgeGraphTable allows users to switch between complementary views without separate routes or navigation. This pattern should be considered for other complex data (e.g., dependency graphs with source/target filters, audit logs with different severity views). The cognitive benefit comes from keeping context intact while changing the lens.
+
+### Knowledge graph nodes/edges: use structured tables, not interactive visualization (for now)
+
+S04 chose structured HTML tables over D3.js interactive graph visualization. This choice traded interactivity for stability, accessibility, and maintainability. The pattern is sound: start with tables and structured data, add interactive visualization only if user research indicates it's needed. Avoid speculative feature work.
+
+### All 6 slices completing without blockers signals solid foundation
+
+M013 executed 6 slices across 15 tasks with zero replanning events. This indicates: (1) prior milestones established sufficient infrastructure, (2) slice boundaries were well-defined, and (3) task estimates were realistic. For future milestones with similar scope (6 slices, ~15 tasks), this success rate should be the baseline, not an exception.
+
+### Validation document format enables clear sign-off without ceremony
+
+The structured VALIDATION.md document (verdict/remediation_round/success criteria checklist/slice audit/cross-slice integration/requirement coverage) provided clear evidence for milestone completion without requiring separate review meetings or back-and-forth clarifications. This format should be standardized for all future milestone closures.
+
+### API client stubs and real implementations coexist during feature expansion
+
+During S01, both stub hooks and real GitHub hooks existed temporarily in queries.ts. This coexistence allowed features to render with stub data while real implementations were being wired. The pattern: stub implementations use hardcoded defaults or empty arrays, real implementations call TanStack Query hooks. When both are present, UI testing can proceed with stubs while integration testing waits for real wiring.
+
+### Test count increases are reliable signals of feature completeness
+
+M013 grew the test suite from ~180 tests to 211 tests (31 new tests across S02, S04, S05, S06). Test count increases at slice-level verification (not end of milestone) signal that components are being built with testing-first discipline. This is a healthier metric than "final build succeeds" because test count can't be manipulated by refactoring.
+
+### Worktree code exists but isn't committed — manual sync required
+
+All M013 code was written to the worktree but not committed to the `milestone/M013` branch. The slice summaries and summaries exist in the `.gsd/` tree (committed via `gsd_complete_*` operations), but source files exist only in the working directory. Future cycles should automate this: after all slices complete, run `git add src/ src-tauri/src/ e2e/` and `git commit` to ensure the worktree branch is a complete snapshot of the feature branch, not a partial state.
