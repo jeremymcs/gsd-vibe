@@ -51,23 +51,23 @@ export interface ProjectView {
  */
 export const projectViews: ProjectView[] = [
   // --- Core ---
-  { id: 'overview', label: 'Overview', icon: LayoutDashboard, section: 'Core' },
+  { id: 'overview', label: 'Dashboard', icon: LayoutDashboard, section: 'Core' },
   { id: 'files', label: 'Files', icon: FolderTree, section: 'Core' },
   { id: 'dependencies', label: 'Dependencies', icon: Package, section: 'Core' },
   { id: 'knowledge', label: 'Knowledge', icon: ClipboardList, section: 'Core' },
-  { id: 'shell', label: 'Shell', icon: SquareTerminal, section: 'Core' },
+  { id: 'shell', label: 'Terminal', icon: SquareTerminal, section: 'Core' },
   { id: 'envvars', label: 'Env Vars', icon: Key, section: 'Core' },
   { id: 'git', label: 'Git', icon: GitBranch, section: 'Core' },
 
   // --- GSD-2 ---
   { id: 'gsd2-group-progress', label: 'Progress', icon: BarChart3, section: 'GSD', gsd2Only: true },
   { id: 'gsd2-group-planning', label: 'Planning', icon: Layers, section: 'GSD', gsd2Only: true },
-  { id: 'gsd2-group-metrics', label: 'Metrics', icon: TrendingUp, section: 'GSD', gsd2Only: true },
-  { id: 'gsd2-group-commands', label: 'Commands', icon: Terminal, section: 'GSD', gsd2Only: true },
+  { id: 'gsd2-group-metrics', label: 'Analytics', icon: TrendingUp, section: 'GSD', gsd2Only: true },
+  { id: 'gsd2-group-commands', label: 'Operations', icon: Terminal, section: 'GSD', gsd2Only: true },
   { id: 'gsd2-group-diagnostics', label: 'Diagnostics', icon: Stethoscope, section: 'Diagnostics', gsd2Only: true },
-  { id: 'gsd2-headless', label: 'Session', icon: Play, section: 'GSD', gsd2Only: true },
+  { id: 'gsd2-headless', label: 'Runner', icon: Play, section: 'GSD', gsd2Only: true },
   { id: 'gsd2-worktrees', label: 'Worktrees', icon: GitBranch, section: 'GSD', gsd2Only: true },
-  { id: 'gsd2-sessions', label: 'Sessions', icon: History, section: 'GSD', gsd2Only: true },
+  { id: 'gsd2-sessions', label: 'History', icon: History, section: 'GSD', gsd2Only: true },
   { id: 'gsd2-knowledge-captures', label: 'Knowledge Captures', icon: BookOpen, section: 'GSD', gsd2Only: true },
   { id: 'gsd2-preferences', label: 'Preferences', icon: Settings2, section: 'GSD', gsd2Only: true },
 

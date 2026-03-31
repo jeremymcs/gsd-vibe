@@ -54,7 +54,7 @@ export const ProjectCard = React.memo(function ProjectCard({
     toggleFavorite.mutate(project.id);
   };
 
-  const projectType = getProjectType(project.tech_stack);
+  const projectType = getProjectType(project.tech_stack, project.gsd_version);
   const typeConfig = projectTypeConfig[projectType];
 
   const fp = project.roadmap_progress;

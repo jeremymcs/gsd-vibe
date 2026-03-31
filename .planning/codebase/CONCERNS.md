@@ -1,226 +1,251 @@
+<!-- GSD VibeFlow - Codebase Map: Concerns -->
+<!-- Generated: 2026-03-30 -->
+
 # Codebase Concerns
 
-**Analysis Date:** 2026-02-21
+**Analysis Date:** 2026-03-30
 
-## Tech Debt
+## Critical Issues
 
-**Large Component Files:**
-- Issue: Multiple frontend components exceed 600+ lines, making them difficult to test and maintain
+### Unwrap Calls in Non-Test Production Code
+- Issue: Multiple `.unwrap()` calls in Rust command handlers can panic and crash the app
 - Files:
-  - `src/components/project/git-status-widget.tsx` (1079 lines)
-  - `src/components/projects/new-project-dialog.tsx` (886 lines)
-  - `src/components/projects/import-dialog.tsx` (720 lines)
-  - `src/components/project/dependencies-tab.tsx` (686 lines)
-  - `src/components/terminal/interactive-terminal.tsx` (678 lines)
-  - `src/components/settings/secrets-manager.tsx` (548 lines)
-- Impact: Difficult to refactor, test, and reason about; increased risk of regression
-- Fix approach: Break into smaller, focused sub-components with clear responsibilities; extract logic into custom hooks
+  - `src-tauri/src/commands/github.rs:178,186` — `strip_prefix().unwrap()` on URL parsing (panics if URL format check is bypassed)
+  - `src-tauri/src/commands/gsd2.rs:6770-6771` — `points.last().unwrap()` and `points.first().unwrap()` (panics on empty vec)
+  - `src-tauri/src/commands/gsd.rs:134` — `SystemTime::now().duration_since(UNIX_EPOCH).unwrap()` in `gen_id()`
+  - `src-tauri/src/commands/gsd.rs:743` — `section_start.unwrap()` without guard
+  - `src-tauri/src/commands/gsd.rs:465-475` — Regex capture `.unwrap()` calls
+  - `src-tauri/src/commands/filesystem.rs:680-748` — Multiple regex capture `.unwrap()` calls
+- Impact: App crash (panic) if unexpected input reaches these paths. Tauri will not catch Rust panics gracefully — the entire backend process terminates.
+- Fix approach: Replace `.unwrap()` with `.ok_or_else(|| "descriptive error".to_string())?` or `.unwrap_or_default()` where appropriate. Priority: `gsd2.rs:6770-6771` and `github.rs:178,186` since they handle user-influenced data.
 
-**Large Rust Backend Module:**
-- Issue: `src-tauri/src/commands/gsd.rs` at 4005 lines contains all GSD file parsing and CRUD logic in one file
-- Files: `src-tauri/src/commands/gsd.rs`
-- Impact: Monolithic structure makes it hard to maintain, test individual features, and causes slower compile times
-- Fix approach: Refactor into domain-specific submodules (gsd/parsing, gsd/crud, gsd/validation, gsd/todos, gsd/phases)
+### dangerouslySetInnerHTML Usage
+- Issue: Raw HTML injection via `dangerouslySetInnerHTML` in the file browser
+- Files: `src/components/project/file-browser.tsx:514`
+- Impact: If `highlightedContent` contains unsanitized user content, it is a potential XSS vector. Since this is a desktop app reading local files, risk is lower but still present if a malicious project is opened.
+- Current mitigation: Content comes from highlight.js which typically HTML-escapes input
+- Fix approach: Verify the highlight.js pipeline always escapes input, or add explicit sanitization (e.g., DOMPurify)
 
-**Minimal Test Coverage:**
-- Issue: Only 3-4 test files found across 135+ source files; test coverage estimated at <5%
-- Files: `src/components/__tests__/error-boundary.test.tsx`, `src/components/layout/main-layout.test.tsx`, `src/contexts/terminal-context.test.tsx`, `src/lib/__tests__/performance.test.ts`
-- Impact: High risk of undetected regressions; critical paths (git operations, terminal I/O, data mutations) lack automated validation
-- Fix approach: Establish unit test coverage targets (aim for 60%+ on critical paths); add integration tests for IPC/Tauri boundary; implement E2E test scenarios for core workflows
+### @ts-nocheck on Entire File
+- Issue: `src/components/project/github-panel.tsx` has `@ts-nocheck` suppressing all TypeScript checking (721 lines)
+- Files: `src/components/project/github-panel.tsx:1,5`
+- Impact: Zero type safety on a 721-line component handling GitHub API data. Any bug introduced here will not be caught at compile time.
+- Fix approach: Remove `@ts-nocheck`, add proper types to callback params and API response shapes. This is the only file in the codebase with this directive.
 
-## Fragile Areas
+## Technical Debt
 
-**Terminal Instance Caching System:**
-- Files: `src/components/terminal/interactive-terminal.tsx`
-- Why fragile: Complex multi-level caching system with module-level WeakMaps and indirection layers (`terminalInstanceCache`, `terminalInputWriters`, `terminalKeyHandlers`, `terminalSessionIds`, `terminalTmuxNames`, `terminalBufferCache`). Event listener cleanup and reconnection logic relies on precise state synchronization. Terminal instances persist across unmount/remount cycles without formal lifecycle management.
-- Safe modification: Add unit tests for cache lifecycle (store/retrieve/clear); add integration tests for page navigation + terminal reconnection; consider formalizing cache management as a separate class/hook
-- Test coverage: Minimal; only basic error boundary test exists
+### Massive Single-File Modules
+- Issue: Several files are excessively large, making them difficult to navigate, test, and maintain
+- Files:
+  - `src-tauri/src/commands/gsd2.rs` — **8,482 lines**, 43 commands
+  - `src-tauri/src/commands/gsd.rs` — **4,427 lines**, 30 commands
+  - `src/lib/tauri.ts` — **2,299 lines** (typed invoke wrappers)
+  - `src/lib/queries.ts` — **1,833 lines** (TanStack Query hooks)
+  - `src-tauri/src/commands/filesystem.rs` — **1,592 lines**, 12 commands
+  - `src/components/project/git-status-widget.tsx` — **1,413 lines**
+  - `src-tauri/src/db/mod.rs` — **1,318 lines**
+- Impact: Difficult to review, high merge conflict risk, slow IDE performance, cognitive overload
+- Fix approach: Split `gsd2.rs` into sub-modules (e.g., `gsd2/milestones.rs`, `gsd2/headless.rs`, `gsd2/doctor.rs`, `gsd2/reports.rs`). Split `tauri.ts` and `queries.ts` by domain (git, gsd, projects, etc.).
 
-**PTY Session Reconnection Logic:**
-- Files: `src/hooks/use-pty-session.ts`, `src/components/terminal/interactive-terminal.tsx`
-- Why fragile: Multiple reconnection strategies (direct pty attach, tmux reattach, fallback to new session) with implicit fallback behavior. Error handling routes errors through console logging and toast notifications without structured validation. Session state stored across multiple refs and context objects.
-- Safe modification: Extract reconnection logic into standalone service with explicit error types; add comprehensive test suite for each reconnection path; establish clear preconditions/postconditions
-- Test coverage: Minimal; hook docstring shows usage but no unit tests
+### Duplicated Code Across Modules
+- Issue: Helpers are intentionally copied between `gsd.rs` and `gsd2.rs` with an explicit comment: "Helpers (copied from gsd.rs — do NOT import across module boundary)"
+- Files:
+  - `src-tauri/src/commands/gsd.rs:28` — `fn get_project_path()`
+  - `src-tauri/src/commands/gsd2.rs:32` — `fn get_project_path()` (identical copy)
+- Impact: Changes to shared logic must be applied in two places. Bug fixes can be missed.
+- Fix approach: Extract shared helpers to a common module (e.g., `src-tauri/src/commands/helpers.rs` or `src-tauri/src/utils.rs`) and import from both `gsd.rs` and `gsd2.rs`.
 
-**Query Cache Invalidation Patterns:**
-- Files: `src/lib/queries.ts` (uses patterns throughout mutation callbacks)
-- Why fragile: Widespread use of query client invalidation with potential race conditions. Multiple mutation handlers invalidate overlapping cache keys (e.g., both `gitStatus` and `gitChangedFiles` invalidated separately). No centralized cache coherency rules or test suite for cache invalidation sequences.
-- Safe modification: Establish cache invalidation patterns as documented function; add test fixtures for concurrent mutation scenarios; consider using TanStack Query v5's new invalidation batch API
-- Test coverage: None; patterns verified manually only
+### Duplicated stripAnsi Implementation
+- Issue: `stripAnsi` function is implemented twice — once in the shared parser and once locally in the headless session hook
+- Files:
+  - `src/lib/pty-chat-parser.ts:91` — exported `stripAnsi()` function
+  - `src/hooks/use-headless-session.ts:91` — local copy with comment "matches pty-chat-parser's stripAnsi"
+- Impact: Two copies to maintain; divergence risk if one is updated but not the other
+- Fix approach: Import `stripAnsi` from `@/lib/pty-chat-parser` in `use-headless-session.ts`
 
-**GSD File Parsing in `gsd.rs`:**
-- Files: `src-tauri/src/commands/gsd.rs` (functions `parse_frontmatter`, `extract_section`)
-- Why fragile: String-based YAML frontmatter parsing with hand-rolled logic (lines 41-94); brittle assumptions about file structure (section order, heading levels). Edge cases for multiline lists and indented continuations. No schema validation or error recovery for malformed documents.
-- Safe modification: Add unit tests for edge cases (empty frontmatter, missing sections, malformed YAML); consider switching to proper YAML parser crate; add logging for parsing failures
-- Test coverage: None; assumed to work through manual testing
+### Regex Compilation in Hot Paths
+- Issue: `Regex::new()` is called inside functions (not compiled once), creating new regex objects on every invocation
+- Files:
+  - `src-tauri/src/commands/gsd.rs` — 46 `Regex::new()` calls scattered across functions
+  - `src-tauri/src/commands/filesystem.rs` — 4 `Regex::new()` calls
+  - `src-tauri/src/commands/projects.rs` — 1 `Regex::new()` call
+- Impact: Minor performance cost per call. Regex compilation is not free, especially with 46 instances in `gsd.rs`.
+- Fix approach: Use `lazy_static!` or `once_cell::sync::Lazy` to compile regexes once at module level.
 
-## Test Coverage Gaps
+### Stub Functions in Headless Session Hook
+- Issue: Backend commands for session persistence are stubbed with no-op functions
+- Files: `src/hooks/use-headless-session.ts:10-12`
+  ```typescript
+  const gsd2HeadlessSaveSession = async (_args: any): Promise<void> => {};
+  const gsd2HeadlessLoadLastSession = async (_projectId: string): Promise<any | null> => null;
+  ```
+- Impact: Headless session state is lost between app restarts. The UI calls `loadPersistedSession` and `gsd2HeadlessSaveSession` but they silently do nothing.
+- Fix approach: Wire these to actual Tauri commands or remove the persistence UI to avoid misleading users.
 
-**Terminal Component Tests:**
-- What's not tested: PTY lifecycle (connect, reconnect, disconnect), event listener cleanup, error recovery, session state synchronization, cache restoration after navigation
-- Files: `src/components/terminal/interactive-terminal.tsx`, `src/hooks/use-pty-session.ts`, `src/contexts/terminal-context.tsx`
-- Risk: Navigation away and back to a terminal page could fail to reconnect or create orphaned PTY sessions; memory leaks from uncleaned event listeners
-- Priority: High - terminal is critical feature; failures degrade user experience
+### Hooks Called Inside Loops (Rules of Hooks Violation)
+- Issue: `useCodebaseDoc` hook is called inside a `.map()` loop, violating React's rules of hooks
+- Files: `src/components/project/codebase-tab.tsx:51-55`
+  ```typescript
+  const probeResults = CODEBASE_DOCS.map((doc) => {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const { data } = useCodebaseDoc(projectPath, doc.filename);
+    return { filename: doc.filename, exists: !!data };
+  });
+  ```
+- Impact: If `CODEBASE_DOCS` changes length at runtime, React will crash. The eslint-disable comment masks a real bug risk.
+- Fix approach: Create a single `useCodebaseDocs` hook that accepts an array, or use a single query that checks all docs.
 
-**Git Operations Tests:**
-- What's not tested: All git mutation hooks (push, pull, fetch, commit, stash); query invalidation sequences; concurrent git operations
-- Files: `src/lib/queries.ts` (lines 66-400+), `src/lib/tauri.ts` (git functions)
-- Risk: Git command failures could leave UI state inconsistent with backend; concurrent operations could cause race conditions or data loss
-- Priority: High - git is core feature; data loss risk
+## Architecture Concerns
 
-**Error Boundary Tests:**
-- What's not tested: Inline variant, fallback component variants, error capture in nested boundaries, Sentry integration
-- Files: `src/components/error-boundary.tsx`
-- Risk: Error state might not render correctly; Sentry may not receive errors; backend error logging could fail
-- Priority: Medium - existing test covers basic error state
+### Monolithic Command Registration
+- Issue: All 206+ Tauri commands are registered in a single `generate_handler![]` macro call in `src-tauri/src/lib.rs:120-348`
+- Files: `src-tauri/src/lib.rs:120-348`
+- Impact: Long compile times, difficult to scan, easy to forget registering new commands
+- Fix approach: This is a Tauri limitation — the `generate_handler!` macro requires all commands in one place. Consider grouping with clear section comments (already partially done).
 
-**GSD Operations Tests:**
-- What's not tested: CRUD operations for todos, phases, plans; file parsing and schema validation; data consistency after disk writes
-- Files: `src-tauri/src/commands/gsd.rs` (entire module)
-- Risk: Malformed GSD files could corrupt project data; parsing errors could cause silent failures
-- Priority: Medium-High - data integrity concern
+### GSD v1 and v2 Coexistence
+- Issue: Two separate GSD systems (`gsd.rs` for `.planning/` directory structure, `gsd2.rs` for `.gsd/` directory structure) coexist with 73 combined commands
+- Files:
+  - `src-tauri/src/commands/gsd.rs` — 30 commands (v1)
+  - `src-tauri/src/commands/gsd2.rs` — 43 commands (v2)
+- Impact: Nearly 13,000 lines of Rust code for two planning systems. Maintenance burden is doubled. Frontend must support both code paths.
+- Fix approach: If GSD v1 is deprecated, plan a migration path and remove v1 commands. If both are needed long-term, extract shared logic.
 
-## Performance Bottlenecks
+### Error Handling via String
+- Issue: All Tauri commands return `Result<T, String>` with `.map_err(|e| e.to_string())?` throughout
+- Files: All files in `src-tauri/src/commands/` (pervasive pattern)
+- Impact: Error context is lost — callers cannot distinguish between error types (DB error vs. file not found vs. validation error). Frontend gets opaque error strings.
+- Fix approach: Define a proper error enum (using `thiserror` which is already a dependency) and implement `Into<InvokeError>` for structured error handling.
 
-**Database Query Polling Overhead:**
-- Problem: Multiple TanStack Query hooks polling simultaneously with `refetchInterval` (30-60 second intervals)
-- Files: `src/lib/queries.ts` (lines 30-65)
-- Cause: `useGitStatus` (30s interval), `useGitInfo` (60s interval), `useGitLog`, `useGitChangedFiles` (15s interval) all fire on the same 30-60s cadence; serialization via single `Arc<Mutex<Database>>` before DbPool refactoring could cause lock contention
-- Improvement path: Stagger polling intervals to avoid thundering herd; implement adaptive polling (only when window focused); batch invalidation queries; monitor query cache hit rates
+## Developer Experience Issues
 
-**Large Component Re-renders:**
-- Problem: Components like `git-status-widget` (1079 lines) with many state-dependent render branches could trigger expensive re-renders
-- Files: `src/components/project/git-status-widget.tsx`
-- Cause: Complex conditional rendering with inline dialogs/modals; no memoization of sub-components
-- Improvement path: Extract dialog/modal content into separate memoized components; use `useMemo` for expensive computations; profile with React DevTools
+### Low Test Coverage
+- Issue: 22 test files covering ~170 source files (roughly 13% file coverage)
+- Test file locations:
+  - `src/components/settings/__tests__/` — 1 test
+  - `src/components/projects/__tests__/` — 2 tests
+  - `src/components/project/__tests__/` — 4 tests
+  - `src/components/__tests__/` — 1 test
+  - `src/components/knowledge/__tests__/` — 1 test
+  - `src/components/onboarding/__tests__/` — 1 test
+  - `src/lib/__tests__/` — 6 tests
+  - Plus 6 co-located test files
+- Impact: Large areas of the codebase have zero test coverage, especially:
+  - No tests for `src/components/terminal/interactive-terminal.tsx` (683 lines)
+  - No tests for most pages in `src/pages/` (except `projects.test.tsx`)
+  - Rust backend tests exist only in `gsd2.rs` and `templates.rs`
+- Fix approach: Prioritize tests for data layer (`queries.ts`), terminal context, and critical UI flows
 
-**Terminal Buffer Serialization:**
-- Problem: SerializeAddon is called on every buffer change but results are cached; unclear if large terminal buffers cause memory issues
-- Files: `src/components/terminal/interactive-terminal.tsx` (lines 46-48, buffer cache)
-- Cause: No limits on buffer size; cache grows indefinitely across session lifetime
-- Improvement path: Set max buffer size limit; implement LRU eviction for cached buffers; monitor memory usage in long-running terminal sessions
+### eslint-disable Comments for react-hooks/exhaustive-deps
+- Issue: 11 `eslint-disable` comments suppressing hook dependency warnings
+- Files:
+  - `src/pages/project.tsx:136`
+  - `src/pages/settings.tsx:32`
+  - `src/pages/dashboard.tsx:64`
+  - `src/contexts/terminal-context.tsx:232`
+  - `src/components/terminal/terminal-view.tsx:261`
+  - `src/components/terminal/interactive-terminal.tsx:207,570,608`
+  - `src/components/project/codebase-tab.tsx:52`
+  - `src/components/project/guided-project-view.tsx:49`
+  - `src/components/project/gsd2-headless-tab.tsx:56`
+  - `src/components/knowledge/knowledge-viewer.tsx:74`
+  - `src/components/theme/theme-provider.tsx:202`
+- Impact: Potential stale closure bugs. Effects may not re-run when dependencies change, leading to subtle UI inconsistencies.
+- Fix approach: Audit each suppression. Use `useCallback` to stabilize function references, or restructure effects to correctly declare dependencies.
 
-**Rust Backend File I/O:**
-- Problem: GSD file parsing reads entire `.planning/` directory structure synchronously for each query
-- Files: `src-tauri/src/commands/gsd.rs` (project info, todos, phases all scan filesystem)
-- Cause: No file watching or caching; each query does full directory walk
-- Improvement path: Implement file change watcher (inotify/FSEvents) with debounced cache invalidation; consider memory cache for frequently accessed GSD files
+### Swallowed Errors in .catch(() => {})
+- Issue: Multiple places catch and silently discard errors
+- Files:
+  - `src/contexts/terminal-context.tsx:260,292,533` — terminal session save errors silently ignored
+  - `src/components/terminal/interactive-terminal.tsx:231,239,255` — PTY resize/detach errors silently ignored
+  - `src/components/theme/theme-provider.tsx:199,214`
+  - `src/components/project/gsd-validation-plan-tab.tsx:105` — clipboard write error ignored
+- Impact: Failures are invisible to both users and developers. Debugging becomes harder when operations fail silently.
+- Fix approach: At minimum, log errors to console or the app's log system. For user-facing operations, show a toast.
 
-## Dependencies at Risk
+## Dependency Risks
 
-**Sentry Integration with Incomplete Configuration:**
-- Risk: Sentry DSN must be provided via `VITE_SENTRY_DSN` env var; if not set, error tracking silently disables
-- Impact: Production errors in deployed app are not captured; no observability without manual configuration
-- Migration plan: Make DSN configuration explicit with warnings; add fallback console logging for development; consider using Sentry's Replay API for debugging terminal issues
+### npm Audit Vulnerabilities
+- Issue: 22 known vulnerabilities (8 moderate, 14 high) in the dependency tree
+- Packages affected:
+  - `minimatch` (ReDoS via repeated wildcards) — via `eslint` and `typescript-eslint`
+  - `picomatch` (method injection in POSIX character classes) — via `tailwindcss`
+- Impact: These are all in devDependencies (eslint, tailwindcss tooling) so they do not affect production builds. However, they could affect the development environment.
+- Fix approach: Update `eslint` and `tailwindcss` to versions with patched transitive dependencies, or wait for upstream fixes.
 
-**Tauri API Surface Exposure:**
-- Risk: All Tauri `invoke()` calls are untyped except for return type; parameter validation happens only in Rust backend
-- Impact: Frontend can send malformed commands; errors bubble up as generic strings with limited context
-- Migration plan: Add runtime validation middleware for IPC parameters; create typed command builders; implement command versioning for backward compatibility
+### portable-pty Version
+- Issue: `portable-pty = "0.8"` — this crate has had sporadic maintenance
+- Files: `src-tauri/Cargo.toml`
+- Impact: If bugs are found in PTY handling (especially on macOS), fixes may be slow. PTY is critical for the terminal feature.
+- Fix approach: Monitor for alternatives or forks. Consider `alacritty_terminal` or `ptyprocess` if maintenance stalls.
 
-## Scaling Limits
+## Improvement Opportunities
 
-**SQLite Write Concurrency:**
-- Current capacity: Single writer via `Mutex<Database>` (serialized); 4 read-only connections (concurrent)
-- Limit: Once write throughput exceeds single-threaded capability (~5K+ INSERTs/sec), write queue will block all mutations
-- Scaling path: For multi-project scenarios with high activity logging, consider migrating to PostgreSQL with connection pooling; implement write-ahead logging batching
+### Quick Wins (Low Effort, High Impact)
 
-**PTY Session Limit:**
-- Current capacity: Each tab spawns a new PTY process; OS limit typically 256-512 processes per user
-- Limit: Apps with 50+ terminal tabs open will approach process limits; potential fork bomb if reconnection logic retries aggressively
-- Scaling path: Implement session pooling; warn user when approaching process limit; implement graceful session cleanup on idle
+1. **Extract shared `stripAnsi`** — Import from `pty-chat-parser.ts` instead of duplicating in `use-headless-session.ts`. One-line import change.
 
-**Terminal Buffer Memory:**
-- Current capacity: No documented limit on xterm buffer; caching system stores serialized buffers indefinitely
-- Limit: Long-running terminal sessions (24+ hours) could accumulate GBs of buffer data
-- Scaling path: Implement configurable buffer size limits; add buffer rotation/archival; implement memory monitoring with warnings
+2. **Fix `get_project_path` duplication** — Extract to a shared `helpers.rs` module. ~10 minutes of work, eliminates divergence risk.
 
-## Known Bugs
+3. **Add error logging to `.catch(() => {})` blocks** — Replace empty catches with `catch((e) => console.warn('operation failed:', e))`. Quick find-and-replace.
 
-**Terminal Reconnection on App Focus:**
-- Symptoms: Terminal may not automatically reconnect after app is brought to foreground if underlying PTY process has exited
-- Files: `src/components/terminal/interactive-terminal.tsx` (useEffect on window focus, line ~300+)
-- Trigger: Minimize app for >5 minutes, bring back to focus with long-running terminal command
-- Workaround: Manual "Reconnect" button visible in UI when disconnected
+4. **Remove `@ts-nocheck` from `github-panel.tsx`** — Add proper types to the component. Prevents silent type regressions.
 
-**Git Status Stale Cache After External Operations:**
-- Symptoms: If user modifies git state outside app (e.g., via command line), UI cache doesn't update immediately
-- Files: `src/lib/queries.ts` (useGitStatus staleTime: 30000)
-- Trigger: Edit files in terminal, UI git-status-widget shows stale state for up to 30 seconds
-- Workaround: User can click refresh button or wait for staleTime to expire
+### Medium-Term Improvements
 
-**Broadcast Mode Tab Cleanup:**
-- Symptoms: If broadcast mode is active and a tab is closed, broadcast set may retain dangling references
-- Files: `src/contexts/terminal-context.tsx` (broadcastTabIds Set management)
-- Trigger: Enable broadcast, close one of the broadcast tabs without explicitly removing from broadcast first
-- Workaround: Disable broadcast mode explicitly before closing tabs
+1. **Split `gsd2.rs` into sub-modules** — Group the 43 commands by domain (milestones, headless, doctor, reports, preferences). Reduces file from 8,482 lines to ~5 files of 1,500-2,000 lines each.
 
-## Security Considerations
+2. **Split `tauri.ts` and `queries.ts` by domain** — Create `lib/tauri/git.ts`, `lib/tauri/gsd.ts`, `lib/queries/gsd.ts`, etc. with barrel re-exports.
 
-**Secrets Storage via OS Keychain:**
-- Risk: Secrets are stored in OS keychain (via `keyring` crate in Rust), but no encryption at rest for other stored data (SQLite plaintext)
-- Files: `src/components/settings/secrets-manager.tsx`, `src-tauri/src/security.rs`
-- Current mitigation: Keychain integration for auth tokens/passwords; user must grant OS-level permissions for keychain access
-- Recommendations:
-  - Audit keychain permissions model (some OS versions may cache credentials in memory)
-  - Add encryption for sensitive project metadata stored in SQLite (API keys, deployment credentials in project config)
-  - Document keychain backup/restore behavior for user migrations between machines
+3. **Introduce a proper Rust error type** — Use `thiserror` to create `AppError` enum, replacing `Result<T, String>` throughout. Enables structured error handling on the frontend.
 
-**Unencrypted IPC Messages:**
-- Risk: Frontend-backend communication via Tauri IPC is unencrypted at the protocol level (but isolated within single process)
-- Files: `src/lib/tauri.ts` (all invoke calls), `src-tauri/src/commands/` (command handlers)
-- Current mitigation: Desktop app is single-user; IPC is local, not network-exposed
-- Recommendations: Document threat model; add input validation for all IPC parameters; sanitize file paths to prevent directory traversal
+4. **Wire headless session persistence** — Implement the Tauri commands for `gsd2HeadlessSaveSession` and `gsd2HeadlessLoadLastSession`, or remove the dead persistence code.
 
-**Environment Variable Exposure in Frontend Bundle:**
-- Risk: `VITE_` prefixed env vars are embedded in bundle; if Sentry DSN or other config is sensitive, it's exposed in source
-- Files: `vite.config.ts` (envPrefix), `src/lib/sentry.ts` (reads VITE_SENTRY_DSN)
-- Current mitigation: Only non-sensitive config (Sentry DSN, app version) exposed; actual auth tokens stored in OS keychain
-- Recommendations: Audit all VITE_ variables to ensure none contain secrets; use `.env.local` for development without committing
+### Long-Term Architectural Changes
 
-**File Path Traversal in GSD File Operations:**
-- Risk: GSD file paths are user-provided (from project path); no explicit validation of path components
-- Files: `src-tauri/src/commands/gsd.rs` (get_project_path, read GSD files), `src-tauri/src/commands/filesystem.rs`
-- Current mitigation: Assumed safe because project paths are pre-validated on import
-- Recommendations: Add explicit path canonicalization; reject paths with `..` components; add unit tests for path injection attempts
+1. **Deprecate or migrate GSD v1** — If `.planning/` based workflow (gsd.rs, 4,427 lines) is superseded by `.gsd/` based workflow (gsd2.rs), plan a migration path and remove v1 to cut ~4,400 lines of backend code and associated frontend code.
 
-## Missing Critical Features
+2. **Compile regexes statically** — Use `once_cell::sync::Lazy` for all `Regex::new()` calls in `gsd.rs` (46 instances) and other command modules.
 
-**Data Export Format Standardization:**
-- Problem: Export functionality exists but format/compatibility not documented; no import validation for exported data
-- Blocks: Data recovery, backup/restore workflows, migration between environments
-- Impact: Users cannot reliably backup or transfer projects
+3. **Increase test coverage** — Target critical paths: terminal session management, GSD state derivation, PTY lifecycle, and the query layer.
 
-**PTY Error Recovery Strategy:**
-- Problem: If PTY backend crashes, no documented recovery path; frontend may hang waiting for responses
-- Blocks: Reliability in production; user can only force-quit and restart app
-- Impact: Loss of terminal session history; frustration for long-running tasks
+## Raw Findings
 
-**GSD File Validation/Repair Tool:**
-- Problem: No validation that `.planning/` directory structure conforms to expected schema; corrupted files cause silent failures
-- Blocks: Integrity checking for imported projects; debugging corrupted state
-- Impact: Silent data loss or inconsistency
+### TODO Comments
+- `src-tauri/src/commands/gsd2.rs:4340` — `// TODO: GSD-2 guard not possible without DB state — no project_id parameter`
 
-## Code Quality Issues
+### FIXME Comments
+- None found.
 
-**Unhandled Promise Rejections:**
-- Pattern: Several async operations use `.catch(() => {})` to silently ignore errors
-- Files: `src/components/error-boundary.tsx` (line 44), `src/components/terminal/interactive-terminal.tsx` (multiple places)
-- Impact: Errors are hidden from debugging; users don't know if operation succeeded
-- Fix approach: Log caught errors with context; use specific error types instead of generic handlers
+### HACK/WORKAROUND Comments
+- None found.
 
-**Console Logging in Production:**
-- Pattern: `console.log`, `console.error` used directly instead of structured logging
-- Files: `src/lib/sentry.ts` (line 9), `src/lib/performance.ts` (lines 68, 104), `src/components/settings/secrets-manager.tsx` (line 114), `src/components/project/env-vars-tab.tsx` (line 98)
-- Impact: Production logs are not captured; development debugging pollutes console output
-- Fix approach: Implement structured logger abstraction; route errors to backend logging service; remove console.log from shipped code
+### @ts-nocheck / @ts-ignore Directives
+- `src/components/project/github-panel.tsx:1` — `@ts-nocheck` (entire 721-line file)
 
-**Implicit Type Assumptions:**
-- Pattern: No explicit validation of Tauri command results beyond `Result<T, String>` type
-- Files: `src/lib/tauri.ts` (all invoke calls), `src/lib/queries.ts` (all mutation handlers)
-- Impact: Type mismatches between frontend expectations and backend responses caught only at runtime
-- Fix approach: Add runtime schema validation (zod/io-ts); generate TypeScript types from Rust types via code generation
+### eslint-disable Directives (16 total)
+- `src/pages/project.tsx:136` — `react-hooks/exhaustive-deps`
+- `src/pages/settings.tsx:32` — `react-hooks/set-state-in-effect`
+- `src/pages/dashboard.tsx:64` — `react-hooks/exhaustive-deps`
+- `src/contexts/terminal-context.tsx:232` — `react-hooks/exhaustive-deps`
+- `src/components/terminal/terminal-view.tsx:261` — `react-hooks/exhaustive-deps`
+- `src/components/terminal/interactive-terminal.tsx:207` — `react-hooks/exhaustive-deps`
+- `src/components/terminal/interactive-terminal.tsx:570` — `react-hooks/exhaustive-deps`
+- `src/components/terminal/interactive-terminal.tsx:608` — `react-hooks/exhaustive-deps`
+- `src/components/project/codebase-tab.tsx:52` — `react-hooks/rules-of-hooks` (violation)
+- `src/components/project/guided-project-view.tsx:49` — `react-hooks/exhaustive-deps`
+- `src/components/project/gsd2-headless-tab.tsx:56` — `react-hooks/exhaustive-deps`
+- `src/hooks/use-headless-session.ts:10` — `@typescript-eslint/no-explicit-any`
+- `src/components/knowledge/knowledge-viewer.tsx:74` — `react-hooks/exhaustive-deps`
+- `src/components/theme/theme-provider.tsx:202` — `react-hooks/exhaustive-deps`
+
+### Console.log/warn/error in Production Code
+- `src/lib/sentry.ts:9` — `console.log` for missing DSN
+- `src/lib/performance.ts:68,104` — `console.warn` for slow invocations (intentional monitoring)
+- `src/hooks/use-close-warning.ts:58` — `console.warn` for terminal save failure
+- `src/components/settings/secrets-manager.tsx:114` — `console.error` for secrets load failure
+- `src/components/project/env-vars-tab.tsx:95` — `console.error` for env vars load failure
 
 ---
 
-*Concerns audit: 2026-02-21*
+*Concerns audit: 2026-03-30*

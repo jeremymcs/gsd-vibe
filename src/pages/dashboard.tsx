@@ -101,7 +101,7 @@ export function Dashboard() {
       <div className="px-8 pt-6 pb-4">
         <PageHeader
           title="Projects"
-          description="Your GSD projects at a glance"
+          description="Manage and monitor your projects"
           icon={<LayoutDashboard className="h-6 w-6 text-muted-foreground" />}
           actions={
             <Button onClick={() => setAddProjectOpen(true)} size="sm">

@@ -20,7 +20,7 @@ describe('navigation mode filtering', () => {
     const visible = getVisibleNavigation('guided');
     const names = onlyLinkNames(visible);
 
-    expect(names).toEqual(['Home', 'Terminal', 'Notifications', 'Settings']);
+    expect(names).toEqual(['Projects', 'Terminal', 'Notifications', 'Settings']);
   });
 
   it('keeps all links in expert mode', () => {
@@ -28,7 +28,7 @@ describe('navigation mode filtering', () => {
     const names = onlyLinkNames(visible);
 
     expect(names).toEqual([
-      'Home',
+      'Projects',
       'Todos',
       'Terminal',
       'Notifications',
@@ -49,7 +49,7 @@ describe('navigation mode filtering', () => {
   it('returns only visible links from getVisibleNavLinks', () => {
     const guidedLinks = getVisibleNavLinks('guided').map((link) => link.name);
 
-    expect(guidedLinks).toEqual(['Home', 'Terminal', 'Notifications', 'Settings']);
+    expect(guidedLinks).toEqual(['Projects', 'Terminal', 'Notifications', 'Settings']);
   });
 
   it('keeps navLinks as full unfiltered label lookup source', () => {

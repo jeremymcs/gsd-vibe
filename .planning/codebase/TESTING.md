@@ -1,252 +1,169 @@
+<!-- GSD VibeFlow - Codebase Map: Testing Patterns -->
+<!-- Generated: 2026-03-30 -->
+
 # Testing Patterns
 
-**Analysis Date:** 2026-02-21
+**Analysis Date:** 2026-03-30
 
 ## Test Framework
 
 **Runner:**
 - Vitest 4.0.18
-- Config: `vite.config.ts` (test section)
-- Environment: jsdom (for DOM testing)
-- Global test utilities enabled
+- Config: `vite.config.ts` (under `test` key)
+- Environment: jsdom
+- Globals enabled (`describe`, `it`, `expect`, `vi` available without import)
 
 **Assertion Library:**
-- Vitest built-in `expect()` assertions
+- Vitest built-in `expect()` with `@testing-library/jest-dom` matchers (extended in setup)
 - React Testing Library for component testing
-- Testing Library User Event for user interactions
+- Testing Library User Event for realistic user interactions
 
 **Run Commands:**
 ```bash
-npm run test              # Run all tests once
-npm run test:watch       # Watch mode for development
-npm run test:e2e         # Run Playwright E2E tests
-npm run test:e2e:ui      # Interactive E2E test runner
-npm run test:e2e:debug   # Debug E2E tests with inspector
+pnpm test              # Run all unit tests once
+pnpm test:watch        # Watch mode for development
+pnpm test:e2e          # Run Playwright E2E tests
+pnpm test:e2e:ui       # Interactive Playwright UI
+pnpm test:e2e:debug    # Debug E2E with inspector
+pnpm lint              # ESLint check
+pnpm build             # TypeScript check + Vite build (catches type errors)
 ```
 
 ## Test File Organization
 
 **Location:**
-- Co-located with source files using `.test.tsx` or `.test.ts` extensions
-- Alternatively, in `src/**/__tests__/` subdirectories
-- E2E tests in `e2e/` directory at project root
+- Co-located with source files as `.test.ts(x)` OR in `__tests__/` subdirectories
+- Both patterns coexist; no strict rule
 
 **Naming:**
-- `.test.ts` for utility/hook tests: `utils.test.ts`, `performance.test.ts`
-- `.test.tsx` for component tests: `error-boundary.test.tsx`
-- E2E specs: `*.spec.ts` format (e.g., `navigation.spec.ts`, `projects.spec.ts`)
+- Unit/component tests: `*.test.ts` or `*.test.tsx`
+- E2E tests: `*.spec.ts` in `e2e/` directory
 
-**Structure:**
+**Current Test Files (22 total):**
 ```
 src/
 ├── components/
-│   ├── error-boundary.tsx
-│   └── __tests__/
-│       └── error-boundary.test.tsx
+│   ├── __tests__/
+│   │   └── error-boundary.test.tsx
+│   ├── knowledge/__tests__/
+│   │   └── knowledge-graph-table.test.tsx
+│   ├── layout/
+│   │   └── main-layout.test.tsx
+│   ├── onboarding/__tests__/
+│   │   └── first-launch-wizard.test.tsx
+│   ├── project/__tests__/
+│   │   ├── gsd2-preferences-tab.test.tsx
+│   │   ├── gsd2-sessions-tab.test.tsx
+│   │   ├── guided-project-view.test.tsx
+│   │   └── knowledge-captures-panel.test.tsx
+│   ├── projects/__tests__/
+│   │   ├── guided-project-wizard.test.tsx
+│   │   └── project-wizard-dialog.test.tsx
+│   └── settings/__tests__/
+│       └── settings-mode-toggle.test.tsx
+├── contexts/
+│   └── terminal-context.test.tsx
+├── hooks/
+│   └── use-guided-execution.test.ts
 ├── lib/
-│   ├── utils.ts
-│   └── __tests__/
-│       └── utils.test.ts
-└── hooks/
-    └── use-close-warning.ts
+│   ├── __tests__/
+│   │   ├── performance.test.ts
+│   │   ├── queries-gsd2.test.ts
+│   │   ├── query-keys.test.ts
+│   │   ├── tauri-gsd2.test.ts
+│   │   ├── tauri-onboarding.test.ts
+│   │   └── utils.test.ts
+│   ├── navigation.test.ts
+│   └── project-views.test.ts
+├── pages/
+│   └── projects.test.tsx
 e2e/
+├── dashboard.spec.ts
+├── guided-flow.spec.ts
 ├── navigation.spec.ts
 ├── projects.spec.ts
-└── dashboard.spec.ts
+└── screenshots.spec.ts
 ```
 
-## Test Structure
+## Test Setup
+
+**Global Setup File:** `src/test/setup.ts`
+
+Provides these global mocks (applied to ALL unit tests):
+
+1. **Browser API mocks:**
+   - `localStorage` (full implementation with get/set/remove/clear)
+   - `sessionStorage` (full implementation)
+   - `ResizeObserver` (no-op)
+   - `IntersectionObserver` (no-op)
+   - `Element.prototype.scrollIntoView` (no-op, needed for cmdk)
+   - `HTMLCanvasElement.getContext` (stub for xterm/recharts)
+
+2. **Tauri API mocks:**
+   - `@tauri-apps/api/core` - `invoke` returns `Promise.resolve(null)`
+   - `@tauri-apps/api/event` - `listen` returns unsubscribe fn, `emit` is no-op
+   - `@tauri-apps/plugin-shell` - `Command.create` stub
+   - `@tauri-apps/plugin-dialog` - `open`, `save`, `message`, `ask`, `confirm` stubs
+   - `@tauri-apps/plugin-fs` - `readTextFile`, `writeTextFile`, `exists` stubs
+   - `@tauri-apps/api/window` - `getCurrentWindow` with `onCloseRequested` and `close` stubs
+
+3. **Cleanup:** `beforeEach` clears localStorage, sessionStorage, and all mocks via `vi.clearAllMocks()`
+
+**Custom Render Utility:** `src/test/test-utils.tsx`
+
+Wraps components with all required providers:
+```typescript
+import { render } from "@/test/test-utils";
+
+// Provides: QueryClientProvider + TerminalProvider + MemoryRouter
+render(<MyComponent />);
+
+// With options:
+render(<MyComponent />, {
+  routerProps: { initialEntries: ["/projects/123"] },
+  queryClient: createTestQueryClient(),
+});
+```
+
+- Re-exports all `@testing-library/react` utilities
+- Creates a test QueryClient with `retry: false` and `gcTime: 0`
+
+## Test Patterns
 
 **Suite Organization:**
 ```typescript
-describe("ErrorBoundary", () => {
-  describe("normal rendering", () => {
-    it("renders children when no error occurs", () => {
-      // Test body
+describe("ComponentName", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  describe("feature group", () => {
+    it("specific behavior description", () => {
+      // Arrange, Act, Assert
     });
   });
-
-  describe("error catching", () => {
-    it("catches and displays error when child component throws", () => {
-      // Test body
-    });
-  });
 });
 ```
 
-**Patterns:**
-- Top-level `describe()` block for component/function name
-- Nested `describe()` blocks for feature grouping
-- `it()` for individual test cases with descriptive names
-- Setup via `beforeEach()` for test isolation
-- Cleanup via `afterEach()` for mocks and spies
-
-## Mocking
-
-**Framework:** Vitest's `vi` module
-
-**Patterns:**
+**Component Testing:**
 ```typescript
-// Mock entire module
-vi.mock("@tauri-apps/api/core", () => ({
-  invoke: vi.fn(),
-}));
+// Use custom render for component tests (includes providers)
+import { render, screen } from "@/test/test-utils";
+import userEvent from "@testing-library/user-event";
 
-// Mock specific function
-const reloadMock = vi.fn();
-Object.defineProperty(window, "location", {
-  value: { reload: reloadMock },
-  writable: true,
+it("handles user interaction", async () => {
+  const user = userEvent.setup();
+  render(<MyComponent />);
+
+  await user.click(screen.getByText("Submit"));
+  expect(screen.getByText("Success")).toBeInTheDocument();
 });
-
-// Spy on existing functions
-const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-warnSpy.mockRestore(); // In afterEach
-
-// Suppress console errors in error boundary tests
-vi.spyOn(console, "error").mockImplementation(() => {});
-```
-
-**Setup File (`src/test/setup.ts`):**
-- Global mocks for browser APIs: localStorage, sessionStorage, ResizeObserver, IntersectionObserver
-- Tauri API mocks: `@tauri-apps/api/core`, `@tauri-apps/api/event`, `@tauri-apps/plugin-shell`, etc.
-- Element.prototype.scrollIntoView mock for cmdk component
-- Mock cleanup in `beforeEach()` via `vi.clearAllMocks()`
-
-**What to Mock:**
-- External APIs and third-party Tauri modules
-- Browser APIs that may not be available in jsdom
-- setTimeout/setInterval for performance tests
-- Window events and methods
-
-**What NOT to Mock:**
-- Component internal state and behavior
-- React Router navigation (use MemoryRouter with routerProps)
-- React Query (use test QueryClient with retry:false, gcTime:0)
-
-## Fixtures and Factories
-
-**Test Data:**
-```typescript
-function createTestQueryClient() {
-  return new QueryClient({
-    defaultOptions: {
-      queries: {
-        retry: false,
-        gcTime: 0,
-      },
-    },
-  });
-}
-```
-
-**Location:**
-- Helper functions defined at top of test files or in `src/test/test-utils.tsx`
-- Component wrappers for testing: `AllProviders`, `customRender`
-
-**Custom Render (`src/test/test-utils.tsx`):**
-```typescript
-function customRender(
-  ui: ReactElement,
-  options: CustomRenderOptions = {}
-) {
-  const { routerProps, queryClient, ...renderOptions } = options;
-  return render(ui, {
-    wrapper: ({ children }) => (
-      <AllProviders routerProps={routerProps} queryClient={queryClient}>
-        {children}
-      </AllProviders>
-    ),
-    ...renderOptions,
-  });
-}
-
-export { customRender as render, createTestQueryClient };
-```
-
-**Providers Wrapper:**
-- Wraps all required context providers: QueryClientProvider, TerminalProvider, MemoryRouter
-- Automatically included in all component test renders
-- Allows passing custom routerProps and queryClient via options
-
-## Coverage
-
-**Requirements:** None enforced (no coverage thresholds configured)
-
-**View Coverage:**
-```bash
-npm run test -- --coverage
-```
-
-## Test Types
-
-**Unit Tests:**
-- Scope: Individual functions, hooks, components in isolation
-- Approach: Mock external dependencies, test function behavior
-- Examples: `utils.test.ts`, `performance.test.ts`, hook tests
-
-**Component Tests:**
-- Scope: React components, user interactions, prop handling
-- Approach: Render with React Testing Library, query by role/text
-- Examples: `error-boundary.test.tsx`, context tests
-- Pattern: Use `render()` (which includes all providers), `userEvent.setup()`, `waitFor()`
-
-**Integration Tests:**
-- Scope: Multiple components working together with real hooks
-- Approach: Render full component trees, test data flow
-- Note: Not heavily used; most tests are component-level
-
-**E2E Tests:**
-- Framework: Playwright 1.58.2
-- Config: `playwright.config.ts`
-- Scope: Full application flow through browser
-- Target: Vite dev server at `http://localhost:1420`
-- Execution: Single worker in CI, parallel locally
-- Artifacts: HTML reports, screenshots on failure
-
-## Common Patterns
-
-**Async Testing:**
-```typescript
-// For components that render asynchronously
-await waitFor(() => {
-  expect(mockInvoke).toHaveBeenCalledWith(
-    "log_frontend_error",
-    expect.objectContaining({
-      error: expect.stringContaining("[ErrorBoundary:TestComponent]"),
-    })
-  );
-});
-
-// For user events
-const user = userEvent.setup();
-const tryAgainButton = screen.getByText("Try Again");
-await user.click(tryAgainButton);
-```
-
-**Error Testing:**
-```typescript
-// Component that throws
-function ThrowError({ shouldThrow }: { shouldThrow: boolean }) {
-  if (shouldThrow) {
-    throw new Error("Test error message");
-  }
-  return <div>Normal content</div>;
-}
-
-// Test error catching
-render(
-  <ErrorBoundary>
-    <ThrowError shouldThrow={true} />
-  </ErrorBoundary>
-);
-
-expect(screen.getByText("Something went wrong")).toBeInTheDocument();
-expect(screen.getByText("Test error message")).toBeInTheDocument();
 ```
 
 **Hook Testing:**
 ```typescript
+import { renderHook, act } from "@testing-library/react";
+
 const wrapper = ({ children }: { children: React.ReactNode }) => (
   <TerminalProvider>{children}</TerminalProvider>
 );
@@ -257,54 +174,206 @@ act(() => {
   result.current.addTab("project-1", "shell");
 });
 
-const terminals = result.current.getProjectTerminals("project-1");
-expect(terminals.tabs).toHaveLength(1);
+expect(result.current.getProjectTerminals("project-1").tabs).toHaveLength(1);
 ```
 
-**Mock Verification:**
+**Pure Function Testing:**
 ```typescript
-const mockInvoke = vi.mocked(invoke);
+import { describe, it, expect } from "vitest";
+import { formatCost, cn, getErrorMessage } from "../utils";
 
-// Set mock return value
-mockInvoke.mockResolvedValue(undefined);
-
-// Verify called with arguments
-expect(mockInvoke).toHaveBeenCalledWith(
-  "test_command",
-  expect.objectContaining({ param: "value" })
-);
-
-// Reset mocks between tests
-vi.clearAllMocks();
+describe("formatCost", () => {
+  it("formats positive amounts correctly", () => {
+    expect(formatCost(1.2345)).toBe("$1.2345");
+  });
+});
 ```
 
-**Suppressing Console Errors:**
+## Mocking
+
+**Module Mocking (most common pattern):**
+```typescript
+// Mock entire module before imports
+vi.mock("@/lib/queries", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/queries")>();
+  return {
+    ...actual,
+    useGsd2Sessions: vi.fn(),
+  };
+});
+
+import { useGsd2Sessions } from "@/lib/queries";
+
+// In test:
+(useGsd2Sessions as Mock).mockReturnValue({
+  data: MOCK_SESSIONS,
+  isLoading: false,
+  isError: false,
+});
+```
+
+**Component Mocking:**
+```typescript
+// Mock complex child components to simplify tests
+vi.mock("@/components/projects", () => ({
+  ProjectWizardDialog: ({ open }: { open: boolean }) =>
+    open ? <div data-testid="import-dialog">Add Project Dialog</div> : null,
+  ProjectCard: ({ project }: { project: { name: string } }) => (
+    <span>{project.name}</span>
+  ),
+}));
+```
+
+**Tauri Invoke Mocking:**
+```typescript
+vi.mock("@tauri-apps/api/core", () => ({
+  invoke: vi.fn(),
+}));
+
+import { invoke } from "@tauri-apps/api/core";
+
+// In test:
+vi.mocked(invoke).mockResolvedValue(undefined);
+
+// Verify:
+expect(invoke).toHaveBeenCalledWith("gsd2_list_milestones", { projectId: "proj-1" });
+```
+
+**Console Suppression (for error boundary tests):**
 ```typescript
 beforeEach(() => {
   vi.spyOn(console, "error").mockImplementation(() => {});
 });
-
-afterEach(() => {
-  // Cleanup happens in vi.clearAllMocks() or explicit restore
-});
 ```
 
-## Playwright E2E Configuration
+**What to Mock:**
+- Tauri IPC calls (`invoke`, `listen`, `emit`)
+- Browser APIs unavailable in jsdom (ResizeObserver, Canvas, etc.)
+- Complex child components that have their own test suites
+- Query hooks when testing presentation logic
 
-**Setup (`playwright.config.ts`):**
+**What NOT to Mock:**
+- Component internal state and behavior
+- React Router (use MemoryRouter from test-utils)
+- React Query client (use test QueryClient with retry:false)
+- Utility functions being tested
+
+## Test Data / Fixtures
+
+Test data is defined inline at the top of test files as constants:
+
+```typescript
+const MOCK_SESSIONS = [
+  {
+    filename: "2026-01-15T12:00:00Z-abc.jsonl",
+    timestamp: "2026-01-15T12:00:00Z",
+    name: "Fix login bug",
+    message_count: 24,
+    // ...
+  },
+];
+
+const mockProjects: ProjectWithStats[] = [
+  {
+    id: "1",
+    name: "GSD VibeFlow",
+    path: "/users/test/track-your-shit",
+    // ... full object shape matching the type
+  },
+];
+```
+
+No shared fixture files or factory functions exist beyond `createTestQueryClient()`.
+
+## E2E Tests (Playwright)
+
+**Config:** `playwright.config.ts`
 - Single browser: Chromium (Desktop Chrome)
 - Base URL: `http://localhost:1420`
-- Auto-starts Vite dev server on port 1420
-- Reuses existing server in development (not CI)
-- Screenshots: Only on failure
-- Traces: Recorded on first retry
-- Reporter: HTML format
+- Web server: auto-starts `pnpm exec vite --port 1420`
+- Screenshots: only on failure
+- Traces: on first retry
+- Reporter: HTML
+- CI: `forbidOnly`, 2 retries, 1 worker
+- Local: parallel workers, reuses existing server
 
-**Sample Tests:**
-- `e2e/navigation.spec.ts`: Navigation between routes
-- `e2e/projects.spec.ts`: Project creation and management
-- `e2e/dashboard.spec.ts`: Dashboard functionality
+**E2E Test Files (5):**
+- `e2e/navigation.spec.ts` - Route navigation, sidebar collapse/expand
+- `e2e/dashboard.spec.ts` - Dashboard rendering, search, view toggles, dialogs
+- `e2e/projects.spec.ts` - Project page functionality
+- `e2e/guided-flow.spec.ts` - Guided mode with Tauri IPC mocking
+- `e2e/screenshots.spec.ts` - Visual screenshots
+
+**E2E Tauri Mocking Pattern:**
+```typescript
+async function installTauriMock(page: Page, initialMode: UserMode) {
+  await page.addInitScript((mode: UserMode) => {
+    const g = window as typeof window & {
+      __TAURI_INTERNALS__?: Record<string, unknown>;
+    };
+    g.__TAURI_INTERNALS__ = g.__TAURI_INTERNALS__ || {};
+    // ... mock invoke responses based on command name
+  }, mode);
+}
+```
+
+**Limitations:**
+- E2E tests run against Vite dev server (web layer only)
+- No native Tauri API testing (PTY, filesystem, keychain)
+- Full Tauri E2E with `tauri-driver` noted as future work
+
+## Coverage
+
+**Tool:** `@vitest/coverage-v8` (installed as devDependency)
+**Thresholds:** None enforced
+**Command:**
+```bash
+pnpm test -- --coverage
+```
+
+## Coverage Gaps
+
+**Areas with NO test coverage (high impact):**
+- `src/pages/project.tsx` - Main project detail page (the primary view)
+- `src/pages/dashboard.tsx` - Dashboard page (only E2E coverage)
+- `src/pages/settings.tsx` - Settings page
+- `src/pages/shell.tsx` - Terminal/shell page
+- `src/pages/todos.tsx` - Todos page
+- `src/pages/notifications.tsx` - Notifications page
+- `src/pages/logs.tsx` - Logs page
+- `src/App.tsx` - Root app component, routing setup
+
+**Areas with NO test coverage (components):**
+- `src/components/project/gsd2-*.tsx` - Most GSD-2 tab components (only `gsd2-sessions-tab` and `gsd2-preferences-tab` tested)
+- `src/components/terminal/` - Terminal components (xterm integration)
+- `src/components/command-palette/` - Command palette
+- `src/components/dashboard/` - Dashboard sub-components
+- `src/components/notifications/` - Notification components
+- `src/components/shared/` - Shared components
+
+**Areas with NO test coverage (lib):**
+- `src/lib/tauri.ts` - Only GSD-2 and onboarding wrappers tested (vast majority untested)
+- `src/lib/queries.ts` - Query hooks not directly tested
+- `src/lib/codebase-parsers.ts`, `src/lib/gsd-plan-utils.ts`, `src/lib/knowledge-graph-utils.ts`
+- `src/lib/pty-chat-parser.ts`, `src/lib/recent-searches.ts`, `src/lib/sentry.ts`
+
+**Areas with NO test coverage (hooks):**
+- `src/hooks/use-pty-session.ts` - PTY session management
+- `src/hooks/use-keyboard-shortcuts.ts` - Keyboard shortcut handler
+- `src/hooks/use-gsd-file-watcher.ts` - File watcher hook
+- `src/hooks/use-close-warning.ts` - Close warning hook
+- `src/hooks/use-theme.ts` - Theme hook
+- `src/hooks/use-headless-session.ts` - Headless session hook
+
+**Backend (Rust):**
+- No Rust unit tests detected in `src-tauri/src/`
+
+**Coverage Summary:**
+- ~170 source files, ~22 test files
+- Estimated coverage: ~13% of source files have dedicated tests
+- Well-tested: utility functions, error boundary, terminal context, navigation, query keys
+- Untested: most pages, most GSD-2 tabs, terminal integration, all Rust commands
 
 ---
 
-*Testing analysis: 2026-02-21*
+*Testing analysis: 2026-03-30*

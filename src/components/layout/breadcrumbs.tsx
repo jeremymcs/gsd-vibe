@@ -114,7 +114,7 @@ export function Breadcrumbs() {
   const crumbs: Crumb[] = [];
 
   // Home crumb
-  crumbs.push({ label: 'Home', href: '/' });
+  crumbs.push({ label: 'Projects', href: '/' });
 
   // Build crumbs from URL segments
   let currentPath = '';

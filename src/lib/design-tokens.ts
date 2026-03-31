@@ -109,7 +109,7 @@ export function getStatusClasses(status: Status) {
 /**
  * Project type derived from TechStack flags
  */
-export type ProjectType = "gsd" | "bare";
+export type ProjectType = "gsd2" | "gsd1" | "bare";
 
 /**
  * Project type display metadata
@@ -118,11 +118,17 @@ export const projectTypeConfig: Record<
   ProjectType,
   { label: string; classes: string; tooltip: string }
 > = {
-  gsd: {
-    label: "GSD",
+  gsd2: {
+    label: "GSD-2",
     classes:
-      "bg-secondary text-secondary-foreground border-border",
-    tooltip: "GSD project (.planning/)",
+      "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30",
+    tooltip: "GSD-2 project (.gsd/)",
+  },
+  gsd1: {
+    label: "GSD-1",
+    classes:
+      "bg-sky-500/15 text-sky-600 dark:text-sky-400 border-sky-500/30",
+    tooltip: "GSD-1 project (.planning/)",
   },
   bare: {
     label: "Bare",
@@ -132,13 +138,15 @@ export const projectTypeConfig: Record<
 };
 
 /**
- * Derive project type from TechStack flags
+ * Derive project type from TechStack flags and gsd_version
  */
 export function getProjectType(techStack: {
   has_planning: boolean;
-} | null | undefined): ProjectType {
+} | null | undefined, gsdVersion?: string | null): ProjectType {
+  if (gsdVersion === '2') return "gsd2";
+  if (gsdVersion === '1') return "gsd1";
   if (!techStack) return "bare";
-  if (techStack.has_planning) return "gsd";
+  if (techStack.has_planning) return "gsd1";
   return "bare";
 }
 

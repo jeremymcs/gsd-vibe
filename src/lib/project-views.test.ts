@@ -10,19 +10,18 @@ import {
 } from './project-views';
 
 describe('project-views mode filtering', () => {
-  it('hides expert-only GSD2 views in guided mode', () => {
-    const views = getVisibleViews({ isGsd2: true, isGsd1: false, userMode: 'guided' });
+  it('shows gsd2 group views for gsd2 projects', () => {
+    const views = getVisibleViews({ isGsd2: true, isGsd1: false, userMode: 'expert' });
     const ids = new Set(views.map((view) => view.id));
 
-    expect(ids.has('gsd2-dashboard')).toBe(true);
-    expect(ids.has('gsd2-health')).toBe(true);
+    expect(ids.has('gsd2-group-progress')).toBe(true);
+    expect(ids.has('gsd2-group-planning')).toBe(true);
+    expect(ids.has('gsd2-group-metrics')).toBe(true);
+    expect(ids.has('gsd2-group-commands')).toBe(true);
+    expect(ids.has('gsd2-group-diagnostics')).toBe(true);
+    expect(ids.has('gsd2-headless')).toBe(true);
     expect(ids.has('gsd2-worktrees')).toBe(true);
-
-    expect(ids.has('gsd2-milestones')).toBe(false);
-    expect(ids.has('gsd2-slices')).toBe(false);
-    expect(ids.has('gsd2-tasks')).toBe(false);
-    expect(ids.has('gsd2-doctor')).toBe(false);
-    expect(ids.has('gsd2-reports')).toBe(false);
+    expect(ids.has('gsd2-sessions')).toBe(true);
   });
 
   it('keeps core views visible in guided mode', () => {
@@ -37,32 +36,41 @@ describe('project-views mode filtering', () => {
     expect(ids.has('envvars')).toBe(true);
   });
 
-  it('falls back expert-only view tab to default view in guided mode', () => {
-    const resolved = resolveViewFromTab('gsd2-milestones', {
-      isGsd2: true,
-      isGsd1: false,
-      userMode: 'guided',
-    });
+  it('hides gsd2 views for non-gsd2 projects', () => {
+    const views = getVisibleViews({ isGsd2: false, isGsd1: false, userMode: 'expert' });
+    const ids = new Set(views.map((view) => view.id));
 
-    expect(resolved).toBe(DEFAULT_VIEW);
+    expect(ids.has('gsd2-group-progress')).toBe(false);
+    expect(ids.has('gsd2-group-planning')).toBe(false);
+    expect(ids.has('gsd2-headless')).toBe(false);
   });
 
-  it('keeps expert-only view tab in expert mode', () => {
-    const resolved = resolveViewFromTab('gsd2-milestones', {
+  it('resolves unknown tab to default view', () => {
+    const resolved = resolveViewFromTab('nonexistent-tab', {
       isGsd2: true,
       isGsd1: false,
       userMode: 'expert',
     });
 
-    expect(resolved).toBe('gsd2-milestones');
+    expect(resolved).toBe(DEFAULT_VIEW);
   });
 
-  it('removes empty diagnostics section in guided mode', () => {
-    const sections = getViewSections({ isGsd2: true, isGsd1: false, userMode: 'guided' });
+  it('resolves gsd tab to gsd2 view for gsd2 projects', () => {
+    const resolved = resolveViewFromTab('gsd', {
+      isGsd2: true,
+      isGsd1: false,
+      userMode: 'expert',
+    });
+
+    expect(resolved).toBe('gsd2-dashboard');
+  });
+
+  it('groups views into correct sections', () => {
+    const sections = getViewSections({ isGsd2: true, isGsd1: false, userMode: 'expert' });
     const sectionNames = sections.map((section) => section.section);
 
     expect(sectionNames.includes('Core')).toBe(true);
     expect(sectionNames.includes('GSD')).toBe(true);
-    expect(sectionNames.includes('Diagnostics')).toBe(false);
+    expect(sectionNames.includes('Diagnostics')).toBe(true);
   });
 });

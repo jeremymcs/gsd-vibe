@@ -6,6 +6,7 @@ pub mod data;
 pub mod dependencies;
 pub mod filesystem;
 pub mod git;
+pub mod github;
 pub mod gsd;
 pub mod gsd2;
 pub mod knowledge;

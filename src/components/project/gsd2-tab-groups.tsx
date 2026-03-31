@@ -78,7 +78,7 @@ function GroupShell({
 export function Gsd2ProgressGroup({ projectId, projectPath }: GroupProps) {
   const tabs = [
     { value: 'visualizer', label: 'Visualizer' },
-    { value: 'dashboard',  label: 'Dashboard'  },
+    { value: 'dashboard',  label: 'Summary'    },
     { value: 'roadmap',    label: 'Roadmap'    },
     { value: 'activity',   label: 'Activity'   },
   ];

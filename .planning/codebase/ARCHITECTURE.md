@@ -1,182 +1,266 @@
+<!-- GSD VibeFlow - Codebase Map: Architecture -->
+<!-- Generated: 2026-03-30 -->
+
 # Architecture
 
-**Analysis Date:** 2026-02-21
+**Analysis Date:** 2026-03-30
 
 ## Pattern Overview
 
-**Overall:** Tauri Desktop Application with React Frontend and Rust Backend
-
-This is a desktop application built with the Tauri framework, combining a modern React frontend (TypeScript + Vite) with a Rust backend for system-level operations. The architecture follows a clear separation of concerns: the frontend handles UI and state management via React Query, while the backend (Rust) manages file I/O, terminal session management (PTY), Git operations, and database access.
+**Overall:** Two-process Tauri desktop application (Rust backend + React frontend) with IPC-based communication
 
 **Key Characteristics:**
-- Desktop application (cross-platform via Tauri)
-- Client-server communication via Tauri's `invoke` command bridge
-- React Query for frontend state management and API data synchronization
-- Context-based global state for persistent terminal sessions
-- Component-driven UI with Shadcn/ui component library
-- Type-safe frontend-backend contract via TypeScript interfaces
+- Tauri 2.x native desktop app with a single window
+- Frontend renders in a webview; backend runs as a native Rust process
+- All data operations go through Tauri `invoke()` IPC -- there is no REST API
+- SQLite database with WAL mode and read/write connection pool separation
+- React Query (TanStack Query) manages all frontend data fetching, caching, and polling
+- Domain-organized command modules on the backend, domain-organized components on the frontend
 
 ## Layers
 
-**Frontend (React + TypeScript):**
-- Purpose: User interface, state management, event handling
+**Frontend UI Layer:**
+- Purpose: Render the application UI and handle user interaction
 - Location: `src/`
-- Contains: React components, pages, hooks, contexts, utility libraries
-- Depends on: Tauri API (`@tauri-apps/api`), React Query, external libraries
-- Used by: Tauri window, end users
+- Contains: React components, pages, hooks, contexts, lib utilities
+- Depends on: Tauri IPC bridge (`@tauri-apps/api/core`), TanStack Query, React Router
+- Used by: End users via the native desktop window
 
-**Tauri Backend Bridge:**
-- Purpose: IPC (Inter-Process Communication) between React and Rust
-- Location: `src/lib/tauri.ts` (API wrapper), Tauri runtime
-- Contains: Type-safe command invocation, event listeners
-- Depends on: Tauri runtime
-- Used by: All frontend code needing backend operations
+**IPC Bridge Layer:**
+- Purpose: Type-safe communication between frontend and backend
+- Location: `src/lib/tauri.ts` (2,299 lines -- typed invoke wrappers), `src/lib/queries.ts` (1,833 lines -- React Query hooks)
+- Contains: TypeScript type definitions mirroring Rust models, `invoke()` wrapper functions, TanStack Query hooks with caching/polling config
+- Depends on: `@tauri-apps/api/core` for `invoke()`, `@tauri-apps/api/event` for `listen()`
+- Used by: All frontend components that need data
 
-**Rust Backend (Tauri Commands):**
-- Purpose: System operations, database, file I/O, terminal management
-- Location: `src-tauri/src/`
-- Contains: Command handlers, PTY management, database models, Git integration
-- Depends on: Tokio, rusqlite, git2, nix crate
-- Used by: Frontend via Tauri command invoke
+**Backend Command Layer:**
+- Purpose: Handle IPC requests from the frontend and execute business logic
+- Location: `src-tauri/src/commands/` (20 modules)
+- Contains: `#[tauri::command]` async functions organized by domain
+- Depends on: `DbPool` (database), `TerminalManager` (PTY), `HeadlessSessionRegistry`, `WatcherManager`
+- Used by: Tauri IPC dispatcher (registered in `src-tauri/src/lib.rs`)
 
-**UI Component System:**
-- Purpose: Reusable, accessible UI primitives (Radix UI wrapped)
-- Location: `src/components/ui/`
-- Contains: Button, Dialog, Input, Select, etc. (Shadcn/ui components)
-- Depends on: React, Radix UI, Tailwind CSS
-- Used by: Feature components throughout app
+**Database Layer:**
+- Purpose: Persistent data storage with concurrent access
+- Location: `src-tauri/src/db/mod.rs`, `src-tauri/src/db/tracing_layer.rs`
+- Contains: `DbPool` (1 writer + 4 reader connections), schema definitions, migrations, PRAGMAs
+- Depends on: `rusqlite` crate
+- Used by: All command modules via `State<Arc<DbPool>>`
 
-**Feature Components:**
-- Purpose: Domain-specific UI (Projects, Terminal, Settings, Dashboard)
-- Location: `src/components/{feature}/`
-- Contains: Feature-specific components, dialogs, forms
-- Depends on: UI components, hooks, contexts, queries
-- Used by: Pages and layout
+**Models Layer:**
+- Purpose: Shared data structures serializable between Rust and TypeScript
+- Location: `src-tauri/src/models/mod.rs` (1,016 lines)
+- Contains: Serde-serializable structs for all domain entities
+- Depends on: `serde`, `serde_json`
+- Used by: Command modules (return types), frontend (via TypeScript mirror types in `src/lib/tauri.ts`)
 
-**Pages:**
-- Purpose: Route-level components representing major app sections
-- Location: `src/pages/`
-- Contains: Dashboard, Projects, Project Detail, Terminal, Settings, Logs, Todos, Notifications
-- Depends on: Components, hooks, queries, contexts
-- Used by: React Router (App.tsx)
-
-**Data Access Layer:**
-- Purpose: React Query hooks for Tauri command invocation
-- Location: `src/lib/queries.ts`
-- Contains: useQuery and useMutation hooks wrapping Tauri API calls
-- Depends on: React Query, Tauri API wrapper
-- Used by: Components and pages
-
-**Tauri API Wrapper:**
-- Purpose: Type-safe abstraction over Tauri `invoke` calls
-- Location: `src/lib/tauri.ts`
-- Contains: Async functions wrapping Tauri commands, TypeScript interfaces for all data types
-- Depends on: Tauri core API, event listeners
-- Used by: Queries layer and hooks
+**PTY/Terminal Layer:**
+- Purpose: Manage pseudo-terminal sessions with optional tmux persistence
+- Location: `src-tauri/src/pty/mod.rs`
+- Contains: `TerminalManager`, `TerminalSession`, session backend (Native or Tmux)
+- Depends on: `portable-pty` crate, system tmux binary
+- Used by: PTY commands, headless session commands
 
 ## Data Flow
 
-**User Action → UI Update Flow:**
+**Standard Read Query (e.g., list projects):**
 
-1. User interacts with React component (click, form submission, etc.)
-2. Component calls hook (e.g., `useCreateProject()` mutation)
-3. Hook calls Tauri API wrapper function (e.g., `createProject(name, path)`)
-4. Wrapper invokes Tauri command: `invoke("create_project", { ... })`
-5. Tauri passes command to Rust backend
-6. Rust handler executes business logic (DB write, file operations, etc.)
-7. Handler returns result/error to frontend
-8. React Query processes response (onSuccess/onError callbacks)
-9. Query cache updates trigger component re-render
-10. UI reflects new state (toast notification, list update, etc.)
+1. React component calls `useProjects()` hook from `src/lib/queries.ts`
+2. TanStack Query checks cache; if stale, calls `api.listProjects()` from `src/lib/tauri.ts`
+3. `listProjects()` calls `invoke<Project[]>("list_projects")` via Tauri IPC
+4. Rust command handler `commands::projects::list_projects` acquires a read connection from `DbPool`
+5. SQLite query executes against one of 4 read-only connections (round-robin)
+6. Result serialized to JSON, sent back through IPC to frontend
+7. TanStack Query caches result and triggers component re-render
+
+**Standard Write Mutation (e.g., update project):**
+
+1. React component calls `useUpdateProject()` mutation hook
+2. Mutation calls `api.updateProject()` which invokes `invoke("update_project", { ... })`
+3. Rust handler acquires the single write connection via `pool.write().await`
+4. Write executes against the writer connection (serialized -- one write at a time)
+5. On success, the mutation's `onSuccess` callback invalidates related query keys
+6. TanStack Query automatically refetches stale queries
+
+**Terminal Session Flow:**
+
+1. Frontend creates a PTY session via `pty_create` command
+2. Backend spawns a `portable-pty` process (or attaches to tmux session)
+3. Output streamed via Tauri events (`pty:output:{session_id}`) to the frontend
+4. Frontend writes input via `pty_write` command
+5. xterm.js renders terminal output in `src/components/terminal/interactive-terminal.tsx`
 
 **State Management:**
-
-- **Query State:** Managed by React Query with configurable stale times and refetch intervals
-- **Global State:** Terminal sessions via `TerminalContext` (persists across navigation)
-- **Local State:** Component-level state (search filters, form inputs, expanded panels)
-- **Persistent State:** localStorage for sidebar collapse state, theme preference
+- **Server state:** TanStack Query manages all backend data with caching, polling intervals, and invalidation via `src/lib/query-keys.ts`
+- **Terminal state:** React Context (`src/contexts/terminal-context.tsx`) manages terminal tabs, sessions, and persistence across navigation
+- **Local UI state:** React `useState` within individual components
+- **Theme state:** `use-theme` hook with CSS class strategy (dark mode)
 
 ## Key Abstractions
 
-**Tauri Command as API Contract:**
-- Purpose: Type-safe bridge between React and Rust
-- Examples: `src/lib/tauri.ts` exports functions like `listProjects()`, `createProject()`, `gitPush()`
-- Pattern: Each function wraps an `invoke("command_name", payload)` call with typed parameters and return values
+**DbPool:**
+- Purpose: Concurrent database access without write contention
+- Implementation: `src-tauri/src/db/mod.rs`
+- Pattern: 1 write `Mutex<Database>` + 4 read-only `Mutex<Connection>` with round-robin via `AtomicUsize`
+- Rule: Use `pool.read()` for SELECT, `pool.write()` for mutations
 
-**React Query Hook Pattern:**
-- Purpose: Encapsulate data fetching, caching, and mutation logic
-- Examples: `useProjects()`, `useGitStatus()`, `useCreateProject()`
-- Pattern: Hooks in `src/lib/queries.ts` wrap Tauri API calls with React Query configuration (stale time, refetch intervals, error handling)
+**Query Key Factory:**
+- Purpose: Centralized, type-safe cache key management for TanStack Query
+- Implementation: `src/lib/query-keys.ts`
+- Pattern: Object with factory functions returning `as const` tuples
+- Rule: Always use `queryKeys.xxx()` -- never inline cache key arrays
 
-**Terminal Context:**
-- Purpose: Persistent terminal session management across page navigation
-- File: `src/contexts/terminal-context.tsx`
-- Pattern: Provides terminal state (tabs, active tab, session IDs) to entire app tree via context; handles PTY reconnection and tmux session tracking
+**Tauri Command Pattern:**
+- Purpose: Each backend operation is a typed async function
+- Implementation: `src-tauri/src/commands/*.rs`
+- Pattern: `#[tauri::command] async fn name(pool: State<'_, Arc<DbPool>>, ...) -> Result<T, String>`
+- Rule: Commands receive `State<Arc<...>>` for managed dependencies; return `Result<T, String>`
 
-**Component Hierarchy:**
-- Purpose: Reusable UI building blocks
-- Pattern: Shadcn/ui (Radix + Tailwind) components in `src/components/ui/`, feature-specific compounds in feature directories
-
-**Error Boundary:**
-- Purpose: Catch React runtime errors to prevent white-screen crashes
-- File: `src/components/error-boundary.tsx`
-- Pattern: Class component wrapping page content; logs errors to Sentry and Tauri backend for debugging
+**Project Views:**
+- Purpose: Define all possible views within a project detail page
+- Implementation: `src/lib/project-views.ts`
+- Pattern: Declarative view definitions with section grouping, conditional visibility (GSD version, user mode)
+- Rule: Sidebar renders views from this registry; views are resolved via `?tab=` search param
 
 ## Entry Points
 
-**Application Entry:**
-- Location: `src/main.tsx`
-- Triggers: Browser loads Tauri window
-- Responsibilities: Initialize React root, set up React Query client, wrap app with providers (ThemeProvider, QueryClientProvider, TerminalProvider)
-
-**Router Entry:**
-- Location: `src/App.tsx`
-- Triggers: React root renders
-- Responsibilities: Define routes, set up error boundary, lazy-load pages, handle app-level dialogs (close warning)
-
-**Layout Entry:**
-- Location: `src/components/layout/main-layout.tsx`
-- Triggers: Rendered by App.tsx
-- Responsibilities: Render persistent sidebar, command palette, shell panel; manage sidebar collapse state; show page content with header
-
-**Tauri Backend Entry:**
+**Application Entry (Rust):**
 - Location: `src-tauri/src/main.rs`
-- Triggers: Desktop application launches
-- Responsibilities: Initialize Tauri runtime, register command handlers, set up window state
+- Triggers: OS launches the binary
+- Responsibilities: Calls `gsd_vibeflow_lib::run()`
+
+**Application Setup (Rust):**
+- Location: `src-tauri/src/lib.rs`
+- Triggers: Called by `main.rs`
+- Responsibilities: Initializes tracing, database pool, terminal manager, headless registry, file watcher; registers all 150+ Tauri commands; starts the Tauri event loop
+
+**Frontend Entry:**
+- Location: `src/App.tsx`
+- Triggers: Webview loads
+- Responsibilities: Sets up React Router, ErrorBoundary, TerminalProvider, onboarding gate, lazy-loaded routes
+
+**Routes:**
+- `/` -- Dashboard (`src/pages/dashboard.tsx`)
+- `/projects` -- Projects list (`src/pages/projects.tsx`)
+- `/projects/:id` -- Project detail (`src/pages/project.tsx`) with `?tab=` view switching
+- `/todos` -- Cross-project todos (`src/pages/todos.tsx`)
+- `/settings` -- App settings (`src/pages/settings.tsx`)
+- `/gsd-preferences` -- GSD workflow preferences (`src/pages/gsd-preferences.tsx`)
+- `/terminal` -- Standalone terminal (`src/pages/shell.tsx`)
+- `/terminal/:projectId` -- Project terminal (`src/pages/shell.tsx`)
+- `/logs` -- Application logs (`src/pages/logs.tsx`)
+- `/notifications` -- Notifications center (`src/pages/notifications.tsx`)
+
+## Data Architecture
+
+**Database:** SQLite stored at OS app data directory as `gsd-vibe.db`
+
+**Key Tables:**
+- `projects` -- Core entity. All other tables reference via `project_id` FK with CASCADE delete
+- `roadmaps` -- Project roadmaps (formerly flight_plans). One project can have multiple roadmaps
+- `phases` -- Phases within a roadmap, with status tracking and ordering
+- `tasks` -- Tasks within a phase, with file tracking and status
+- `activity_log` -- Per-project event log
+- `knowledge` -- Persistent knowledge base entries per project
+- `decisions` -- Architectural decisions per project
+- `costs` -- Token/cost tracking per execution
+- `settings` -- Key-value store for app settings
+- `app_logs` -- Unified application logging (backend tracing + frontend events)
+- `command_history` -- Terminal command history per project
+- `snippets` -- Reusable command snippets (global or per-project)
+- `auto_commands` -- Auto-run commands on terminal hooks
+- `gsd_todos` -- GSD workflow todo items
+- `gsd_requirements` -- GSD requirements tracking
+- `gsd_debug_sessions` -- Debug session tracking
+- `notifications` -- In-app notification queue
+- `terminal_sessions` -- Persistent terminal session metadata
+- `knowledge_bookmarks` -- Bookmarked knowledge sections
+- `cost_thresholds` -- Per-project cost threshold overrides
+- `schema_migrations` -- Migration tracking
+
+**FTS5 Full-Text Search:** Optional (graceful fallback to LIKE if unavailable). Indexes projects, knowledge, decisions, and activity.
+
+**Connection Pool:**
+- 1 writer connection (WAL mode, busy_timeout 5s, synchronous NORMAL)
+- 4 read-only connections (round-robin distribution)
+- PRAGMAs: cache_size 8MB (writer) / 4MB (readers), mmap_size 128MB, temp_store MEMORY
 
 ## Error Handling
 
-**Strategy:** Multi-layered error catching and reporting
+**Strategy:** Result-based error handling throughout
 
-**Patterns:**
-- **Component Level:** ErrorBoundary wraps page content; captures React errors, logs to Sentry and Tauri backend
-- **Hook Level:** React Query `onError` callbacks show toast notifications via Sonner; specific error messages extracted from backend responses
-- **Backend Level:** Rust handlers return `Result<T, String>` with descriptive error messages; converted to frontend-friendly messages
-- **User Feedback:** Toast notifications (Sonner) for mutation results, inline error messages in forms, dedicated error dialogs for critical failures
+**Frontend Patterns:**
+- `ErrorBoundary` component wraps the entire app and individual pages (`src/components/error-boundary.tsx`)
+- TanStack Query `onError` callbacks show toast notifications via `sonner`
+- `getErrorMessage()` utility in `src/lib/utils.ts` normalizes error objects to strings
+
+**Backend Patterns:**
+- All Tauri commands return `Result<T, String>` -- errors are stringified for IPC transport
+- Database errors mapped to descriptive strings
+- Tracing (`tracing::info/warn/error`) for structured backend logging
+- `SqliteLayer` custom tracing layer writes logs to the `app_logs` table
 
 ## Cross-Cutting Concerns
 
 **Logging:**
-- Frontend: Errors captured by Sentry (DSN from env); Tauri backend logs frontend errors via `log_frontend_error` command
-- Backend: Rust standard logging (tracing/log crates)
+- Backend: `tracing` crate with env-filter + fmt + custom SQLite layer
+- Frontend: `log_frontend_error` and `log_frontend_event` commands send to backend `app_logs` table
+- Viewable: Logs page at `/logs` with filtering by level, source, and project
 
-**Validation:**
-- Form validation in React components (client-side)
-- Backend validation in Rust handlers (server-side)
+**Security:**
+- OS keychain integration via `keyring` crate for secret storage (`src-tauri/src/commands/secrets.rs`)
+- CSP policy configured in `src-tauri/tauri.conf.json`
+- Path traversal protection in `src-tauri/src/security.rs` (`safe_join`, `shell_escape_path`)
+- Single-instance enforcement on desktop via `tauri-plugin-single-instance`
 
-**Authentication:**
-- Not present in this version; app operates on local desktop only (user's own machine)
+**Monitoring:**
+- Sentry integration for production error tracking (`src/lib/sentry.ts`)
+- In-app notification system with unread count badge
 
-**Theme Management:**
-- ThemeProvider wraps entire app in `src/main.tsx`
-- Theme context manages light/dark mode and custom design tokens
-- Tailwind CSS for styling with custom design tokens (colors, spacing)
+## Module Boundaries
 
-**Keyboard Shortcuts:**
-- Centralized in `KeyboardShortcutsProvider` wrapper
-- Shortcuts defined in `src/hooks/use-keyboard-shortcuts.ts`
-- Global shortcuts (Cmd/Ctrl+K for command palette) handled via context
+**Backend Command Modules (20 total in `src-tauri/src/commands/`):**
+
+| Module | Lines | Purpose |
+|--------|-------|---------|
+| `gsd2.rs` | 8,482 | GSD v2 workflow: milestones, slices, tasks, headless sessions, worktrees, diagnostics |
+| `gsd.rs` | 4,427 | GSD v1 workflow: plans, todos, verification, research, milestones |
+| `filesystem.rs` | 1,592 | File operations, tech stack detection, knowledge file scanning |
+| `github.rs` | 967 | GitHub API integration: PRs, issues, releases, check runs |
+| `projects.rs` | 945 | Project CRUD, import, enhanced import, stats |
+| `templates.rs` | 648 | Project templates and scaffolding |
+| `knowledge.rs` | 550 | Knowledge base CRUD, search, bookmarks |
+| `git.rs` | 469 | Git operations: status, push, pull, stage, commit, stash |
+| `onboarding.rs` | 429 | First-launch wizard: dependency detection, API key validation |
+| `data.rs` | 412 | Export/clear data operations |
+| `snippets.rs` | 401 | Command snippets and auto-commands |
+| `logs.rs` | 325 | Application log queries and frontend log capture |
+| `terminal.rs` | 315 | Command history, script favorites, session persistence |
+| `secrets.rs` | 251 | OS keychain operations |
+| `dependencies.rs` | 251 | Dependency outdated/vulnerable scanning |
+| `settings.rs` | 247 | App settings CRUD |
+| `watcher.rs` | 228 | File system watcher for project changes |
+| `notifications.rs` | 199 | Notification CRUD and unread counts |
+| `search.rs` | 165 | Global cross-entity search |
+| `pty.rs` | 152 | PTY session lifecycle (create, write, resize, close, attach) |
+
+**Frontend has no circular dependencies between domains.** Components import from `@/lib/queries` and `@/lib/tauri` for data; from `@/components/ui/` for primitives.
+
+## Deployment Architecture
+
+**Build:**
+- Frontend: Vite builds to `dist/` (TypeScript check + bundle)
+- Backend: Cargo builds the Rust binary
+- Combined: `pnpm tauri build` produces native installers
+
+**Platform Targets:**
+- macOS (minimum 10.15) -- `.dmg` / `.app`
+- Linux -- AppImage
+- Windows -- MSI with embedded WebView2 bootstrapper
+
+**Bundle ID:** `io.gsd.vibeflow`
+**App Version:** 0.1.1
 
 ---
 
-*Architecture analysis: 2026-02-21*
+*Architecture analysis: 2026-03-30*

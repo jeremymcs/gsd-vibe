@@ -41,7 +41,7 @@ vi.mock("@/components/ui/skeleton", () => ({
 
 // Mock design tokens
 vi.mock("@/lib/design-tokens", () => ({
-  getProjectType: vi.fn(() => "web"),
+  getProjectType: vi.fn(() => "bare"),
 }));
 
 const mockProjects: ProjectWithStats[] = [

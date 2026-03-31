@@ -24,7 +24,7 @@ describe("MainLayout - Collapsible Sidebar", () => {
     );
 
     // Check that navigation items are present (matching current navigation.ts)
-    expect(screen.getByText("Home")).toBeInTheDocument();
+    expect(screen.getByText("Projects")).toBeInTheDocument();
     expect(screen.getByText("Todos")).toBeInTheDocument();
     // Terminal appears multiple times (nav item + shell panel)
     expect(screen.getAllByText("Terminal").length).toBeGreaterThan(0);
@@ -173,7 +173,7 @@ describe("MainLayout - Collapsible Sidebar", () => {
     );
 
     // Initially expanded - text should be visible
-    expect(screen.getByText("Home")).toBeInTheDocument();
+    expect(screen.getByText("Projects")).toBeInTheDocument();
 
     // Collapse
     const collapseButton = screen.getByLabelText("Collapse sidebar");
@@ -187,7 +187,7 @@ describe("MainLayout - Collapsible Sidebar", () => {
     });
 
     // Home text should be gone when sidebar is collapsed
-    expect(screen.queryByText("Home")).not.toBeInTheDocument();
+    expect(screen.queryByText("Projects")).not.toBeInTheDocument();
   });
 
   it("when collapsed, shows PanelLeftOpen icon with tooltip", async () => {
@@ -259,7 +259,7 @@ describe("MainLayout - Accessibility", () => {
     );
 
     // On the default "/" route, Home should be the active nav item
-    const homeButton = screen.getByRole("button", { name: "Home" });
+    const homeButton = screen.getByRole("button", { name: "Projects" });
     expect(homeButton).toHaveAttribute("aria-current", "page");
 
     // A non-active item should NOT have aria-current

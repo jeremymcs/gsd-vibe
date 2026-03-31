@@ -22,7 +22,7 @@ interface ProjectHeaderProps {
 }
 
 export function ProjectHeader({ project, onDelete }: ProjectHeaderProps) {
-  const projectType = getProjectType(project.tech_stack);
+  const projectType = getProjectType(project.tech_stack, project.gsd_version);
   const typeConfig = projectTypeConfig[projectType];
 
   return (
