@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   Select,
   SelectContent,
@@ -21,6 +22,7 @@ import { useDependencyStatus } from '@/lib/queries';
 import { invalidateDependencyCache } from '@/lib/tauri';
 import { queryKeys } from '@/lib/query-keys';
 import { useQueryClient } from '@tanstack/react-query';
+import { useCopyToClipboard } from '@/hooks';
 import {
   formatRelativeTime,
   getErrorMessage,
@@ -39,6 +41,8 @@ import {
   ExternalLink,
   CheckCircle2,
   ShieldCheck,
+  Copy,
+  Check,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -182,6 +186,8 @@ function OutdatedTable({
   packages: [string, OutdatedEntry][];
   packageManager: string;
 }) {
+  const { copyToClipboard, copiedItems } = useCopyToClipboard();
+  
   return (
     <ScrollArea className="max-h-[500px]">
       <div className="flex items-center gap-2 text-[10px] font-medium uppercase tracking-wider text-muted-foreground px-3 py-2 border-b sticky top-0 bg-background z-10">
@@ -195,9 +201,9 @@ function OutdatedTable({
         return (
           <div
             key={name}
-            className="flex items-center gap-2 px-3 py-2 text-sm border-b last:border-b-0 hover:bg-muted/50 transition-colors"
+            className="flex items-center gap-2 px-3 py-2 text-sm border-b last:border-b-0 hover:bg-muted/50 transition-colors group"
           >
-            <span className="flex-1 min-w-0 truncate" title={name}>
+            <span className="flex-1 min-w-0 truncate flex items-center gap-2" title={name}>
               <a
                 href={getRegistryUrl(packageManager, name)}
                 target="_blank"
@@ -207,6 +213,25 @@ function OutdatedTable({
                 {name}
                 <ExternalLink className="h-3 w-3 shrink-0" />
               </a>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => copyToClipboard(name, `Copied package name: ${name}`)}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 hover:bg-accent rounded"
+                    >
+                      {copiedItems.has(name) ? (
+                        <Check className="h-3 w-3 text-green-600" />
+                      ) : (
+                        <Copy className="h-3 w-3 text-muted-foreground" />
+                      )}
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="text-xs">
+                    Copy package name
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </span>
             <span className="w-24 text-right shrink-0 font-mono text-muted-foreground text-xs">
               {info.current}
@@ -236,6 +261,8 @@ function VulnerabilityTable({
   packages: [string, AuditVulnerability][];
   severityFilter: string;
 }) {
+  const { copyToClipboard, copiedItems } = useCopyToClipboard();
+  
   const filtered =
     severityFilter === 'all'
       ? packages
@@ -268,13 +295,29 @@ function VulnerabilityTable({
       {filtered.map(([name, info]) => (
         <div
           key={name}
-          className="flex items-center gap-2 px-3 py-2 text-sm border-b last:border-b-0 hover:bg-muted/50 transition-colors"
+          className="flex items-center gap-2 px-3 py-2 text-sm border-b last:border-b-0 hover:bg-muted/50 transition-colors group"
         >
-          <span
-            className="flex-1 min-w-0 font-medium truncate"
-            title={name}
-          >
+          <span className="flex-1 min-w-0 font-medium truncate flex items-center gap-2" title={name}>
             {name}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => copyToClipboard(name, `Copied package name: ${name}`)}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 hover:bg-accent rounded"
+                  >
+                    {copiedItems.has(name) ? (
+                      <Check className="h-3 w-3 text-green-600" />
+                    ) : (
+                      <Copy className="h-3 w-3 text-muted-foreground" />
+                    )}
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="text-xs">
+                  Copy package name
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </span>
           <span className="w-20 shrink-0">
             <Badge variant={severityBadgeVariant(info.severity)} size="sm">

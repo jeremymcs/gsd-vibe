@@ -2,17 +2,20 @@
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { useState } from 'react';
-import { ChevronRight, Map } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
+import { ChevronRight, Map, Copy, Check } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ViewEmpty } from '@/components/shared/loading-states';
+import { SearchInput } from '@/components/shared/search-input';
+import { SingleSelectFilter } from '@/components/shared/filter-chips';
 import {
   useGsd2Milestones,
   useGsd2Milestone,
   useGsd2Slice,
   useGsd2DerivedState,
 } from '@/lib/queries';
+import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard';
 import type { Gsd2DerivedState } from '@/lib/tauri';
 
 interface Gsd2MilestonesTabProps {
@@ -44,6 +47,11 @@ interface SliceTasksSectionProps {
 
 function SliceTasksSection({ projectId, milestoneId, sliceId }: SliceTasksSectionProps) {
   const { data: slice, isLoading, isError } = useGsd2Slice(projectId, milestoneId, sliceId, true);
+  const { copyToClipboard, copiedItems } = useCopyToClipboard();
+
+  const handleCopyTaskId = async (taskId: string) => {
+    await copyToClipboard(taskId, `Task ID "${taskId}" copied`);
+  };
 
   if (isLoading) {
     return <Skeleton className="h-8 w-full" />;
@@ -61,10 +69,22 @@ function SliceTasksSection({ projectId, milestoneId, sliceId }: SliceTasksSectio
     <div className="space-y-0.5">
       {slice.tasks.map((task) => {
         const taskStatus = task.done ? 'done' : 'pending';
+        const isCopied = copiedItems.has(task.id);
         return (
           <div key={task.id} className="flex items-center gap-2 py-1.5 px-3">
             <StatusIcon status={taskStatus} />
-            <span className="text-xs font-mono text-muted-foreground">{task.id}</span>
+            <button
+              onClick={() => handleCopyTaskId(task.id)}
+              className="flex items-center gap-1 hover:text-foreground transition-colors text-xs font-mono text-muted-foreground"
+              title="Click to copy task ID"
+            >
+              {task.id}
+              {isCopied ? (
+                <Check className="h-3 w-3 text-green-500" />
+              ) : (
+                <Copy className="h-3 w-3 opacity-50" />
+              )}
+            </button>
             <span className="text-sm">{task.title}</span>
             <Badge
               variant="outline"
@@ -99,6 +119,11 @@ function MilestoneSlices({
   derivedState,
 }: MilestoneSlicesProps) {
   const { data: milestone, isLoading, isError } = useGsd2Milestone(projectId, milestoneId, true);
+  const { copyToClipboard, copiedItems } = useCopyToClipboard();
+
+  const handleCopySliceId = async (sliceId: string) => {
+    await copyToClipboard(sliceId, `Slice ID "${sliceId}" copied`);
+  };
 
   if (isLoading) {
     return <Skeleton className="h-8 w-full ml-6" />;
@@ -123,19 +148,38 @@ function MilestoneSlices({
         const totalCount = s.tasks.length;
         const sliceStatus = getStatus(s.done, derivedState?.active_slice_id ?? null, s.id);
         const isExpanded = expandedSlices.has(s.id);
+        const isCopied = copiedItems.has(s.id);
 
         return (
           <div key={s.id}>
             <div
-              className="flex items-center gap-2 py-2 px-3 ml-6 rounded cursor-pointer hover:bg-muted/50 transition-colors"
-              onClick={() => toggleSlice(s.id)}
+              className="flex items-center gap-2 py-2 px-3 ml-6 rounded hover:bg-muted/50 transition-colors"
             >
-              <ChevronRight
-                className="h-3.5 w-3.5 transition-transform duration-200 shrink-0"
-                style={{ transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)' }}
-              />
-              <StatusIcon status={sliceStatus} />
-              <span className="text-xs font-mono text-muted-foreground">{s.id}</span>
+              <button
+                onClick={() => toggleSlice(s.id)}
+                className="flex items-center gap-2"
+              >
+                <ChevronRight
+                  className="h-3.5 w-3.5 transition-transform duration-200 shrink-0"
+                  style={{ transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)' }}
+                />
+                <StatusIcon status={sliceStatus} />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleCopySliceId(s.id);
+                }}
+                className="flex items-center gap-1 hover:text-foreground transition-colors text-xs font-mono text-muted-foreground"
+                title="Click to copy slice ID"
+              >
+                {s.id}
+                {isCopied ? (
+                  <Check className="h-3 w-3 text-green-500" />
+                ) : (
+                  <Copy className="h-3 w-3 opacity-50" />
+                )}
+              </button>
               <span className="text-sm">{s.title}</span>
               <span className="text-xs text-muted-foreground ml-auto mr-2">
                 {doneCount}/{totalCount} tasks
@@ -168,11 +212,18 @@ function MilestoneSlices({
 }
 
 export function Gsd2MilestonesTab({ projectId }: Gsd2MilestonesTabProps) {
+  const [search, setSearch] = useState('');
+  const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
   const [expandedMilestones, setExpandedMilestones] = useState<Set<string>>(new Set());
   const [expandedSlices, setExpandedSlices] = useState<Set<string>>(new Set());
 
   const { data: milestones, isLoading, isError } = useGsd2Milestones(projectId);
   const { data: derivedState } = useGsd2DerivedState(projectId);
+  const { copyToClipboard, copiedItems } = useCopyToClipboard();
+
+  const handleCopyMilestoneId = async (milestoneId: string) => {
+    await copyToClipboard(milestoneId, `Milestone ID "${milestoneId}" copied`);
+  };
 
   const toggleMilestone = (id: string) => {
     setExpandedMilestones((prev) => {
@@ -226,11 +277,77 @@ export function Gsd2MilestonesTab({ projectId }: Gsd2MilestonesTabProps) {
     );
   }
 
+  // Status filter options with counts
+  const statusGroups = milestones.reduce((acc, milestone) => {
+    const status = getStatus(milestone.done, derivedState?.active_milestone_id ?? null, milestone.id);
+    acc[status] = (acc[status] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const statusOptions = [
+    { id: 'active', label: 'Active', count: statusGroups.active || 0 },
+    { id: 'done', label: 'Done', count: statusGroups.done || 0 },
+    { id: 'pending', label: 'Pending', count: statusGroups.pending || 0 },
+  ].filter(option => option.count > 0);
+
+  // Apply search and status filters
+  const query = search.trim().toLowerCase();
+  const filtered = milestones.filter((milestone) => {
+    // Status filter
+    if (selectedStatus) {
+      const status = getStatus(milestone.done, derivedState?.active_milestone_id ?? null, milestone.id);
+      if (status !== selectedStatus) return false;
+    }
+    
+    // Search filter
+    if (query) {
+      return (
+        milestone.id.toLowerCase().includes(query) ||
+        milestone.title.toLowerCase().includes(query)
+      );
+    }
+    
+    return true;
+  });
+
   return (
     <Card>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between gap-4">
+          <CardTitle className="text-sm font-semibold flex items-center gap-2">
+            <Map className="h-4 w-4" /> Milestones
+            <span className="text-xs font-normal text-muted-foreground">
+              ({milestones.length})
+            </span>
+          </CardTitle>
+        </div>
+        <div className="space-y-2">
+          <SearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder="Search by ID or title..."
+            size="sm"
+          />
+          {statusOptions.length > 1 && (
+            <SingleSelectFilter
+              options={statusOptions}
+              selected={selectedStatus}
+              onSelectionChange={setSelectedStatus}
+              size="sm"
+              showAllOption={true}
+              allLabel="All Status"
+            />
+          )}
+        </div>
+      </CardHeader>
       <CardContent className="p-2">
-        <div className="space-y-0.5">
-          {milestones.map((m) => {
+        {filtered.length === 0 && (query || selectedStatus) ? (
+          <p className="py-6 text-center text-sm text-muted-foreground">
+            No milestones match {query && selectedStatus ? `"${search}" and ${selectedStatus} status` : query ? `"${search}"` : `${selectedStatus} status`}
+          </p>
+        ) : (
+          <div className="space-y-0.5">
+            {filtered.map((m) => {
             const milestoneStatus = getStatus(
               m.done,
               derivedState?.active_milestone_id ?? null,
@@ -238,19 +355,38 @@ export function Gsd2MilestonesTab({ projectId }: Gsd2MilestonesTabProps) {
             );
             const isExpanded = expandedMilestones.has(m.id);
             const isActive = derivedState?.active_milestone_id === m.id;
+            const isCopied = copiedItems.has(m.id);
 
             return (
               <div key={m.id}>
                 <div
-                  className={`flex items-center gap-2 py-2 px-3 rounded cursor-pointer hover:bg-muted/50 transition-colors${isActive ? ' border-l-2 border-primary' : ''}`}
-                  onClick={() => toggleMilestone(m.id)}
+                  className={`flex items-center gap-2 py-2 px-3 rounded hover:bg-muted/50 transition-colors${isActive ? ' border-l-2 border-primary' : ''}`}
                 >
-                  <ChevronRight
-                    className="h-4 w-4 transition-transform duration-200 shrink-0"
-                    style={{ transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)' }}
-                  />
-                  <StatusIcon status={milestoneStatus} />
-                  <span className="text-xs font-mono text-muted-foreground">{m.id}</span>
+                  <button
+                    onClick={() => toggleMilestone(m.id)}
+                    className="flex items-center gap-2"
+                  >
+                    <ChevronRight
+                      className="h-4 w-4 transition-transform duration-200 shrink-0"
+                      style={{ transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)' }}
+                    />
+                    <StatusIcon status={milestoneStatus} />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCopyMilestoneId(m.id);
+                    }}
+                    className="flex items-center gap-1 hover:text-foreground transition-colors text-xs font-mono text-muted-foreground"
+                    title="Click to copy milestone ID"
+                  >
+                    {m.id}
+                    {isCopied ? (
+                      <Check className="h-3 w-3 text-green-500" />
+                    ) : (
+                      <Copy className="h-3 w-3 opacity-50" />
+                    )}
+                  </button>
                   <span className="text-sm font-medium">{m.title}</span>
                   <Badge
                     variant="outline"
@@ -275,7 +411,8 @@ export function Gsd2MilestonesTab({ projectId }: Gsd2MilestonesTabProps) {
               </div>
             );
           })}
-        </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

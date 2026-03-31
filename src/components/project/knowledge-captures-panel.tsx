@@ -1,11 +1,12 @@
 // GSD VibeFlow - Knowledge & Captures Panel Component
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import type { ReactNode } from "react";
 import { BookOpen, MessageSquare, LoaderCircle, RefreshCw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { SearchInput } from "@/components/shared/search-input";
 import type { KnowledgeEntry, CaptureEntry } from "@/lib/tauri";
 import { cn } from "@/lib/utils";
 import {
@@ -122,7 +123,23 @@ function KnowledgeEntryRow({ entry }: { entry: KnowledgeEntry }) {
 }
 
 function KnowledgeTabContent({ projectId }: { projectId: string }) {
+  const [searchTerm, setSearchTerm] = useState("");
+  
   const { data, error, isFetching, refetch } = useGsd2KnowledgeData(projectId);
+
+  const filteredEntries = useMemo(() => {
+    if (!data?.entries || !searchTerm.trim()) {
+      return data?.entries || [];
+    }
+    
+    const search = searchTerm.toLowerCase();
+    return data.entries.filter((entry) =>
+      entry.type.toLowerCase().includes(search) ||
+      (entry.title && entry.title.toLowerCase().includes(search)) ||
+      (entry.content && entry.content.toLowerCase().includes(search)) ||
+      (entry.id && entry.id.toLowerCase().includes(search))
+    );
+  }, [data?.entries, searchTerm]);
 
   return (
     <div className="space-y-4" data-testid="knowledge-tab-content">
@@ -131,13 +148,24 @@ function KnowledgeTabContent({ projectId }: { projectId: string }) {
         status={
           data ? (
             <span className="text-[11px] text-muted-foreground">
-              {data.entries.length} {data.entries.length === 1 ? "entry" : "entries"}
+              {filteredEntries.length} {filteredEntries.length === 1 ? "entry" : "entries"}
+              {searchTerm && data.entries.length !== filteredEntries.length && ` of ${data.entries.length}`}
             </span>
           ) : null
         }
         onRefresh={() => void refetch()}
         refreshing={isFetching}
       />
+
+      {/* Search input */}
+      {data && data.entries.length > 0 && (
+        <SearchInput
+          value={searchTerm}
+          onChange={setSearchTerm}
+          placeholder="Search knowledge entries..."
+          size="sm"
+        />
+      )}
 
       {error && (
         <KnowError
@@ -148,15 +176,17 @@ function KnowledgeTabContent({ projectId }: { projectId: string }) {
 
       {data && (
         <>
-          {data.entries.length > 0 ? (
+          {filteredEntries.length > 0 ? (
             <div className="space-y-2">
-              {data.entries.map((entry) => (
+              {filteredEntries.map((entry) => (
                 <KnowledgeEntryRow key={entry.id} entry={entry} />
               ))}
             </div>
-          ) : (
+          ) : searchTerm && data.entries.length > 0 ? (
+            <KnowEmpty message={`No entries match "${searchTerm}"`} />
+          ) : data.entries.length === 0 ? (
             <KnowEmpty message="No knowledge entries found" />
-          )}
+          ) : null}
         </>
       )}
     </div>
@@ -275,7 +305,24 @@ function CaptureEntryRow({
 }
 
 function CapturesTabContent({ projectId }: { projectId: string }) {
+  const [searchTerm, setSearchTerm] = useState("");
+  
   const { data, error, isFetching, refetch } = useGsd2CapturesData(projectId);
+
+  const filteredEntries = useMemo(() => {
+    if (!data?.entries || !searchTerm.trim()) {
+      return data?.entries || [];
+    }
+    
+    const search = searchTerm.toLowerCase();
+    return data.entries.filter((entry) =>
+      (entry.text && entry.text.toLowerCase().includes(search)) ||
+      entry.status.toLowerCase().includes(search) ||
+      (entry.classification && entry.classification.toLowerCase().includes(search)) ||
+      entry.id.toLowerCase().includes(search) ||
+      (entry.resolution && entry.resolution.toLowerCase().includes(search))
+    );
+  }, [data?.entries, searchTerm]);
 
   return (
     <div className="space-y-4" data-testid="captures-tab-content">
@@ -296,6 +343,16 @@ function CapturesTabContent({ projectId }: { projectId: string }) {
         refreshing={isFetching}
       />
 
+      {/* Search input */}
+      {data && data.entries.length > 0 && (
+        <SearchInput
+          value={searchTerm}
+          onChange={setSearchTerm}
+          placeholder="Search captures..."
+          size="sm"
+        />
+      )}
+
       {error && (
         <KnowError
           message={error instanceof Error ? error.message : String(error)}
@@ -305,9 +362,9 @@ function CapturesTabContent({ projectId }: { projectId: string }) {
 
       {data && (
         <>
-          {data.entries.length > 0 ? (
+          {filteredEntries.length > 0 ? (
             <div className="space-y-2">
-              {data.entries.map((entry) => (
+              {filteredEntries.map((entry) => (
                 <CaptureEntryRow
                   key={entry.id}
                   entry={entry}
@@ -315,9 +372,11 @@ function CapturesTabContent({ projectId }: { projectId: string }) {
                 />
               ))}
             </div>
-          ) : (
+          ) : searchTerm && data.entries.length > 0 ? (
+            <KnowEmpty message={`No captures match "${searchTerm}"`} />
+          ) : data.entries.length === 0 ? (
             <KnowEmpty message="No captures found" />
-          )}
+          ) : null}
         </>
       )}
     </div>

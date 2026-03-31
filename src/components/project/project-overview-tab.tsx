@@ -11,6 +11,7 @@ import { VisionCard } from './vision-card';
 import { RoadmapProgressCard } from './roadmap-progress-card';
 import type { Project } from '@/lib/tauri';
 import { useGsdState, useGsdTodos, useGsdConfig, useGsdSync, useEnvironmentInfo } from '@/lib/queries';
+import {
   CheckSquare,
   AlertTriangle,
   Crosshair,
@@ -20,7 +21,6 @@ import { useGsdState, useGsdTodos, useGsdConfig, useGsdSync, useEnvironmentInfo 
   GitBranch,
   Monitor,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 interface ProjectOverviewTabProps {
   project: Project;

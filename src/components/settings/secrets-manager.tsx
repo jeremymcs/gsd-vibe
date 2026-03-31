@@ -22,6 +22,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -225,7 +231,7 @@ export function SecretsManager() {
   );
 
   return (
-    <>
+    <TooltipProvider delayDuration={300}>
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -346,55 +352,65 @@ export function SecretsManager() {
                       <CheckCircle2 className="h-4 w-4 text-green-500 mr-1" />
 
                       {/* Reveal button */}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        disabled={isRevealing}
-                        onClick={() => void handleRevealSecret(secret.key)}
-                        title={
-                          revealedKey === secret.key
-                            ? "Hide value"
-                            : "Reveal value"
-                        }
-                      >
-                        {revealedKey === secret.key ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                      </Button>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            disabled={isRevealing}
+                            onClick={() => void handleRevealSecret(secret.key)}
+                          >
+                            {revealedKey === secret.key ? (
+                              <EyeOff className="h-4 w-4" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          {revealedKey === secret.key ? "Hide value" : "Reveal value"}
+                        </TooltipContent>
+                      </Tooltip>
 
                       {/* Copy button */}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => void handleCopySecret(secret.key)}
-                        title="Copy to clipboard"
-                      >
-                        {copiedKey === secret.key ? (
-                          <Check className="h-4 w-4 text-green-500" />
-                        ) : (
-                          <Copy className="h-4 w-4" />
-                        )}
-                      </Button>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => void handleCopySecret(secret.key)}
+                          >
+                            {copiedKey === secret.key ? (
+                              <Check className="h-4 w-4 text-green-500" />
+                            ) : (
+                              <Copy className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Copy to clipboard</TooltipContent>
+                      </Tooltip>
 
                       {/* Delete button */}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        disabled={deletingKey === secret.key}
-                        onClick={() => void handleDeleteSecret(secret.key)}
-                        title="Delete from keychain"
-                      >
-                        {deletingKey === secret.key ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        )}
-                      </Button>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            disabled={deletingKey === secret.key}
+                            onClick={() => void handleDeleteSecret(secret.key)}
+                          >
+                            {deletingKey === secret.key ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            )}
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Delete from keychain</TooltipContent>
+                      </Tooltip>
                     </div>
                   </div>
                 );
@@ -543,6 +559,6 @@ export function SecretsManager() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </>
+    </TooltipProvider>
   );
 }

@@ -2,14 +2,16 @@
 // Manage and view environment variables for a project
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { readProjectFile } from '@/lib/tauri';
+import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { SearchInput } from '@/components/shared/search-input';
 import {
   Dialog,
   DialogContent,
@@ -18,6 +20,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import {
   Plus,
   Trash2,
@@ -30,6 +42,12 @@ import {
   FileJson,
   RefreshCw,
 } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { toast } from 'sonner';
 
 interface EnvVar {
@@ -38,6 +56,10 @@ interface EnvVar {
   isSecret: boolean;
   source: 'project' | 'system' | 'user';
 }
+
+type ConfirmAction = 'delete' | null;
+
+const confirmConfig: Record<Exclude<ConfirmAction, null>, { title: string; description: string; action: string }> = { delete: { title: 'Delete environment variable?', description: 'This will permanently remove this environment variable. This action cannot be undone.', action: 'Delete' } };
 
 interface EnvVarsTabProps {
   projectId: string;
@@ -53,10 +75,26 @@ export function EnvVarsTab({ projectId, projectPath }: EnvVarsTabProps) {
   const [newValue, setNewValue] = useState('');
   const [newIsSecret, setNewIsSecret] = useState(false);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [confirmAction, setConfirmAction] = useState<ConfirmAction>(null);
+  const [deleteKey, setDeleteKey] = useState<string>('');
+  const { copyToClipboard: copy } = useCopyToClipboard();
 
   useEffect(() => {
     loadEnvVars();
   }, [projectId]);
+
+  const filteredEnvVars = useMemo(() => {
+    if (!searchTerm.trim()) {
+      return envVars;
+    }
+    
+    const search = searchTerm.toLowerCase();
+    return envVars.filter((envVar) =>
+      envVar.key.toLowerCase().includes(search) ||
+      (showSecrets.has(envVar.key) && envVar.value.toLowerCase().includes(search))
+    );
+  }, [envVars, searchTerm, showSecrets]);
 
   const parseEnvContent = (content: string): EnvVar[] => {
     const vars: EnvVar[] = [];
@@ -121,10 +159,11 @@ export function EnvVarsTab({ projectId, projectPath }: EnvVarsTabProps) {
   };
 
   const copyToClipboard = async (_key: string, value: string) => {
-    await navigator.clipboard.writeText(value);
-    setCopiedKey(_key);
-    setTimeout(() => setCopiedKey(null), 2000);
-    toast.success('Copied to clipboard');
+    const success = await copy(value);
+    if (success) {
+      setCopiedKey(_key);
+      setTimeout(() => setCopiedKey(null), 2000);
+    }
   };
 
   const handleAddEnvVar = async () => {
@@ -148,20 +187,30 @@ export function EnvVarsTab({ projectId, projectPath }: EnvVarsTabProps) {
   };
 
   const handleDeleteEnvVar = (key: string) => {
-    setEnvVars(prev => prev.filter(v => v.key !== key));
-    toast.success(`Deleted ${key}`);
+    setDeleteKey(key);
+    setConfirmAction('delete');
   };
 
-  const projectVars = envVars.filter(v => v.source === 'project');
+  const executeConfirmedAction = () => {
+    if (confirmAction === 'delete' && deleteKey) {
+      setEnvVars(prev => prev.filter(v => v.key !== deleteKey));
+      toast.success(`Deleted ${deleteKey}`);
+      setDeleteKey('');
+    }
+    setConfirmAction(null);
+  };
+
+  const projectVars = filteredEnvVars.filter(v => v.source === 'project');
   const secretVars = projectVars.filter(v => v.isSecret);
 
   return (
-    <div className="h-full flex flex-col gap-4">
+    <TooltipProvider delayDuration={300}>
+      <div className="h-full flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <FileJson className="h-5 w-5" />
           <h2 className="text-lg font-semibold">Environment Variables</h2>
-          <Badge variant="outline">{projectVars.length}</Badge>
+          <Badge variant="outline">{envVars.filter(v => v.source === 'project').length}</Badge>
           {secretVars.length > 0 && (
             <Badge variant="secondary">{secretVars.length} secrets</Badge>
           )}
@@ -172,16 +221,17 @@ export function EnvVarsTab({ projectId, projectPath }: EnvVarsTabProps) {
             size="sm"
             onClick={() => setShowSecrets(prev => {
               const next = new Set(prev);
-              if (secretVars.length === next.size) {
+              const allSecretVars = envVars.filter(v => v.source === 'project' && v.isSecret);
+              if (allSecretVars.length === next.size) {
                 next.clear();
               } else {
-                secretVars.forEach(v => next.add(v.key));
+                allSecretVars.forEach(v => next.add(v.key));
               }
               return next;
             })}
           >
-            {secretVars.length > 0 && (showSecrets.size === secretVars.length ? <EyeOff className="h-4 w-4 mr-2" /> : <Eye className="h-4 w-4 mr-2" />)}
-            {showSecrets.size === secretVars.length ? 'Hide' : 'Show'} Secrets
+            {envVars.filter(v => v.source === 'project' && v.isSecret).length > 0 && (showSecrets.size === envVars.filter(v => v.source === 'project' && v.isSecret).length ? <EyeOff className="h-4 w-4 mr-2" /> : <Eye className="h-4 w-4 mr-2" />)}
+            {showSecrets.size === envVars.filter(v => v.source === 'project' && v.isSecret).length ? 'Hide' : 'Show'} Secrets
           </Button>
           <Button size="sm" onClick={() => setShowAddDialog(true)}>
             <Plus className="h-4 w-4 mr-2" />
@@ -194,7 +244,7 @@ export function EnvVarsTab({ projectId, projectPath }: EnvVarsTabProps) {
         <div className="flex items-center justify-center p-8">
           <RefreshCw className="h-6 w-6 animate-spin" />
         </div>
-      ) : projectVars.length === 0 ? (
+      ) : envVars.filter(v => v.source === 'project').length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center p-8 gap-4">
             <AlertTriangle className="h-8 w-8 text-muted-foreground" />
@@ -206,69 +256,107 @@ export function EnvVarsTab({ projectId, projectPath }: EnvVarsTabProps) {
           </CardContent>
         </Card>
       ) : (
-        <ScrollArea className="flex-1">
-          <div className="space-y-2">
-            {projectVars.map((envVar) => (
-              <div
-                key={envVar.key}
-                className="flex items-center justify-between p-3 rounded-lg border bg-card"
-              >
-                <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <div className="flex items-center gap-2 min-w-[200px]">
-                    {envVar.isSecret && <Key className="h-4 w-4 text-muted-foreground flex-shrink-0" />}
-                    <span className="font-mono text-sm font-medium truncate">{envVar.key}</span>
-                  </div>
-                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                    <span className="font-mono text-sm text-muted-foreground truncate">
-                      {envVar.isSecret && !showSecrets.has(envVar.key)
-                        ? '••••••••••••'
-                        : envVar.value}
-                    </span>
-                    {envVar.isSecret && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 flex-shrink-0"
-                        onClick={() => toggleSecret(envVar.key)}
-                      >
-                        {showSecrets.has(envVar.key) ? (
-                          <EyeOff className="h-3 w-3" />
-                        ) : (
-                          <Eye className="h-3 w-3" />
+        <div className="space-y-4">
+          {/* Search input */}
+          {envVars.filter(v => v.source === 'project').length > 0 && (
+            <SearchInput
+              value={searchTerm}
+              onChange={setSearchTerm}
+              placeholder="Search by key name..."
+              size="sm"
+            />
+          )}
+          
+          {projectVars.length === 0 && searchTerm ? (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center p-8 gap-4">
+                <AlertTriangle className="h-8 w-8 text-muted-foreground" />
+                <p className="text-muted-foreground">No variables match "{searchTerm}"</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <ScrollArea className="flex-1">
+              <div className="space-y-2">
+                {projectVars.map((envVar) => (
+                  <div
+                    key={envVar.key}
+                    className="flex items-center justify-between p-3 rounded-lg border bg-card"
+                  >
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <div className="flex items-center gap-2 min-w-[200px]">
+                        {envVar.isSecret && <Key className="h-4 w-4 text-muted-foreground flex-shrink-0" />}
+                        <span className="font-mono text-sm font-medium truncate">{envVar.key}</span>
+                      </div>
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <span className="font-mono text-sm text-muted-foreground truncate">
+                          {envVar.isSecret && !showSecrets.has(envVar.key)
+                            ? '••••••••••••'
+                            : envVar.value}
+                        </span>
+                        {envVar.isSecret && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 flex-shrink-0"
+                                onClick={() => toggleSecret(envVar.key)}
+                              >
+                                {showSecrets.has(envVar.key) ? (
+                                  <EyeOff className="h-3 w-3" />
+                                ) : (
+                                  <Eye className="h-3 w-3" />
+                                )}
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {showSecrets.has(envVar.key) ? 'Hide value' : 'Show value'}
+                            </TooltipContent>
+                          </Tooltip>
                         )}
-                      </Button>
-                    )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      <Badge variant={envVar.isSecret ? "destructive" : "secondary"} className="mr-2">
+                        {envVar.isSecret ? "Secret" : "Public"}
+                      </Badge>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => copyToClipboard(envVar.key, envVar.value)}
+                          >
+                            {copiedKey === envVar.key ? (
+                              <Check className="h-4 w-4 text-green-500" />
+                            ) : (
+                              <Copy className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Copy to clipboard</TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => handleDeleteEnvVar(envVar.key)}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Delete environment variable</TooltipContent>
+                      </Tooltip>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center gap-1 flex-shrink-0">
-                  <Badge variant={envVar.isSecret ? "destructive" : "secondary"} className="mr-2">
-                    {envVar.isSecret ? "Secret" : "Public"}
-                  </Badge>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => copyToClipboard(envVar.key, envVar.value)}
-                  >
-                    {copiedKey === envVar.key ? (
-                      <Check className="h-4 w-4 text-green-500" />
-                    ) : (
-                      <Copy className="h-4 w-4" />
-                    )}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => handleDeleteEnvVar(envVar.key)}
-                  >
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </ScrollArea>
+            </ScrollArea>
+          )}
+        </div>
       )}
 
       <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
@@ -322,6 +410,35 @@ export function EnvVarsTab({ projectId, projectPath }: EnvVarsTabProps) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Confirmation dialog */}
+      <AlertDialog open={confirmAction !== null} onOpenChange={(open) => { if (!open) setConfirmAction(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirmAction && confirmConfig[confirmAction].title}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmAction && confirmConfig[confirmAction].description}
+              {confirmAction === 'delete' && deleteKey && (
+                <>
+                  <br />
+                  <span className="font-mono text-foreground mt-1 block">
+                    {deleteKey}
+                  </span>
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={executeConfirmedAction}>
+              {confirmAction && confirmConfig[confirmAction].action}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
+  </TooltipProvider>
   );
 }

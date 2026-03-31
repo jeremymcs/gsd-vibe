@@ -8,11 +8,14 @@ import {
   Clock,
   Circle,
   Tag,
+  Copy,
+  Check,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useGsdMilestones, useGsdState } from '@/lib/queries';
+import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard';
 import { ViewError } from '@/components/shared/loading-states';
 import { cn } from '@/lib/utils';
 
@@ -45,6 +48,11 @@ function milestoneStatusVariant(status: string | null) {
 export function GsdMilestonesTab({ projectId }: GsdMilestonesTabProps) {
   const { data: milestones, isLoading, isError } = useGsdMilestones(projectId);
   const { data: state } = useGsdState(projectId);
+  const { copyToClipboard, copiedItems } = useCopyToClipboard();
+
+  const handleCopyMilestoneName = async (name: string) => {
+    await copyToClipboard(name, `Milestone "${name}" copied`);
+  };
 
   const currentMilestone = state?.current_position?.milestone;
 
@@ -131,9 +139,20 @@ export function GsdMilestonesTab({ projectId }: GsdMilestonesTabProps) {
                     <div className="flex items-start justify-between">
                       <div>
                         <div className="flex items-center gap-2">
-                          <h3 className="text-sm font-semibold">
-                            {milestone.name}
-                          </h3>
+                          <button
+                            onClick={() => handleCopyMilestoneName(milestone.name)}
+                            className="flex items-center gap-1 hover:text-foreground transition-colors"
+                            title="Click to copy milestone name"
+                          >
+                            <h3 className="text-sm font-semibold">
+                              {milestone.name}
+                            </h3>
+                            {copiedItems.has(milestone.name) ? (
+                              <Check className="h-3 w-3 text-green-500" />
+                            ) : (
+                              <Copy className="h-3 w-3 opacity-50" />
+                            )}
+                          </button>
                           {isCurrent && (
                             <Badge variant="subtle-cyan" size="sm">
                               current

@@ -2,6 +2,7 @@
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { useState } from 'react';
+import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard';
 import {
   GitBranch,
   GitCommit,
@@ -78,7 +79,6 @@ import {
 import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/query-keys';
 import { formatRelativeTime } from '@/lib/utils';
-import { toast } from 'sonner';
 
 type ConfirmAction = 'push' | 'pull' | 'commit' | 'stash' | 'pop' | null;
 
@@ -128,6 +128,7 @@ interface GitStatusWidgetProps {
 export function GitStatusWidget({ projectPath }: GitStatusWidgetProps) {
   const { data: status, isLoading } = useGitStatus(projectPath);
   const { data: changedFiles } = useGitChangedFiles(projectPath);
+  const { copyToClipboard } = useCopyToClipboard();
   const queryClient = useQueryClient();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [commitMessage, setCommitMessage] = useState('');
@@ -175,8 +176,7 @@ export function GitStatusWidget({ projectPath }: GitStatusWidgetProps) {
 
   const handleCopyBranch = () => {
     if (status.branch) {
-      void navigator.clipboard.writeText(status.branch);
-      toast.success('Branch name copied');
+      void copyToClipboard(status.branch, 'Branch name copied');
     }
   };
 
@@ -238,15 +238,20 @@ export function GitStatusWidget({ projectPath }: GitStatusWidgetProps) {
                 </TooltipTrigger>
                 <TooltipContent>View full git details</TooltipContent>
               </Tooltip>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-6 w-6"
-                onClick={handleRefresh}
-                disabled={anyMutationPending}
-              >
-                <RefreshCw className={`h-3 w-3 ${isRefreshing ? 'animate-spin' : ''}`} />
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={handleRefresh}
+                    disabled={anyMutationPending}
+                  >
+                    <RefreshCw className={`h-3 w-3 ${isRefreshing ? 'animate-spin' : ''}`} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Refresh git status</TooltipContent>
+              </Tooltip>
             </div>
           </div>
         </CardHeader>
@@ -588,6 +593,7 @@ function GitDetailDialog({ open, onOpenChange, projectPath, status, changedFiles
   const { data: remoteUrl } = useGitRemoteUrl(projectPath, open);
   const { data: branches } = useGitBranches(projectPath, open);
   const { data: tags } = useGitTags(projectPath, open);
+  const { copyToClipboard } = useCopyToClipboard();
   const queryClient = useQueryClient();
 
   const [commitMessage, setCommitMessage] = useState('');
@@ -648,8 +654,7 @@ function GitDetailDialog({ open, onOpenChange, projectPath, status, changedFiles
   };
 
   const copyText = (text: string, label: string) => {
-    void navigator.clipboard.writeText(text);
-    toast.success(`${label} copied`);
+    void copyToClipboard(text, `${label} copied`);
   };
 
   return (
@@ -1090,6 +1095,7 @@ export function GitStatusPanel({ projectPath }: { projectPath: string }) {
   const { data: remoteUrl } = useGitRemoteUrl(projectPath);
   const { data: branches } = useGitBranches(projectPath);
   const { data: tags } = useGitTags(projectPath);
+  const { copyToClipboard } = useCopyToClipboard();
   const queryClient = useQueryClient();
 
   const [commitMessage, setCommitMessage] = useState('');
@@ -1124,8 +1130,7 @@ export function GitStatusPanel({ projectPath }: { projectPath: string }) {
   };
 
   const copyText = (text: string, label: string) => {
-    void navigator.clipboard.writeText(text);
-    toast.success(`${label} copied`);
+    void copyToClipboard(text, `${label} copied`);
   };
 
   const executeConfirmedAction = () => {
@@ -1207,9 +1212,14 @@ export function GitStatusPanel({ projectPath }: { projectPath: string }) {
               </span>
             )}
           </div>
-          <Button variant="ghost" size="icon" className="h-6 w-6 flex-shrink-0" onClick={handleRefresh} disabled={anyMutationPending}>
-            <RefreshCw className={`h-3 w-3 ${anyMutationPending ? 'animate-spin' : ''}`} />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-6 w-6 flex-shrink-0" onClick={handleRefresh} disabled={anyMutationPending}>
+                <RefreshCw className={`h-3 w-3 ${anyMutationPending ? 'animate-spin' : ''}`} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Refresh git status</TooltipContent>
+          </Tooltip>
         </div>
 
         {/* ── Action bar ── */}

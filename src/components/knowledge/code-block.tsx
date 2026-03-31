@@ -4,6 +4,7 @@
 import { useState } from "react";
 import { Copy, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 
 interface CodeBlockProps {
   children: string;
@@ -13,11 +14,14 @@ interface CodeBlockProps {
 
 export function CodeBlock({ children, className, language }: CodeBlockProps) {
   const [copied, setCopied] = useState(false);
+  const { copyToClipboard } = useCopyToClipboard({ showToast: false });
 
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(children);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    const success = await copyToClipboard(children);
+    if (success) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
   };
 
   return (

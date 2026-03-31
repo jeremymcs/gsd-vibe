@@ -9,6 +9,12 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -59,14 +65,19 @@ function AutoCommandRow({
           {cmd.command}
         </p>
       </div>
-      <Button
-        variant="ghost"
-        size="sm"
-        className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
-        onClick={() => deleteCmd.mutate({ id: cmd.id, projectId })}
-      >
-        <Trash2 className="h-3.5 w-3.5" />
-      </Button>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
+            onClick={() => deleteCmd.mutate({ id: cmd.id, projectId })}
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Delete auto-command</TooltipContent>
+      </Tooltip>
     </div>
   );
 }
@@ -129,8 +140,9 @@ export function AutoCommandsSettings({ projectId }: AutoCommandsSettingsProps) {
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+        <TooltipProvider>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
             <Settings className="h-4 w-4" />
             Auto-commands
           </DialogTitle>
@@ -251,6 +263,7 @@ export function AutoCommandsSettings({ projectId }: AutoCommandsSettingsProps) {
             integration will be available in a future update.
           </p>
         </div>
+        </TooltipProvider>
       </DialogContent>
     </Dialog>
   );

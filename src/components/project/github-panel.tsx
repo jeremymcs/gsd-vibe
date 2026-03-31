@@ -31,6 +31,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 import { open as openUrl } from '@tauri-apps/plugin-shell';
 import { toast } from 'sonner';
@@ -422,9 +428,16 @@ export function GitHubPanel({ projectPath, projectId: _projectId }: GitHubPanelP
                   }
                 }}
               />
-              <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0" onClick={() => setShowPat(!showPat)}>
-                <Key className="h-3.5 w-3.5" />
-              </Button>
+              <TooltipProvider delayDuration={300}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0" onClick={() => setShowPat(!showPat)}>
+                      <Key className="h-3.5 w-3.5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>{showPat ? 'Hide token' : 'Show token'}</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
             <Button
               className="w-full h-8 text-xs gap-2"
@@ -449,7 +462,8 @@ export function GitHubPanel({ projectPath, projectId: _projectId }: GitHubPanelP
   const unreadCount = notifications?.filter((n) => n.unread).length ?? 0;
 
   return (
-    <div className="h-full flex flex-col overflow-hidden">
+    <TooltipProvider delayDuration={300}>
+      <div className="h-full flex flex-col overflow-hidden">
       {/* Header */}
       <div className="flex-shrink-0 flex items-center justify-between gap-2 px-4 py-2.5 border-b border-border/50">
         <div className="flex items-center gap-2 min-w-0">
@@ -476,21 +490,25 @@ export function GitHubPanel({ projectPath, projectId: _projectId }: GitHubPanelP
           )}
         </div>
         {/* Token management */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-6 w-6 flex-shrink-0 text-muted-foreground hover:text-status-error"
-          title="Remove GitHub token"
-          onClick={() => {
-            removeTokenMutation.mutate(undefined, {
-              onSuccess: () => { toast.success('GitHub token removed'); void refetchToken(); },
-              onError: (e) => toast.error(String(e)),
-            });
-          }}
-          disabled={removeTokenMutation.isPending}
-        >
-          {removeTokenMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 flex-shrink-0 text-muted-foreground hover:text-status-error"
+              onClick={() => {
+                removeTokenMutation.mutate(undefined, {
+                  onSuccess: () => { toast.success('GitHub token removed'); void refetchToken(); },
+                  onError: (e) => toast.error(String(e)),
+                });
+              }}
+              disabled={removeTokenMutation.isPending}
+            >
+              {removeTokenMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Remove GitHub token</TooltipContent>
+        </Tooltip>
       </div>
 
       {/* No remote state */}
@@ -657,9 +675,14 @@ export function GitHubPanel({ projectPath, projectId: _projectId }: GitHubPanelP
                 placeholder={gitStatus?.branch ?? 'main'}
                 className="h-6 text-xs font-mono flex-1"
               />
-              <Button variant="ghost" size="icon" className="h-6 w-6 flex-shrink-0" onClick={() => setCheckRef(gitStatus?.branch ?? '')}>
-                <RefreshCw className="h-3 w-3" />
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-6 w-6 flex-shrink-0" onClick={() => setCheckRef(gitStatus?.branch ?? '')}>
+                    <RefreshCw className="h-3 w-3" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Reset to current branch</TooltipContent>
+              </Tooltip>
             </div>
             <div className="divide-y divide-border/50 p-2">
               {!checkRuns || checkRuns.length === 0 ? (
@@ -718,5 +741,6 @@ export function GitHubPanel({ projectPath, projectId: _projectId }: GitHubPanelP
         </Tabs>
       )}
     </div>
+    </TooltipProvider>
   );
 }

@@ -18,7 +18,11 @@ M010 complete: Full 6-section project-pulse dashboard (active unit with live tim
 
 M012 complete (Guided Mode): guided/expert toggle in settings, first-launch setup wizard with parallel dependency detection (8 CLI tools), provider API key validation/storage via OS keychain, and Guided/Expert mode selection. App startup gates on onboarding completion flag.
 
-M013 in progress (Feature Coverage Maximization): Systematic audit of every page/view to surface all available backend capabilities. Major targets: GitHub integration (967-line Rust backend fully implemented but never registered), GSD-2 session browser and preferences editor, dashboard/visualizer data expansion, knowledge tab search/bookmarks, GSD-1 view expansion, and wiring all 16 unused hooks.
+M013 complete (Feature Coverage Maximization): GitHub integration (13 commands), GSD-2 session browser and preferences editor, dashboard data expansion, knowledge graph table, GSD-1 view expansion, wiring of all unused hooks.
+
+M014 complete (Data Surface Completion & Polish): Final data surface coverage and polish pass across all views.
+
+M015 complete (QOL Sweep): Systematic quality-of-life improvements across all ~25 views — inline search/filter on 9 list views (SearchInput + FilterChips shared components), click-to-copy with visual feedback on IDs/paths/filenames via useCopyToClipboard hook (12 components), Radix tooltips on all icon-only buttons (20 files), refresh buttons and confirmation dialogs where missing, relative timestamps on sessions. 218/218 tests pass, clean build throughout. R160–R166 all validated.
 
 ## Architecture / Key Patterns
 
@@ -43,4 +47,6 @@ See `.gsd/REQUIREMENTS.md` for the explicit capability contract, requirement sta
 - [x] M009: Visual Redesign & Navigation Overhaul
 - [x] M010: Feature Maximization — Dashboard, Templates & Rendering Fixes
 - [x] M012: Guided Mode — Wizard-Driven Experience for New Users
-- [ ] M013: Feature Coverage Maximization — Surface Every Available Capability
+- [x] M013: Feature Coverage Maximization — Surface Every Available Capability
+- [x] M014: Data Surface Completion & Polish
+- [x] M015: QOL Sweep — Search, Copy, Tooltips, Refresh, Confirm across all views

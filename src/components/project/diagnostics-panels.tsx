@@ -10,11 +10,16 @@ import {
   ShieldAlert,
   Wrench,
   XCircle,
+  Copy,
+  Check,
 } from "lucide-react";
 import type { ReactNode } from "react";
+import { useMemo, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { SearchInput } from "@/components/shared/search-input";
 import type {
   DoctorIssue,
   DoctorFixResult,
@@ -22,6 +27,7 @@ import type {
   SkillHealthSuggestion,
 } from "@/lib/tauri";
 import { cn, formatCost } from "@/lib/utils";
+import { useCopyToClipboard } from '@/hooks';
 import {
   useGsd2DoctorReport,
   useGsd2ApplyDoctorFixes,
@@ -157,8 +163,10 @@ function StatPill({
 // ═══════════════════════════════════════════════════════════════════════
 
 function AnomalyRow({ anomaly }: { anomaly: ForensicAnomaly }) {
+  const { copyToClipboard, copiedItems } = useCopyToClipboard();
+  
   return (
-    <div className="rounded-lg border border-border/30 bg-card/30 px-3 py-2.5 space-y-1">
+    <div className="rounded-lg border border-border/30 bg-card/30 px-3 py-2.5 space-y-1 group">
       <div className="flex items-center gap-2">
         <SeverityIcon severity={anomaly.severity} />
         <Badge
@@ -175,6 +183,25 @@ function AnomalyRow({ anomaly }: { anomaly: ForensicAnomaly }) {
             {anomaly.unit_type}/{anomaly.unit_id}
           </span>
         )}
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => copyToClipboard(anomaly.summary, `Copied anomaly: ${anomaly.summary}`)}
+                className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity p-0.5 hover:bg-accent rounded"
+              >
+                {copiedItems.has(anomaly.summary) ? (
+                  <Check className="h-3 w-3 text-green-600" />
+                ) : (
+                  <Copy className="h-3 w-3 text-muted-foreground" />
+                )}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="text-xs">
+              Copy anomaly summary
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
       <p className="text-xs text-foreground/90">{anomaly.summary}</p>
       {anomaly.details && anomaly.details !== anomaly.summary && (
@@ -193,8 +220,39 @@ export function ForensicsPanel({
   projectId: string;
   projectPath: string;
 }) {
+  const [searchTerm, setSearchTerm] = useState("");
+  
   const { data, error, isFetching, refetch } =
     useGsd2ForensicsReport(projectId);
+
+  const filteredAnomalies = useMemo(() => {
+    if (!data?.anomalies || !searchTerm.trim()) {
+      return data?.anomalies || [];
+    }
+    
+    const search = searchTerm.toLowerCase();
+    return data.anomalies.filter((anomaly) => 
+      anomaly.summary.toLowerCase().includes(search) ||
+      anomaly.details?.toLowerCase().includes(search) ||
+      anomaly.type_name.toLowerCase().includes(search) ||
+      anomaly.severity.toLowerCase().includes(search) ||
+      (anomaly.unit_id && anomaly.unit_id.toLowerCase().includes(search)) ||
+      (anomaly.unit_type && anomaly.unit_type.toLowerCase().includes(search))
+    );
+  }, [data?.anomalies, searchTerm]);
+
+  const filteredRecentUnits = useMemo(() => {
+    if (!data?.recent_units || !searchTerm.trim()) {
+      return data?.recent_units || [];
+    }
+    
+    const search = searchTerm.toLowerCase();
+    return data.recent_units.filter((unit) =>
+      unit.id.toLowerCase().includes(search) ||
+      unit.type_name.toLowerCase().includes(search) ||
+      unit.model.toLowerCase().includes(search)
+    );
+  }, [data?.recent_units, searchTerm]);
 
   return (
     <div className="space-y-4" data-testid="diagnostics-forensics">
@@ -206,7 +264,7 @@ export function ForensicsPanel({
             <span
               className={cn(
                 "inline-block h-1.5 w-1.5 rounded-full",
-                data.anomalies.length > 0 ? "bg-warning" : "bg-success"
+                filteredAnomalies.length > 0 ? "bg-warning" : "bg-success"
               )}
             />
           ) : null
@@ -214,6 +272,16 @@ export function ForensicsPanel({
         onRefresh={() => void refetch()}
         refreshing={isFetching}
       />
+
+      {/* Search input */}
+      {data && (data.anomalies.length > 0 || data.recent_units.length > 0) && (
+        <SearchInput
+          value={searchTerm}
+          onChange={setSearchTerm}
+          placeholder="Search anomalies, units, types..."
+          size="sm"
+        />
+      )}
 
       {error && <DiagError message={error instanceof Error ? error.message : String(error)} />}
       {isFetching && !data && <DiagLoading label="Running forensic analysis…" />}
@@ -268,24 +336,26 @@ export function ForensicsPanel({
           )}
 
           {/* Anomalies */}
-          {data.anomalies.length > 0 ? (
+          {filteredAnomalies.length > 0 ? (
             <div className="space-y-2">
               <h4 className="text-xs font-medium text-foreground/70">
-                Anomalies ({data.anomalies.length})
+                Anomalies ({filteredAnomalies.length}{searchTerm && data.anomalies.length !== filteredAnomalies.length ? ` of ${data.anomalies.length}` : ""})
               </h4>
-              {data.anomalies.map((a, i) => (
+              {filteredAnomalies.map((a, i) => (
                 <AnomalyRow key={i} anomaly={a} />
               ))}
             </div>
-          ) : (
+          ) : searchTerm && data.anomalies.length > 0 ? (
+            <DiagEmpty message={`No anomalies match "${searchTerm}"`} />
+          ) : data.anomalies.length === 0 ? (
             <DiagEmpty message="No anomalies detected" />
-          )}
+          ) : null}
 
           {/* Recent units */}
-          {data.recent_units.length > 0 && (
+          {filteredRecentUnits.length > 0 && (
             <div className="space-y-2">
               <h4 className="text-xs font-medium text-foreground/70">
-                Recent Units ({data.recent_units.length})
+                Recent Units ({filteredRecentUnits.length}{searchTerm && data.recent_units.length !== filteredRecentUnits.length ? ` of ${data.recent_units.length}` : ""})
               </h4>
               <div className="overflow-x-auto rounded-lg border border-border/30">
                 <table className="w-full text-[11px]">
@@ -309,7 +379,7 @@ export function ForensicsPanel({
                     </tr>
                   </thead>
                   <tbody>
-                    {data.recent_units.map((u, i) => (
+                    {filteredRecentUnits.map((u, i) => (
                       <tr
                         key={i}
                         className="border-b border-border/20 last:border-0"
@@ -353,8 +423,10 @@ function humanizeCode(code: string): string {
 }
 
 function IssueRow({ issue }: { issue: DoctorIssue }) {
+  const { copyToClipboard, copiedItems } = useCopyToClipboard();
+  
   return (
-    <div className="rounded-lg border border-border/30 bg-card/30 px-3 py-2.5 space-y-1">
+    <div className="rounded-lg border border-border/30 bg-card/30 px-3 py-2.5 space-y-1 group">
       <div className="flex items-center gap-2 flex-wrap">
         <SeverityIcon severity={issue.severity} />
         <Badge
@@ -380,8 +452,50 @@ function IssueRow({ issue }: { issue: DoctorIssue }) {
             fixable
           </Badge>
         )}
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => copyToClipboard(issue.message, `Copied issue: ${issue.message}`)}
+                className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity p-0.5 hover:bg-accent rounded"
+              >
+                {copiedItems.has(issue.message) ? (
+                  <Check className="h-3 w-3 text-green-600" />
+                ) : (
+                  <Copy className="h-3 w-3 text-muted-foreground" />
+                )}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="text-xs">
+              Copy error message
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
-      <p className="text-xs text-foreground/90">{issue.message}</p>
+      <div className="flex items-start gap-2">
+        <p className="text-xs text-foreground/90 flex-1">{issue.message}</p>
+        {issue.file && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => copyToClipboard(issue.file!, `Copied file path: ${issue.file}`)}
+                  className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 hover:bg-accent rounded"
+                >
+                  {copiedItems.has(issue.file) ? (
+                    <Check className="h-3 w-3 text-green-600" />
+                  ) : (
+                    <Copy className="h-3 w-3 text-muted-foreground" />
+                  )}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="text-xs">
+                Copy file path: {issue.file}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
+      </div>
       {issue.file && (
         <p className="text-[10px] font-mono text-muted-foreground truncate">
           {issue.file}
@@ -398,8 +512,26 @@ export function DoctorPanel({
   projectId: string;
   projectPath: string;
 }) {
+  const [searchTerm, setSearchTerm] = useState("");
+  
   const { data, error, isFetching, refetch } = useGsd2DoctorReport(projectId);
   const fixMutation = useGsd2ApplyDoctorFixes();
+
+  const filteredIssues = useMemo(() => {
+    if (!data?.issues || !searchTerm.trim()) {
+      return data?.issues || [];
+    }
+    
+    const search = searchTerm.toLowerCase();
+    return data.issues.filter((issue) =>
+      issue.message.toLowerCase().includes(search) ||
+      issue.code.toLowerCase().includes(search) ||
+      issue.severity.toLowerCase().includes(search) ||
+      (issue.scope && issue.scope.toLowerCase().includes(search)) ||
+      (issue.file && issue.file.toLowerCase().includes(search)) ||
+      humanizeCode(issue.code).toLowerCase().includes(search)
+    );
+  }, [data?.issues, searchTerm]);
 
   const fixableCount = data?.summary.fixable ?? 0;
 
@@ -420,6 +552,16 @@ export function DoctorPanel({
         onRefresh={() => void refetch()}
         refreshing={isFetching}
       />
+
+      {/* Search input */}
+      {data && data.issues.length > 0 && (
+        <SearchInput
+          value={searchTerm}
+          onChange={setSearchTerm}
+          placeholder="Search issues, codes, files..."
+          size="sm"
+        />
+      )}
 
       {error && <DiagError message={error instanceof Error ? error.message : String(error)} />}
       {isFetching && !data && <DiagLoading label="Running health check…" />}
@@ -510,18 +652,20 @@ export function DoctorPanel({
             )}
 
           {/* Issue list */}
-          {data.issues.length > 0 ? (
+          {filteredIssues.length > 0 ? (
             <div className="space-y-2">
               <h4 className="text-xs font-medium text-foreground/70">
-                Issues ({data.issues.length})
+                Issues ({filteredIssues.length}{searchTerm && data.issues.length !== filteredIssues.length ? ` of ${data.issues.length}` : ""})
               </h4>
-              {data.issues.map((issue, i) => (
+              {filteredIssues.map((issue, i) => (
                 <IssueRow key={i} issue={issue} />
               ))}
             </div>
-          ) : (
+          ) : searchTerm && data.issues.length > 0 ? (
+            <DiagEmpty message={`No issues match "${searchTerm}"`} />
+          ) : data.issues.length === 0 ? (
             <DiagEmpty message="No issues found — workspace is healthy" />
-          )}
+          ) : null}
         </>
       )}
     </div>
@@ -578,7 +722,33 @@ export function SkillHealthPanel({
   projectId: string;
   projectPath: string;
 }) {
+  const [searchTerm, setSearchTerm] = useState("");
+  
   const { data, error, isFetching, refetch } = useGsd2SkillHealth(projectId);
+
+  const filteredSkills = useMemo(() => {
+    if (!data?.skills || !searchTerm.trim()) {
+      return data?.skills || [];
+    }
+    
+    const search = searchTerm.toLowerCase();
+    return data.skills.filter((skill) =>
+      skill.name.toLowerCase().includes(search)
+    );
+  }, [data?.skills, searchTerm]);
+
+  const filteredSuggestions = useMemo(() => {
+    if (!data?.suggestions || !searchTerm.trim()) {
+      return data?.suggestions || [];
+    }
+    
+    const search = searchTerm.toLowerCase();
+    return data.suggestions.filter((suggestion) =>
+      suggestion.skill_name.toLowerCase().includes(search) ||
+      suggestion.message.toLowerCase().includes(search) ||
+      suggestion.trigger.toLowerCase().includes(search)
+    );
+  }, [data?.suggestions, searchTerm]);
 
   return (
     <div className="space-y-4" data-testid="diagnostics-skill-health">
@@ -602,6 +772,16 @@ export function SkillHealthPanel({
         onRefresh={() => void refetch()}
         refreshing={isFetching}
       />
+
+      {/* Search input */}
+      {data && (data.skills.length > 0 || data.suggestions.length > 0) && (
+        <SearchInput
+          value={searchTerm}
+          onChange={setSearchTerm}
+          placeholder="Search skills, suggestions..."
+          size="sm"
+        />
+      )}
 
       {error && <DiagError message={error instanceof Error ? error.message : String(error)} />}
       {isFetching && !data && <DiagLoading label="Analyzing skill health…" />}
@@ -632,10 +812,10 @@ export function SkillHealthPanel({
           </div>
 
           {/* Skill table */}
-          {data.skills.length > 0 && (
+          {filteredSkills.length > 0 && (
             <div className="space-y-2">
               <h4 className="text-xs font-medium text-foreground/70">
-                Skills ({data.skills.length})
+                Skills ({filteredSkills.length}{searchTerm && data.skills.length !== filteredSkills.length ? ` of ${data.skills.length}` : ""})
               </h4>
               <div className="overflow-x-auto rounded-lg border border-border/30">
                 <table className="w-full text-[11px]">
@@ -665,7 +845,7 @@ export function SkillHealthPanel({
                     </tr>
                   </thead>
                   <tbody>
-                    {data.skills.map((skill) => (
+                    {filteredSkills.map((skill) => (
                       <tr
                         key={skill.name}
                         className={cn(
@@ -769,19 +949,21 @@ export function SkillHealthPanel({
           )}
 
           {/* Suggestions */}
-          {data.suggestions.length > 0 && (
+          {filteredSuggestions.length > 0 ? (
             <div className="space-y-2">
               <h4 className="text-xs font-medium text-foreground/70">
-                Suggestions ({data.suggestions.length})
+                Suggestions ({filteredSuggestions.length}{searchTerm && data.suggestions.length !== filteredSuggestions.length ? ` of ${data.suggestions.length}` : ""})
               </h4>
-              {data.suggestions.map((s, i) => (
+              {filteredSuggestions.map((s, i) => (
                 <SuggestionRow key={i} suggestion={s} />
               ))}
             </div>
-          )}
-
-          {data.skills.length === 0 && data.suggestions.length === 0 && (
-            <DiagEmpty message="No skill usage data available" />
+          ) : searchTerm && data.suggestions.length > 0 ? (
+            <DiagEmpty message={`No suggestions match "${searchTerm}"`} />
+          ) : (
+            filteredSkills.length === 0 && data.suggestions.length === 0 && (
+              <DiagEmpty message="No skill usage data available" />
+            )
           )}
         </>
       )}

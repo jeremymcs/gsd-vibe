@@ -15,6 +15,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ViewEmpty } from '@/components/shared/loading-states';
 import { useGsd2Preferences, useGsd2SavePreferences, useGsd2Models } from '@/lib/queries';
@@ -318,9 +324,14 @@ function SkillRulesEditor({ value, onChange }: { value: string; onChange: (val: 
         <div key={idx} className="rounded-md border border-border/50 bg-muted/20 p-3 space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Rule {idx + 1}</span>
-            <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => removeRule(idx)}>
-              <Trash2 className="h-3 w-3 text-muted-foreground hover:text-status-error" />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => removeRule(idx)}>
+                  <Trash2 className="h-3 w-3 text-muted-foreground hover:text-status-error" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Remove rule</TooltipContent>
+            </Tooltip>
           </div>
           <Input
             value={rule.when}
@@ -429,9 +440,14 @@ function PostUnitHooksEditor({ value, onChange }: { value: string; onChange: (va
                 />
                 {hook.enabled !== false ? 'on' : 'off'}
               </label>
-              <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => removeHook(idx)}>
-                <Trash2 className="h-3 w-3 text-muted-foreground hover:text-status-error" />
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => removeHook(idx)}>
+                    <Trash2 className="h-3 w-3 text-muted-foreground hover:text-status-error" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Remove hook</TooltipContent>
+              </Tooltip>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-2">
@@ -564,9 +580,14 @@ function PreDispatchHooksEditor({ value, onChange }: { value: string; onChange: 
                 />
                 {hook.enabled !== false ? 'on' : 'off'}
               </label>
-              <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => removeHook(idx)}>
-                <Trash2 className="h-3 w-3 text-muted-foreground hover:text-status-error" />
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => removeHook(idx)}>
+                    <Trash2 className="h-3 w-3 text-muted-foreground hover:text-status-error" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Remove pre-hook</TooltipContent>
+              </Tooltip>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-2">
@@ -1092,110 +1113,112 @@ export function Gsd2PreferencesTab({ projectPath }: Gsd2PreferencesTabProps) {
   });
 
   return (
-    <div className="space-y-4">
-      {/* Toolbar */}
-      <div className="flex items-center justify-between gap-4">
-        <p className="text-sm text-muted-foreground">
-          {keys.length} fields across {sortedGroups.length} sections
-          {isGlobalOnly && <span className="ml-1">· editing global preferences</span>}
-        </p>
+    <TooltipProvider>
+      <div className="space-y-4">
+        {/* Toolbar */}
+        <div className="flex items-center justify-between gap-4">
+          <p className="text-sm text-muted-foreground">
+            {keys.length} fields across {sortedGroups.length} sections
+            {isGlobalOnly && <span className="ml-1">· editing global preferences</span>}
+          </p>
 
-        <div className="flex items-center gap-2">
-          {!isGlobalOnly && (
-            <div className="flex rounded-md border border-border overflow-hidden text-xs">
-              <button
-                type="button"
-                onClick={() => setSaveScope('project')}
-                className={`px-3 py-1.5 transition-colors ${
-                  saveScope === 'project'
-                    ? 'bg-status-success/20 text-status-success font-medium'
-                    : 'bg-transparent text-muted-foreground hover:bg-muted/40'
-                }`}
-              >
-                Save to project
-              </button>
-              <button
-                type="button"
-                onClick={() => setSaveScope('global')}
-                className={`px-3 py-1.5 transition-colors border-l border-border ${
-                  saveScope === 'global'
-                    ? 'bg-status-info/20 text-status-info font-medium'
-                    : 'bg-transparent text-muted-foreground hover:bg-muted/40'
-                }`}
-              >
-                Save to global
-              </button>
-            </div>
-          )}
-
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-8 px-2"
-            disabled={!isDirty}
-            onClick={handleReset}
-            title="Discard changes"
-          >
-            <RotateCcw className="h-3.5 w-3.5" />
-          </Button>
-
-          <Button
-            size="sm"
-            disabled={!isDirty || savePreferences.isPending}
-            onClick={handleSave}
-          >
-            {savePreferences.isPending ? (
-              <>
-                <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
-                Saving…
-              </>
-            ) : (
-              <>
-                <Save className="h-3.5 w-3.5 mr-1.5" />
-                Save
-              </>
+          <div className="flex items-center gap-2">
+            {!isGlobalOnly && (
+              <div className="flex rounded-md border border-border overflow-hidden text-xs">
+                <button
+                  type="button"
+                  onClick={() => setSaveScope('project')}
+                  className={`px-3 py-1.5 transition-colors ${
+                    saveScope === 'project'
+                      ? 'bg-status-success/20 text-status-success font-medium'
+                      : 'bg-transparent text-muted-foreground hover:bg-muted/40'
+                  }`}
+                >
+                  Save to project
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSaveScope('global')}
+                  className={`px-3 py-1.5 transition-colors border-l border-border ${
+                    saveScope === 'global'
+                      ? 'bg-status-info/20 text-status-info font-medium'
+                      : 'bg-transparent text-muted-foreground hover:bg-muted/40'
+                  }`}
+                >
+                  Save to global
+                </button>
+              </div>
             )}
-          </Button>
+
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-8 px-2"
+              disabled={!isDirty}
+              onClick={handleReset}
+              title="Discard changes"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+            </Button>
+
+            <Button
+              size="sm"
+              disabled={!isDirty || savePreferences.isPending}
+              onClick={handleSave}
+            >
+              {savePreferences.isPending ? (
+                <>
+                  <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                  Saving…
+                </>
+              ) : (
+                <>
+                  <Save className="h-3.5 w-3.5 mr-1.5" />
+                  Save
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+
+        {/* Sections */}
+        <div className="rounded-lg border border-border/40 bg-card overflow-hidden">
+          {sortedGroups.map((group) => {
+            const groupKeys = grouped[group];
+            const dirtyCount = groupKeys.filter(
+              (k) => draft[k] !== valueToDisplay(flatMerged[k])
+            ).length;
+            const hasValues = groupKeys.some((k) => {
+              const v = flatMerged[k];
+              return v !== null && v !== undefined && v !== '' && v !== false;
+            });
+
+            return (
+              <GroupSection
+                key={group}
+                title={group}
+                fieldCount={groupKeys.length}
+                dirtyCount={dirtyCount}
+                defaultOpen={hasValues}
+              >
+                {groupKeys.map((key) => (
+                  <FieldControl
+                    key={key}
+                    fieldKey={key}
+                    meta={FIELD_META[key]}
+                    value={flatMerged[key]}
+                    draftValue={draft[key] ?? ''}
+                    scope={flatScopes[key] ?? 'default'}
+                    showScope={!isGlobalOnly}
+                    modelOptions={modelOptions}
+                    onChange={handleChange}
+                  />
+                ))}
+              </GroupSection>
+            );
+          })}
         </div>
       </div>
-
-      {/* Sections */}
-      <div className="rounded-lg border border-border/40 bg-card overflow-hidden">
-        {sortedGroups.map((group) => {
-          const groupKeys = grouped[group];
-          const dirtyCount = groupKeys.filter(
-            (k) => draft[k] !== valueToDisplay(flatMerged[k])
-          ).length;
-          const hasValues = groupKeys.some((k) => {
-            const v = flatMerged[k];
-            return v !== null && v !== undefined && v !== '' && v !== false;
-          });
-
-          return (
-            <GroupSection
-              key={group}
-              title={group}
-              fieldCount={groupKeys.length}
-              dirtyCount={dirtyCount}
-              defaultOpen={hasValues}
-            >
-              {groupKeys.map((key) => (
-                <FieldControl
-                  key={key}
-                  fieldKey={key}
-                  meta={FIELD_META[key]}
-                  value={flatMerged[key]}
-                  draftValue={draft[key] ?? ''}
-                  scope={flatScopes[key] ?? 'default'}
-                  showScope={!isGlobalOnly}
-                  modelOptions={modelOptions}
-                  onChange={handleChange}
-                />
-              ))}
-            </GroupSection>
-          );
-        })}
-      </div>
-    </div>
+    </TooltipProvider>
   );
 }

@@ -16,6 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { SearchInput } from '@/components/shared/search-input';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -126,6 +127,7 @@ function WorktreeDiffSection({ projectId, worktreeName }: WorktreeDiffSectionPro
 }
 
 export function Gsd2WorktreesTab({ projectId }: Gsd2WorktreesTabProps) {
+  const [search, setSearch] = useState('');
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [removeTarget, setRemoveTarget] = useState<WorktreeInfo | null>(null);
 
@@ -197,17 +199,46 @@ export function Gsd2WorktreesTab({ projectId }: Gsd2WorktreesTabProps) {
     );
   }
 
+  // Apply search filter
+  const query = search.trim().toLowerCase();
+  const filtered = query
+    ? worktrees.filter(
+        (wt) =>
+          wt.name.toLowerCase().includes(query) ||
+          wt.branch.toLowerCase().includes(query) ||
+          wt.path.toLowerCase().includes(query)
+      )
+    : worktrees;
+
   return (
     <>
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-semibold flex items-center gap-2">
-            <GitBranch className="h-4 w-4" /> Worktrees
-          </CardTitle>
+          <div className="flex items-center justify-between gap-4">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <GitBranch className="h-4 w-4" /> Worktrees
+              <span className="text-xs font-normal text-muted-foreground">
+                ({worktrees.length})
+              </span>
+            </CardTitle>
+          </div>
+          <div className="mt-2">
+            <SearchInput
+              value={search}
+              onChange={setSearch}
+              placeholder="Search by name, branch, or path..."
+              size="sm"
+            />
+          </div>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="divide-y">
-            {worktrees.map((wt) => (
+          {filtered.length === 0 && query ? (
+            <p className="py-6 text-center text-sm text-muted-foreground">
+              No worktrees match &ldquo;{search}&rdquo;
+            </p>
+          ) : (
+            <div className="divide-y">
+              {filtered.map((wt) => (
               <div key={wt.name}>
                 {/* Row header — click to toggle accordion */}
                 <div
@@ -276,7 +307,8 @@ export function Gsd2WorktreesTab({ projectId }: Gsd2WorktreesTabProps) {
                 )}
               </div>
             ))}
-          </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 

@@ -2,7 +2,7 @@
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { useState } from 'react';
-import { ChevronRight, Layers } from 'lucide-react';
+import { ChevronRight, Layers, Copy, Check } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -13,6 +13,7 @@ import {
   useGsd2Slice,
   useGsd2DerivedState,
 } from '@/lib/queries';
+import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard';
 import type { Gsd2SliceSummary, Gsd2DerivedState } from '@/lib/tauri';
 
 interface Gsd2SlicesTabProps {
@@ -44,6 +45,11 @@ interface SliceTasksSectionProps {
 
 function SliceTasksSection({ projectId, milestoneId, sliceId }: SliceTasksSectionProps) {
   const { data: slice, isLoading, isError } = useGsd2Slice(projectId, milestoneId, sliceId, true);
+  const { copyToClipboard, copiedItems } = useCopyToClipboard();
+
+  const handleCopyTaskId = async (taskId: string) => {
+    await copyToClipboard(taskId, `Task ID "${taskId}" copied`);
+  };
 
   if (isLoading) {
     return <Skeleton className="h-8 w-full" />;
@@ -61,10 +67,22 @@ function SliceTasksSection({ projectId, milestoneId, sliceId }: SliceTasksSectio
     <div className="space-y-0.5">
       {slice.tasks.map((task) => {
         const taskStatus = task.done ? 'done' : 'pending';
+        const isCopied = copiedItems.has(task.id);
         return (
           <div key={task.id} className="flex items-center gap-2 py-1.5 px-3">
             <StatusIcon status={taskStatus} />
-            <span className="text-xs font-mono text-muted-foreground">{task.id}</span>
+            <button
+              onClick={() => handleCopyTaskId(task.id)}
+              className="flex items-center gap-1 hover:text-foreground transition-colors text-xs font-mono text-muted-foreground"
+              title="Click to copy task ID"
+            >
+              {task.id}
+              {isCopied ? (
+                <Check className="h-3 w-3 text-green-500" />
+              ) : (
+                <Copy className="h-3 w-3 opacity-50" />
+              )}
+            </button>
             <span className="text-sm">{task.title}</span>
             <Badge
               variant="outline"
@@ -101,6 +119,11 @@ function MilestoneSlicesSection({
   derivedState,
 }: MilestoneSlicesSectionProps) {
   const { data: fullMilestone, isLoading } = useGsd2Milestone(projectId, milestoneId, true);
+  const { copyToClipboard, copiedItems } = useCopyToClipboard();
+
+  const handleCopySliceId = async (sliceId: string) => {
+    await copyToClipboard(sliceId, `Slice ID "${sliceId}" copied`);
+  };
 
   // Use full milestone slices if available (have task arrays); fall back to summary slices
   const displaySlices = fullMilestone?.slices ?? slices;
@@ -112,19 +135,38 @@ function MilestoneSlicesSection({
         const totalCount = s.tasks.length;
         const sliceStatus = getStatus(s.done, derivedState?.active_slice_id ?? null, s.id);
         const isExpanded = expandedSlices.has(s.id);
+        const isCopied = copiedItems.has(s.id);
 
         return (
           <div key={s.id}>
             <div
-              className="flex items-center gap-2 py-2 px-3 ml-6 rounded cursor-pointer hover:bg-muted/50 transition-colors"
-              onClick={() => toggleSlice(s.id)}
+              className="flex items-center gap-2 py-2 px-3 ml-6 rounded hover:bg-muted/50 transition-colors"
             >
-              <ChevronRight
-                className="h-3.5 w-3.5 transition-transform duration-200 shrink-0"
-                style={{ transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)' }}
-              />
-              <StatusIcon status={sliceStatus} />
-              <span className="text-xs font-mono text-muted-foreground">{s.id}</span>
+              <button
+                onClick={() => toggleSlice(s.id)}
+                className="flex items-center gap-2"
+              >
+                <ChevronRight
+                  className="h-3.5 w-3.5 transition-transform duration-200 shrink-0"
+                  style={{ transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)' }}
+                />
+                <StatusIcon status={sliceStatus} />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleCopySliceId(s.id);
+                }}
+                className="flex items-center gap-1 hover:text-foreground transition-colors text-xs font-mono text-muted-foreground"
+                title="Click to copy slice ID"
+              >
+                {s.id}
+                {isCopied ? (
+                  <Check className="h-3 w-3 text-green-500" />
+                ) : (
+                  <Copy className="h-3 w-3 opacity-50" />
+                )}
+              </button>
               <span className="text-sm">{s.title}</span>
               {isLoading ? (
                 <span className="text-xs text-muted-foreground ml-auto mr-2">loading...</span>
@@ -166,6 +208,11 @@ export function Gsd2SlicesTab({ projectId }: Gsd2SlicesTabProps) {
 
   const { data: milestones, isLoading, isError } = useGsd2Milestones(projectId);
   const { data: derivedState } = useGsd2DerivedState(projectId);
+  const { copyToClipboard, copiedItems } = useCopyToClipboard();
+
+  const handleCopyMilestoneId = async (milestoneId: string) => {
+    await copyToClipboard(milestoneId, `Milestone ID "${milestoneId}" copied`);
+  };
 
   const toggleMilestone = (id: string) => {
     setExpandedMilestones((prev) => {
@@ -237,14 +284,32 @@ export function Gsd2SlicesTab({ projectId }: Gsd2SlicesTabProps) {
               <div key={m.id}>
                 {/* Milestone section header */}
                 <div
-                  className="flex items-center gap-2 py-2 px-3 bg-muted/30 rounded cursor-pointer hover:bg-muted/50 transition-colors"
-                  onClick={() => toggleMilestone(m.id)}
+                  className="flex items-center gap-2 py-2 px-3 bg-muted/30 rounded hover:bg-muted/50 transition-colors"
                 >
-                  <ChevronRight
-                    className="h-4 w-4 transition-transform duration-200 shrink-0"
-                    style={{ transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)' }}
-                  />
-                  <span className="text-xs font-mono text-muted-foreground">{m.id}</span>
+                  <button
+                    onClick={() => toggleMilestone(m.id)}
+                    className="flex items-center gap-2"
+                  >
+                    <ChevronRight
+                      className="h-4 w-4 transition-transform duration-200 shrink-0"
+                      style={{ transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)' }}
+                    />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCopyMilestoneId(m.id);
+                    }}
+                    className="flex items-center gap-1 hover:text-foreground transition-colors text-xs font-mono text-muted-foreground"
+                    title="Click to copy milestone ID"
+                  >
+                    {m.id}
+                    {copiedItems.has(m.id) ? (
+                      <Check className="h-3 w-3 text-green-500" />
+                    ) : (
+                      <Copy className="h-3 w-3 opacity-50" />
+                    )}
+                  </button>
                   <span className="text-sm font-semibold">{m.title}</span>
                 </div>
                 {/* Expanded slice rows */}

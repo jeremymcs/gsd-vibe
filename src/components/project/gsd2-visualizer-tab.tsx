@@ -2,6 +2,7 @@
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { useState, useEffect, useCallback } from 'react';
+import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard';
 import {
   CheckCircle2,
   Circle,
@@ -1007,6 +1008,7 @@ function ChangesTab({ data }: { data: VisualizerData }) {
 function ExportTab({ data }: { data: VisualizerData }) {
   const [jsonCopied, setJsonCopied] = useState(false);
   const [mdCopied, setMdCopied] = useState(false);
+  const { copyToClipboard: copy } = useCopyToClipboard({ showToast: false });
 
   const generateMarkdown = useCallback(() => {
     const lines: string[] = [];
@@ -1082,23 +1084,13 @@ function ExportTab({ data }: { data: VisualizerData }) {
 
   const copyToClipboard = useCallback(
     async (text: string, setCopied: (v: boolean) => void) => {
-      try {
-        await navigator.clipboard.writeText(text);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      } catch {
-        // fallback: create a textarea
-        const ta = document.createElement('textarea');
-        ta.value = text;
-        document.body.appendChild(ta);
-        ta.select();
-        document.execCommand('copy');
-        document.body.removeChild(ta);
+      const success = await copy(text);
+      if (success) {
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
       }
     },
-    [],
+    [copy],
   );
 
   const handleCopyJson = () =>

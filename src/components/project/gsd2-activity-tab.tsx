@@ -1,12 +1,16 @@
 // GSD VibeFlow - GSD-2 Activity Tab
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
-import { Activity } from 'lucide-react';
+import { useState } from 'react';
+import { Activity, Copy, Check } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ViewEmpty } from '@/components/shared/loading-states';
+import { SearchInput } from '@/components/shared/search-input';
+import { FilterChips } from '@/components/shared/filter-chips';
 import { useGsd2History } from '@/lib/queries';
+import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard';
 import { formatCost, formatTokenCount, formatDuration } from '@/lib/utils';
 
 interface Gsd2ActivityTabProps {
@@ -35,7 +39,18 @@ function classifyPhase(unitType: string): string {
 }
 
 export function Gsd2ActivityTab({ projectId }: Gsd2ActivityTabProps) {
+  const [search, setSearch] = useState('');
+  const [selectedPhases, setSelectedPhases] = useState<string[]>([]);
   const { data, isLoading, error } = useGsd2History(projectId);
+  const { copyToClipboard, copiedItems } = useCopyToClipboard();
+
+  const handleCopyUnitId = async (unitId: string) => {
+    await copyToClipboard(unitId, `Unit ID "${unitId}" copied`);
+  };
+
+  const handleCopyPhase = async (phase: string) => {
+    await copyToClipboard(phase, `Phase "${phase}" copied`);
+  };
 
   if (isLoading) {
     return (
@@ -58,6 +73,41 @@ export function Gsd2ActivityTab({ projectId }: Gsd2ActivityTabProps) {
 
   const totals = data?.totals;
   const units = [...(data?.units ?? [])].sort((a, b) => b.started_at - a.started_at);
+
+  // Phase filter options with counts
+  const phaseGroups = units.reduce((acc, unit) => {
+    const phase = classifyPhase(unit.unit_type);
+    acc[phase] = (acc[phase] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const phaseOptions = [
+    { id: 'research', label: 'Research', count: phaseGroups.research || 0 },
+    { id: 'planning', label: 'Planning', count: phaseGroups.planning || 0 },
+    { id: 'execution', label: 'Execution', count: phaseGroups.execution || 0 },
+    { id: 'completion', label: 'Completion', count: phaseGroups.completion || 0 },
+    { id: 'reassessment', label: 'Reassessment', count: phaseGroups.reassessment || 0 },
+  ].filter(option => option.count > 0);
+
+  // Apply search and phase filters
+  const query = search.trim().toLowerCase();
+  const filtered = units.filter((unit) => {
+    // Phase filter
+    if (selectedPhases.length > 0) {
+      const phase = classifyPhase(unit.unit_type);
+      if (!selectedPhases.includes(phase)) return false;
+    }
+    
+    // Search filter
+    if (query) {
+      return (
+        unit.id.toLowerCase().includes(query) ||
+        unit.unit_type.toLowerCase().includes(query)
+      );
+    }
+    
+    return true;
+  });
 
   if (!totals || units.length === 0) {
     return (
@@ -99,30 +149,80 @@ export function Gsd2ActivityTab({ projectId }: Gsd2ActivityTabProps) {
         </Card>
       </div>
 
+      {/* Search and filters */}
+      <div className="p-3 space-y-2 shrink-0">
+        <SearchInput
+          value={search}
+          onChange={setSearch}
+          placeholder="Search by unit ID or type..."
+          size="sm"
+        />
+        {phaseOptions.length > 1 && (
+          <FilterChips
+            options={phaseOptions}
+            selected={selectedPhases}
+            onSelectionChange={setSelectedPhases}
+            allowMultiple={true}
+            size="sm"
+            showAllOption={true}
+            allLabel="All Phases"
+          />
+        )}
+      </div>
+
       {/* Unit list */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-1">
-        {units.map((unit) => {
-          const phase = classifyPhase(unit.unit_type);
-          const duration = unit.finished_at > 0 ? unit.finished_at - unit.started_at : 0;
-          return (
-            <div
-              key={unit.id}
-              className="flex items-center gap-2 rounded-md border border-border/40 bg-muted/20 px-3 py-2 text-xs hover:bg-muted/40 transition-colors"
-            >
-              <Badge variant="outline" className={`shrink-0 text-[10px] px-1.5 py-0 ${phaseBadgeClass(phase)}`}>
-                {phase}
-              </Badge>
-              <span className="flex-1 truncate font-mono text-foreground/80" title={unit.id}>
-                {unit.id}
-              </span>
-              <span className="shrink-0 text-muted-foreground tabular-nums">{formatCost(unit.cost)}</span>
-              <span className="shrink-0 text-muted-foreground tabular-nums">{formatTokenCount(unit.total_tokens)}</span>
-              {duration > 0 && (
-                <span className="shrink-0 text-muted-foreground/70 tabular-nums">{formatDuration(duration)}</span>
-              )}
-            </div>
-          );
-        })}
+      <div className="flex-1 overflow-y-auto p-3 pt-0 space-y-1">
+        {filtered.length === 0 && (query || selectedPhases.length > 0) ? (
+          <p className="py-6 text-center text-sm text-muted-foreground">
+            No units match {query && selectedPhases.length > 0 ? `"${search}" and selected phases` : query ? `"${search}"` : 'selected phases'}
+          </p>
+        ) : (
+          filtered.map((unit) => {
+            const phase = classifyPhase(unit.unit_type);
+            const duration = unit.finished_at > 0 ? unit.finished_at - unit.started_at : 0;
+            const isUnitCopied = copiedItems.has(unit.id);
+            const isPhaseCopied = copiedItems.has(phase);
+            
+            return (
+              <div
+                key={unit.id}
+                className="flex items-center gap-2 rounded-md border border-border/40 bg-muted/20 px-3 py-2 text-xs hover:bg-muted/40 transition-colors"
+              >
+                <button
+                  onClick={() => handleCopyPhase(phase)}
+                  title="Click to copy phase name"
+                  className="shrink-0"
+                >
+                  <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${phaseBadgeClass(phase)} cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-1`}>
+                    {phase}
+                    {isPhaseCopied ? (
+                      <Check className="h-2 w-2 text-green-500" />
+                    ) : (
+                      <Copy className="h-2 w-2 opacity-50" />
+                    )}
+                  </Badge>
+                </button>
+                <button
+                  onClick={() => handleCopyUnitId(unit.id)}
+                  className="flex-1 truncate font-mono text-foreground/80 hover:text-foreground transition-colors text-left flex items-center gap-1"
+                  title="Click to copy unit ID"
+                >
+                  <span className="truncate">{unit.id}</span>
+                  {isUnitCopied ? (
+                    <Check className="h-3 w-3 text-green-500 shrink-0" />
+                  ) : (
+                    <Copy className="h-3 w-3 opacity-50 shrink-0" />
+                  )}
+                </button>
+                <span className="shrink-0 text-muted-foreground tabular-nums">{formatCost(unit.cost)}</span>
+                <span className="shrink-0 text-muted-foreground tabular-nums">{formatTokenCount(unit.total_tokens)}</span>
+                {duration > 0 && (
+                  <span className="shrink-0 text-muted-foreground/70 tabular-nums">{formatDuration(duration)}</span>
+                )}
+              </div>
+            );
+          })
+        )}
       </div>
     </div>
   );

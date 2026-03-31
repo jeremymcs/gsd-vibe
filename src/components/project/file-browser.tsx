@@ -11,8 +11,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { useCopyToClipboard } from '@/hooks';
 import hljs from 'highlight.js/lib/core';
 import javascript from 'highlight.js/lib/languages/javascript';
 import typescript from 'highlight.js/lib/languages/typescript';
@@ -67,6 +69,8 @@ import {
   Edit3,
   Save,
   X,
+  Copy,
+  Check,
 } from 'lucide-react';
 
 hljs.registerLanguage('javascript', javascript);
@@ -206,6 +210,8 @@ export function FileBrowser({ projectId, projectPath }: FileBrowserProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState('');
   const [editedContent, setEditedContent] = useState('');
+
+  const { copyToClipboard, copiedItems } = useCopyToClipboard();
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(search), 300);
@@ -377,27 +383,55 @@ export function FileBrowser({ projectId, projectPath }: FileBrowserProps) {
                       <div className="ml-6 mt-1 space-y-0.5">
                         {folder.files.map((file) => {
                           const isSelected = selectedFile === file.relative_path;
+                          const isCopied = copiedItems.has(file.relative_path);
 
                           return (
-                            <button
-                              key={file.relative_path}
-                              onClick={() => handleFileClick(file.relative_path)}
-                              className={cn(
-                                'w-full flex items-center gap-2 px-2 py-1.5 rounded-md',
-                                'transition-colors text-left group',
-                                isSelected
-                                  ? 'bg-primary/10 text-primary'
-                                  : 'hover:bg-accent',
-                              )}
-                            >
-                              <FileText className="h-4 w-4 flex-shrink-0" />
-                              <span className="text-sm flex-1 truncate">
-                                {file.display_name}
-                              </span>
-                              <span className="text-xs text-muted-foreground group-hover:text-foreground transition-colors">
-                                {formatFileSize(file.size_bytes)}
-                              </span>
-                            </button>
+                            <div key={file.relative_path} className="group relative">
+                              <button
+                                onClick={() => handleFileClick(file.relative_path)}
+                                className={cn(
+                                  'w-full flex items-center gap-2 px-2 py-1.5 rounded-md',
+                                  'transition-colors text-left',
+                                  isSelected
+                                    ? 'bg-primary/10 text-primary'
+                                    : 'hover:bg-accent',
+                                )}
+                              >
+                                <FileText className="h-4 w-4 flex-shrink-0" />
+                                <span className="text-sm flex-1 truncate">
+                                  {file.display_name}
+                                </span>
+                                <span className="text-xs text-muted-foreground group-hover:text-foreground transition-colors">
+                                  {formatFileSize(file.size_bytes)}
+                                </span>
+                              </button>
+                              
+                              {/* Copy button overlay */}
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        copyToClipboard(file.relative_path, `Copied file path: ${file.relative_path}`);
+                                      }}
+                                    >
+                                      {isCopied ? (
+                                        <Check className="h-3 w-3 text-green-600" />
+                                      ) : (
+                                        <Copy className="h-3 w-3" />
+                                      )}
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="right" className="text-xs">
+                                    Copy file path
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            </div>
                           );
                         })}
                       </div>
@@ -438,6 +472,29 @@ export function FileBrowser({ projectId, projectPath }: FileBrowserProps) {
                 <FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                 <span className="text-sm font-medium truncate">{selectedFile.split('/').pop()}</span>
                 <Badge variant="secondary" className="text-xs">{language}</Badge>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0"
+                        onClick={() => {
+                          copyToClipboard(selectedFile, `Copied file path: ${selectedFile}`);
+                        }}
+                      >
+                        {copiedItems.has(selectedFile) ? (
+                          <Check className="h-3 w-3 text-green-600" />
+                        ) : (
+                          <Copy className="h-3 w-3" />
+                        )}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="text-xs">
+                      Copy file path: {selectedFile}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
               <div className="flex items-center gap-1">
                 {isEditing ? (

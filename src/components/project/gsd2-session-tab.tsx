@@ -18,6 +18,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import type { UseHeadlessSessionReturn } from '@/hooks/use-headless-session';
 import type { Gsd2Health } from '@/lib/tauri';
 import { ptyWrite } from '@/lib/tauri';
@@ -241,14 +247,21 @@ export function Gsd2SessionTab({ projectId, projectPath }: Gsd2SessionTabProps) 
                   placeholder="Send a message or /gsd command…"
                   className="flex-1 h-8 text-sm min-w-0"
                 />
-                <Button
-                  size="icon"
-                  className="h-8 w-8 shrink-0"
-                  onClick={handleSendInput}
-                  disabled={!inputValue.trim()}
-                >
-                  <Send className="h-3.5 w-3.5" />
-                </Button>
+                <TooltipProvider delayDuration={300}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="icon"
+                        className="h-8 w-8 shrink-0"
+                        onClick={handleSendInput}
+                        disabled={!inputValue.trim()}
+                      >
+                        <Send className="h-3.5 w-3.5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Send message</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
             )}
           </div>

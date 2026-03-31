@@ -772,3 +772,27 @@ M013 grew the test suite from ~180 tests to 211 tests (31 new tests across S02, 
 ### Worktree code exists but isn't committed — manual sync required
 
 All M013 code was written to the worktree but not committed to the `milestone/M013` branch. The slice summaries and summaries exist in the `.gsd/` tree (committed via `gsd_complete_*` operations), but source files exist only in the working directory. Future cycles should automate this: after all slices complete, run `git add src/ src-tauri/src/ e2e/` and `git commit` to ensure the worktree branch is a complete snapshot of the feature branch, not a partial state.
+
+### Horizontal QOL sweeps need a reference component upfront
+
+M015 touched 25+ views with four cross-cutting capabilities. Using `git-status-widget.tsx` as the canonical reference (the one component with all four features pre-built) eliminated ambiguity about implementation style. Future sweeps should identify and document a reference component before writing a single line of code.
+
+### Extract shared components on task 1 of a horizontal sweep, not after
+
+SearchInput, FilterChips, and useCopyToClipboard were all extracted on their respective T01 tasks and then used by T02 and T03. Extracting late (or per-view inline) would have caused divergence and rework. In any sweep spanning 10+ files, establish the shared abstraction on the first task — it de-risks everything downstream.
+
+### Security-aware search: exclude sensitive fields at the search layer
+
+When building search in views that display secrets (env vars, API keys), explicitly exclude the sensitive field from the search predicate and add a comment explaining the decision. This is not obvious from the component's structure alone. The Env Vars tab searching key names only (not values) should be the pattern for any future view with sensitive columnar data.
+
+### Per-item copiedItems map for multi-copy-button screens
+
+When multiple copy buttons can appear simultaneously (e.g., a list of IDs), use a Map/Record keyed by item ID to track each button's feedback state independently. A single boolean `isCopied` state causes all buttons to light up together — the per-item map is the only correct pattern.
+
+### Automated icon detection via grep is unreliable for tooltip coverage
+
+Grep-based detection of "icon-only buttons" cannot reliably distinguish a button with only an icon from one with an icon plus hidden text or an sr-only label. S05 confirmed this limitation. For tooltip coverage audits, supplement grep with targeted manual review of destructive-action buttons specifically.
+
+### S03 thin summary signals incomplete scope execution — verify the original plan
+
+S03 produced a minimal summary with no drill-down paths or documented patterns. When a slice summary is unusually thin relative to the scope in the PLAN.md, the milestone closure step should diff the original plan's target list against the summary's file list. In this case, S05 caught and remediated the gap (gsd2-preferences-tab, auto-commands-settings). For future milestones: thin summaries are a signal to cross-check, not a reason to block.

@@ -1,11 +1,13 @@
 // GSD VibeFlow - GSD-2 HTML Reports Tab Component
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
+import { useMemo, useState } from 'react';
 import { FileText, ExternalLink, Loader2 } from 'lucide-react';
 import { open } from '@tauri-apps/plugin-shell';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { SearchInput } from '@/components/shared/search-input';
 import { ViewEmpty } from '@/components/shared/loading-states';
 import { useGsd2ReportsIndex, useGsd2GenerateHtmlReport } from '@/lib/queries';
 import { formatCost } from '@/lib/utils';
@@ -80,6 +82,8 @@ function ReportRow({ entry, reportsDir }: ReportRowProps) {
 }
 
 export function Gsd2ReportsTab({ projectId, projectPath: _projectPath }: Gsd2ReportsTabProps) {
+  const [searchTerm, setSearchTerm] = useState("");
+  
   const { data: index, isLoading, isError } = useGsd2ReportsIndex(projectId);
   const generate = useGsd2GenerateHtmlReport(projectId);
 
@@ -87,6 +91,22 @@ export function Gsd2ReportsTab({ projectId, projectPath: _projectPath }: Gsd2Rep
   const reportsDir = index?.project_path
     ? `${index.project_path}/.gsd/reports`
     : '';
+
+  const filteredEntries = useMemo(() => {
+    const entries = index?.entries ?? [];
+    if (!searchTerm.trim()) {
+      return entries;
+    }
+    
+    const search = searchTerm.toLowerCase();
+    return entries.filter((entry) =>
+      (entry.label && entry.label.toLowerCase().includes(search)) ||
+      entry.filename.toLowerCase().includes(search) ||
+      entry.milestone_id.toLowerCase().includes(search) ||
+      (entry.milestone_title && entry.milestone_title.toLowerCase().includes(search)) ||
+      entry.kind.toLowerCase().includes(search)
+    );
+  }, [index?.entries, searchTerm]);
 
   if (isLoading) {
     return (
@@ -161,7 +181,24 @@ export function Gsd2ReportsTab({ projectId, projectPath: _projectPath }: Gsd2Rep
         </div>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto">
+        {/* Search input */}
+        {(index?.entries?.length ?? 0) > 0 && (
+          <div className="mb-4">
+            <SearchInput
+              value={searchTerm}
+              onChange={setSearchTerm}
+              placeholder="Search reports by name, milestone..."
+              size="sm"
+            />
+          </div>
+        )}
+        
+        {filteredEntries.length === 0 && searchTerm ? (
+          <div className="text-center py-8 text-sm text-muted-foreground">
+            No reports match "{searchTerm}"
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border/60">
@@ -175,7 +212,7 @@ export function Gsd2ReportsTab({ projectId, projectPath: _projectPath }: Gsd2Rep
                 </tr>
               </thead>
               <tbody>
-                {entries.map((entry) => (
+                {filteredEntries.map((entry) => (
                   <ReportRow
                     key={entry.filename}
                     entry={entry}
@@ -185,6 +222,7 @@ export function Gsd2ReportsTab({ projectId, projectPath: _projectPath }: Gsd2Rep
               </tbody>
             </table>
           </div>
+        )}
       </CardContent>
     </Card>
   );
