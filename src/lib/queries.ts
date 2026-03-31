@@ -943,6 +943,7 @@ export const useDependencyStatus = (projectId: string, projectPath: string) =>
     staleTime: 60 * 60 * 1000, // 1 hour data freshness
     refetchInterval: 15 * 60 * 1000, // Auto-poll every 15 minutes
     refetchOnWindowFocus: true,
+    retry: 1, // fail fast — dependency scans are slow, no point retrying 3x
   });
 
 // Knowledge Graph

@@ -760,6 +760,20 @@ impl Database {
             self.record_migration("add_gsd_version_to_projects")?;
         }
 
+        // Migration: Create dependency_cache table
+        if !self.migration_applied("create_dependency_cache") {
+            tracing::info!("Running migration: Creating dependency_cache table");
+            self.conn.execute(
+                "CREATE TABLE IF NOT EXISTS dependency_cache (
+                    project_id TEXT PRIMARY KEY REFERENCES projects(id) ON DELETE CASCADE,
+                    status TEXT NOT NULL,
+                    checked_at TEXT DEFAULT (datetime('now'))
+                )",
+                [],
+            )?;
+            self.record_migration("create_dependency_cache")?;
+        }
+
         tracing::info!("Database migrations complete");
         Ok(())
     }
@@ -1037,6 +1051,42 @@ CREATE TABLE IF NOT EXISTS schema_migrations (
     applied_at TEXT DEFAULT (datetime('now'))
 );
 
+-- Notifications table
+CREATE TABLE IF NOT EXISTS notifications (
+    id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+    project_id TEXT REFERENCES projects(id) ON DELETE CASCADE,
+    notification_type TEXT NOT NULL DEFAULT 'info',
+    title TEXT NOT NULL,
+    message TEXT,
+    link TEXT,
+    read INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now'))
+);
+
+-- Terminal sessions table (persistence across app restarts)
+CREATE TABLE IF NOT EXISTS terminal_sessions (
+    id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+    project_id TEXT REFERENCES projects(id) ON DELETE CASCADE,
+    tab_name TEXT NOT NULL,
+    tab_type TEXT DEFAULT 'shell',
+    working_directory TEXT,
+    sort_order INTEGER DEFAULT 0,
+    tmux_session TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+);
+
+-- Knowledge bookmarks table
+CREATE TABLE IF NOT EXISTS knowledge_bookmarks (
+    id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    file_path TEXT NOT NULL,
+    heading TEXT NOT NULL,
+    heading_level INTEGER DEFAULT 1,
+    note TEXT,
+    created_at TEXT DEFAULT (datetime('now')),
+    UNIQUE(project_id, file_path, heading)
+);
+
 -- GSD: Todos (matches gsd.rs insert: id, project_id, title, description, area, phase, priority, status, is_blocker, files, source_file, created_at, completed_at)
 CREATE TABLE IF NOT EXISTS gsd_todos (
     id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
@@ -1235,6 +1285,10 @@ CREATE INDEX IF NOT EXISTS idx_auto_commands_hook ON auto_commands(hook_type);
 -- Composite indexes for common multi-column query patterns
 CREATE INDEX IF NOT EXISTS idx_activity_project_created ON activity_log(project_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_decisions_project_category ON decisions(project_id, category);
+CREATE INDEX IF NOT EXISTS idx_notifications_read ON notifications(read);
+CREATE INDEX IF NOT EXISTS idx_notifications_created ON notifications(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_terminal_sessions_project ON terminal_sessions(project_id);
+CREATE INDEX IF NOT EXISTS idx_knowledge_bookmarks_project ON knowledge_bookmarks(project_id);
 "#;
 
 const FTS5_SCHEMA: &str = r#"
@@ -1315,4 +1369,243 @@ CREATE TRIGGER IF NOT EXISTS decisions_fts_delete AFTER DELETE ON decisions BEGI
     INSERT INTO decisions_fts(decisions_fts, rowid, question, answer)
     VALUES ('delete', old.rowid, old.question, old.answer);
 END;
+
+-- Dependency cache for per-project npm audit / outdated results
+CREATE TABLE IF NOT EXISTS dependency_cache (
+    project_id TEXT PRIMARY KEY REFERENCES projects(id) ON DELETE CASCADE,
+    status TEXT NOT NULL,
+    checked_at TEXT DEFAULT (datetime('now'))
+);
 "#;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Open an in-memory SQLite database and run the full schema + indexes.
+    /// Returns the connection for further assertions.
+    fn open_test_db() -> Connection {
+        let conn = Connection::open_in_memory().expect("open in-memory DB");
+        conn.execute_batch(SCHEMA).expect("apply SCHEMA");
+        conn.execute_batch(INDEXES_SCHEMA).expect("apply INDEXES_SCHEMA");
+        // FTS5 may not be available in all test environments; apply but ignore errors
+        let _ = conn.execute_batch(FTS5_SCHEMA);
+        conn
+    }
+
+    /// Return the set of table names that exist in the database.
+    fn existing_tables(conn: &Connection) -> std::collections::HashSet<String> {
+        let mut stmt = conn
+            .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")
+            .expect("prepare sqlite_master query");
+        stmt.query_map([], |row| row.get::<_, String>(0))
+            .expect("query")
+            .filter_map(|r| r.ok())
+            .collect()
+    }
+
+    /// Comprehensive list of every table referenced by Tauri commands.
+    /// If a new command references a table, add it here — the test will catch
+    /// any table that is used but not created by the schema.
+    const REQUIRED_TABLES: &[&str] = &[
+        // Core
+        "projects",
+        "costs",
+        "roadmaps",
+        "phases",
+        "phase_comments",
+        "tasks",
+        "decisions",
+        "activity_log",
+        "cost_thresholds",
+        "knowledge",
+        "test_runs",
+        "test_results",
+        "flaky_tests",
+        "app_logs",
+        "command_history",
+        "snippets",
+        "script_favorites",
+        "auto_commands",
+        "settings",
+        "schema_migrations",
+        // Features
+        "notifications",
+        "terminal_sessions",
+        "knowledge_bookmarks",
+        "dependency_cache",
+        // GSD
+        "gsd_todos",
+        "gsd_debug_sessions",
+        "gsd_requirements",
+        "gsd_milestones",
+        "gsd_verifications",
+        "gsd_config",
+        "gsd_plans",
+        "gsd_summaries",
+        "gsd_phase_research",
+        "gsd_validations",
+        "gsd_uat_results",
+    ];
+
+    #[test]
+    fn schema_creates_all_required_tables() {
+        let conn = open_test_db();
+        let tables = existing_tables(&conn);
+
+        let mut missing: Vec<&str> = Vec::new();
+        for &table in REQUIRED_TABLES {
+            if !tables.contains(table) {
+                missing.push(table);
+            }
+        }
+
+        assert!(
+            missing.is_empty(),
+            "Tables referenced by commands but missing from schema: {:?}",
+            missing
+        );
+    }
+
+    #[test]
+    fn schema_creates_required_indexes() {
+        let conn = open_test_db();
+
+        let mut stmt = conn
+            .prepare("SELECT name FROM sqlite_master WHERE type='index' AND name LIKE 'idx_%'")
+            .expect("prepare index query");
+        let indexes: std::collections::HashSet<String> = stmt
+            .query_map([], |row| row.get::<_, String>(0))
+            .expect("query")
+            .filter_map(|r| r.ok())
+            .collect();
+
+        // Spot-check key indexes
+        let expected = &[
+            "idx_costs_project",
+            "idx_activity_project",
+            "idx_phases_roadmap",
+            "idx_tasks_phase",
+            "idx_decisions_project",
+            "idx_roadmaps_project",
+            "idx_knowledge_project",
+            "idx_notifications_read",
+            "idx_notifications_created",
+            "idx_terminal_sessions_project",
+            "idx_knowledge_bookmarks_project",
+        ];
+
+        let mut missing: Vec<&str> = Vec::new();
+        for &idx in expected {
+            if !indexes.contains(idx) {
+                missing.push(idx);
+            }
+        }
+
+        assert!(
+            missing.is_empty(),
+            "Expected indexes missing from schema: {:?}",
+            missing
+        );
+    }
+
+    #[test]
+    fn knowledge_bookmarks_unique_constraint() {
+        let conn = open_test_db();
+
+        // Seed a project for FK
+        conn.execute(
+            "INSERT INTO projects (id, name, path) VALUES ('p1', 'Test', '/tmp/test')",
+            [],
+        )
+        .expect("insert project");
+
+        // First insert succeeds
+        conn.execute(
+            "INSERT INTO knowledge_bookmarks (id, project_id, file_path, heading, heading_level)
+             VALUES ('b1', 'p1', 'KNOWLEDGE.md', 'Section One', 2)",
+            [],
+        )
+        .expect("first bookmark insert");
+
+        // Duplicate (same project_id + file_path + heading) should conflict
+        let result = conn.execute(
+            "INSERT INTO knowledge_bookmarks (id, project_id, file_path, heading, heading_level)
+             VALUES ('b2', 'p1', 'KNOWLEDGE.md', 'Section One', 3)",
+            [],
+        );
+        assert!(result.is_err(), "Duplicate bookmark should violate UNIQUE constraint");
+
+        // Different heading is fine
+        conn.execute(
+            "INSERT INTO knowledge_bookmarks (id, project_id, file_path, heading, heading_level)
+             VALUES ('b3', 'p1', 'KNOWLEDGE.md', 'Section Two', 2)",
+            [],
+        )
+        .expect("different heading should succeed");
+    }
+
+    #[test]
+    fn notifications_table_columns() {
+        let conn = open_test_db();
+
+        // Seed a project for FK
+        conn.execute(
+            "INSERT INTO projects (id, name, path) VALUES ('p1', 'Test', '/tmp/test')",
+            [],
+        )
+        .expect("insert project");
+
+        // Insert a notification matching the exact column list from notifications.rs
+        conn.execute(
+            "INSERT INTO notifications (id, project_id, notification_type, title, message, link)
+             VALUES ('n1', 'p1', 'info', 'Test Title', 'Test message', '/link')",
+            [],
+        )
+        .expect("insert notification");
+
+        // Read it back with the exact SELECT from get_notifications
+        let (title, read_flag): (String, i32) = conn
+            .query_row(
+                "SELECT title, read FROM notifications WHERE id = 'n1'",
+                [],
+                |row| Ok((row.get(0)?, row.get(1)?)),
+            )
+            .expect("read notification back");
+
+        assert_eq!(title, "Test Title");
+        assert_eq!(read_flag, 0); // default unread
+    }
+
+    #[test]
+    fn terminal_sessions_table_columns() {
+        let conn = open_test_db();
+
+        // Seed a project for FK
+        conn.execute(
+            "INSERT INTO projects (id, name, path) VALUES ('p1', 'Test', '/tmp/test')",
+            [],
+        )
+        .expect("insert project");
+
+        // Insert matching the exact column list from terminal.rs save_terminal_sessions
+        conn.execute(
+            "INSERT INTO terminal_sessions (id, project_id, tab_name, tab_type, working_directory, sort_order, tmux_session)
+             VALUES ('s1', 'p1', 'Shell', 'shell', '/tmp', 0, NULL)",
+            [],
+        )
+        .expect("insert terminal session");
+
+        // Read it back matching the exact SELECT from restore_terminal_sessions
+        let (tab_name, sort_order): (String, i32) = conn
+            .query_row(
+                "SELECT tab_name, sort_order FROM terminal_sessions WHERE id = 's1'",
+                [],
+                |row| Ok((row.get(0)?, row.get(1)?)),
+            )
+            .expect("read session back");
+
+        assert_eq!(tab_name, "Shell");
+        assert_eq!(sort_order, 0);
+    }
+}

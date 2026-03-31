@@ -899,20 +899,34 @@ fn parse_legacy_summary(content: &str, base_path: &Path) -> ScannerSummary {
 pub async fn get_scanner_summary(path: String) -> Result<ScannerSummary, String> {
     let base_path = Path::new(&path);
 
-    // Try scan-report.md first (percentage-based format)
-    let scan_report_path = base_path.join(".planning/reports/scan-report.md");
-    if scan_report_path.exists() {
-        let content = std::fs::read_to_string(&scan_report_path)
-            .map_err(|e| format!("Failed to read scan-report.md: {}", e))?;
-        return Ok(parse_scan_report(&content));
+    // Report path candidates in priority order:
+    // 1) Legacy GSD-1 .planning reports
+    // 2) GSD-2 .gsd reports
+    let scan_report_candidates = [
+        base_path.join(".planning/reports/scan-report.md"),
+        base_path.join(".gsd/reports/scan-report.md"),
+    ];
+
+    for scan_report_path in &scan_report_candidates {
+        if scan_report_path.exists() {
+            let content = std::fs::read_to_string(scan_report_path)
+                .map_err(|e| format!("Failed to read {}: {}", scan_report_path.display(), e))?;
+            return Ok(parse_scan_report(&content));
+        }
     }
 
-    // Fall back to legacy SUMMARY.md (grade-based format)
-    let summary_path = base_path.join(".planning/reports/SUMMARY.md");
-    if summary_path.exists() {
-        let content = std::fs::read_to_string(&summary_path)
-            .map_err(|e| format!("Failed to read SUMMARY.md: {}", e))?;
-        return Ok(parse_legacy_summary(&content, base_path));
+    // Fall back to legacy SUMMARY.md format in either reports location
+    let summary_candidates = [
+        base_path.join(".planning/reports/SUMMARY.md"),
+        base_path.join(".gsd/reports/SUMMARY.md"),
+    ];
+
+    for summary_path in &summary_candidates {
+        if summary_path.exists() {
+            let content = std::fs::read_to_string(summary_path)
+                .map_err(|e| format!("Failed to read {}: {}", summary_path.display(), e))?;
+            return Ok(parse_legacy_summary(&content, base_path));
+        }
     }
 
     Ok(empty_scanner_summary())

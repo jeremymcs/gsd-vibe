@@ -2,12 +2,32 @@
 // Knowledge viewer with Research sub-tab for .planning/research/ files
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
-import { useState } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useProject, useKnowledgeFiles, useKnowledgeFileContent } from '@/lib/queries';
 import { KnowledgeViewer } from '@/components/knowledge';
 import { MarkdownRenderer } from '@/components/knowledge/markdown-renderer';
-import { BookOpen, FlaskConical, Loader2, FileText } from 'lucide-react';
+import { BookOpen, FlaskConical, Loader2, FileText, Edit3, Save, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { writeProjectFile } from '@/lib/tauri';
+import { queryKeys } from '@/lib/query-keys';
+import { toast } from 'sonner';
+import Editor from 'react-simple-code-editor';
+import hljs from 'highlight.js/lib/core';
+import markdownLang from 'highlight.js/lib/languages/markdown';
+
+// Register markdown language for the editor highlighter
+hljs.registerLanguage('markdown', markdownLang);
+
+function highlightMarkdown(code: string): string {
+  try {
+    return hljs.highlight(code, { language: 'markdown' }).value;
+  } catch {
+    return code;
+  }
+}
 
 interface KnowledgeTabProps {
   projectId: string;
@@ -106,6 +126,12 @@ function ResearchBrowser({
   projectPath: string;
 }) {
   const [selectedFile, setSelectedFile] = useState<string>('');
+  const [isEditing, setIsEditing] = useState(false);
+  const [editContent, setEditContent] = useState('');
+  const [editedContent, setEditedContent] = useState('');
+  const queryClient = useQueryClient();
+
+  const editorHighlight = useCallback((code: string) => highlightMarkdown(code), []);
 
   // List all files under .planning/research
   const researchPath = `${projectPath}/.planning/research`;
@@ -124,6 +150,47 @@ function ResearchBrowser({
     researchPath,
     selectedFile,
   );
+
+  const saveMutation = useMutation({
+    mutationFn: ({ filename, content: fileContent }: { filename: string; content: string }) =>
+      writeProjectFile(researchPath, filename, fileContent),
+    onSuccess: () => {
+      toast.success('File saved');
+      setEditedContent(editContent);
+      setIsEditing(false);
+      queryClient.invalidateQueries({ queryKey: queryKeys.knowledgeFile(projectId, selectedFile) });
+    },
+    onError: (error) => {
+      toast.error(`Failed to save: ${error}`);
+    },
+  });
+
+  const hasChanges = editContent !== editedContent;
+
+  const handleEdit = () => {
+    setEditContent(content || '');
+    setEditedContent(content || '');
+    setIsEditing(true);
+  };
+
+  const handleCancel = () => {
+    setIsEditing(false);
+    setEditContent('');
+    setEditedContent('');
+  };
+
+  const handleSave = () => {
+    if (selectedFile) {
+      saveMutation.mutate({ filename: selectedFile, content: editContent });
+    }
+  };
+
+  // Reset edit mode when switching files
+  useEffect(() => {
+    setIsEditing(false);
+    setEditContent('');
+    setEditedContent('');
+  }, [selectedFile]);
 
   if (treeLoading) {
     return (
@@ -172,23 +239,93 @@ function ResearchBrowser({
         </div>
       </div>
 
-      {/* Right panel: file content */}
-      <div className="flex-1 min-w-0 border rounded-lg bg-card overflow-y-auto p-6">
-        {contentLoading ? (
-          <div className="flex items-center justify-center py-16">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-          </div>
-        ) : content ? (
-          <MarkdownRenderer
-            content={content}
-            projectId={projectId}
-            filePath={selectedFile}
-          />
-        ) : (
-          <div className="flex items-center justify-center py-16 text-muted-foreground text-sm">
-            Select a file to view its contents
+      {/* Right panel: file content with edit controls */}
+      <div className="flex-1 min-w-0 border rounded-lg bg-card overflow-hidden flex flex-col">
+        {/* Header with edit/save/cancel */}
+        {selectedFile && (
+          <div className="flex items-center justify-between px-4 py-2 border-b bg-muted/30 flex-shrink-0">
+            <div className="flex items-center gap-2 min-w-0">
+              <FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+              <span className="text-sm font-medium truncate text-muted-foreground">
+                {selectedFile.split('/').pop()}
+              </span>
+              <Badge variant="secondary" className="text-xs">markdown</Badge>
+            </div>
+            <div className="flex items-center gap-1">
+              {isEditing ? (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleSave}
+                    disabled={saveMutation.isPending || !hasChanges}
+                    className="flex-shrink-0"
+                  >
+                    <Save className="h-4 w-4 mr-1" />
+                    {saveMutation.isPending ? 'Saving...' : 'Save'}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleCancel}
+                    disabled={saveMutation.isPending}
+                    className="flex-shrink-0"
+                  >
+                    <X className="h-4 w-4 mr-1" />
+                    Cancel
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleEdit}
+                  className="flex-shrink-0"
+                >
+                  <Edit3 className="h-4 w-4 mr-1" />
+                  Edit
+                </Button>
+              )}
+            </div>
           </div>
         )}
+
+        {/* Content area */}
+        <div className="flex-1 overflow-y-auto">
+          {contentLoading ? (
+            <div className="flex items-center justify-center py-16">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : isEditing ? (
+            <div className="h-full overflow-auto">
+              <Editor
+                value={editContent}
+                onValueChange={(code) => setEditContent(code)}
+                highlight={editorHighlight}
+                padding={24}
+                style={{
+                  fontFamily: '"JetBrains Mono Variable", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+                  fontSize: '13px',
+                  lineHeight: '1.6',
+                  backgroundColor: 'transparent',
+                  minHeight: '100%',
+                }}
+              />
+            </div>
+          ) : content ? (
+            <div className="p-6">
+              <MarkdownRenderer
+                content={content}
+                projectId={projectId}
+                filePath={selectedFile}
+              />
+            </div>
+          ) : (
+            <div className="flex items-center justify-center py-16 text-muted-foreground text-sm">
+              Select a file to view its contents
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

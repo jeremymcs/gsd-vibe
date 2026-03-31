@@ -321,7 +321,7 @@ export function DependenciesTab({
   const queryClient = useQueryClient();
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const { data: status, isLoading } = useDependencyStatus(
+  const { data: status, isLoading, isError, error } = useDependencyStatus(
     projectId,
     projectPath
   );
@@ -402,6 +402,26 @@ export function DependenciesTab({
     return (
       <div className="flex items-center justify-center py-20">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="text-center py-20 text-muted-foreground">
+        <AlertTriangle className="h-12 w-12 mx-auto mb-4 opacity-30 text-status-warning" />
+        <p className="font-medium">Failed to load dependency data</p>
+        <p className="text-sm mt-2 max-w-md mx-auto">{getErrorMessage(error)}</p>
+        <Button
+          variant="outline"
+          size="sm"
+          className="mt-4"
+          onClick={() => void handleRefresh()}
+          disabled={isRefreshing}
+        >
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Retry
+        </Button>
       </div>
     );
   }

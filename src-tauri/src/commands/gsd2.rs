@@ -2238,25 +2238,33 @@ fn parse_metrics_json(
                 .get("cost")
                 .and_then(|v| v.as_f64())
                 .unwrap_or(0.0);
+            // Token fields: try flat top-level keys first (older metrics format),
+            // then fall back to nested `tokens` sub-object (current format).
+            let tokens_obj = item.get("tokens");
             let input_tokens = item
                 .get("inputTokens")
                 .and_then(|v| v.as_i64())
+                .or_else(|| tokens_obj.and_then(|t| t.get("input")).and_then(|v| v.as_i64()))
                 .unwrap_or(0);
             let output_tokens = item
                 .get("outputTokens")
                 .and_then(|v| v.as_i64())
+                .or_else(|| tokens_obj.and_then(|t| t.get("output")).and_then(|v| v.as_i64()))
                 .unwrap_or(0);
             let cache_read_tokens = item
                 .get("cacheRead")
                 .and_then(|v| v.as_i64())
+                .or_else(|| tokens_obj.and_then(|t| t.get("cacheRead")).and_then(|v| v.as_i64()))
                 .unwrap_or(0);
             let cache_write_tokens = item
                 .get("cacheWrite")
                 .and_then(|v| v.as_i64())
+                .or_else(|| tokens_obj.and_then(|t| t.get("cacheWrite")).and_then(|v| v.as_i64()))
                 .unwrap_or(0);
             let total_tokens = item
                 .get("totalTokens")
                 .and_then(|v| v.as_i64())
+                .or_else(|| tokens_obj.and_then(|t| t.get("total")).and_then(|v| v.as_i64()))
                 .unwrap_or_else(|| input_tokens + output_tokens + cache_read_tokens + cache_write_tokens);
             let tool_calls = item
                 .get("toolCalls")
@@ -4947,8 +4955,11 @@ pub async fn gsd2_get_skill_health(
                 if !skill.is_empty() {
                     total_with_skills += 1;
                     let cost = entry.get("cost").and_then(|c| c.as_f64()).unwrap_or(0.0);
+                    let tokens_sub = entry.get("tokens");
                     let tokens = entry.get("totalTokens").and_then(|t| t.as_f64())
+                        .or_else(|| tokens_sub.and_then(|t| t.get("total")).and_then(|v| v.as_f64()))
                         .or_else(|| entry.get("cacheRead").and_then(|c| c.as_f64()))
+                        .or_else(|| tokens_sub.and_then(|t| t.get("cacheRead")).and_then(|v| v.as_f64()))
                         .unwrap_or(0.0);
                     let finished = entry.get("finishedAt").and_then(|f| f.as_f64()).unwrap_or(0.0);
                     skill_map.entry(skill.to_string()).or_default().push((cost, tokens, finished));

@@ -2,9 +2,9 @@
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useMutation } from '@tanstack/react-query';
 import { listen } from '@tauri-apps/api/event';
-import { Project, watchProjectFiles, unwatchProjectFiles } from '@/lib/tauri';
+import { Project, watchProjectFiles, unwatchProjectFiles, writeProjectFile } from '@/lib/tauri';
 import { useKnowledgeFiles, useKnowledgeFileContent, useDeleteProjectFile } from '@/lib/queries';
 import { queryKeys } from '@/lib/query-keys';
 import { KnowledgeFileTreeNav } from './knowledge-file-tree';
@@ -14,8 +14,12 @@ import { KnowledgeBookmarks } from './knowledge-bookmarks';
 import { KnowledgeGraph } from './knowledge-graph';
 import { KnowledgeGraphTable } from './knowledge-graph-table';
 import { MarkdownRenderer } from './markdown-renderer';
-import { FileQuestion, GitBranch, Loader2, Bookmark, Table2 } from 'lucide-react';
+import { FileQuestion, GitBranch, Loader2, Bookmark, Table2, Edit3, Save, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
+import Editor from 'react-simple-code-editor';
+import hljs from 'highlight.js/lib/core';
+import markdownLang from 'highlight.js/lib/languages/markdown';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,6 +32,17 @@ import {
 } from '@/components/ui/alert-dialog';
 import { slugify } from './knowledge-toc';
 
+// Register markdown language for the editor highlighter
+hljs.registerLanguage('markdown', markdownLang);
+
+function highlightMarkdown(code: string): string {
+  try {
+    return hljs.highlight(code, { language: 'markdown' }).value;
+  } catch {
+    return code;
+  }
+}
+
 interface KnowledgeViewerProps {
   project: Project;
 }
@@ -38,8 +53,54 @@ export function KnowledgeViewer({ project }: KnowledgeViewerProps) {
   const [viewMode, setViewMode] = useState<'content' | 'graph' | 'table'>('content');
   const [isWatching, setIsWatching] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ path: string; name: string } | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editContent, setEditContent] = useState('');
+  const [editedContent, setEditedContent] = useState('');
   const contentRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
+
+  const editorHighlight = useCallback((code: string) => highlightMarkdown(code), []);
+
+  const saveMutation = useMutation({
+    mutationFn: ({ filename, content: fileContent }: { filename: string; content: string }) =>
+      writeProjectFile(project.path, filename, fileContent),
+    onSuccess: () => {
+      toast.success('File saved');
+      setEditedContent(editContent);
+      setIsEditing(false);
+      queryClient.invalidateQueries({ queryKey: queryKeys.knowledgeFile(project.id, activeFile) });
+    },
+    onError: (error) => {
+      toast.error(`Failed to save: ${error}`);
+    },
+  });
+
+  const hasChanges = editContent !== editedContent;
+
+  const handleEdit = () => {
+    setEditContent(content || '');
+    setEditedContent(content || '');
+    setIsEditing(true);
+  };
+
+  const handleCancel = () => {
+    setIsEditing(false);
+    setEditContent('');
+    setEditedContent('');
+  };
+
+  const handleSave = () => {
+    if (activeFile) {
+      saveMutation.mutate({ filename: activeFile, content: editContent });
+    }
+  };
+
+  // Reset edit mode when switching files
+  useEffect(() => {
+    setIsEditing(false);
+    setEditContent('');
+    setEditedContent('');
+  }, [activeFile]);
 
   // KN-05: File watching for auto-refresh
   useEffect(() => {
@@ -247,22 +308,87 @@ export function KnowledgeViewer({ project }: KnowledgeViewerProps) {
               />
             </div>
 
-          {/* Center: Content */}
-          <div
-            ref={contentRef}
-            className="flex-1 p-6 bg-card rounded-lg border overflow-y-auto min-w-0"
-          >
-            {contentLoading ? (
-              <div className="flex items-center justify-center py-16">
-                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          {/* Center: Content with edit controls */}
+          <div className="flex-1 flex flex-col min-w-0 border rounded-lg bg-card overflow-hidden">
+            {/* Content header with edit/save/cancel */}
+            {activeFile && (
+              <div className="flex items-center justify-between px-4 py-2 border-b bg-muted/30 flex-shrink-0">
+                <span className="text-sm font-medium truncate text-muted-foreground">
+                  {activeFile.split('/').pop()}
+                </span>
+                <div className="flex items-center gap-1">
+                  {isEditing ? (
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleSave}
+                        disabled={saveMutation.isPending || !hasChanges}
+                        className="flex-shrink-0"
+                      >
+                        <Save className="h-4 w-4 mr-1" />
+                        {saveMutation.isPending ? 'Saving...' : 'Save'}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleCancel}
+                        disabled={saveMutation.isPending}
+                        className="flex-shrink-0"
+                      >
+                        <X className="h-4 w-4 mr-1" />
+                        Cancel
+                      </Button>
+                    </>
+                  ) : (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleEdit}
+                      className="flex-shrink-0"
+                    >
+                      <Edit3 className="h-4 w-4 mr-1" />
+                      Edit
+                    </Button>
+                  )}
+                </div>
               </div>
-            ) : error ? (
-              <div className="flex items-center justify-center py-16 text-destructive">
-                Failed to load file: {String(error)}
-              </div>
-            ) : content ? (
-              <MarkdownRenderer content={content} projectId={project.id} filePath={activeFile} />
-            ) : null}
+            )}
+
+            <div
+              ref={contentRef}
+              className="flex-1 overflow-y-auto"
+            >
+              {contentLoading ? (
+                <div className="flex items-center justify-center py-16">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : error ? (
+                <div className="flex items-center justify-center py-16 text-destructive">
+                  Failed to load file: {String(error)}
+                </div>
+              ) : isEditing ? (
+                <div className="h-full overflow-auto">
+                  <Editor
+                    value={editContent}
+                    onValueChange={(code) => setEditContent(code)}
+                    highlight={editorHighlight}
+                    padding={24}
+                    style={{
+                      fontFamily: '"JetBrains Mono Variable", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+                      fontSize: '13px',
+                      lineHeight: '1.6',
+                      backgroundColor: 'transparent',
+                      minHeight: '100%',
+                    }}
+                  />
+                </div>
+              ) : content ? (
+                <div className="p-6">
+                  <MarkdownRenderer content={content} projectId={project.id} filePath={activeFile} />
+                </div>
+              ) : null}
+            </div>
           </div>
 
           {/* Right: Table of Contents (conditional) */}

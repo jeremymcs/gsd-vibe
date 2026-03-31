@@ -2,10 +2,11 @@
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { useState, useEffect, useCallback, type ReactNode } from 'react';
-import { Save, Loader2, ChevronDown, ChevronRight, RotateCcw, Settings } from 'lucide-react';
+import { Save, Loader2, ChevronDown, ChevronRight, RotateCcw, Settings, Plus, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import {
   Select,
@@ -22,7 +23,7 @@ import { useGsd2Preferences, useGsd2SavePreferences, useGsd2Models } from '@/lib
 // Field metadata
 // ============================================================
 
-type FieldType = 'boolean' | 'enum' | 'number' | 'string' | 'string[]' | 'model';
+type FieldType = 'boolean' | 'enum' | 'number' | 'string' | 'string[]' | 'model' | 'skill_rules' | 'hooks' | 'pre_hooks';
 
 interface FieldMeta {
   type: FieldType;
@@ -89,6 +90,8 @@ const FIELD_META: Record<string, FieldMeta> = {
   always_use_skills: { type: 'string[]', label: 'Always Use Skills', description: 'Skills always loaded when relevant', group: 'Skills' },
   prefer_skills: { type: 'string[]', label: 'Prefer Skills', description: 'Soft-preference skills', group: 'Skills' },
   avoid_skills: { type: 'string[]', label: 'Avoid Skills', description: 'Skills to avoid unless clearly needed', group: 'Skills' },
+  custom_instructions: { type: 'string[]', label: 'Custom Instructions', description: 'Extra durable instructions for skill use', group: 'Skills' },
+  skill_rules: { type: 'skill_rules', label: 'Skill Rules', description: 'Situational rules with when/use/prefer/avoid', group: 'Skills' },
 
   // ── Budget & Tokens ──
   budget_ceiling: { type: 'number', label: 'Budget Ceiling ($)', description: 'Max spend for auto-mode', group: 'Budget & Tokens' },
@@ -109,6 +112,7 @@ const FIELD_META: Record<string, FieldMeta> = {
   'git.manage_gitignore': { type: 'boolean', label: 'Manage .gitignore', description: 'Let GSD modify .gitignore', group: 'Git' },
   'git.auto_pr': { type: 'boolean', label: 'Auto PR', description: 'Create GitHub PR after milestone merge', group: 'Git' },
   'git.pr_target_branch': { type: 'string', label: 'PR Target Branch', description: 'Branch to target for auto PRs', group: 'Git' },
+  'git.worktree_post_create': { type: 'string', label: 'Worktree Post-Create', description: 'Script to run after worktree creation', group: 'Git' },
   unique_milestone_ids: { type: 'boolean', label: 'Unique Milestone IDs', description: 'M001-rand6 format to avoid collisions', group: 'Git' },
 
   // ── Phases ──
@@ -150,6 +154,7 @@ const FIELD_META: Record<string, FieldMeta> = {
   'parallel.budget_ceiling': { type: 'number', label: 'Budget Ceiling', description: 'Per-run budget limit', group: 'Parallel' },
   'parallel.merge_strategy': { type: 'enum', options: ['per-slice', 'per-milestone'], label: 'Merge Strategy', description: 'When to merge results', group: 'Parallel' },
   'parallel.auto_merge': { type: 'enum', options: ['auto', 'confirm', 'manual'], label: 'Auto Merge', description: 'Merge behavior after completion', group: 'Parallel' },
+  'parallel.worker_model': { type: 'model', label: 'Worker Model', description: 'Model override for parallel workers', group: 'Parallel' },
 
   // ── Dynamic Routing ──
   'dynamic_routing.enabled': { type: 'boolean', label: 'Enabled', description: 'Enable dynamic model routing', group: 'Dynamic Routing' },
@@ -172,12 +177,19 @@ const FIELD_META: Record<string, FieldMeta> = {
   'auto_supervisor.soft_timeout_minutes': { type: 'number', label: 'Soft Timeout (min)', description: 'Minutes before soft warning', group: 'Auto Supervisor' },
   'auto_supervisor.idle_timeout_minutes': { type: 'number', label: 'Idle Timeout (min)', description: 'Minutes before intervention', group: 'Auto Supervisor' },
   'auto_supervisor.hard_timeout_minutes': { type: 'number', label: 'Hard Timeout (min)', description: 'Minutes before termination', group: 'Auto Supervisor' },
+
+  // ── Hooks ──
+  post_unit_hooks: { type: 'hooks', label: 'Post-Unit Hooks', description: 'Hooks that fire after a unit completes', group: 'Hooks' },
+  pre_dispatch_hooks: { type: 'pre_hooks', label: 'Pre-Dispatch Hooks', description: 'Hooks that fire before a unit is dispatched', group: 'Hooks' },
+
+  // ── Experimental ──
+  'experimental.rtk': { type: 'boolean', label: 'RTK Compression', description: 'Shell-command compression via RTK binary', group: 'Experimental' },
 };
 
 const GROUP_ORDER = [
   'General', 'Models', 'Skills', 'Budget & Tokens', 'Git', 'Phases',
   'Auto Mode', 'Dynamic Routing', 'Verification', 'Notifications',
-  'cmux', 'Parallel', 'Remote Questions', 'Auto Supervisor',
+  'cmux', 'Parallel', 'Remote Questions', 'Auto Supervisor', 'Hooks', 'Experimental',
 ];
 
 // ============================================================
@@ -215,8 +227,12 @@ function unflattenObj(flat: Record<string, unknown>): Record<string, unknown> {
 
 function valueToDisplay(val: unknown): string {
   if (val === null || val === undefined) return '';
-  if (Array.isArray(val)) return val.join(', ');
-  if (typeof val === 'object') return JSON.stringify(val);
+  if (Array.isArray(val)) {
+    // If it's an array of objects (hooks, skill_rules), use JSON
+    if (val.length > 0 && typeof val[0] === 'object') return JSON.stringify(val, null, 2);
+    return val.join(', ');
+  }
+  if (typeof val === 'object') return JSON.stringify(val, null, 2);
   return String(val);
 }
 
@@ -232,6 +248,12 @@ function parseDisplayToValue(str: string, meta: FieldMeta | undefined, originalV
     case 'enum': return str || null;
     case 'model': return str || null;
     case 'string[]': return str ? str.split(',').map(s => s.trim()).filter(Boolean) : [];
+    case 'skill_rules':
+    case 'hooks':
+    case 'pre_hooks': {
+      if (!str || str.trim() === '') return [];
+      try { return JSON.parse(str); } catch { return originalVal ?? []; }
+    }
     default: return str;
   }
 }
@@ -244,6 +266,400 @@ function getScopeVariant(scope: string): ScopeBadgeVariant {
     case 'default': return 'outline';
     default: return 'warning';
   }
+}
+
+// ============================================================
+// Skill Rule editor (array of { when, use?, prefer?, avoid? })
+// ============================================================
+
+interface SkillRule {
+  when: string;
+  use?: string[];
+  prefer?: string[];
+  avoid?: string[];
+}
+
+function parseSkillRules(raw: string): SkillRule[] {
+  if (!raw || raw.trim() === '') return [];
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch { return []; }
+}
+
+function SkillRulesEditor({ value, onChange }: { value: string; onChange: (val: string) => void }) {
+  const rules = parseSkillRules(value);
+
+  const update = (newRules: SkillRule[]) => {
+    onChange(newRules.length === 0 ? '' : JSON.stringify(newRules, null, 2));
+  };
+
+  const addRule = () => {
+    update([...rules, { when: '', use: [], prefer: [], avoid: [] }]);
+  };
+
+  const removeRule = (idx: number) => {
+    update(rules.filter((_, i) => i !== idx));
+  };
+
+  const updateRule = (idx: number, field: keyof SkillRule, val: string) => {
+    const updated = [...rules];
+    if (field === 'when') {
+      updated[idx] = { ...updated[idx], when: val };
+    } else {
+      updated[idx] = { ...updated[idx], [field]: val ? val.split(',').map(s => s.trim()).filter(Boolean) : [] };
+    }
+    update(updated);
+  };
+
+  return (
+    <div className="w-full max-w-lg space-y-3">
+      {rules.map((rule, idx) => (
+        <div key={idx} className="rounded-md border border-border/50 bg-muted/20 p-3 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Rule {idx + 1}</span>
+            <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => removeRule(idx)}>
+              <Trash2 className="h-3 w-3 text-muted-foreground hover:text-status-error" />
+            </Button>
+          </div>
+          <Input
+            value={rule.when}
+            onChange={(e) => updateRule(idx, 'when', e.target.value)}
+            placeholder="when: e.g. task involves authentication"
+            className="h-7 text-xs"
+            aria-label={`Rule ${idx + 1} when condition`}
+          />
+          <div className="grid grid-cols-3 gap-2">
+            <Input
+              value={(rule.use ?? []).join(', ')}
+              onChange={(e) => updateRule(idx, 'use', e.target.value)}
+              placeholder="use (comma-sep)"
+              className="h-7 text-xs"
+              aria-label={`Rule ${idx + 1} use skills`}
+            />
+            <Input
+              value={(rule.prefer ?? []).join(', ')}
+              onChange={(e) => updateRule(idx, 'prefer', e.target.value)}
+              placeholder="prefer (comma-sep)"
+              className="h-7 text-xs"
+              aria-label={`Rule ${idx + 1} prefer skills`}
+            />
+            <Input
+              value={(rule.avoid ?? []).join(', ')}
+              onChange={(e) => updateRule(idx, 'avoid', e.target.value)}
+              placeholder="avoid (comma-sep)"
+              className="h-7 text-xs"
+              aria-label={`Rule ${idx + 1} avoid skills`}
+            />
+          </div>
+        </div>
+      ))}
+      <Button variant="outline" size="sm" className="h-7 text-xs" onClick={addRule}>
+        <Plus className="h-3 w-3 mr-1" /> Add Rule
+      </Button>
+    </div>
+  );
+}
+
+// ============================================================
+// Post-Unit Hook editor (array of objects)
+// ============================================================
+
+interface PostUnitHook {
+  name: string;
+  after: string[];
+  prompt: string;
+  max_cycles?: number;
+  model?: string;
+  artifact?: string;
+  retry_on?: string;
+  agent?: string;
+  enabled?: boolean;
+}
+
+const UNIT_TYPE_OPTIONS = [
+  'research-milestone', 'plan-milestone', 'research-slice', 'plan-slice',
+  'execute-task', 'complete-slice', 'replan-slice', 'reassess-roadmap', 'run-uat',
+];
+
+function parseHooks(raw: string): PostUnitHook[] {
+  if (!raw || raw.trim() === '') return [];
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch { return []; }
+}
+
+function PostUnitHooksEditor({ value, onChange }: { value: string; onChange: (val: string) => void }) {
+  const hooks = parseHooks(value);
+
+  const update = (newHooks: PostUnitHook[]) => {
+    onChange(newHooks.length === 0 ? '' : JSON.stringify(newHooks, null, 2));
+  };
+
+  const addHook = () => {
+    update([...hooks, { name: '', after: ['execute-task'], prompt: '', max_cycles: 1, enabled: true }]);
+  };
+
+  const removeHook = (idx: number) => {
+    update(hooks.filter((_, i) => i !== idx));
+  };
+
+  const updateField = (idx: number, field: string, val: unknown) => {
+    const updated = [...hooks];
+    updated[idx] = { ...updated[idx], [field]: val };
+    update(updated);
+  };
+
+  return (
+    <div className="w-full max-w-lg space-y-3">
+      {hooks.map((hook, idx) => (
+        <div key={idx} className="rounded-md border border-border/50 bg-muted/20 p-3 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+              Hook {idx + 1}
+            </span>
+            <div className="flex items-center gap-2">
+              <label className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                <Switch
+                  checked={hook.enabled !== false}
+                  onCheckedChange={(checked) => updateField(idx, 'enabled', checked)}
+                  className="scale-75"
+                  aria-label={`Enable hook ${idx + 1}`}
+                />
+                {hook.enabled !== false ? 'on' : 'off'}
+              </label>
+              <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => removeHook(idx)}>
+                <Trash2 className="h-3 w-3 text-muted-foreground hover:text-status-error" />
+              </Button>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <Input
+              value={hook.name}
+              onChange={(e) => updateField(idx, 'name', e.target.value)}
+              placeholder="name"
+              className="h-7 text-xs"
+              aria-label={`Hook ${idx + 1} name`}
+            />
+            <Input
+              value={hook.artifact ?? ''}
+              onChange={(e) => updateField(idx, 'artifact', e.target.value || undefined)}
+              placeholder="artifact file (optional)"
+              className="h-7 text-xs"
+              aria-label={`Hook ${idx + 1} artifact`}
+            />
+          </div>
+          <div className="space-y-1">
+            <span className="text-[10px] text-muted-foreground">After unit types (comma-separated):</span>
+            <Input
+              value={(hook.after ?? []).join(', ')}
+              onChange={(e) => updateField(idx, 'after', e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
+              placeholder={UNIT_TYPE_OPTIONS.slice(0, 3).join(', ')}
+              className="h-7 text-xs font-mono"
+              aria-label={`Hook ${idx + 1} after unit types`}
+            />
+          </div>
+          <Textarea
+            value={hook.prompt}
+            onChange={(e) => updateField(idx, 'prompt', e.target.value)}
+            placeholder="Prompt sent to the LLM. Supports {milestoneId}, {sliceId}, {taskId}"
+            className="text-xs min-h-[4rem] resize-y"
+            aria-label={`Hook ${idx + 1} prompt`}
+          />
+          <div className="grid grid-cols-3 gap-2">
+            <Input
+              type="number"
+              value={hook.max_cycles ?? 1}
+              onChange={(e) => updateField(idx, 'max_cycles', Number(e.target.value) || 1)}
+              placeholder="max cycles"
+              className="h-7 text-xs"
+              aria-label={`Hook ${idx + 1} max cycles`}
+            />
+            <Input
+              value={hook.model ?? ''}
+              onChange={(e) => updateField(idx, 'model', e.target.value || undefined)}
+              placeholder="model (optional)"
+              className="h-7 text-xs font-mono"
+              aria-label={`Hook ${idx + 1} model`}
+            />
+            <Input
+              value={hook.agent ?? ''}
+              onChange={(e) => updateField(idx, 'agent', e.target.value || undefined)}
+              placeholder="agent (optional)"
+              className="h-7 text-xs"
+              aria-label={`Hook ${idx + 1} agent`}
+            />
+          </div>
+        </div>
+      ))}
+      <Button variant="outline" size="sm" className="h-7 text-xs" onClick={addHook}>
+        <Plus className="h-3 w-3 mr-1" /> Add Hook
+      </Button>
+    </div>
+  );
+}
+
+// ============================================================
+// Pre-Dispatch Hook editor (array of objects)
+// ============================================================
+
+interface PreDispatchHook {
+  name: string;
+  before: string[];
+  action: 'modify' | 'skip' | 'replace';
+  prepend?: string;
+  append?: string;
+  prompt?: string;
+  unit_type?: string;
+  skip_if?: string;
+  model?: string;
+  enabled?: boolean;
+}
+
+function parsePreHooks(raw: string): PreDispatchHook[] {
+  if (!raw || raw.trim() === '') return [];
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch { return []; }
+}
+
+function PreDispatchHooksEditor({ value, onChange }: { value: string; onChange: (val: string) => void }) {
+  const hooks = parsePreHooks(value);
+
+  const update = (newHooks: PreDispatchHook[]) => {
+    onChange(newHooks.length === 0 ? '' : JSON.stringify(newHooks, null, 2));
+  };
+
+  const addHook = () => {
+    update([...hooks, { name: '', before: ['execute-task'], action: 'modify', enabled: true }]);
+  };
+
+  const removeHook = (idx: number) => {
+    update(hooks.filter((_, i) => i !== idx));
+  };
+
+  const updateField = (idx: number, field: string, val: unknown) => {
+    const updated = [...hooks];
+    updated[idx] = { ...updated[idx], [field]: val };
+    update(updated);
+  };
+
+  return (
+    <div className="w-full max-w-lg space-y-3">
+      {hooks.map((hook, idx) => (
+        <div key={idx} className="rounded-md border border-border/50 bg-muted/20 p-3 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+              Pre-Hook {idx + 1}
+            </span>
+            <div className="flex items-center gap-2">
+              <label className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                <Switch
+                  checked={hook.enabled !== false}
+                  onCheckedChange={(checked) => updateField(idx, 'enabled', checked)}
+                  className="scale-75"
+                  aria-label={`Enable pre-hook ${idx + 1}`}
+                />
+                {hook.enabled !== false ? 'on' : 'off'}
+              </label>
+              <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => removeHook(idx)}>
+                <Trash2 className="h-3 w-3 text-muted-foreground hover:text-status-error" />
+              </Button>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <Input
+              value={hook.name}
+              onChange={(e) => updateField(idx, 'name', e.target.value)}
+              placeholder="name"
+              className="h-7 text-xs"
+              aria-label={`Pre-hook ${idx + 1} name`}
+            />
+            <Select
+              value={hook.action}
+              onValueChange={(v) => updateField(idx, 'action', v)}
+            >
+              <SelectTrigger className="h-7 text-xs" aria-label={`Pre-hook ${idx + 1} action`}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="modify">modify</SelectItem>
+                <SelectItem value="skip">skip</SelectItem>
+                <SelectItem value="replace">replace</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1">
+            <span className="text-[10px] text-muted-foreground">Before unit types (comma-separated):</span>
+            <Input
+              value={(hook.before ?? []).join(', ')}
+              onChange={(e) => updateField(idx, 'before', e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
+              placeholder={UNIT_TYPE_OPTIONS.slice(0, 3).join(', ')}
+              className="h-7 text-xs font-mono"
+              aria-label={`Pre-hook ${idx + 1} before unit types`}
+            />
+          </div>
+          {hook.action === 'modify' && (
+            <div className="space-y-2">
+              <Textarea
+                value={hook.prepend ?? ''}
+                onChange={(e) => updateField(idx, 'prepend', e.target.value || undefined)}
+                placeholder="Prepend text (added before unit prompt)"
+                className="text-xs min-h-[3rem] resize-y"
+                aria-label={`Pre-hook ${idx + 1} prepend`}
+              />
+              <Textarea
+                value={hook.append ?? ''}
+                onChange={(e) => updateField(idx, 'append', e.target.value || undefined)}
+                placeholder="Append text (added after unit prompt)"
+                className="text-xs min-h-[3rem] resize-y"
+                aria-label={`Pre-hook ${idx + 1} append`}
+              />
+            </div>
+          )}
+          {hook.action === 'replace' && (
+            <Textarea
+              value={hook.prompt ?? ''}
+              onChange={(e) => updateField(idx, 'prompt', e.target.value)}
+              placeholder="Replacement prompt (required for replace action)"
+              className="text-xs min-h-[4rem] resize-y"
+              aria-label={`Pre-hook ${idx + 1} prompt`}
+            />
+          )}
+          {hook.action === 'skip' && (
+            <Input
+              value={hook.skip_if ?? ''}
+              onChange={(e) => updateField(idx, 'skip_if', e.target.value || undefined)}
+              placeholder="skip_if: file path (skip only if exists)"
+              className="h-7 text-xs"
+              aria-label={`Pre-hook ${idx + 1} skip_if`}
+            />
+          )}
+          <div className="grid grid-cols-2 gap-2">
+            <Input
+              value={hook.model ?? ''}
+              onChange={(e) => updateField(idx, 'model', e.target.value || undefined)}
+              placeholder="model override (optional)"
+              className="h-7 text-xs font-mono"
+              aria-label={`Pre-hook ${idx + 1} model`}
+            />
+            <Input
+              value={hook.unit_type ?? ''}
+              onChange={(e) => updateField(idx, 'unit_type', e.target.value || undefined)}
+              placeholder="unit_type override (optional)"
+              className="h-7 text-xs"
+              aria-label={`Pre-hook ${idx + 1} unit_type`}
+            />
+          </div>
+        </div>
+      ))}
+      <Button variant="outline" size="sm" className="h-7 text-xs" onClick={addHook}>
+        <Plus className="h-3 w-3 mr-1" /> Add Pre-Hook
+      </Button>
+    </div>
+  );
 }
 
 // ============================================================
@@ -372,6 +788,30 @@ function FieldControl({ fieldKey, meta, value, draftValue, scope, showScope, mod
           />
         );
 
+      case 'skill_rules':
+        return (
+          <SkillRulesEditor
+            value={draftValue}
+            onChange={(val) => onChange(fieldKey, val)}
+          />
+        );
+
+      case 'hooks':
+        return (
+          <PostUnitHooksEditor
+            value={draftValue}
+            onChange={(val) => onChange(fieldKey, val)}
+          />
+        );
+
+      case 'pre_hooks':
+        return (
+          <PreDispatchHooksEditor
+            value={draftValue}
+            onChange={(val) => onChange(fieldKey, val)}
+          />
+        );
+
       default:
         return (
           <Input
@@ -383,6 +823,41 @@ function FieldControl({ fieldKey, meta, value, draftValue, scope, showScope, mod
         );
     }
   };
+
+  const isWideField = meta?.type === 'skill_rules' || meta?.type === 'hooks' || meta?.type === 'pre_hooks';
+
+  if (isWideField) {
+    return (
+      <div className="py-3 px-5 border-b border-border/30 last:border-0 hover:bg-muted/30 transition-colors space-y-2">
+        {/* Header row */}
+        <div className="flex items-center gap-3">
+          <div className="min-w-0">
+            <span className="text-sm font-medium text-foreground block leading-tight">
+              {label}
+            </span>
+            {description && (
+              <span className="text-xs text-muted-foreground leading-snug block mt-0.5">
+                {description}
+              </span>
+            )}
+          </div>
+          <div className="flex-1" />
+          {showScope && (
+            <Badge variant={scopeVariant} size="sm" className="w-16 justify-center text-[10px]">
+              {scope || 'default'}
+            </Badge>
+          )}
+          <div className="w-2 shrink-0">
+            {isDirty && (
+              <div className="w-2 h-2 rounded-full bg-status-info" title="Modified" />
+            )}
+          </div>
+        </div>
+        {/* Full-width editor */}
+        {renderControl()}
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center gap-4 py-3 px-5 border-b border-border/30 last:border-0 hover:bg-muted/30 transition-colors">

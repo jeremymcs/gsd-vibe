@@ -351,7 +351,6 @@ pub async fn clear_selected_data(
                     .map_err(|e| e.to_string())?;
             }
             "decisions" => {
-                conn.execute("DELETE FROM decision_links", []).ok();
                 conn.execute("DELETE FROM decisions", [])
                     .map_err(|e| e.to_string())?;
             }
@@ -373,7 +372,7 @@ pub async fn clear_selected_data(
                     .map_err(|e| e.to_string())?;
                 conn.execute("DELETE FROM activity_log", [])
                     .map_err(|e| e.to_string())?;
-                conn.execute("DELETE FROM decision_links", []).ok();
+                conn.execute("DELETE FROM decision_links", []).ok(); // vestigial, may not exist
                 conn.execute("DELETE FROM decisions", [])
                     .map_err(|e| e.to_string())?;
                 conn.execute("DELETE FROM costs", [])
