@@ -143,8 +143,8 @@ export const projectTypeConfig: Record<
 export function getProjectType(techStack: {
   has_planning: boolean;
 } | null | undefined, gsdVersion?: string | null): ProjectType {
-  if (gsdVersion === '2') return "gsd2";
-  if (gsdVersion === '1') return "gsd1";
+  if (gsdVersion === 'gsd2') return "gsd2";
+  if (gsdVersion === 'gsd1') return "gsd1";
   if (!techStack) return "bare";
   if (techStack.has_planning) return "gsd1";
   return "bare";
