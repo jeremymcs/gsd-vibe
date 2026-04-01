@@ -28,7 +28,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import {
@@ -529,16 +529,26 @@ export function GuidedProjectWizard({ open, onOpenChange }: GuidedProjectWizardP
               <div className="space-y-1.5">
                 <Label>Execution model</Label>
                 <Select value={selectedModel} onValueChange={setSelectedModel}>
-                  <SelectTrigger>
+                  <SelectTrigger className="text-[13px]">
                     <SelectValue placeholder="Auto-select model" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="auto">Auto-select model</SelectItem>
-                    {models.map((model) => (
-                      <SelectItem key={`${model.provider}:${model.id}`} value={model.id}>
-                        {model.name} ({model.provider})
-                      </SelectItem>
-                    ))}
+                    {(() => {
+                      const providers = [...new Set(models.map((m) => m.provider))];
+                      return providers.map((provider) => (
+                        <SelectGroup key={provider}>
+                          <SelectLabel className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70 py-1">
+                            {provider}
+                          </SelectLabel>
+                          {models.filter((m) => m.provider === provider).map((model) => (
+                            <SelectItem key={`${model.provider}:${model.id}`} value={model.id} className="text-[13px]">
+                              {model.name}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      ));
+                    })()}
                   </SelectContent>
                 </Select>
               </div>

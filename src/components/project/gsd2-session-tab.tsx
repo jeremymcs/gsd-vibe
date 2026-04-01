@@ -14,7 +14,9 @@ import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
@@ -117,8 +119,9 @@ export function Gsd2SessionTab({ projectId, projectPath }: Gsd2SessionTabProps) 
   const completedUnits = (health?.tasks_done ?? 0) + (health?.slices_done ?? 0) + (health?.milestones_done ?? 0);
 
   return (
-    <div className="flex h-full overflow-hidden">
-      <Group orientation="horizontal" className="h-full w-full">
+    <TooltipProvider delayDuration={300}>
+      <div className="flex h-full overflow-hidden">
+        <Group orientation="horizontal" className="h-full w-full">
         {/* ── Main session panel ──────────────────────────────── */}
         <Panel defaultSize="80%" minSize="50%">
           <div className="flex flex-col h-full">
@@ -155,18 +158,22 @@ export function Gsd2SessionTab({ projectId, projectPath }: Gsd2SessionTabProps) 
                 <div className="flex items-center gap-1.5">
                   {providers.length > 0 && (
                     <Select value={selectedModel} onValueChange={setSelectedModel}>
-                      <SelectTrigger className="h-7 text-xs w-[130px]">
+                      <SelectTrigger className="h-7 text-[13px] w-[180px]">
                         <SelectValue placeholder="Default model" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="__default__">Default</SelectItem>
                         {providers.map((provider) => (
-                          <span key={provider}>
-                            <div className="px-2 py-1 text-xs font-semibold text-muted-foreground">{provider}</div>
+                          <SelectGroup key={provider}>
+                            <SelectLabel className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70 py-1">
+                              {provider}
+                            </SelectLabel>
                             {modelsQuery.data?.filter((m) => m.provider === provider).map((model) => (
-                              <SelectItem key={model.id} value={model.id}>{model.name}</SelectItem>
+                              <SelectItem key={model.id} value={model.id} className="text-[13px]">
+                                {model.name}
+                              </SelectItem>
                             ))}
-                          </span>
+                          </SelectGroup>
                         ))}
                       </SelectContent>
                     </Select>
@@ -247,21 +254,19 @@ export function Gsd2SessionTab({ projectId, projectPath }: Gsd2SessionTabProps) 
                   placeholder="Send a message or /gsd command…"
                   className="flex-1 h-8 text-sm min-w-0"
                 />
-                <TooltipProvider delayDuration={300}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        size="icon"
-                        className="h-8 w-8 shrink-0"
-                        onClick={handleSendInput}
-                        disabled={!inputValue.trim()}
-                      >
-                        <Send className="h-3.5 w-3.5" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Send message</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="icon"
+                      className="h-8 w-8 shrink-0"
+                      onClick={handleSendInput}
+                      disabled={!inputValue.trim()}
+                    >
+                      <Send className="h-3.5 w-3.5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Send message</TooltipContent>
+                </Tooltip>
               </div>
             )}
           </div>
@@ -275,6 +280,7 @@ export function Gsd2SessionTab({ projectId, projectPath }: Gsd2SessionTabProps) 
         </Panel>
       </Group>
     </div>
+    </TooltipProvider>
   );
 }
 

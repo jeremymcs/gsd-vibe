@@ -11,7 +11,9 @@ import { Switch } from '@/components/ui/switch';
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
@@ -74,6 +76,109 @@ const KNOWN_MODELS = [
   'vertex/claude-sonnet-4-6',
   'vertex/claude-haiku-4-5',
 ];
+
+// ============================================================
+// Model grouping helpers
+// ============================================================
+
+/** Display names for model provider groups. */
+const PROVIDER_LABELS: Record<string, string> = {
+  anthropic: 'Anthropic',
+  'openrouter/anthropic': 'OpenRouter · Anthropic',
+  'openrouter/google': 'OpenRouter · Google',
+  'openrouter/openai': 'OpenRouter · OpenAI',
+  'openrouter/deepseek': 'OpenRouter · DeepSeek',
+  'openrouter/z-ai': 'OpenRouter · Z-AI',
+  'openrouter/minimax': 'OpenRouter · MiniMax',
+  'openrouter/moonshotai': 'OpenRouter · Moonshot',
+  bedrock: 'AWS Bedrock',
+  vertex: 'Google Vertex',
+};
+
+/** Sort order for provider groups — lower = higher in dropdown. */
+const PROVIDER_ORDER: string[] = [
+  'anthropic',
+  'openrouter/anthropic',
+  'openrouter/google',
+  'openrouter/openai',
+  'openrouter/deepseek',
+  'openrouter/z-ai',
+  'openrouter/minimax',
+  'openrouter/moonshotai',
+  'bedrock',
+  'vertex',
+];
+
+interface ModelGroup {
+  provider: string;
+  label: string;
+  models: string[];
+}
+
+/** Group a flat list of model IDs by provider prefix. */
+function groupModelOptions(models: string[]): ModelGroup[] {
+  const groups = new Map<string, string[]>();
+
+  for (const id of models) {
+    let provider: string;
+
+    // Match known prefixed providers (openrouter/vendor/..., bedrock/..., vertex/...)
+    const orMatch = id.match(/^(openrouter\/[^/]+)\//);
+    if (orMatch) {
+      provider = orMatch[1];
+    } else if (id.startsWith('bedrock/')) {
+      provider = 'bedrock';
+    } else if (id.startsWith('vertex/')) {
+      provider = 'vertex';
+    } else if (id.includes('/')) {
+      // Unknown prefixed provider — use first segment
+      provider = id.split('/')[0];
+    } else {
+      // Bare model IDs (claude-*, etc.) → Anthropic
+      provider = 'anthropic';
+    }
+
+    if (!groups.has(provider)) groups.set(provider, []);
+    groups.get(provider)!.push(id);
+  }
+
+  // Sort groups by PROVIDER_ORDER, unknowns go to the end
+  const sorted = [...groups.entries()].sort(([a], [b]) => {
+    const ai = PROVIDER_ORDER.indexOf(a);
+    const bi = PROVIDER_ORDER.indexOf(b);
+    if (ai === -1 && bi === -1) return a.localeCompare(b);
+    if (ai === -1) return 1;
+    if (bi === -1) return -1;
+    return ai - bi;
+  });
+
+  return sorted.map(([provider, ids]) => ({
+    provider,
+    label: PROVIDER_LABELS[provider] ?? provider,
+    models: ids.sort(),
+  }));
+}
+
+/** Extract the short display name from a model ID (strip provider prefix). */
+function modelDisplayName(id: string): string {
+  // openrouter/anthropic/claude-sonnet-4 → claude-sonnet-4
+  // bedrock/claude-opus-4-6 → claude-opus-4-6
+  // claude-opus-4-6 → claude-opus-4-6
+  const parts = id.split('/');
+  return parts[parts.length - 1];
+}
+
+/** Extract the provider prefix from a model ID for display on the trigger. */
+function modelProviderTag(id: string): string | null {
+  if (id.startsWith('openrouter/')) {
+    const parts = id.split('/');
+    return parts.length >= 3 ? parts[1] : 'openrouter';
+  }
+  if (id.startsWith('bedrock/')) return 'bedrock';
+  if (id.startsWith('vertex/')) return 'vertex';
+  if (id.includes('/')) return id.split('/')[0];
+  return null;
+}
 
 const FIELD_META: Record<string, FieldMeta> = {
   // ── General ──
@@ -496,7 +601,7 @@ function PostUnitHooksEditor({ value, onChange }: { value: string; onChange: (va
               value={hook.model ?? ''}
               onChange={(e) => updateField(idx, 'model', e.target.value || undefined)}
               placeholder="model (optional)"
-              className="h-7 text-xs font-mono"
+              className="h-7 text-xs"
               aria-label={`Hook ${idx + 1} model`}
             />
             <Input
@@ -663,7 +768,7 @@ function PreDispatchHooksEditor({ value, onChange }: { value: string; onChange: 
               value={hook.model ?? ''}
               onChange={(e) => updateField(idx, 'model', e.target.value || undefined)}
               placeholder="model override (optional)"
-              className="h-7 text-xs font-mono"
+              className="h-7 text-xs"
               aria-label={`Pre-hook ${idx + 1} model`}
             />
             <Input
@@ -756,36 +861,60 @@ function FieldControl({ fieldKey, meta, value, draftValue, scope, showScope, mod
           </Select>
         );
 
-      case 'model':
+      case 'model': {
+        const groups = groupModelOptions(modelOptions);
+        const providerTag = draftValue ? modelProviderTag(draftValue) : null;
         return (
           <Select
             value={draftValue || '__unset__'}
             onValueChange={(v) => onChange(fieldKey, v === '__unset__' ? '' : v)}
           >
             <SelectTrigger
-              className={`h-8 text-xs w-full max-w-sm font-mono ${isDirty ? 'border-status-info/60 ring-1 ring-status-info/30' : ''}`}
+              className={`h-8 text-[13px] w-full max-w-sm ${isDirty ? 'border-status-info/60 ring-1 ring-status-info/30' : ''}`}
               aria-label={label}
             >
-              <SelectValue placeholder="— not set —" />
+              <SelectValue placeholder="— not set —">
+                {draftValue && (
+                  <span className="flex items-center gap-1.5">
+                    {providerTag && (
+                      <span className="text-[10px] font-medium text-muted-foreground bg-muted px-1.5 py-0.5 rounded shrink-0">
+                        {providerTag}
+                      </span>
+                    )}
+                    <span className="truncate">{modelDisplayName(draftValue)}</span>
+                  </span>
+                )}
+              </SelectValue>
             </SelectTrigger>
-            <SelectContent className="max-h-60">
+            <SelectContent className="max-h-72 w-[var(--radix-select-trigger-width)]">
               <SelectItem value="__unset__">
                 <span className="text-muted-foreground italic">— not set —</span>
               </SelectItem>
-              {/* Show current value first if it's not in the list (e.g. provider-prefixed) */}
+              {/* Show current value if it's not in the known list */}
               {draftValue && !modelOptions.includes(draftValue) && (
-                <SelectItem value={draftValue}>
-                  <span className="font-mono">{draftValue}</span>
-                </SelectItem>
+                <SelectGroup>
+                  <SelectLabel className="text-[10px] text-muted-foreground/70">Current</SelectLabel>
+                  <SelectItem value={draftValue}>
+                    <span className="text-[13px]">{draftValue}</span>
+                  </SelectItem>
+                </SelectGroup>
               )}
-              {modelOptions.map((m) => (
-                <SelectItem key={m} value={m}>
-                  <span className="font-mono">{m}</span>
-                </SelectItem>
+              {groups.map((group) => (
+                <SelectGroup key={group.provider}>
+                  <SelectLabel className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70 py-1.5">
+                    {group.label}
+                  </SelectLabel>
+                  {group.models.map((m) => (
+                    <SelectItem key={m} value={m} className="text-[13px]">
+                      <span>{modelDisplayName(m)}</span>
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
               ))}
             </SelectContent>
           </Select>
         );
+      }
 
       case 'number':
         return (
