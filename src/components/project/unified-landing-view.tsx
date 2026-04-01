@@ -1,4 +1,4 @@
-// GSD VibeFlow - Unified Landing View
+// VCCA - Unified Landing View
 // Adaptive landing that shows GSD-2 Dashboard or GSD-1 Overview based on project type
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

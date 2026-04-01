@@ -1,4 +1,4 @@
-// GSD VibeFlow - Dropdown Menu Component
+// VCCA - Dropdown Menu Component
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import * as React from "react";

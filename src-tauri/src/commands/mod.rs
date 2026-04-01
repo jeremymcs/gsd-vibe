@@ -1,4 +1,4 @@
-// GSD VibeFlow - Commands Module
+// VCCA - Commands Module
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 pub mod activity;

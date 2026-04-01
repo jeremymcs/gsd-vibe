@@ -1,4 +1,4 @@
-// GSD VibeFlow - Guided Plan Preview Cards
+// VCCA - Guided Plan Preview Cards
 // Visual milestone/slice preview cards for guided project creation
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

@@ -1,4 +1,4 @@
-// GSD VibeFlow - Quick Actions Bar (OV-02)
+// VCCA - Quick Actions Bar (OV-02)
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { RefreshCw, SquareTerminal } from 'lucide-react';

@@ -1,4 +1,4 @@
-// GSD VibeFlow - First Launch Wizard
+// VCCA - First Launch Wizard
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { useEffect, useMemo, useState } from "react";
@@ -430,7 +430,7 @@ export function FirstLaunchWizard({ className, onComplete, onCancel }: FirstLaun
                 <Wrench className="h-5 w-5" />
                 <span className="text-xs font-semibold uppercase tracking-wider">First-launch setup</span>
               </div>
-              <CardTitle>Welcome to GSD VibeFlow</CardTitle>
+              <CardTitle>Welcome to VCCA</CardTitle>
               <CardDescription>
                 We'll verify local tooling, secure your API keys, and set your default interface mode.
               </CardDescription>

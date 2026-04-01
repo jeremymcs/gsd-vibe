@@ -1,4 +1,4 @@
-// GSD Vibe - GSD-1 Plan Utilities
+// VCCA - GSD-1 Plan Utilities
 // Shared helpers for GSD-1 plan/phase data manipulation.
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

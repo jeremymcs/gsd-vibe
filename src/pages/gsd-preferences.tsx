@@ -1,4 +1,4 @@
-// GSD VibeFlow - GSD Preferences Page
+// VCCA - GSD Preferences Page
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { Settings2 } from 'lucide-react';

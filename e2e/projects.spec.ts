@@ -1,4 +1,4 @@
-// GSD VibeFlow - E2E Projects Page Tests
+// VCCA - E2E Projects Page Tests
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { test, expect } from '@playwright/test';
@@ -11,7 +11,7 @@ test.describe('Projects Page', () => {
 
   test('renders projects page and branding', async ({ page }) => {
     await expect(page).toHaveURL('/projects');
-    await expect(page.getByText('GSD Vibe')).toBeVisible();
+    await expect(page.getByText('VCCA')).toBeVisible();
   });
 
   test('supports searching projects', async ({ page }) => {

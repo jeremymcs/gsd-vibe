@@ -1,4 +1,4 @@
-// GSD VibeFlow - Theme Customization Settings Component
+// VCCA - Theme Customization Settings Component
 // Accent color, UI density, and font size configuration
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
@@ -35,7 +35,7 @@ export function ThemeCustomization() {
     <Card>
       <CardHeader>
         <CardTitle>Appearance</CardTitle>
-        <CardDescription>Customize the look and feel of GSD VibeFlow</CardDescription>
+        <CardDescription>Customize the look and feel of VCCA</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* UI Density */}

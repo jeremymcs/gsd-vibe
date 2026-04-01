@@ -1,4 +1,4 @@
-// GSD VibeFlow - Theme Hook
+// VCCA - Theme Hook
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { createContext, useContext } from "react";

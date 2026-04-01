@@ -1,4 +1,4 @@
-// GSD Vibe - GSD-2 Session Tab
+// VCCA - GSD-2 Session Tab
 // Left: status bar + terminal + command bar + input. Right: milestone tree.
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

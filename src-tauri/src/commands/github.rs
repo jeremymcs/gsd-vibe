@@ -1,4 +1,4 @@
-// GSD Vibe - GitHub API Commands
+// VCCA - GitHub API Commands
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 use keyring::Entry;
@@ -8,7 +8,7 @@ use std::collections::HashMap;
 use tokio::time::Duration;
 
 /// Default service name for keychain access
-const DEFAULT_SERVICE: &str = "io.gsd.vibeflow";
+const DEFAULT_SERVICE: &str = "net.fluxlabs.vcca";
 
 // ============================================================
 // Data structures for GitHub API responses
@@ -879,14 +879,14 @@ pub async fn github_import_gh_token() -> Result<String, String> {
 
     // Store in keychain
     use keyring::Entry;
-    let entry = Entry::new("io.gsd.vibeflow", "GITHUB_TOKEN")
+    let entry = Entry::new("net.fluxlabs.vcca", "GITHUB_TOKEN")
         .map_err(|e| format!("Failed to create keychain entry: {}", e))?;
     entry
         .set_password(&token)
         .map_err(|e| format!("Failed to store token in keychain: {}", e))?;
 
     // Update the key index (same pattern as secrets.rs)
-    let index_entry = Entry::new("io.gsd.vibeflow", "__gsd_vibe_key_index__")
+    let index_entry = Entry::new("net.fluxlabs.vcca", "__vcca_key_index__")
         .map_err(|e| format!("Failed to access key index: {}", e))?;
 
     let mut keys: Vec<String> = match index_entry.get_password() {
@@ -920,14 +920,14 @@ pub async fn github_save_token(token: String) -> Result<(), String> {
     let clean = token.trim().to_string();
 
     use keyring::Entry;
-    let entry = Entry::new("io.gsd.vibeflow", "GITHUB_TOKEN")
+    let entry = Entry::new("net.fluxlabs.vcca", "GITHUB_TOKEN")
         .map_err(|e| format!("Failed to create keychain entry: {}", e))?;
     entry
         .set_password(&clean)
         .map_err(|e| format!("Failed to store token in keychain: {}", e))?;
 
     // Update key index
-    let index_entry = Entry::new("io.gsd.vibeflow", "__gsd_vibe_key_index__")
+    let index_entry = Entry::new("net.fluxlabs.vcca", "__vcca_key_index__")
         .map_err(|e| format!("Failed to access key index: {}", e))?;
 
     let mut keys: Vec<String> = match index_entry.get_password() {
@@ -956,7 +956,7 @@ pub async fn github_save_token(token: String) -> Result<(), String> {
 #[tauri::command]
 pub async fn github_remove_token() -> Result<(), String> {
     use keyring::Entry;
-    let entry = Entry::new("io.gsd.vibeflow", "GITHUB_TOKEN")
+    let entry = Entry::new("net.fluxlabs.vcca", "GITHUB_TOKEN")
         .map_err(|e| format!("Keychain error: {}", e))?;
     match entry.delete_credential() {
         Ok(()) | Err(keyring::Error::NoEntry) => {}

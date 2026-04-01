@@ -1,4 +1,4 @@
-// GSD VibeFlow - Skeleton Component
+// VCCA - Skeleton Component
 // Loading state placeholders with shimmer animation
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

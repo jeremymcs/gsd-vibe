@@ -1,4 +1,4 @@
-// GSD VibeFlow - Dependencies Tab Component
+// VCCA - Dependencies Tab Component
 // Package dependency analysis and vulnerability detection for project page tab context
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useDependencyStatus } from '@/lib/queries';
 import { invalidateDependencyCache } from '@/lib/tauri';
 import { queryKeys } from '@/lib/query-keys';
@@ -110,6 +111,22 @@ function parseVulnerablePackages(
   if (!vulns || typeof vulns !== 'object') return [];
   return Object.entries(vulns)
     .filter(([, v]) => v.severity && v.severity !== 'info')
+    .map(([name, v]) => {
+      // npm audit v2: title/url live inside via[] advisory objects, not on the top-level entry
+      let title = v.title;
+      let url = v.url;
+      if ((!title || !url) && Array.isArray(v.via)) {
+        for (const entry of v.via) {
+          if (entry && typeof entry === 'object' && 'title' in entry) {
+            const advisory = entry as { title?: string; url?: string };
+            if (!title && advisory.title) title = advisory.title;
+            if (!url && advisory.url) url = advisory.url;
+            if (title && url) break;
+          }
+        }
+      }
+      return [name, { ...v, title, url }] as [string, AuditVulnerability];
+    })
     .sort(([, a], [, b]) => {
       const order: Record<string, number> = {
         critical: 0,
@@ -208,7 +225,7 @@ function OutdatedTable({
                 href={getRegistryUrl(packageManager, name)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-medium text-gsd-cyan hover:underline inline-flex items-center gap-1"
+                className="font-medium text-primary hover:underline inline-flex items-center gap-1"
               >
                 {name}
                 <ExternalLink className="h-3 w-3 shrink-0" />
@@ -324,8 +341,24 @@ function VulnerabilityTable({
               {info.severity}
             </Badge>
           </span>
-          <span className="flex-1 min-w-0 text-muted-foreground truncate text-xs">
-            {info.title ?? '-'}
+          <span className="flex-1 min-w-0 truncate text-xs">
+            {info.title ? (
+              info.url ? (
+                <a
+                  href={info.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-foreground hover:underline"
+                  title={info.title}
+                >
+                  {info.title}
+                </a>
+              ) : (
+                <span className="text-muted-foreground">{info.title}</span>
+              )
+            ) : (
+              <span className="text-muted-foreground">-</span>
+            )}
           </span>
           <span className="w-20 text-right shrink-0">
             {info.url ? (
@@ -333,9 +366,9 @@ function VulnerabilityTable({
                 href={info.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-xs text-gsd-cyan hover:underline"
+                className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
               >
-                View
+                Advisory
                 <ExternalLink className="h-3 w-3" />
               </a>
             ) : (
@@ -345,6 +378,123 @@ function VulnerabilityTable({
         </div>
       ))}
     </ScrollArea>
+  );
+}
+
+/** Skeleton row for the outdated packages table */
+function SkeletonTableRow({ index }: { index: number }) {
+  const widths = [140, 110, 160, 120, 130, 150, 100, 170];
+  const w = widths[index % widths.length];
+  return (
+    <div className="flex items-center gap-2 px-3 py-2 border-b last:border-b-0">
+      <span className="flex-1 min-w-0 flex items-center gap-2">
+        <Skeleton className="h-4" style={{ width: `${w}px` }} />
+        <Skeleton className="h-3 w-3 rounded shrink-0" />
+      </span>
+      <Skeleton className="h-3.5 w-14 shrink-0" />
+      <Skeleton className="h-3.5 w-14 shrink-0" />
+      <Skeleton className="h-3.5 w-16 shrink-0" />
+    </div>
+  );
+}
+
+/** Summary card skeleton matching the 4-card grid layout */
+function SkeletonSummaryCard({ accent }: { accent?: 'warning' | 'error' }) {
+  return (
+    <Card className={accent === 'warning' ? 'border-status-warning/10' : accent === 'error' ? 'border-status-error/10' : ''}>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm font-medium flex items-center gap-2">
+          <Skeleton className="h-4 w-4 rounded" />
+          <Skeleton className="h-3.5 w-24" />
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        <Skeleton className="h-7 w-12" />
+        <Skeleton className="h-3 w-32" />
+      </CardContent>
+    </Card>
+  );
+}
+
+/** Full-page loading skeleton that mirrors the Dependencies tab layout */
+function DependenciesTabSkeleton() {
+  return (
+    <div className="space-y-6 animate-in fade-in duration-200">
+      {/* Summary cards grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Package Manager card */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <Skeleton className="h-4 w-4 rounded" />
+              <Skeleton className="h-3.5 w-28" />
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <Skeleton className="h-5 w-16 rounded-full" />
+            <Skeleton className="h-3 w-36" />
+          </CardContent>
+        </Card>
+
+        {/* Health Score card */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <Skeleton className="h-4 w-4 rounded" />
+              <Skeleton className="h-3.5 w-20" />
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <Skeleton className="h-7 w-14" />
+            <Skeleton className="h-2 w-full rounded-full" />
+          </CardContent>
+        </Card>
+
+        {/* Outdated card */}
+        <SkeletonSummaryCard accent="warning" />
+
+        {/* Vulnerabilities card */}
+        <SkeletonSummaryCard accent="error" />
+      </div>
+
+      {/* Search toolbar */}
+      <div className="flex items-center gap-3">
+        <Skeleton className="h-10 flex-1 rounded-md" />
+        <Skeleton className="h-9 w-24 rounded-md" />
+      </div>
+
+      {/* Tabs + table */}
+      <div className="space-y-3">
+        {/* Tab triggers */}
+        <div className="flex items-center gap-1">
+          <Skeleton className="h-9 w-28 rounded-md" />
+          <Skeleton className="h-9 w-36 rounded-md" />
+        </div>
+
+        {/* Table card */}
+        <Card>
+          <CardContent className="p-0">
+            {/* Table header */}
+            <div className="flex items-center gap-2 px-3 py-2 border-b">
+              <Skeleton className="h-2.5 w-16 flex-1" />
+              <Skeleton className="h-2.5 w-12" />
+              <Skeleton className="h-2.5 w-12" />
+              <Skeleton className="h-2.5 w-14" />
+            </div>
+            {/* Table rows — staggered entrance */}
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div
+                key={i}
+                className="animate-in fade-in slide-in-from-bottom-1 fill-mode-both"
+                style={{ animationDelay: `${Math.min(i * 60, 500)}ms`, animationDuration: '300ms' }}
+              >
+                <SkeletonTableRow index={i} />
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   );
 }
 
@@ -442,11 +592,7 @@ export function DependenciesTab({
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <DependenciesTabSkeleton />;
   }
 
   if (isError) {

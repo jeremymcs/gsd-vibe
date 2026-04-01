@@ -1,4 +1,4 @@
-// GSD VibeFlow - Theme Provider
+// VCCA - Theme Provider
 // Extended with accent color, UI density, and font scale support
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
@@ -13,11 +13,11 @@ import {
 } from "@/hooks/use-theme";
 import { getSettings, updateSettings, Settings } from "@/lib/tauri";
 
-const THEME_KEY = "track-your-shit-theme";
-const ACCENT_KEY = "track-your-shit-accent";
-const DENSITY_KEY = "track-your-shit-density";
-const FONT_SCALE_KEY = "track-your-shit-font-scale";
-const FONT_FAMILY_KEY = "track-your-shit-font-family";
+const THEME_KEY = "vcca-theme";
+const ACCENT_KEY = "vcca-accent";
+const DENSITY_KEY = "vcca-density";
+const FONT_SCALE_KEY = "vcca-font-scale";
+const FONT_FAMILY_KEY = "vcca-font-family";
 
 const ACCENT_CLASSES: Record<AccentColor, string> = {
   default: "",

@@ -1,4 +1,4 @@
-// GSD Vibe - Headless Session Hook
+// VCCA - Headless Session Hook
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { useState, useRef, useCallback, useEffect } from 'react';

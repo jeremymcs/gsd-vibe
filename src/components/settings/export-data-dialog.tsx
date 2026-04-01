@@ -1,4 +1,4 @@
-// GSD VibeFlow - Export Data Dialog
+// VCCA - Export Data Dialog
 // Supports selective data category export
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
@@ -81,7 +81,7 @@ export function ExportDataDialog({ open, onOpenChange }: ExportDataDialogProps) 
         <DialogHeader>
           <DialogTitle>Export Data</DialogTitle>
           <DialogDescription>
-            Export GSD VibeFlow data to a file for backup or migration.
+            Export VCCA data to a file for backup or migration.
           </DialogDescription>
         </DialogHeader>
 

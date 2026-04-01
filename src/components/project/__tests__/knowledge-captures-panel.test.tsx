@@ -1,4 +1,4 @@
-// GSD VibeFlow - Knowledge & Captures Panel Tests
+// VCCA - Knowledge & Captures Panel Tests
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { describe, it, expect, vi, beforeEach, Mock } from "vitest";

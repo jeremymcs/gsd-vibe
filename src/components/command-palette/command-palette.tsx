@@ -1,4 +1,4 @@
-// GSD VibeFlow - Command Palette (Cmd+K)
+// VCCA - Command Palette (Cmd+K)
 // Global search with cmdk for projects, phases, decisions, knowledge, pages, and project views
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

@@ -1,4 +1,4 @@
-// GSD VibeFlow - E2E Guided Flow Tests
+// VCCA - E2E Guided Flow Tests
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { test, expect, type Page } from '@playwright/test';

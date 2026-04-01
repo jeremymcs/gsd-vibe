@@ -1,4 +1,4 @@
-// GSD VibeFlow - Shared Search Input Component
+// VCCA - Shared Search Input Component
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import * as React from "react";
@@ -47,7 +47,7 @@ const sizeStyles = {
  * SearchInput - A reusable search input with left-positioned search icon
  * 
  * Extracted from the Sessions tab search pattern to provide consistent
- * search UX across all list views in VibeFlow.
+ * search UX across all list views in VCCA.
  */
 export const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
   ({ 

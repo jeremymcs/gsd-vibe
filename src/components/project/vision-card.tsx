@@ -1,4 +1,4 @@
-// GSD VibeFlow - Project Vision Card (PROJECT.md)
+// VCCA - Project Vision Card (PROJECT.md)
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { useQuery } from '@tanstack/react-query';

@@ -1,4 +1,4 @@
-// GSD VibeFlow - Tailwind Configuration
+// VCCA - Vibe Coders Companion App - Tailwind Configuration
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 /** @type {import('tailwindcss').Config} */

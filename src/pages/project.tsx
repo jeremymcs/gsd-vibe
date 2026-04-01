@@ -1,4 +1,4 @@
-// GSD VibeFlow - Project Page
+// VCCA - Project Page
 // Sidebar-driven views — no more nested tabs
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
@@ -48,6 +48,7 @@ import {
   Gsd2MetricsGroup,
   Gsd2CommandsGroup,
   Gsd2DiagnosticsGroup,
+  Gsd2StatusBar,
 } from "@/components/project";
 import { TerminalTabs } from "@/components/terminal";
 import { watchProjectFiles } from "@/lib/tauri";
@@ -211,12 +212,14 @@ export function ProjectPage() {
         )}
       </div>
 
+      {isGsd2 && <Gsd2StatusBar projectId={projectId} />}
+
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Remove Project?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will remove <span className="font-semibold">{project.name}</span> from GSD VibeFlow.
+              This will remove <span className="font-semibold">{project.name}</span> from VCCA.
               <br /><br />
               <span className="text-foreground">Your project files will NOT be deleted.</span> The project folder at{" "}
               <code className="text-xs bg-muted px-1 py-0.5 rounded">{truncatePath(projectPath, 50)}</code>{" "}

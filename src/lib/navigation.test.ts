@@ -1,4 +1,4 @@
-// GSD VibeFlow - Navigation Mode Filtering Tests
+// VCCA - Navigation Mode Filtering Tests
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { describe, expect, it } from 'vitest';

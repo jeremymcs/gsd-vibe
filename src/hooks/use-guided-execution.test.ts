@@ -1,4 +1,4 @@
-// GSD Vibe - Guided Execution Hook Tests
+// VCCA - Guided Execution Hook Tests
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { describe, expect, it } from "vitest";

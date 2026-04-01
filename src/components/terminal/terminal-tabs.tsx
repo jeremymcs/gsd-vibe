@@ -1,4 +1,4 @@
-// GSD VibeFlow - Terminal Tabs Component
+// VCCA - Terminal Tabs Component
 // Multi-tab terminal management with add/close functionality
 // Uses global context for persistence across navigation
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>

@@ -1,4 +1,4 @@
-// GSD Vibe - Headless Tab Component
+// VCCA - Headless Tab Component
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { useRef, useEffect, useState } from 'react';

@@ -1,4 +1,4 @@
-// GSD VibeFlow - Snippet Editor Dialog Component
+// VCCA - Snippet Editor Dialog Component
 // Create or edit saved command snippets
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

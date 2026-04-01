@@ -1,4 +1,4 @@
-// GSD VibeFlow - PTY Commands
+// VCCA - PTY Commands
 // Tauri command handlers for PTY operations
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
@@ -79,7 +79,7 @@ pub async fn pty_check_tmux() -> Result<Option<String>, String> {
     Ok(crate::pty::TerminalManager::check_tmux())
 }
 
-/// List all GSD VibeFlow tmux sessions
+/// List all VCCA tmux sessions
 #[tauri::command]
 pub async fn pty_list_tmux() -> Result<Vec<TmuxSessionInfo>, String> {
     Ok(crate::pty::TerminalManager::list_ct_sessions())

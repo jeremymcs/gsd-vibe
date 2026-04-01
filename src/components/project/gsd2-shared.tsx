@@ -1,4 +1,4 @@
-// GSD Vibe - GSD-2 Shared Primitives
+// VCCA - GSD-2 Shared Primitives
 // Shared components and utilities used across GSD-2 tab components.
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

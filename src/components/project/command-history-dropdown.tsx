@@ -1,4 +1,4 @@
-// GSD VibeFlow - Command History Dropdown Component
+// VCCA - Command History Dropdown Component
 // Shows previously executed commands for quick re-use
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

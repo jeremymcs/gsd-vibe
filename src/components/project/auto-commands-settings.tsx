@@ -1,4 +1,4 @@
-// GSD VibeFlow - Auto-commands Settings Dialog
+// VCCA - Auto-commands Settings Dialog
 // Pre/post execution hooks management
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

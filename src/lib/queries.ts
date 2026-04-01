@@ -1,4 +1,4 @@
-// GSD VibeFlow - React Query Hooks
+// VCCA - React Query Hooks
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -1776,6 +1776,49 @@ export const useGsd2SavePreferences = () => {
     },
     onError: (error) => {
       toast.error('Failed to save preferences', { description: getErrorMessage(error) });
+    },
+  });
+};
+
+// ── Terminal & Utility hooks ───────────────────────────────────────────────
+
+export const useTmuxSessions = () =>
+  useQuery({
+    queryKey: queryKeys.tmuxSessions(),
+    queryFn: () => api.ptyListTmux(),
+    staleTime: 30_000,
+    retry: false,
+  });
+
+export const useProjectDocs = (path: string) =>
+  useQuery({
+    queryKey: queryKeys.projectDocs(path),
+    queryFn: () => api.readProjectDocs(path),
+    enabled: !!path,
+    staleTime: 5 * 60 * 1000,
+  });
+
+export const useDetectTechStack = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (path: string) => api.detectTechStack(path),
+    onSuccess: () => {
+      toast.success('Tech stack refreshed');
+      void queryClient.invalidateQueries({ queryKey: queryKeys.projects() });
+    },
+    onError: (error) => {
+      toast.error('Failed to detect tech stack', { description: getErrorMessage(error) });
+    },
+  });
+};
+
+export const useReorderScriptFavorites = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ projectId, scriptIds }: { projectId: string; scriptIds: string[] }) =>
+      api.reorderScriptFavorites(projectId, scriptIds),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.projects() });
     },
   });
 };

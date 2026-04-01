@@ -1,4 +1,4 @@
-// GSD VibeFlow - Shared Filter Chips Component  
+// VCCA - Shared Filter Chips Component  
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { Badge } from "@/components/ui/badge";
@@ -45,7 +45,7 @@ export interface FilterChipsProps {
  * - Multi-select mode for category filters (activity phases)
  * - Active/inactive visual states
  * - Optional count badges
- * - Consistent styling with VibeFlow design system
+ * - Consistent styling with VCCA design system
  */
 export function FilterChips({
   options,

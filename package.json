@@ -1,7 +1,7 @@
 {
-  "name": "gsd-vibeflow",
+  "name": "vcca",
   "version": "0.1.1",
-  "description": "GSD VibeFlow - Desktop app for managing Claude Code projects",
+  "description": "VCCA - Vibe Coders Companion App",
   "author": "Jeremy McSpadden <jeremy@fluxlabs.net>",
   "license": "MIT",
   "type": "module",

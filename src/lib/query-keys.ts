@@ -1,4 +1,4 @@
-// GSD VibeFlow - Query Key Factory
+// VCCA - Query Key Factory
 // Centralized query key management for TanStack Query
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
@@ -143,4 +143,6 @@ export const queryKeys = {
   gsd2ReportsIndex: (projectId: string) => ['gsd2', 'reports-index', projectId] as const,
   gsd2Preferences: (path?: string) => ['gsd2', 'preferences', path] as const,
   gsd2Sessions: (projectId: string) => ['gsd2', 'sessions', projectId] as const,
+  tmuxSessions: () => ['tmux', 'sessions'] as const,
+  projectDocs: (path: string) => ['project-docs', path] as const,
 };

@@ -1,4 +1,4 @@
-// GSD VibeFlow - Input Component
+// VCCA - Input Component
 // Enhanced with improved focus states and styling
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

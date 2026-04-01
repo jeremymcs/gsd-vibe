@@ -1,4 +1,4 @@
-// GSD VibeFlow - Bulk Project Bar (BP-01)
+// VCCA - Bulk Project Bar (BP-01)
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { useState } from 'react';

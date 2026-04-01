@@ -1,4 +1,4 @@
-// GSD VibeFlow - Onboarding Tauri Invoke Wrapper Tests
+// VCCA - Onboarding Tauri Invoke Wrapper Tests
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { beforeEach, describe, expect, it, vi } from "vitest";

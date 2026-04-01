@@ -1,10 +1,10 @@
-# GSD VibeFlow - Rust Backend Configuration
+# VCCA - Vibe Coders Companion App - Rust Backend Configuration
 # Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 [package]
-name = "gsd-vibeflow"
+name = "vcca"
 version = "0.1.1"
-description = "GSD VibeFlow - Desktop app for managing Claude Code projects"
+description = "VCCA - Vibe Coders Companion App"
 authors = ["Jeremy McSpadden <jeremy@fluxlabs.net>"]
 edition = "2021"
 license = "MIT"
@@ -12,7 +12,7 @@ license = "MIT"
 [features]
 
 [lib]
-name = "gsd_vibeflow_lib"
+name = "vcca_lib"
 crate-type = ["lib", "cdylib", "staticlib"]
 
 [build-dependencies]

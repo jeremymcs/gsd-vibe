@@ -1,4 +1,4 @@
-// GSD VibeFlow - Project Template Registry and Scaffold Commands
+// VCCA - Project Template Registry and Scaffold Commands
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 use crate::models::{GsdPlanningTemplate, ProjectTemplate, ScaffoldOptions, ScaffoldResult};
@@ -407,9 +407,9 @@ fn run_git_init(base: &Path) -> bool {
                 .output();
             let _ = Command::new("git")
                 .args(["commit", "-m", "chore: initial scaffold"])
-                .env("GIT_AUTHOR_NAME", "VibeFlow")
+                .env("GIT_AUTHOR_NAME", "VCCA")
                 .env("GIT_AUTHOR_EMAIL", "vibeflow@local")
-                .env("GIT_COMMITTER_NAME", "VibeFlow")
+                .env("GIT_COMMITTER_NAME", "VCCA")
                 .env("GIT_COMMITTER_EMAIL", "vibeflow@local")
                 .current_dir(base)
                 .output();

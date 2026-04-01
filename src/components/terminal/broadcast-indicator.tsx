@@ -1,4 +1,4 @@
-// GSD VibeFlow - Broadcast Mode Indicator (SH-05)
+// VCCA - Broadcast Mode Indicator (SH-05)
 // Overlay showing broadcast mode is active for a terminal tab
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

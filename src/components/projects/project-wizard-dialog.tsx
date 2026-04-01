@@ -1,4 +1,4 @@
-// GSD VibeFlow - Project Wizard Dialog
+// VCCA - Project Wizard Dialog
 // Multi-step new project creation wizard with template selection
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

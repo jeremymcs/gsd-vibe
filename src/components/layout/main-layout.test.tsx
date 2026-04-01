@@ -1,4 +1,4 @@
-// GSD VibeFlow - MainLayout Collapsible Sidebar Tests
+// VCCA - MainLayout Collapsible Sidebar Tests
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { describe, it, expect, vi, beforeEach } from "vitest";

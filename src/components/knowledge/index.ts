@@ -1,4 +1,4 @@
-// GSD VibeFlow - Knowledge Components Barrel Export
+// VCCA - Knowledge Components Barrel Export
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 export { KnowledgeViewer } from './knowledge-viewer';

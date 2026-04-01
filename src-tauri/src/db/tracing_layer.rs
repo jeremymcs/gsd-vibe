@@ -1,4 +1,4 @@
-// GSD VibeFlow - Custom Tracing Subscriber Layer
+// VCCA - Custom Tracing Subscriber Layer
 // Captures Rust tracing events and writes to app_logs SQLite table
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

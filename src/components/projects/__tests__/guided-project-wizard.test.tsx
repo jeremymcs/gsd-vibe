@@ -1,4 +1,4 @@
-// GSD VibeFlow - Guided Project Wizard Tests
+// VCCA - Guided Project Wizard Tests
 // Verifies guided create/start flow routes users to guided overview view
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

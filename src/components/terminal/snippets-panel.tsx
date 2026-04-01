@@ -1,4 +1,4 @@
-// GSD VibeFlow - Snippets Panel
+// VCCA - Snippets Panel
 // Sidebar panel for managing and inserting terminal snippets
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

@@ -1,4 +1,4 @@
-// GSD VibeFlow - Data Models
+// VCCA - Data Models
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 use serde::{Deserialize, Serialize};
@@ -547,6 +547,7 @@ pub struct KnowledgeFileEntry {
     pub folder: String,
     pub size_bytes: u64,
 }
+
 
 // ============================================================
 // Notification Models (CC-03)

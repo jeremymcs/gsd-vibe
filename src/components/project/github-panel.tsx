@@ -1,5 +1,5 @@
 // @ts-nocheck — pre-existing file with implicit-any callback params; full typing deferred
-// GSD Vibe - GitHub Integration Panel
+// VCCA - GitHub Integration Panel
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 // @ts-nocheck — pre-existing: data layer hooks not yet wired

@@ -1,4 +1,4 @@
-// GSD VibeFlow - Guided Project Wizard
+// VCCA - Guided Project Wizard
 // 4-step guided project creation with AI preview and one-click headless start
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

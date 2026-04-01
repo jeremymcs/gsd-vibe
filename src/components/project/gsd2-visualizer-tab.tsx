@@ -1,4 +1,4 @@
-// GSD VibeFlow - Visualizer Tab Component
+// VCCA - Visualizer Tab Component
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { useState, useEffect, useCallback } from 'react';
@@ -25,6 +25,7 @@ import { cn } from '@/lib/utils';
 import { formatCost, formatRelativeTime, formatDuration, formatTokenCount } from '@/lib/utils';
 import { useGsd2VisualizerData } from '@/lib/queries';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
 import type {
   VisualizerData,
   VisualizerMilestone2,
@@ -349,6 +350,25 @@ function ProgressTab({ data }: { data: VisualizerData }) {
           </div>
         ))}
       </div>
+
+      {/* Knowledge & Captures summary */}
+      {(data.knowledge.entry_count > 0 || data.captures.pending_count > 0) && (
+        <div className="rounded-xl border border-border bg-card p-6">
+          <SectionLabel>Knowledge &amp; Captures</SectionLabel>
+          <div className="mt-4 flex gap-6 text-sm">
+            <div className="flex items-center gap-2">
+              <span className="text-muted-foreground">Knowledge entries:</span>
+              <span className="font-medium tabular-nums">{data.knowledge.entry_count}</span>
+            </div>
+            {data.captures.pending_count > 0 && (
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground">Captures pending:</span>
+                <Badge variant="outline" className="text-xs tabular-nums">{data.captures.pending_count}</Badge>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -356,7 +376,7 @@ function ProgressTab({ data }: { data: VisualizerData }) {
 // ─── Deps Tab ─────────────────────────────────────────────────────────────────
 
 function DepsTab({ data }: { data: VisualizerData }) {
-  // VibeFlow critical path: path[] are qualified slice IDs like "M001/S01"
+  // VCCA critical path: path[] are qualified slice IDs like "M001/S01"
   const cp = data.critical_path;
 
   // Derive milestone path from unique milestone prefixes
@@ -856,7 +876,7 @@ function AgentTab({ data }: { data: VisualizerData }) {
         </div>
       )}
 
-      {/* Stats grid — completionRate/sessionCost/sessionTokens not in VibeFlow type → show "—" */}
+      {/* Stats grid — completionRate/sessionCost/sessionTokens not in VCCA type → show "—" */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <StatCard label="Completion Rate"  value="—"                              accent="sky" />
         <StatCard label="Session Cost"     value="—"                              accent="emerald" />
@@ -897,6 +917,27 @@ function AgentTab({ data }: { data: VisualizerData }) {
           </div>
         </div>
       )}
+
+      {/* Health overview */}
+      {data.health && (data.health.milestones_total > 0 || data.health.slices_total > 0) && (
+        <div className="rounded-xl border border-border bg-card p-6">
+          <SectionLabel>Health Overview</SectionLabel>
+          <div className="mt-4 grid grid-cols-3 gap-4 text-sm">
+            <div>
+              <p className="text-muted-foreground">Milestones</p>
+              <p className="font-medium tabular-nums">{data.health.milestones_done}/{data.health.milestones_total}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground">Slices</p>
+              <p className="font-medium tabular-nums">{data.health.slices_done}/{data.health.slices_total}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground">Tasks</p>
+              <p className="font-medium tabular-nums">{data.health.tasks_done}/{data.health.tasks_total}</p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -913,6 +954,8 @@ interface ChangeEntry {
 }
 
 function ChangesTab({ data }: { data: VisualizerData }) {
+  const missingSummaries = data.stats.milestones_missing_summary + data.stats.slices_missing_summary;
+
   // Build changelog from milestones tree
   const entries: ChangeEntry[] = data.milestones.flatMap((ms: VisualizerMilestone2) =>
     ms.slices.flatMap((sl: VisualizerSlice2) =>
@@ -927,7 +970,7 @@ function ChangesTab({ data }: { data: VisualizerData }) {
     ),
   );
 
-  if (entries.length === 0) {
+  if (entries.length === 0 && missingSummaries === 0) {
     return <EmptyState message="No completed slices yet." icon={Activity} />;
   }
 
@@ -941,6 +984,14 @@ function ChangesTab({ data }: { data: VisualizerData }) {
 
   return (
     <div className="space-y-4">
+      {missingSummaries > 0 && (
+        <div className="rounded-lg border border-status-warning/30 bg-status-warning/5 px-4 py-3 text-sm text-muted-foreground">
+          <span className="font-medium text-foreground">{missingSummaries}</span> {missingSummaries === 1 ? 'summary' : 'summaries'} missing
+          ({data.stats.milestones_missing_summary > 0 && `${data.stats.milestones_missing_summary} milestone`}
+          {data.stats.milestones_missing_summary > 0 && data.stats.slices_missing_summary > 0 && ', '}
+          {data.stats.slices_missing_summary > 0 && `${data.stats.slices_missing_summary} slice`})
+        </div>
+      )}
       {sorted.map((entry, i) => (
         <div
           key={`${entry.milestoneId}-${entry.sliceId}-${i}`}

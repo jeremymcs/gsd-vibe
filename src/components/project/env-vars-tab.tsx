@@ -1,4 +1,4 @@
-// GSD VibeFlow - Environment Variables Tab Component
+// VCCA - Environment Variables Tab Component
 // Manage and view environment variables for a project
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

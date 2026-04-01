@@ -1,4 +1,4 @@
-// GSD Vibe - Dependency Utilities
+// VCCA - Dependency Utilities
 // Shared parsing logic and UI helpers for dependency status components.
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

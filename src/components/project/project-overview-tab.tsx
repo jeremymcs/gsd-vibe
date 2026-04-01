@@ -1,4 +1,4 @@
-// GSD VibeFlow - Project Overview Tab Component
+// VCCA - Project Overview Tab Component
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,7 +10,9 @@ import { RequirementsCard } from './requirements-card';
 import { VisionCard } from './vision-card';
 import { RoadmapProgressCard } from './roadmap-progress-card';
 import type { Project } from '@/lib/tauri';
-import { useGsdState, useGsdTodos, useGsdConfig, useGsdSync, useEnvironmentInfo } from '@/lib/queries';
+import { useGsdState, useGsdTodos, useGsdConfig, useGsdSync, useEnvironmentInfo, useScannerSummary, useProjectDocs, useDetectTechStack } from '@/lib/queries';
+import { Button } from '@/components/ui/button';
+import { RefreshCw } from 'lucide-react';
 import {
   CheckSquare,
   AlertTriangle,
@@ -63,6 +65,12 @@ export function ProjectOverviewTab({
 
         {/* Project Details (non-GSD projects) */}
         {!isGsd1 && <ProjectDetailsCard project={project} />}
+
+        {/* Project Docs (non-GSD projects) */}
+        {!isGsd1 && <ProjectDocsCard projectPath={project.path} />}
+
+        {/* Scanner Summary (non-GSD projects) */}
+        {!isGsd1 && <ScannerCard projectPath={project.path} />}
 
         {/* Git Status */}
         <GitStatusWidget projectPath={project.path} />
@@ -378,6 +386,109 @@ function EnvironmentInfoCard({ projectPath }: { projectPath: string }) {
             </div>
           )}
         </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// --- Project Docs Card (non-GSD) ---
+
+function ProjectDocsCard({ projectPath }: { projectPath: string }) {
+  const { data: docs } = useProjectDocs(projectPath);
+  const detectTechStack = useDetectTechStack();
+
+  if (!docs) return null;
+
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2 text-sm">
+            <Settings2 className="h-4 w-4 text-muted-foreground" />
+            Project Info
+          </CardTitle>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 px-2 text-xs"
+            onClick={() => detectTechStack.mutate(projectPath)}
+            disabled={detectTechStack.isPending}
+          >
+            <RefreshCw className={`h-3 w-3 mr-1 ${detectTechStack.isPending ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        {docs.description && (
+          <div>
+            <p className="text-xs text-muted-foreground mb-1">Description</p>
+            <p className="text-sm">{docs.description}</p>
+          </div>
+        )}
+        {docs.goal && (
+          <div>
+            <p className="text-xs text-muted-foreground mb-1">Goal</p>
+            <p className="text-sm">{docs.goal}</p>
+          </div>
+        )}
+        <p className="text-xs text-muted-foreground">Source: {docs.source}</p>
+      </CardContent>
+    </Card>
+  );
+}
+
+// --- Scanner Summary Card (non-GSD) ---
+
+function ScannerCard({ projectPath }: { projectPath: string }) {
+  const { data: scanner } = useScannerSummary(projectPath);
+
+  if (!scanner?.available) return null;
+
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="flex items-center gap-2 text-sm">
+          <Gauge className="h-4 w-4 text-muted-foreground" />
+          Project Scanner
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-muted-foreground">Overall grade</span>
+          <span className="text-lg font-bold">{scanner.overall_grade ?? '—'}</span>
+        </div>
+        {scanner.overall_score !== null && (
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Score</span>
+            <span className="font-medium tabular-nums">{scanner.overall_score}/100</span>
+          </div>
+        )}
+        {scanner.total_gaps !== null && scanner.total_gaps > 0 && (
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Gaps found</span>
+            <span className="font-medium tabular-nums text-status-warning">{scanner.total_gaps}</span>
+          </div>
+        )}
+        {scanner.total_recommendations !== null && scanner.total_recommendations > 0 && (
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Recommendations</span>
+            <span className="font-medium tabular-nums">{scanner.total_recommendations}</span>
+          </div>
+        )}
+        {scanner.high_priority_actions.length > 0 && (
+          <div className="pt-2 border-t border-border/50">
+            <p className="text-xs text-muted-foreground mb-1.5">High priority</p>
+            <ul className="space-y-1">
+              {scanner.high_priority_actions.slice(0, 3).map((action, i) => (
+                <li key={i} className="text-xs text-muted-foreground flex items-start gap-1.5">
+                  <AlertTriangle className="h-3 w-3 shrink-0 mt-0.5 text-status-warning" />
+                  <span>{action}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

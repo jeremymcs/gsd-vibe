@@ -1,4 +1,4 @@
-// GSD VibeFlow - GSD-2 Roadmap Tab
+// VCCA - GSD-2 Roadmap Tab
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { useState } from 'react';

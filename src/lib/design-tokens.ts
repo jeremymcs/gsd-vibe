@@ -1,4 +1,4 @@
-// GSD VibeFlow - Design Token System
+// VCCA - Design Token System
 // Centralized spacing, sizing, animation, and status utilities
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

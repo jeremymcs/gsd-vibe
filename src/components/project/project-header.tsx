@@ -1,4 +1,4 @@
-// GSD VibeFlow - Project Header Component (Slim)
+// VCCA - Project Header Component (Slim)
 // Compact bar with tech stack badges and actions — no back arrow or project name (sidebar handles that)
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

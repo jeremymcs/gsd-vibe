@@ -1,4 +1,4 @@
-// GSD VibeFlow - Library Root (Tauri app setup, command registration, event listeners)
+// VCCA - Library Root (Tauri app setup, command registration, event listeners)
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 mod commands;
@@ -123,7 +123,7 @@ pub fn run() {
                 }
             });
 
-            tracing::info!("GSD VibeFlow initialized");
+            tracing::info!("VCCA initialized");
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -356,7 +356,7 @@ pub fn run() {
             commands::templates::scaffold_project,
         ])
         .run(tauri::generate_context!())
-        .expect("error while running GSD VibeFlow");
+        .expect("error while running VCCA");
 }
 
 /// Re-read descriptions for projects whose stored description contains HTML comments

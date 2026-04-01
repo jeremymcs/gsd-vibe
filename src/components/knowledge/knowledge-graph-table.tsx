@@ -1,4 +1,4 @@
-// GSD VibeFlow - Knowledge Graph Table View Component
+// VCCA - Knowledge Graph Table View Component
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { useMemo, useState } from 'react';

@@ -1,4 +1,4 @@
-// GSD VibeFlow - Snippets & Auto-commands
+// VCCA - Snippets & Auto-commands
 // Saved command snippets and pre/post execution hooks
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

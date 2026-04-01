@@ -1,4 +1,4 @@
-// GSD VibeFlow - Knowledge Graph Table Component Tests
+// VCCA - Knowledge Graph Table Component Tests
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';

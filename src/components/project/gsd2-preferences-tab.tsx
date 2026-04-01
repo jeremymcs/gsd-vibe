@@ -1,4 +1,4 @@
-// GSD VibeFlow - GSD-2 Preferences Tab Component
+// VCCA - GSD-2 Preferences Tab Component
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { useState, useEffect, useCallback, type ReactNode } from 'react';

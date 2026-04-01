@@ -1,4 +1,4 @@
-// GSD VibeFlow - GSD File Watcher Hook
+// VCCA - GSD File Watcher Hook
 // Listens for gsd:file-changed events and triggers targeted query invalidation
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

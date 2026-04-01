@@ -3,7 +3,7 @@ Generated: $(date)
 
 ## Executive Summary
 
-Task T02 tooltip coverage audit and fixes have been completed. This report documents the before/after state of icon button tooltip coverage across the VibeFlow project components.
+Task T02 tooltip coverage audit and fixes have been completed. This report documents the before/after state of icon button tooltip coverage across the VCCA project components.
 
 ## Tooltip Coverage Improvements
 

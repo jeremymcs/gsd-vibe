@@ -1,4 +1,4 @@
-// GSD Vibe - Guided Execution Hook
+// VCCA - Guided Execution Hook
 // Orchestrates scaffold -> import -> headless start for guided project creation
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

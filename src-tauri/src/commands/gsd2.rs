@@ -1,4 +1,4 @@
-// GSD VibeFlow - GSD-2 Commands
+// VCCA - GSD-2 Commands
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 //
 // GSD-2 backend: version detection, file resolvers, struct definitions, and helpers.
@@ -15,8 +15,8 @@ use std::time::Duration;
 
 type DbState = Arc<crate::db::DbPool>;
 
-const HEADLESS_KEYCHAIN_SERVICE_PRIMARY: &str = "io.gsd.vibeflow";
-const HEADLESS_KEYCHAIN_SERVICE_LEGACY: &str = "net.fluxlabs.track-your-shit";
+const HEADLESS_KEYCHAIN_SERVICE_PRIMARY: &str = "net.fluxlabs.vcca";
+const HEADLESS_KEYCHAIN_SERVICE_LEGACY: &str = "net.fluxlabs.vcca";
 const HEADLESS_ENV_KEYS: &[&str] = &[
     "ANTHROPIC_API_KEY",
     "OPENAI_API_KEY",

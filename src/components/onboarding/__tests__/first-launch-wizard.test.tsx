@@ -1,4 +1,4 @@
-// GSD Vibe - First Launch Wizard Tests
+// VCCA - First Launch Wizard Tests
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { beforeEach, describe, expect, it, vi, type Mock } from "vitest";
@@ -109,7 +109,7 @@ describe("FirstLaunchWizard", () => {
     setupHookMocks();
     render(<FirstLaunchWizard />);
 
-    expect(screen.getByText("Welcome to GSD VibeFlow")).toBeInTheDocument();
+    expect(screen.getByText("Welcome to VCCA")).toBeInTheDocument();
     expect(screen.getByText("Tooling check")).toBeInTheDocument();
     expect(screen.getByText("git")).toBeInTheDocument();
     expect(screen.getByText("node")).toBeInTheDocument();

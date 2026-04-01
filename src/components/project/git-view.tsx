@@ -1,4 +1,4 @@
-// GSD Vibe - Git Full-Screen View
+// VCCA - Git Full-Screen View
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 //
 // Full-height split view: Git panel (local ops + history) | GitHub panel (PRs, issues, CI).

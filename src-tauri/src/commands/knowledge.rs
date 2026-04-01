@@ -1,4 +1,4 @@
-// GSD VibeFlow - Knowledge Commands
+// VCCA - Knowledge Commands
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 //
 // Implements knowledge/memory system for persistent context (PRD FR-9)

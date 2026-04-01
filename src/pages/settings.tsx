@@ -1,4 +1,4 @@
-// GSD VibeFlow - Settings Page
+// VCCA - Settings Page
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { useState, useEffect } from "react";
@@ -89,7 +89,7 @@ export function SettingsPage() {
       {/* Header */}
       <PageHeader
         title="Settings"
-        description="Configure GSD VibeFlow preferences"
+        description="Configure VCCA preferences"
         icon={<SettingsIcon className="h-6 w-6 text-muted-foreground" />}
         actions={
           hasChanges ? (
@@ -164,7 +164,7 @@ export function SettingsPage() {
                 <div>
                   <Label htmlFor="settings-start-login" className="text-sm font-medium">Start on login</Label>
                   <p className="text-xs text-muted-foreground">
-                    Launch GSD VibeFlow when you log in
+                    Launch VCCA when you log in
                   </p>
                 </div>
                 <Switch
@@ -309,7 +309,7 @@ export function SettingsPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="text-sm text-muted-foreground">
-                Database: <code className="bg-muted px-1.5 py-0.5 rounded text-xs">~/Library/Application Support/net.fluxlabs.track-your-shit/track-your-shit.db</code>
+                Database: <code className="bg-muted px-1.5 py-0.5 rounded text-xs">~/Library/Application Support/net.fluxlabs.vcca/vcca.db</code>
               </div>
               <div className="flex gap-2 flex-wrap">
                 <Button variant="outline" onClick={() => setShowExportDialog(true)}>
@@ -342,11 +342,11 @@ export function SettingsPage() {
                           setFormData(defaults);
                           setHasChanges(false);
                           setShowResetConfirm(false);
-                          localStorage.removeItem('track-your-shit-theme');
-                          localStorage.removeItem('track-your-shit-accent');
-                          localStorage.removeItem('track-your-shit-density');
-                          localStorage.removeItem('track-your-shit-font-scale');
-                          localStorage.removeItem('track-your-shit-font-family');
+                          localStorage.removeItem('vcca-theme');
+                          localStorage.removeItem('vcca-accent');
+                          localStorage.removeItem('vcca-density');
+                          localStorage.removeItem('vcca-font-scale');
+                          localStorage.removeItem('vcca-font-family');
                         }).catch(() => { /* toast via onError */ });
                       }}
                       disabled={resetSettings.isPending}

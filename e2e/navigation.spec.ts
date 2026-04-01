@@ -1,4 +1,4 @@
-// GSD VibeFlow - E2E Navigation Tests
+// VCCA - E2E Navigation Tests
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { test, expect } from '@playwright/test';
@@ -6,7 +6,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Navigation', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByText('GSD Vibe')).toBeVisible();
+    await expect(page.getByText('VCCA')).toBeVisible();
   });
 
   test('loads home as the default route', async ({ page }) => {
@@ -37,7 +37,7 @@ test.describe('Navigation', () => {
 
     await page.goto('/settings');
     await expect(page).toHaveURL('/settings');
-    await expect(page.getByText('GSD Vibe')).toBeVisible();
+    await expect(page.getByText('VCCA')).toBeVisible();
   });
 
   test('can collapse and expand sidebar', async ({ page }) => {

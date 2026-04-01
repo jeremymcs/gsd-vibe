@@ -1,9 +1,13 @@
-// GSD VibeFlow - Dashboard Status Bar
+// VCCA - Dashboard Status Bar
 // 6-stat summary: projects, pending todos, GSD projects, cost, tokens, active agents
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
+import { useMemo } from 'react';
 import { FolderOpen, ListTodo, AlertTriangle, DollarSign, Activity, Users } from 'lucide-react';
+import { useQueries } from '@tanstack/react-query';
 import { useProjectsWithStats } from '@/lib/queries';
+import { queryKeys } from '@/lib/query-keys';
+import * as api from '@/lib/tauri';
 
 export function StatusBar() {
   const { data: projects } = useProjectsWithStats();
@@ -20,14 +24,47 @@ export function StatusBar() {
   // GSD project count 
   const gsdCount = gsdProjects.length;
 
-  // Initialize GSD-2 metrics — we'll aggregate data from visualizer queries
-  // For now, aggregate is set to 0 (no GSD-2 projects have data yet)
-  // In a future iteration, consider a single backend endpoint for efficiency
-  const gsd2Metrics = {
-    totalCost: 0,
-    totalTokens: 0,
-    activeAgents: 0,
-  };
+  // GSD-2 projects for cross-project aggregation
+  const gsd2Projects = projects?.filter((p) => p.gsd_version === 'gsd2') ?? [];
+
+  // Batch history queries for all GSD-2 projects
+  const historyQueries = useQueries({
+    queries: gsd2Projects.map((p) => ({
+      queryKey: queryKeys.gsd2History(p.id),
+      queryFn: () => api.gsd2GetHistory(p.path),
+      enabled: !!p.path,
+      staleTime: 60_000,
+      retry: false,
+    })),
+  });
+
+  // Batch visualizer queries for active agent detection
+  const vizQueries = useQueries({
+    queries: gsd2Projects.map((p) => ({
+      queryKey: queryKeys.gsd2VisualizerData(p.id),
+      queryFn: () => api.gsd2GetVisualizerData(p.path),
+      enabled: !!p.path,
+      staleTime: 30_000,
+      retry: false,
+    })),
+  });
+
+  const gsd2Metrics = useMemo(() => {
+    let totalCost = 0;
+    let totalTokens = 0;
+    let activeAgents = 0;
+    for (const q of historyQueries) {
+      if (q.data?.totals) {
+        totalCost += q.data.totals.total_cost;
+        totalTokens += q.data.totals.total_tokens;
+      }
+    }
+    for (const q of vizQueries) {
+      if (q.data?.agent_activity?.is_active) activeAgents++;
+    }
+    return { totalCost, totalTokens, activeAgents };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(historyQueries.map((q) => q.data?.totals)), JSON.stringify(vizQueries.map((q) => q.data?.agent_activity?.is_active))]);
 
   // Format cost as dollars with 2 decimal places
   const formatCost = (cost: number) => `$${cost.toFixed(2)}`;

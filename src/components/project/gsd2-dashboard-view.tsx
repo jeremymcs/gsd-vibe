@@ -1,4 +1,4 @@
-// GSD VibeFlow - GSD-2 Dashboard View
+// VCCA - GSD-2 Dashboard View
 // Full project-pulse landing: current unit, metrics, slice progress, activity, git, health
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
@@ -15,6 +15,10 @@ import {
   ArrowUp,
   ArrowDown,
   GitCommit,
+  BookOpen,
+  Inbox,
+  Route,
+  FileText,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -303,6 +307,55 @@ function PhaseBreakdownCard({ byPhase }: PhaseBreakdownCardProps) {
 }
 
 // ---------------------------------------------------------------------------
+// Section 5b — Knowledge, Captures & Critical Path
+// ---------------------------------------------------------------------------
+
+interface InsightsCardProps {
+  knowledge: { exists: boolean; entry_count: number };
+  captures: { exists: boolean; pending_count: number };
+  criticalPath: { path: string[]; slack_map: Array<{ id: string; slack: number }> };
+  stats: { milestones_missing_summary: number; slices_missing_summary: number; recent_changelog: Array<{ one_liner: string }> };
+}
+
+function InsightsCard({ knowledge, captures, criticalPath, stats }: InsightsCardProps) {
+  const items = [
+    { icon: <BookOpen className="h-4 w-4" />, label: 'Knowledge entries', value: knowledge.entry_count },
+    { icon: <Inbox className="h-4 w-4" />, label: 'Captures pending', value: captures.pending_count },
+    { icon: <Route className="h-4 w-4" />, label: 'Critical path length', value: criticalPath.path.length },
+    { icon: <FileText className="h-4 w-4" />, label: 'Missing summaries', value: stats.milestones_missing_summary + stats.slices_missing_summary },
+  ];
+
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm font-medium">Project Insights</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div className="grid grid-cols-2 gap-3">
+          {items.map((item) => (
+            <div key={item.label} className="flex items-center gap-2 text-sm">
+              <span className="text-muted-foreground">{item.icon}</span>
+              <span className="text-muted-foreground">{item.label}</span>
+              <span className="ml-auto font-medium tabular-nums">{item.value}</span>
+            </div>
+          ))}
+        </div>
+        {criticalPath.path.length > 0 && (
+          <div className="pt-2 border-t border-border/50">
+            <p className="text-xs text-muted-foreground mb-1">Critical path</p>
+            <div className="flex flex-wrap gap-1">
+              {criticalPath.path.map((id) => (
+                <Badge key={id} variant="outline" className="text-xs">{id}</Badge>
+              ))}
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Section 6 — Git + Health
 // ---------------------------------------------------------------------------
 
@@ -524,6 +577,11 @@ export function Gsd2DashboardView({ projectId, projectPath: _projectPath }: Gsd2
     tasks_total: 0,
   };
 
+  const knowledgeInfo = vizData?.knowledge ?? { exists: false, entry_count: 0 };
+  const capturesInfo = vizData?.captures ?? { exists: false, pending_count: 0 };
+  const criticalPath = vizData?.critical_path ?? { path: [], slack_map: [] };
+  const statsInfo = vizData?.stats ?? { milestones_missing_summary: 0, slices_missing_summary: 0, recent_changelog: [] };
+
   return (
     <div className="p-4 space-y-4">
       {/* Section 1 — Current Active Unit */}
@@ -569,11 +627,22 @@ export function Gsd2DashboardView({ projectId, projectPath: _projectPath }: Gsd2
         <PhaseBreakdownCard byPhase={byPhase} />
       </div>
 
-      {/* Section 5 + Section 6 */}
+      {/* Section 5 — Insights + Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-        {/* Section 5 — Activity Feed */}
-        <ActivityFeed projectId={projectId} limit={8} />
+        {/* Section 5a — Knowledge, Captures, Critical Path */}
+        <InsightsCard
+          knowledge={knowledgeInfo}
+          captures={capturesInfo}
+          criticalPath={criticalPath}
+          stats={statsInfo}
+        />
 
+        {/* Section 5b — Activity Feed */}
+        <ActivityFeed projectId={projectId} limit={8} />
+      </div>
+
+      {/* Section 6 */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
         {/* Section 6 — Git Status + Health Summary */}
         <GitHealthCard
           branch={git?.branch ?? null}

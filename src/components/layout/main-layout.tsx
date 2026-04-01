@@ -1,8 +1,8 @@
-// GSD Vibe - Main Layout Component
+// VCCA - Main Layout Component
 // Context-aware sidebar: global nav or project-scoped nav
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
-import { ReactNode, useState, useEffect, useMemo, lazy, Suspense } from 'react';
+import { ReactNode, useState, useEffect, useMemo, useRef, lazy, Suspense } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useTerminalContext } from '@/contexts/terminal-context';
@@ -74,9 +74,9 @@ export function MainLayout({ children }: MainLayoutProps) {
   const { data: project } = useProject(projectId ?? '');
   const isProjectRoute = !!projectId;
 
-  // Determine if user is on the project shell view
+  // Determine active view and whether we're on the Runner page
   const activeView = searchParams.get('view') ?? searchParams.get('tab') ?? '';
-  const isProjectShellView = isProjectRoute && activeView === 'shell';
+  const isRunnerView = isProjectRoute && activeView === 'gsd2-headless';
 
   const { shellPanelCollapsed, setShellPanelCollapsed } = useTerminalContext();
   const { data: unreadCount } = useUnreadNotificationCount();
@@ -135,6 +135,17 @@ export function MainLayout({ children }: MainLayoutProps) {
   useEffect(() => {
     localStorage.setItem("sidebar-collapsed", String(sidebarCollapsed));
   }, [sidebarCollapsed]);
+
+  // Auto-expand shell panel when entering Runner view, collapse when leaving
+  const prevRunnerRef = useRef(isRunnerView);
+  useEffect(() => {
+    if (isRunnerView && !prevRunnerRef.current) {
+      setShellPanelCollapsed(false);
+    } else if (!isRunnerView && prevRunnerRef.current) {
+      setShellPanelCollapsed(true);
+    }
+    prevRunnerRef.current = isRunnerView;
+  }, [isRunnerView, setShellPanelCollapsed]);
 
   // Navigate to a project view
   const goToView = (viewId: string) => {
@@ -213,7 +224,7 @@ export function MainLayout({ children }: MainLayoutProps) {
                 <div className="flex flex-col items-center gap-1 w-full pt-3">
                   <img src="/gsd-logo.svg" alt="GSD" className="h-8 w-full max-w-[160px] object-contain" />
                   <span className="text-[13px] font-semibold tracking-[0.2em] uppercase text-muted-foreground/70">
-                    GSD Vibe
+                    VCCA
                   </span>
                 </div>
               )}
@@ -475,8 +486,8 @@ export function MainLayout({ children }: MainLayoutProps) {
             {children}
           </div>
 
-          {/* Shell panel collapse toggle (hidden on /shell route and project Shell view) */}
-          {!isShellRoute && !isProjectShellView && (
+          {/* Shell panel collapse toggle — only visible on Runner view */}
+          {!isShellRoute && isRunnerView && (
             <button
               className={cn(
                 "relative flex items-center gap-2 px-4 py-2 border-t cursor-pointer select-none flex-shrink-0 w-full transition-all duration-200 group",
@@ -510,14 +521,14 @@ export function MainLayout({ children }: MainLayoutProps) {
             </button>
           )}
 
-          {/* Persistent shell panel - always mounted, visible based on state */}
+          {/* Persistent shell panel — visible on /terminal route or Runner view when expanded */}
           <div className={cn(
             "flex-shrink-0 transition-all duration-200",
             isShellRoute
               ? "flex-1"
-              : shellPanelCollapsed || isProjectShellView
-                ? "h-0 invisible"
-                : "h-[300px]"
+              : isRunnerView && !shellPanelCollapsed
+                ? "h-[300px]"
+                : "h-0 invisible"
           )}>
             <Suspense fallback={<div className="flex items-center justify-center h-full text-muted-foreground text-sm">Loading terminal...</div>}>
               <ShellPage />

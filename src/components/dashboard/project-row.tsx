@@ -1,4 +1,4 @@
-// GSD VibeFlow - Project Row (dashboard list item)
+// VCCA - Project Row (dashboard list item)
 // Compact single-row layout with live GSD stats, cost, and status
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

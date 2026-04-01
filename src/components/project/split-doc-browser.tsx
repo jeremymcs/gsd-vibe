@@ -1,4 +1,4 @@
-// GSD Vibe - Split Doc Browser
+// VCCA - Split Doc Browser
 // Reusable left-list / right-content browser for markdown documents.
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

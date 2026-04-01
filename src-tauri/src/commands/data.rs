@@ -1,4 +1,4 @@
-// GSD VibeFlow - Data Management Commands
+// VCCA - Data Management Commands
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 use serde::{Deserialize, Serialize};
@@ -272,7 +272,7 @@ pub async fn export_data(
         "csv"
     };
     let default_name = format!(
-        "track-your-shit-export-{}.{}",
+        "vcca-export-{}.{}",
         chrono::Utc::now().format("%Y%m%d-%H%M%S"),
         extension
     );

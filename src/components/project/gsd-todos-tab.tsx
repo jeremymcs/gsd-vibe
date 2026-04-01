@@ -1,4 +1,4 @@
-// GSD VibeFlow - GSD Todos Tab
+// VCCA - GSD Todos Tab
 // Full CRUD todo manager for GSD projects
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

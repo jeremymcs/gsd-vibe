@@ -1,4 +1,4 @@
-// GSD VibeFlow - Settings Mode Toggle Tests
+// VCCA - Settings Mode Toggle Tests
 // Verifies interface mode persists immediately without save button interaction
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

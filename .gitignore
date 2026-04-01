@@ -46,3 +46,6 @@ tmp/
 .bg-shell/
 node_modules
 .claude/worktrees/
+
+# ── GSD baseline (auto-generated) ──
+.gsd-id

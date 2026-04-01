@@ -1,4 +1,4 @@
-// GSD VibeFlow - GSD Milestones Tab
+// VCCA - GSD Milestones Tab
 // Visual milestone timeline for GSD projects
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

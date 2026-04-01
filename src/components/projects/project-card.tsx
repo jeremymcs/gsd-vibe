@@ -1,4 +1,4 @@
-// GSD VibeFlow - Shared Project Card Component
+// VCCA - Shared Project Card Component
 // Enriched card with stats, git info, progress, costs, todos, and favorites
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

@@ -1,4 +1,4 @@
-// GSD VibeFlow - Database Module (SQLite connection pool, schema, migrations, PRAGMA tuning)
+// VCCA - Database Module (SQLite connection pool, schema, migrations, PRAGMA tuning)
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 //
 // Architecture: Read/Write connection separation for concurrent access.
@@ -54,7 +54,7 @@ impl DbPool {
         let app_data_dir = app.path().app_data_dir()?;
         std::fs::create_dir_all(&app_data_dir)?;
 
-        let db_path = app_data_dir.join("gsd-vibe.db");
+        let db_path = app_data_dir.join("vcca.db");
         tracing::info!("Database path: {:?}", db_path);
 
         Self::open_pool(&db_path)
@@ -119,7 +119,7 @@ impl Database {
         let app_data_dir = app.path().app_data_dir()?;
         std::fs::create_dir_all(&app_data_dir)?;
 
-        let db_path = app_data_dir.join("gsd-vibe.db");
+        let db_path = app_data_dir.join("vcca.db");
         tracing::info!("Database path: {:?}", db_path);
 
         let conn = Connection::open(&db_path)?;
@@ -185,19 +185,19 @@ impl Database {
         #[cfg(target_os = "macos")]
         let base_dir = dirs::data_dir()
             .ok_or("Could not determine data directory")?
-            .join("io.gsd.vibeflow");
+            .join("net.fluxlabs.vcca");
 
         #[cfg(target_os = "linux")]
         let base_dir = dirs::data_dir()
             .ok_or("Could not determine data directory")?
-            .join("io.gsd.vibeflow");
+            .join("net.fluxlabs.vcca");
 
         #[cfg(target_os = "windows")]
         let base_dir = dirs::data_dir()
             .ok_or("Could not determine data directory")?
-            .join("io.gsd.vibeflow");
+            .join("net.fluxlabs.vcca");
 
-        Ok(base_dir.join("gsd-vibe.db"))
+        Ok(base_dir.join("vcca.db"))
     }
 
     pub fn conn(&self) -> &Connection {

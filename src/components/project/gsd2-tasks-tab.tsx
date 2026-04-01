@@ -1,4 +1,4 @@
-// GSD VibeFlow - GSD-2 Tasks Tab Component
+// VCCA - GSD-2 Tasks Tab Component
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { Card, CardContent } from '@/components/ui/card';
@@ -132,7 +132,7 @@ function ActiveMilestoneTasks({
   activeMilestoneId,
   activeTaskId,
 }: ActiveMilestoneTasksProps) {
-  const { data: milestone, isLoading, isError } = useGsd2Milestone(
+  const { data: milestone, isLoading, isError, error: milestoneErr } = useGsd2Milestone(
     projectId,
     activeMilestoneId,
     true,
@@ -152,12 +152,14 @@ function ActiveMilestoneTasks({
   }
 
   if (isError || !milestone) {
+    const errMsg = milestoneErr?.message || (milestone === undefined ? 'Milestone data is empty' : 'Unknown error');
     return (
       <Card>
-        <CardContent className="py-8 text-center">
+        <CardContent className="py-8 text-center space-y-2">
           <p className="text-sm text-status-error">
             Failed to load tasks — check that the project path is accessible.
           </p>
+          <p className="text-xs text-muted-foreground font-mono">{errMsg}</p>
         </CardContent>
       </Card>
     );
@@ -195,9 +197,9 @@ function ActiveMilestoneTasks({
 }
 
 export function Gsd2TasksTab({ projectId }: Gsd2TasksTabProps) {
-  const { data: milestones, isLoading: milestonesLoading, isError: milestonesError } =
+  const { data: milestones, isLoading: milestonesLoading, isError: milestonesError, error: milestonesErr } =
     useGsd2Milestones(projectId);
-  const { data: derivedState, isLoading: stateLoading } = useGsd2DerivedState(projectId);
+  const { data: derivedState, isLoading: stateLoading, isError: stateError, error: stateErr } = useGsd2DerivedState(projectId);
 
   const isLoading = milestonesLoading || stateLoading;
 
@@ -214,13 +216,15 @@ export function Gsd2TasksTab({ projectId }: Gsd2TasksTabProps) {
     );
   }
 
-  if (milestonesError) {
+  if (milestonesError || stateError) {
+    const errMsg = milestonesErr?.message || stateErr?.message || 'Unknown error';
     return (
       <Card>
-        <CardContent className="py-8 text-center">
+        <CardContent className="py-8 text-center space-y-2">
           <p className="text-sm text-status-error">
             Failed to load tasks — check that the project path is accessible.
           </p>
+          <p className="text-xs text-muted-foreground font-mono">{errMsg}</p>
         </CardContent>
       </Card>
     );

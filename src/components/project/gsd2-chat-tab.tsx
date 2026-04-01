@@ -1,4 +1,4 @@
-// GSD VibeFlow - GSD-2 Chat Mode Tab
+// VCCA - GSD-2 Chat Mode Tab
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { useEffect, useRef, useState, useCallback } from 'react';

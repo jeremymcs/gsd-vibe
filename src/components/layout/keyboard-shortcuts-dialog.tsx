@@ -1,4 +1,4 @@
-// GSD VibeFlow - Keyboard Shortcuts Help Dialog
+// VCCA - Keyboard Shortcuts Help Dialog
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import {

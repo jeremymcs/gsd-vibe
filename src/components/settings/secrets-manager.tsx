@@ -1,4 +1,4 @@
-// GSD VibeFlow - Secrets Manager Settings Component
+// VCCA - Secrets Manager Settings Component
 // Provides UI for managing API keys stored in the OS keychain
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

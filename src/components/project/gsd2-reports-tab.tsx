@@ -1,4 +1,4 @@
-// GSD VibeFlow - GSD-2 HTML Reports Tab Component
+// VCCA - GSD-2 HTML Reports Tab Component
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { useMemo, useState } from 'react';

@@ -5,7 +5,7 @@ set -euo pipefail
 AUDIT_DIR="audit-reports"
 mkdir -p "$AUDIT_DIR"
 
-echo "=== GSD VibeFlow QOL Coverage Audit ===" 
+echo "=== GSD VCCA QOL Coverage Audit ===" 
 echo "Auditing requirements R160-R166..."
 echo ""
 

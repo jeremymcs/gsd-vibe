@@ -1,4 +1,4 @@
-// GSD VibeFlow - Knowledge Viewer Component
+// VCCA - Knowledge Viewer Component
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { useState, useRef, useCallback, useEffect } from 'react';

@@ -1,4 +1,4 @@
-// GSD VibeFlow - Keyboard Shortcuts Provider
+// VCCA - Keyboard Shortcuts Provider
 // Registers global hotkeys and exposes search/help open state
 // Adds project view shortcuts (Cmd+1-6) when inside a project
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>

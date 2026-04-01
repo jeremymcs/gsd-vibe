@@ -1,4 +1,4 @@
-// GSD VibeFlow - Terminal Page Header Component
+// VCCA - Terminal Page Header Component
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { Button } from "@/components/ui/button";

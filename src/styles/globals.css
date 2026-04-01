@@ -1,4 +1,4 @@
-/* GSD VibeFlow - Global Styles
+/* VCCA - Global Styles
    Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net> */
 
 @tailwind base;
@@ -7,28 +7,28 @@
 
 @layer base {
   .dark {
-    --background: 220 13% 9%;
-    --foreground: 220 9% 97%;
-    --card: 220 13% 11%;
-    --card-foreground: 220 9% 97%;
-    --popover: 220 13% 11%;
-    --popover-foreground: 220 9% 97%;
+    --background: 0 0% 0%;
+    --foreground: 0 0% 93%;
+    --card: 0 0% 7%;
+    --card-foreground: 0 0% 93%;
+    --popover: 0 0% 7%;
+    --popover-foreground: 0 0% 93%;
     --primary: 189 72% 44%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 220 13% 14%;
-    --secondary-foreground: 220 9% 97%;
-    --muted: 220 13% 14%;
-    --muted-foreground: 220 9% 58%;
-    --accent: 220 13% 17%;
-    --accent-foreground: 220 9% 97%;
+    --secondary: 0 0% 10%;
+    --secondary-foreground: 0 0% 93%;
+    --muted: 0 0% 10%;
+    --muted-foreground: 0 0% 52%;
+    --accent: 0 0% 13%;
+    --accent-foreground: 0 0% 93%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 220 13% 20%;
-    --input: 220 13% 14%;
+    --border: 0 0% 15%;
+    --input: 0 0% 10%;
     --ring: 189 72% 44%;
     --radius: 0.375rem;
 
-    /* GSD VibeFlow Brand Color */
+    /* VCCA Brand Color */
     --gsd-cyan: 189 72% 44%;
 
     /* Status Colors - Semantic (Dark - desaturated for professional calm) */
@@ -36,38 +36,38 @@
     --status-warning: 38 75% 52%;
     --status-error: 0 65% 58%;
     --status-info: 217 75% 60%;
-    --status-pending: 220 12% 55%;
+    --status-pending: 0 0% 52%;
     --status-blocked: 30 75% 52%;
     --status-paused: 45 80% 52%;
 
     /* Terminal Colors */
-    --terminal-bg: 220 13% 7%;
-    --terminal-fg: 220 9% 95%;
+    --terminal-bg: 0 0% 0%;
+    --terminal-fg: 0 0% 93%;
   }
 
   .light {
     --background: 0 0% 100%;
-    --foreground: 220 15% 8%;
+    --foreground: 0 0% 7%;
     --card: 0 0% 100%;
-    --card-foreground: 220 15% 8%;
+    --card-foreground: 0 0% 7%;
     --popover: 0 0% 100%;
-    --popover-foreground: 220 15% 8%;
+    --popover-foreground: 0 0% 7%;
     --primary: 189 72% 32%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 220 15% 10%;
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 9% 44%;
-    --accent: 220 14% 96%;
-    --accent-foreground: 220 15% 10%;
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 9%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 44%;
+    --accent: 0 0% 96%;
+    --accent-foreground: 0 0% 9%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 220 13% 88%;
-    --input: 220 13% 88%;
+    --border: 0 0% 89%;
+    --input: 0 0% 89%;
     --ring: 189 72% 32%;
     --radius: 0.375rem;
 
-    /* GSD VibeFlow Brand Color - darker for white background contrast (~7:1) */
+    /* VCCA Brand Color - darker for white background contrast (~7:1) */
     --gsd-cyan: 189 72% 32%;
 
     /* Status Colors - Semantic (Light - desaturated for professional calm) */
@@ -75,13 +75,13 @@
     --status-warning: 38 70% 36%;
     --status-error: 0 65% 46%;
     --status-info: 217 70% 44%;
-    --status-pending: 220 12% 38%;
+    --status-pending: 0 0% 38%;
     --status-blocked: 30 70% 40%;
     --status-paused: 45 75% 38%;
 
     /* Terminal Colors */
-    --terminal-bg: 220 14% 96%;
-    --terminal-fg: 220 15% 8%;
+    --terminal-bg: 0 0% 97%;
+    --terminal-fg: 0 0% 7%;
   }
 }
 

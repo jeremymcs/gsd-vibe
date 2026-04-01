@@ -1,4 +1,4 @@
-// GSD VibeFlow - GSD Phase Context Tab
+// VCCA - GSD Phase Context Tab
 // Shows CONTEXT.md decisions and deferred ideas per phase
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

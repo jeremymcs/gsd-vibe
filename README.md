@@ -1,8 +1,8 @@
-# GSD VibeFlow
-<!-- GSD VibeFlow - Project README -->
+# VCCA — Vibe Coders Companion App
+<!-- VCCA - Project README -->
 <!-- Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net> -->
 
-A native desktop application for managing Claude Code projects with project management, terminal sessions (tmux support), knowledge base browsing, GSD workflow integration, git operations, and more.
+A native desktop companion app for managing AI coding projects. Project management, terminal sessions (tmux support), knowledge base browsing, GSD workflow integration, git operations, and more.
 
 ## Features
 

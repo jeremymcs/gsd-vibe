@@ -1,4 +1,4 @@
-// GSD VibeFlow - Project Components
+// VCCA - Project Components
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 export { DependencyAlertsCard } from './dependency-alerts-card';

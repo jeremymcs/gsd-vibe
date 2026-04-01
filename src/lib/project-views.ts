@@ -1,4 +1,4 @@
-// GSD Vibe - Project View Definitions
+// VCCA - Project View Definitions
 // Canonical list of all project views for sidebar navigation
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

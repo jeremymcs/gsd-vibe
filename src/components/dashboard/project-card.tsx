@@ -1,4 +1,4 @@
-// GSD VibeFlow - Project Card (dashboard grid item)
+// VCCA - Project Card (dashboard grid item)
 // Enriched card with stats, git info, progress, costs, and live GSD data
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

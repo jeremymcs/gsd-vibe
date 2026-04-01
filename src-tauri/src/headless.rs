@@ -1,4 +1,4 @@
-// GSD VibeFlow - Headless Session Registry
+// VCCA - Headless Session Registry
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 //
 // Tracks active headless GSD sessions (session_id -> project_id mapping).

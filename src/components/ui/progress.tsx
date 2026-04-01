@@ -1,4 +1,4 @@
-// GSD VibeFlow - Progress Component
+// VCCA - Progress Component
 // Enhanced with gradient and glow effects
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

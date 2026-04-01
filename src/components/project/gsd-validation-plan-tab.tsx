@@ -1,4 +1,4 @@
-// GSD VibeFlow - GSD Validation Plan Tab
+// VCCA - GSD Validation Plan Tab
 // Per-phase VALIDATION.md viewer (test strategy, task map, wave tracking)
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

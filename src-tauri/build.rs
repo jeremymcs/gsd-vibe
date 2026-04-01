@@ -1,4 +1,4 @@
-// GSD VibeFlow - Build Script
+// VCCA - Vibe Coders Companion App - Build Script
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 fn main() {

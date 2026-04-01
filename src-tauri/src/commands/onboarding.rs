@@ -1,4 +1,4 @@
-// GSD VibeFlow - First-Launch Onboarding Commands
+// VCCA - First-Launch Onboarding Commands
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 use reqwest::header::{AUTHORIZATION, HeaderMap, HeaderValue, USER_AGENT};
@@ -357,7 +357,7 @@ async fn validate_api_key_with_provider(provider: &str, api_key: &str) -> Result
                 HeaderValue::from_str(&bearer)
                     .map_err(|_| "Invalid API key header value".to_string())?,
             );
-            headers.insert(USER_AGENT, HeaderValue::from_static("gsd-vibeflow-onboarding"));
+            headers.insert(USER_AGENT, HeaderValue::from_static("vcca-onboarding"));
 
             let response = client
                 .get("https://api.github.com/user")

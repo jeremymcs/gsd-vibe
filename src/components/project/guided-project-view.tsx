@@ -1,4 +1,4 @@
-// GSD VibeFlow - Guided Project Workspace View
+// VCCA - Guided Project Workspace View
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { useEffect, useMemo, useState } from "react";

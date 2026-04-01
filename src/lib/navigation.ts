@@ -1,4 +1,4 @@
-// GSD Vibe - Shared Navigation Configuration
+// VCCA - Shared Navigation Configuration
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import {

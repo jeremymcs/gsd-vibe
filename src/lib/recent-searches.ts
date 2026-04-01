@@ -1,4 +1,4 @@
-// GSD VibeFlow - Recent Searches Helper
+// VCCA - Recent Searches Helper
 // Persists recent search queries in localStorage
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

@@ -1,4 +1,4 @@
-// GSD VibeFlow - Notifications Page
+// VCCA - Notifications Page
 // Full-page notifications view with filtering
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 

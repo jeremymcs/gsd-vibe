@@ -1,4 +1,4 @@
-// GSD VibeFlow - Shared Copy to Clipboard Hook
+// VCCA - Shared Copy to Clipboard Hook
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { useState, useCallback } from 'react';

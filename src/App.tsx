@@ -1,4 +1,4 @@
-// GSD VibeFlow - Main App Component
+// VCCA - Main App Component
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import { lazy, Suspense, useEffect, useState } from "react";

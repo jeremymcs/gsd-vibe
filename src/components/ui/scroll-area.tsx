@@ -1,4 +1,4 @@
-// GSD VibeFlow - Scroll Area Component
+// VCCA - Scroll Area Component
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import * as React from "react";

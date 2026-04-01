@@ -1,12 +1,12 @@
-// GSD VibeFlow - OS Keychain Secret Management Commands
+// VCCA - OS Keychain Secret Management Commands
 // Provides secure API key storage via the native OS keychain (macOS Keychain, Windows Credential Manager, Linux Secret Service)
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 use keyring::Entry;
 use serde::{Deserialize, Serialize};
 
-/// Default service name for all GSD VibeFlow keychain entries
-const DEFAULT_SERVICE: &str = "io.gsd.vibeflow";
+/// Default service name for all VCCA keychain entries
+const DEFAULT_SERVICE: &str = "net.fluxlabs.vcca";
 
 /// Known/predefined secret key names that the UI offers as presets
 const PREDEFINED_KEYS: &[&str] = &[
@@ -66,7 +66,7 @@ impl KeyIndex {
 /// Store a secret in the OS keychain.
 ///
 /// # Arguments
-/// * `service` - Keychain service name (use "io.gsd.vibeflow")
+/// * `service` - Keychain service name (use "net.fluxlabs.vcca")
 /// * `key` - The secret key name (e.g., "ANTHROPIC_API_KEY")
 /// * `value` - The secret value to store
 #[tauri::command]

@@ -1,4 +1,4 @@
-// GSD VibeFlow - Switch Component
+// VCCA - Switch Component
 // Copyright (c) 2026 Jeremy McSpadden <jeremy@fluxlabs.net>
 
 import * as React from "react";
