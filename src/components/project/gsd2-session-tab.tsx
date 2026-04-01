@@ -158,19 +158,19 @@ export function Gsd2SessionTab({ projectId, projectPath }: Gsd2SessionTabProps) 
                 <div className="flex items-center gap-1.5">
                   {providers.length > 0 && (
                     <Select value={selectedModel} onValueChange={setSelectedModel}>
-                      <SelectTrigger className="h-7 text-[13px] w-[180px]">
+                      <SelectTrigger className="h-7 text-sm w-[200px]">
                         <SelectValue placeholder="Default model" />
                       </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="__default__">Default</SelectItem>
+                      <SelectContent className="min-w-[240px]">
+                        <SelectItem value="__default__" className="text-sm py-1.5">Default</SelectItem>
                         {providers.map((provider) => (
                           <SelectGroup key={provider}>
-                            <SelectLabel className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70 py-1">
+                            <SelectLabel className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60 px-2 pt-2 pb-1">
                               {provider}
                             </SelectLabel>
                             {modelsQuery.data?.filter((m) => m.provider === provider).map((model) => (
-                              <SelectItem key={model.id} value={model.id} className="text-[13px]">
-                                {model.name}
+                              <SelectItem key={model.id} value={model.id} className="text-sm py-1.5">
+                                {model.name.split(/\s/)[0]}
                               </SelectItem>
                             ))}
                           </SelectGroup>

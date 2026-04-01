@@ -529,21 +529,21 @@ export function GuidedProjectWizard({ open, onOpenChange }: GuidedProjectWizardP
               <div className="space-y-1.5">
                 <Label>Execution model</Label>
                 <Select value={selectedModel} onValueChange={setSelectedModel}>
-                  <SelectTrigger className="text-[13px]">
+                  <SelectTrigger className="text-sm">
                     <SelectValue placeholder="Auto-select model" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="auto">Auto-select model</SelectItem>
+                  <SelectContent className="min-w-[280px]">
+                    <SelectItem value="auto" className="text-sm py-2">Auto-select model</SelectItem>
                     {(() => {
                       const providers = [...new Set(models.map((m) => m.provider))];
                       return providers.map((provider) => (
                         <SelectGroup key={provider}>
-                          <SelectLabel className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70 py-1">
+                          <SelectLabel className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60 px-2 pt-2 pb-1">
                             {provider}
                           </SelectLabel>
                           {models.filter((m) => m.provider === provider).map((model) => (
-                            <SelectItem key={`${model.provider}:${model.id}`} value={model.id} className="text-[13px]">
-                              {model.name}
+                            <SelectItem key={`${model.provider}:${model.id}`} value={model.id} className="text-sm py-1.5">
+                              {model.name.split(/\s/)[0]}
                             </SelectItem>
                           ))}
                         </SelectGroup>

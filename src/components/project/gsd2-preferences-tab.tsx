@@ -870,14 +870,14 @@ function FieldControl({ fieldKey, meta, value, draftValue, scope, showScope, mod
             onValueChange={(v) => onChange(fieldKey, v === '__unset__' ? '' : v)}
           >
             <SelectTrigger
-              className={`h-8 text-[13px] w-full max-w-sm ${isDirty ? 'border-status-info/60 ring-1 ring-status-info/30' : ''}`}
+              className={`h-9 text-sm w-full max-w-sm ${isDirty ? 'border-status-info/60 ring-1 ring-status-info/30' : ''}`}
               aria-label={label}
             >
               <SelectValue placeholder="— not set —">
                 {draftValue && (
-                  <span className="flex items-center gap-1.5">
+                  <span className="flex items-center gap-2">
                     {providerTag && (
-                      <span className="text-[10px] font-medium text-muted-foreground bg-muted px-1.5 py-0.5 rounded shrink-0">
+                      <span className="text-[10px] font-medium text-muted-foreground bg-muted/80 px-1.5 py-0.5 rounded shrink-0">
                         {providerTag}
                       </span>
                     )}
@@ -886,27 +886,27 @@ function FieldControl({ fieldKey, meta, value, draftValue, scope, showScope, mod
                 )}
               </SelectValue>
             </SelectTrigger>
-            <SelectContent className="max-h-72 w-[var(--radix-select-trigger-width)]">
-              <SelectItem value="__unset__">
+            <SelectContent className="max-h-80 min-w-[280px]">
+              <SelectItem value="__unset__" className="text-sm py-2">
                 <span className="text-muted-foreground italic">— not set —</span>
               </SelectItem>
               {/* Show current value if it's not in the known list */}
               {draftValue && !modelOptions.includes(draftValue) && (
                 <SelectGroup>
-                  <SelectLabel className="text-[10px] text-muted-foreground/70">Current</SelectLabel>
-                  <SelectItem value={draftValue}>
-                    <span className="text-[13px]">{draftValue}</span>
+                  <SelectLabel className="text-[10px] uppercase tracking-wider text-muted-foreground/60 px-2 pb-1">Current</SelectLabel>
+                  <SelectItem value={draftValue} className="text-sm py-2">
+                    {draftValue}
                   </SelectItem>
                 </SelectGroup>
               )}
               {groups.map((group) => (
                 <SelectGroup key={group.provider}>
-                  <SelectLabel className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70 py-1.5">
+                  <SelectLabel className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60 px-2 pt-2 pb-1">
                     {group.label}
                   </SelectLabel>
                   {group.models.map((m) => (
-                    <SelectItem key={m} value={m} className="text-[13px]">
-                      <span>{modelDisplayName(m)}</span>
+                    <SelectItem key={m} value={m} className="text-sm py-1.5">
+                      {modelDisplayName(m)}
                     </SelectItem>
                   ))}
                 </SelectGroup>
@@ -1102,8 +1102,9 @@ export function Gsd2PreferencesTab({ projectPath }: Gsd2PreferencesTabProps) {
   const { data: modelEntries } = useGsd2Models();
   const savePreferences = useGsd2SavePreferences();
 
-  // Build model options: API results + known defaults as fallback
-  const apiModels = (modelEntries ?? []).map((m) => m.id);
+  // Build model options: API results + known defaults as fallback.
+  // API model IDs can contain trailing metadata from loose table parsing — strip at first space.
+  const apiModels = (modelEntries ?? []).map((m) => m.id.split(/\s/)[0]);
   const allModels = new Set([...apiModels, ...KNOWN_MODELS]);
 
   // Also include any model values currently set in the prefs that aren't in the list
