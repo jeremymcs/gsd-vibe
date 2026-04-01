@@ -136,7 +136,12 @@ function App() {
           </MainLayout>
           <CloseWarningDialog />
           {shouldShowStartupLoader && <StartupGateLoader />}
-          {shouldBlockForOnboarding && <FirstLaunchWizard onComplete={handleOnboardingComplete} />}
+          {shouldBlockForOnboarding && (
+            <FirstLaunchWizard
+              onComplete={handleOnboardingComplete}
+              onCancel={() => setOnboardingCompletedLocally(true)}
+            />
+          )}
           <Toaster
             position="bottom-right"
             toastOptions={{
