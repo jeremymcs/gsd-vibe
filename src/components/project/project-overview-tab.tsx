@@ -10,9 +10,11 @@ import { RequirementsCard } from './requirements-card';
 import { VisionCard } from './vision-card';
 import { RoadmapProgressCard } from './roadmap-progress-card';
 import type { Project } from '@/lib/tauri';
-import { useGsdState, useGsdTodos, useGsdConfig, useGsdSync, useEnvironmentInfo, useScannerSummary, useProjectDocs, useDetectTechStack } from '@/lib/queries';
+import { useGsdState, useGsdTodos, useGsdConfig, useGsdSync, useEnvironmentInfo, useScannerSummary, useProjectDocs, useDetectTechStack, useProjectWorkflows } from '@/lib/queries';
+import { Link } from 'react-router-dom';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, Bot, ArrowRight } from 'lucide-react';
 import {
   CheckSquare,
   AlertTriangle,
@@ -59,6 +61,9 @@ export function ProjectOverviewTab({
 
         {/* Requirements Coverage (REQUIREMENTS.md) */}
         {isGsd1 && <RequirementsCard projectId={project.id} />}
+
+        {/* AI Tools Detected (non-GSD projects) */}
+        {!isGsd1 && <AiToolsDetectedCard projectId={project.id} projectPath={project.path} />}
 
         {/* Environment Info (non-GSD projects) */}
         {!isGsd1 && <EnvironmentInfoCard projectPath={project.path} />}
@@ -489,6 +494,68 @@ function ScannerCard({ projectPath }: { projectPath: string }) {
             </ul>
           </div>
         )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// --- AI Tools Detected Card ---
+
+const TOOL_BADGE_COLORS: Record<string, string> = {
+  claude: 'bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20',
+  gsd2: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
+  gsd1: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
+  cursor: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20',
+  windsurf: 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/20',
+  copilot: 'bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/20',
+  codex: 'bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20',
+  gemini: 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20',
+  cline: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20',
+  mcp: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
+};
+
+function AiToolsDetectedCard({ projectId, projectPath }: { projectId: string; projectPath: string }) {
+  const { data: workflows } = useProjectWorkflows(projectPath);
+
+  if (!workflows || !workflows.has_any_ai_config) return null;
+
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="flex items-center gap-2 text-sm">
+          <Bot className="h-4 w-4 text-muted-foreground" />
+          AI Tools Detected
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-3">
+          <div className="flex flex-wrap gap-1.5">
+            {workflows.tools.map((t) => (
+              <Badge
+                key={t.tool}
+                variant="outline"
+                className={`text-xs ${TOOL_BADGE_COLORS[t.tool] ?? ''}`}
+              >
+                {t.label}
+                <span className="ml-1 opacity-60">
+                  {t.files.filter(f => f.scope === 'project').length}
+                </span>
+              </Badge>
+            ))}
+          </div>
+          <div className="flex items-center justify-between text-xs text-muted-foreground pt-1 border-t border-border/40">
+            <span>
+              {workflows.tool_count} tool{workflows.tool_count !== 1 ? 's' : ''} · {workflows.file_count} file{workflows.file_count !== 1 ? 's' : ''} detected
+            </span>
+            <Link
+              to={`/projects/${projectId}?view=agent-editor`}
+              className="inline-flex items-center gap-1 text-[10px] text-primary hover:underline"
+            >
+              View in Agents
+              <ArrowRight className="h-3 w-3" />
+            </Link>
+          </div>
+        </div>
       </CardContent>
     </Card>
   );
