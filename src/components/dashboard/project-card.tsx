@@ -12,9 +12,13 @@ import {
   CheckSquare,
   DollarSign,
   Layers,
+  ShieldAlert,
+  ExternalLink,
 } from 'lucide-react';
-import { useToggleFavorite, useGsdTodos } from '@/lib/queries';
+import { open as openExternal } from '@tauri-apps/plugin-shell';
+import { useDependencyStatus, useToggleFavorite, useGsdTodos } from '@/lib/queries';
 import { formatRelativeTime, formatCost, cn } from '@/lib/utils';
+import { getTopVulnerability } from '@/lib/dependency-utils';
 import {
   getStatusClasses,
   getProjectType,
@@ -44,6 +48,7 @@ export const ProjectCard = React.memo(function ProjectCard({
 }: ProjectCardProps) {
   const toggleFavorite = useToggleFavorite();
   const hasGsd = !!project.tech_stack?.has_planning;
+  const { data: dependencyStatus } = useDependencyStatus(project.id, project.path);
 
   // Only fetch GSD todos for GSD projects — no-op for bare projects
   const { data: todos } = useGsdTodos(hasGsd ? project.id : '', 'pending');
@@ -68,6 +73,14 @@ export const ProjectCard = React.memo(function ProjectCard({
   const blockerTodos = pendingTodos.filter((t) => t.is_blocker);
   const todoCount = pendingTodos.length;
   const blockerCount = blockerTodos.length;
+  const topVulnerability = getTopVulnerability(dependencyStatus?.details ?? null);
+
+  const handleOpenAdvisory = (e: React.MouseEvent, url?: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!url) return;
+    void openExternal(url);
+  };
 
   return (
     <Link to={`/projects/${project.id}`} className="block">
@@ -187,6 +200,33 @@ export const ProjectCard = React.memo(function ProjectCard({
                 ) : blockerCount === 0 ? (
                   <span className="text-[10px] text-muted-foreground/60">No open todos</span>
                 ) : null}
+                {dependencyStatus && (dependencyStatus.vulnerable_count > 0 || dependencyStatus.outdated_count > 0) && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-status-error bg-status-error/10 border border-status-error/20 rounded px-1.5 py-0.5">
+                        <ShieldAlert className="h-2.5 w-2.5" />
+                        {dependencyStatus.vulnerable_count > 0
+                          ? `${dependencyStatus.vulnerable_count} vuln${dependencyStatus.vulnerable_count === 1 ? '' : 's'}`
+                          : `${dependencyStatus.outdated_count} outdated`}
+                        {topVulnerability?.vulnerability.url ? (
+                          <button
+                            type="button"
+                            onClick={(e) => handleOpenAdvisory(e, topVulnerability.vulnerability.url)}
+                            className="rounded p-0.5 hover:bg-status-error/15"
+                            aria-label={`Open advisory for ${topVulnerability.packageName}`}
+                          >
+                            <ExternalLink className="h-2.5 w-2.5" />
+                          </button>
+                        ) : null}
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {topVulnerability
+                        ? `${topVulnerability.packageName}: ${topVulnerability.vulnerability.title ?? topVulnerability.vulnerability.severity}`
+                        : 'Dependency findings detected'}
+                    </TooltipContent>
+                  </Tooltip>
+                )}
               </>
             ) : (
               <span className="text-[10px] text-muted-foreground/60">No planning data</span>

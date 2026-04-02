@@ -18,6 +18,11 @@ export interface AuditVulnerability {
   via?: unknown[];
 }
 
+export interface DependencySecuritySummary {
+  packageName: string;
+  vulnerability: AuditVulnerability;
+}
+
 // ─── Package manager icon ─────────────────────────────────────────────────────
 
 export function PackageManagerIcon({ pm, className }: { pm: string; className?: string }) {
@@ -100,8 +105,35 @@ export function parseVulnerablePackages(
   if (!vulns || typeof vulns !== 'object') return [];
   return Object.entries(vulns)
     .filter(([, v]) => v.severity && v.severity !== 'info')
+    .map(([name, v]) => {
+      let title = v.title;
+      let url = v.url;
+
+      if ((!title || !url) && Array.isArray(v.via)) {
+        for (const entry of v.via) {
+          if (entry && typeof entry === 'object' && 'title' in entry) {
+            const advisory = entry as { title?: string; url?: string };
+            if (!title && advisory.title) title = advisory.title;
+            if (!url && advisory.url) url = advisory.url;
+            if (title && url) break;
+          }
+        }
+      }
+
+      return [name, { ...v, title, url }] as [string, AuditVulnerability];
+    })
     .sort(([, a], [, b]) => {
       const order: Record<string, number> = { critical: 0, high: 1, moderate: 2, low: 3 };
       return (order[a.severity] ?? 4) - (order[b.severity] ?? 4);
     });
+}
+
+export function getTopVulnerability(
+  details: Record<string, unknown> | null,
+): DependencySecuritySummary | null {
+  const vulnerabilities = parseVulnerablePackages(details);
+  if (vulnerabilities.length === 0) return null;
+
+  const [packageName, vulnerability] = vulnerabilities[0];
+  return { packageName, vulnerability };
 }

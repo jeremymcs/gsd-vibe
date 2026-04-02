@@ -5,18 +5,21 @@
   "author": "Jeremy McSpadden <jeremy@fluxlabs.net>",
   "license": "MIT",
   "type": "module",
+  "packageManager": "pnpm@9.0.0",
   "engines": {
     "node": ">=22.0.0"
   },
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "typecheck": "tsc --noEmit",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:debug": "playwright test --debug",
+    "audit:prod": "pnpm audit --prod --audit-level=high",
     "tauri": "tauri",
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",

@@ -122,6 +122,12 @@ export function Breadcrumbs() {
     const segment = segments[i];
     currentPath += `/${segment}`;
 
+    // The root dashboard crumb already represents the projects area.
+    // Skip the literal `/projects` path segment to avoid `Projects > Projects`.
+    if (i === 0 && segment === 'projects') {
+      continue;
+    }
+
     // Try to match against known nav links
     const navItem = navLinks.find((n) => n.href === currentPath);
 
