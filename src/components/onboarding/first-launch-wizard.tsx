@@ -166,8 +166,8 @@ function DependencyStep({
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border/60 bg-muted/20 p-3">
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border/60 bg-muted/20 px-4 py-3">
         <div>
           <p className="text-sm font-medium">Tooling check</p>
           <p className="text-xs text-muted-foreground">
@@ -185,9 +185,9 @@ function DependencyStep({
         </Button>
       </div>
 
-      <div className="grid gap-2 sm:grid-cols-2">
+      <div className="grid gap-3 sm:grid-cols-2">
         {dependencies.map((dep) => (
-          <div key={dep.name} className="rounded-md border border-border/60 bg-card p-3">
+          <div key={dep.name} className="rounded-md border border-border/60 bg-card px-4 py-3.5">
             <div className="flex items-center justify-between gap-2">
               <p className="text-sm font-medium">{dep.name}</p>
               {dep.installed ? (
@@ -200,7 +200,7 @@ function DependencyStep({
                 </Badge>
               )}
             </div>
-            <p className="mt-1 text-xs text-muted-foreground">
+            <p className="mt-1.5 text-xs text-muted-foreground">
               {dep.version ?? dep.message ?? "Not detected"}
             </p>
           </div>
@@ -234,7 +234,7 @@ function ApiKeysStep({
   const savedCount = Object.values(results).filter((result) => result?.stored).length;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <p className="text-sm text-muted-foreground">
         Add at least one provider key to unlock model access. Keys are validated with the provider and stored in your OS keychain.
       </p>
@@ -245,7 +245,7 @@ function ApiKeysStep({
           const isLoading = activeProvider === provider.id;
 
           return (
-            <div key={provider.id} className="rounded-lg border border-border/60 bg-card p-3">
+            <div key={provider.id} className="rounded-lg border border-border/60 bg-card px-4 py-3.5">
               <div className="mb-2 flex items-center justify-between gap-2">
                 <div>
                   <p className="text-sm font-medium">{provider.label}</p>
@@ -308,12 +308,12 @@ function ModeStep({
   onModeChange: (mode: OnboardingUserMode) => void;
 }) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <p className="text-sm text-muted-foreground">
         Choose your default interface mode. You can change this later from Settings.
       </p>
 
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2">
         <button
           type="button"
           onClick={() => onModeChange("guided")}
@@ -421,9 +421,9 @@ export function FirstLaunchWizard({ className, onComplete, onCancel }: FirstLaun
   };
 
   return (
-    <div className={cn("fixed inset-0 z-50 flex items-center justify-center bg-background/90 p-4", className)}>
+    <div className={cn("fixed inset-0 z-50 flex items-center justify-center bg-background/90 p-6", className)}>
       <Card className="w-full max-w-3xl border-border/60 shadow-xl">
-        <CardHeader>
+        <CardHeader className="px-8 pt-8 pb-5">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
               <div className="mb-2 flex items-center gap-2 text-primary">
@@ -450,7 +450,7 @@ export function FirstLaunchWizard({ className, onComplete, onCancel }: FirstLaun
           <WizardStepIndicator step={step} />
         </CardHeader>
 
-        <CardContent className="min-h-[300px]">
+        <CardContent className="min-h-[300px] px-8">
           {onboardingStatus.isLoading ? (
             <div className="flex min-h-[250px] items-center justify-center">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -484,7 +484,7 @@ export function FirstLaunchWizard({ className, onComplete, onCancel }: FirstLaun
           )}
         </CardContent>
 
-        <CardFooter className="flex items-center justify-between gap-2 border-t border-border/60 pt-4">
+        <CardFooter className="flex items-center justify-between gap-2 border-t border-border/60 px-8 pt-5 pb-6">
           <div className="flex gap-2">
             <Button
               type="button"

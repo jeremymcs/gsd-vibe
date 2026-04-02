@@ -3,6 +3,10 @@
 
 import {
   LayoutDashboard,
+  Inbox,
+  Briefcase,
+  Search,
+  SearchCheck,
   CheckSquare,
   Terminal,
   Bell,
@@ -28,6 +32,10 @@ export type NavigationItem = NavItem | NavSection;
 export const navigation: NavigationItem[] = [
   { type: 'section', label: 'Workspace' },
   { type: 'link', name: 'Projects', href: '/', icon: LayoutDashboard },
+  { type: 'link', name: 'Inbox', href: '/inbox', icon: Inbox },
+  { type: 'link', name: 'Portfolio', href: '/portfolio', icon: Briefcase },
+  { type: 'link', name: 'Search', href: '/search', icon: Search },
+  { type: 'link', name: 'Review', href: '/review', icon: SearchCheck },
   { type: 'link', name: 'Todos', href: '/todos', icon: CheckSquare },
   { type: 'link', name: 'Terminal', href: '/terminal', icon: Terminal },
 

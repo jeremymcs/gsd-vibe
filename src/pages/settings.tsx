@@ -9,16 +9,59 @@ import { ExportDataDialog, ClearDataDialog, ThemeCustomization, SecretsManager }
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { useSettings, useUpdateSettings, useResetSettings, useImportSettings } from "@/lib/queries";
+import { useOnboardingStatus, useSettings, useUpdateSettings, useResetSettings, useImportSettings } from "@/lib/queries";
 import { Settings } from "@/lib/tauri";
 import { useTheme, Theme } from "@/hooks/use-theme";
-import { Download, Trash2, Settings as SettingsIcon, RotateCcw, Upload, Bug, Terminal, Bell, Database, ScrollText } from "lucide-react";
+import { Download, Trash2, Settings as SettingsIcon, RotateCcw, Upload, Bug, Terminal, Bell, Database, ScrollText, Rocket } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { LogsContent } from "./logs";
 import { SkeletonCard } from "@/components/ui/skeleton";
 
+function SettingsField({
+  title,
+  description,
+  control,
+}: {
+  title: string;
+  description: string;
+  control: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-start justify-between gap-4 rounded-lg border border-border/50 bg-muted/15 px-4 py-3">
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-medium">{title}</p>
+        <p className="mt-1 text-xs text-muted-foreground">{description}</p>
+      </div>
+      <div className="flex-shrink-0">{control}</div>
+    </div>
+  );
+}
+
+function SettingsSelectField({
+  htmlFor,
+  title,
+  description,
+  children,
+}: {
+  htmlFor: string;
+  title: string;
+  description: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-lg border border-border/50 bg-muted/15 px-4 py-3">
+      <Label htmlFor={htmlFor} className="block text-sm font-medium">
+        {title}
+      </Label>
+      <p className="mt-1 text-xs text-muted-foreground">{description}</p>
+      <div className="mt-3">{children}</div>
+    </div>
+  );
+}
+
 export function SettingsPage() {
   const { data: settings, isLoading } = useSettings();
+  const { data: onboardingStatus } = useOnboardingStatus();
   const updateSettings = useUpdateSettings();
   const resetSettings = useResetSettings();
   const importSettingsMutation = useImportSettings();
@@ -74,9 +117,13 @@ export function SettingsPage() {
     setHasChanges(false);
   };
 
+  const openFirstLaunchSetup = () => {
+    window.dispatchEvent(new Event("vcca:open-onboarding"));
+  };
+
   if (isLoading || !formData) {
     return (
-      <div className="p-8 max-w-3xl space-y-4">
+      <div className="p-8 space-y-4">
         <SkeletonCard />
         <SkeletonCard />
         <SkeletonCard />
@@ -85,7 +132,7 @@ export function SettingsPage() {
   }
 
   return (
-    <div className="h-full overflow-auto p-8 max-w-3xl">
+    <div className="h-full overflow-auto p-8">
       {/* Header */}
       <PageHeader
         title="Settings"
@@ -101,136 +148,172 @@ export function SettingsPage() {
       />
 
       <Tabs defaultValue="general" className="mt-6">
-        <TabsList className="mb-6">
-          <TabsTrigger value="general">General</TabsTrigger>
-          <TabsTrigger value="appearance">Appearance</TabsTrigger>
-          <TabsTrigger value="notifications">Notifications</TabsTrigger>
-          <TabsTrigger value="data">Data Management</TabsTrigger>
-          <TabsTrigger value="advanced">Advanced</TabsTrigger>
-          <TabsTrigger value="logs">
-            <ScrollText className="h-3.5 w-3.5 mr-1.5" />
-            Logs
-          </TabsTrigger>
-        </TabsList>
+        <div className="sticky top-0 z-10 -mx-8 mb-6 border-b border-border/60 bg-background/95 px-8 pb-4 pt-2 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+          <TabsList className="h-auto flex-wrap justify-start gap-2 rounded-xl border border-border/60 bg-card/70 p-1">
+            <TabsTrigger value="general" className="rounded-lg px-4 py-2">
+              General
+            </TabsTrigger>
+            <TabsTrigger value="appearance" className="rounded-lg px-4 py-2">
+              Appearance
+            </TabsTrigger>
+            <TabsTrigger value="notifications" className="rounded-lg px-4 py-2">
+              Notifications
+            </TabsTrigger>
+            <TabsTrigger value="data" className="rounded-lg px-4 py-2">
+              Data Management
+            </TabsTrigger>
+            <TabsTrigger value="advanced" className="rounded-lg px-4 py-2">
+              Advanced
+            </TabsTrigger>
+            <TabsTrigger value="logs" className="rounded-lg px-4 py-2">
+              <ScrollText className="h-3.5 w-3.5 mr-1.5" />
+              Logs
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         {/* ── General ─────────────────────────────────────── */}
         <TabsContent value="general" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <SettingsIcon className="h-5 w-5" />
-                General
-              </CardTitle>
-              <CardDescription>Application behavior and startup preferences</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="settings-interface-mode" className="block text-sm font-medium mb-2">Interface Mode</Label>
-                <p className="text-xs text-muted-foreground mb-2">
-                  Guided mode provides a simplified experience. Expert mode shows all features.
-                </p>
-                <Select
-                  value={formData.user_mode}
-                  onValueChange={(value) => handleChange("user_mode", value)}
+          <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <SettingsIcon className="h-5 w-5" />
+                  Workspace Experience
+                </CardTitle>
+                <CardDescription>Core behavior, interface mode, and launch defaults.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <SettingsSelectField
+                  htmlFor="settings-interface-mode"
+                  title="Interface Mode"
+                  description="Guided mode simplifies navigation. Expert mode exposes the full workspace."
                 >
-                  <SelectTrigger id="settings-interface-mode">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="guided">Guided — Simplified, wizard-driven interface</SelectItem>
-                    <SelectItem value="expert">Expert — Full power UI with all features</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+                  <Select
+                    value={formData.user_mode}
+                    onValueChange={(value) => handleChange("user_mode", value)}
+                  >
+                    <SelectTrigger id="settings-interface-mode">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="guided">Guided — Simplified, wizard-driven interface</SelectItem>
+                      <SelectItem value="expert">Expert — Full power UI with all features</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </SettingsSelectField>
 
-              <div>
-                <Label htmlFor="settings-theme" className="block text-sm font-medium mb-2">Theme</Label>
-                <Select
-                  value={theme}
-                  onValueChange={(value) => handleChange("theme", value)}
+                <SettingsSelectField
+                  htmlFor="settings-theme"
+                  title="Base Theme"
+                  description="Pick how VCCA responds to light and dark environments."
                 >
-                  <SelectTrigger id="settings-theme">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="system">System</SelectItem>
-                    <SelectItem value="light">Light</SelectItem>
-                    <SelectItem value="dark">Dark</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+                  <Select
+                    value={theme}
+                    onValueChange={(value) => handleChange("theme", value)}
+                  >
+                    <SelectTrigger id="settings-theme">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="system">System</SelectItem>
+                      <SelectItem value="light">Light</SelectItem>
+                      <SelectItem value="dark">Dark</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </SettingsSelectField>
 
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label htmlFor="settings-start-login" className="text-sm font-medium">Start on login</Label>
-                  <p className="text-xs text-muted-foreground">
-                    Launch VCCA when you log in
-                  </p>
-                </div>
-                <Switch
-                  id="settings-start-login"
-                  checked={formData.start_on_login}
-                  onCheckedChange={(checked) => handleChange("start_on_login", checked)}
+                <SettingsField
+                  title="Start on login"
+                  description="Launch VCCA automatically when you sign into your machine."
+                  control={
+                    <Switch
+                      id="settings-start-login"
+                      checked={formData.start_on_login}
+                      onCheckedChange={(checked) => handleChange("start_on_login", checked)}
+                    />
+                  }
                 />
-              </div>
 
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label htmlFor="settings-auto-open" className="text-sm font-medium">Auto-open last project</Label>
-                  <p className="text-xs text-muted-foreground">
-                    Automatically open the last viewed project on startup
-                  </p>
-                </div>
-                <Switch
-                  id="settings-auto-open"
-                  checked={formData.auto_open_last_project}
-                  onCheckedChange={(checked) => handleChange("auto_open_last_project", checked)}
+                <SettingsField
+                  title="Auto-open last project"
+                  description="Reopen the last viewed project at startup so you can resume faster."
+                  control={
+                    <Switch
+                      id="settings-auto-open"
+                      checked={formData.auto_open_last_project}
+                      onCheckedChange={(checked) => handleChange("auto_open_last_project", checked)}
+                    />
+                  }
                 />
-              </div>
 
-              <div>
-                <Label htmlFor="settings-window-state" className="block text-sm font-medium mb-2">Window state</Label>
-                <Select
-                  value={formData.window_state}
-                  onValueChange={(value) => handleChange("window_state", value)}
-                >
-                  <SelectTrigger id="settings-window-state">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="normal">Normal</SelectItem>
-                    <SelectItem value="maximized">Maximized</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* ── Terminal ───────────────────────── */}
-              <div className="pt-2 border-t">
-                <div className="flex items-center gap-2 mb-3">
-                  <Terminal className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-semibold">Terminal</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label htmlFor="settings-use-tmux" className="text-sm font-medium">Persistent terminals (tmux)</Label>
-                    <p className="text-xs text-muted-foreground">
-                      Use tmux for sessions that survive app restarts
-                    </p>
+                <div className="rounded-lg border border-border/50 bg-muted/15 px-4 py-3">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium">First-launch setup</p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Reopen the setup wizard to re-check tooling, validate API keys, or change the default interface mode.
+                      </p>
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        Status: {onboardingStatus?.completed ? "Completed" : "Not completed"}
+                        {onboardingStatus?.completed_at ? ` • last completed ${new Date(onboardingStatus.completed_at).toLocaleString()}` : ""}
+                      </p>
+                    </div>
+                    <Button type="button" variant="outline" onClick={openFirstLaunchSetup}>
+                      <Rocket className="h-4 w-4 mr-2" />
+                      {onboardingStatus?.completed ? "Run Setup Again" : "Open Setup"}
+                    </Button>
                   </div>
-                  <Switch
-                    id="settings-use-tmux"
-                    checked={formData.use_tmux}
-                    onCheckedChange={(checked) => handleChange("use_tmux", checked)}
-                  />
                 </div>
-              </div>
+              </CardContent>
+            </Card>
 
-              {/* ── Secrets ───────────────────────── */}
-              <div className="pt-2 border-t">
-                <SecretsManager />
-              </div>
-            </CardContent>
-          </Card>
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Terminal className="h-5 w-5" />
+                    Window & Terminal
+                  </CardTitle>
+                  <CardDescription>Desktop behavior and terminal persistence.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <SettingsSelectField
+                    htmlFor="settings-window-state"
+                    title="Window State"
+                    description="Choose how the application window should open by default."
+                  >
+                    <Select
+                      value={formData.window_state}
+                      onValueChange={(value) => handleChange("window_state", value)}
+                    >
+                      <SelectTrigger id="settings-window-state">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="normal">Normal</SelectItem>
+                        <SelectItem value="maximized">Maximized</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </SettingsSelectField>
+
+                  <SettingsField
+                    title="Persistent terminals (tmux)"
+                    description="Keep terminal sessions alive across app restarts when tmux is available."
+                    control={
+                      <Switch
+                        id="settings-use-tmux"
+                        checked={formData.use_tmux}
+                        onCheckedChange={(checked) => handleChange("use_tmux", checked)}
+                      />
+                    }
+                  />
+                </CardContent>
+              </Card>
+
+              <SecretsManager />
+            </div>
+          </div>
         </TabsContent>
 
         {/* ── Appearance ──────────────────────────────────── */}
@@ -240,160 +323,233 @@ export function SettingsPage() {
 
         {/* ── Notifications ───────────────────────────────── */}
         <TabsContent value="notifications" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Bell className="h-5 w-5" />
-                Notifications
-              </CardTitle>
-              <CardDescription>Configure when to receive alerts</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label htmlFor="settings-notifications" className="text-sm font-medium">Enable notifications</Label>
-                  <p className="text-xs text-muted-foreground">
-                    Show system notifications for events
-                  </p>
-                </div>
-                <Switch
-                  id="settings-notifications"
-                  checked={formData.notifications_enabled}
-                  onCheckedChange={(checked) => handleChange("notifications_enabled", checked)}
+          <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Bell className="h-5 w-5" />
+                  Delivery
+                </CardTitle>
+                <CardDescription>Choose whether VCCA should interrupt you with alerts.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <SettingsField
+                  title="Enable notifications"
+                  description="Show system-level notifications for important events."
+                  control={
+                    <Switch
+                      id="settings-notifications"
+                      checked={formData.notifications_enabled}
+                      onCheckedChange={(checked) => handleChange("notifications_enabled", checked)}
+                    />
+                  }
                 />
-              </div>
+              </CardContent>
+            </Card>
 
-              {formData.notifications_enabled && (
-                <div className="space-y-3 pl-1 border-l-2 border-muted ml-2">
-                  <div className="flex items-center justify-between pl-3">
-                    <Label htmlFor="settings-notify-complete" className="text-sm font-medium">On completion</Label>
+            <Card>
+              <CardHeader>
+                <CardTitle>Event Triggers</CardTitle>
+                <CardDescription>Control which events generate notifications.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <SettingsField
+                  title="On completion"
+                  description="Notify when a major workflow or task completes successfully."
+                  control={
                     <Switch
                       id="settings-notify-complete"
                       checked={formData.notify_on_complete}
                       onCheckedChange={(checked) => handleChange("notify_on_complete", checked)}
+                      disabled={!formData.notifications_enabled}
                     />
-                  </div>
+                  }
+                />
 
-                  <div className="flex items-center justify-between pl-3">
-                    <Label htmlFor="settings-notify-error" className="text-sm font-medium">On error</Label>
+                <SettingsField
+                  title="On error"
+                  description="Notify when workflows fail, commands error, or recovery is needed."
+                  control={
                     <Switch
                       id="settings-notify-error"
                       checked={formData.notify_on_error}
                       onCheckedChange={(checked) => handleChange("notify_on_error", checked)}
+                      disabled={!formData.notifications_enabled}
                     />
-                  </div>
+                  }
+                />
 
-                  <div className="flex items-center justify-between pl-3">
-                    <Label htmlFor="settings-notify-phase" className="text-sm font-medium">On phase complete</Label>
+                <SettingsField
+                  title="On phase complete"
+                  description="Notify when a phase boundary is crossed in active planning workflows."
+                  control={
                     <Switch
                       id="settings-notify-phase"
                       checked={formData.notify_on_phase_complete}
                       onCheckedChange={(checked) => handleChange("notify_on_phase_complete", checked)}
+                      disabled={!formData.notifications_enabled}
                     />
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                  }
+                />
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         {/* ── Data Management ─────────────────────────────── */}
         <TabsContent value="data" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Database className="h-5 w-5" />
-                Data Management
-              </CardTitle>
-              <CardDescription>Export, import, and manage application data</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="text-sm text-muted-foreground">
-                Database: <code className="bg-muted px-1.5 py-0.5 rounded text-xs">~/Library/Application Support/net.fluxlabs.vcca/vcca.db</code>
-              </div>
-              <div className="flex gap-2 flex-wrap">
-                <Button variant="outline" onClick={() => setShowExportDialog(true)}>
-                  <Download className="h-4 w-4 mr-2" />
-                  Export Data
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => void importSettingsMutation.mutateAsync().then((imported) => {
-                    setFormData(imported);
-                    setHasChanges(false);
-                  }).catch(() => { /* toast via onError */ })}
-                  disabled={importSettingsMutation.isPending}
-                >
-                  <Upload className="h-4 w-4 mr-2" />
-                  Import Settings
-                </Button>
-                <Button variant="destructive" onClick={() => setShowClearDialog(true)}>
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Clear Data
-                </Button>
-                {showResetConfirm ? (
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-destructive font-medium">Reset all settings?</span>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => {
-                        void resetSettings.mutateAsync().then((defaults) => {
-                          setFormData(defaults);
-                          setHasChanges(false);
-                          setShowResetConfirm(false);
-                          localStorage.removeItem('vcca-theme');
-                          localStorage.removeItem('vcca-accent');
-                          localStorage.removeItem('vcca-density');
-                          localStorage.removeItem('vcca-font-scale');
-                          localStorage.removeItem('vcca-font-family');
-                        }).catch(() => { /* toast via onError */ });
-                      }}
-                      disabled={resetSettings.isPending}
-                    >
-                      Yes, Reset
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={() => setShowResetConfirm(false)}>
-                      Cancel
-                    </Button>
-                  </div>
-                ) : (
-                  <Button variant="outline" onClick={() => setShowResetConfirm(true)}>
-                    <RotateCcw className="h-4 w-4 mr-2" />
-                    Reset to Defaults
+          <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Database className="h-5 w-5" />
+                  Storage
+                </CardTitle>
+                <CardDescription>Where application state lives and how to move it safely.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="rounded-lg border border-border/50 bg-muted/15 px-4 py-3">
+                  <p className="text-sm font-medium">Database Location</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Application data is stored locally in the app support directory.
+                  </p>
+                  <code className="mt-3 block rounded bg-muted px-2 py-1.5 text-xs">
+                    ~/Library/Application Support/net.fluxlabs.vcca/vcca.db
+                  </code>
+                </div>
+
+                <div className="rounded-lg border border-border/50 bg-muted/15 px-4 py-3">
+                  <p className="text-sm font-medium">Backups & portability</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Export data before migrations, machine changes, or aggressive cleanup.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Import & Export</CardTitle>
+                  <CardDescription>Move settings and app data in and out of VCCA.</CardDescription>
+                </CardHeader>
+                <CardContent className="flex flex-wrap gap-2">
+                  <Button variant="outline" onClick={() => setShowExportDialog(true)}>
+                    <Download className="h-4 w-4 mr-2" />
+                    Export Data
                   </Button>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+                  <Button
+                    variant="outline"
+                    onClick={() => void importSettingsMutation.mutateAsync().then((imported) => {
+                      setFormData(imported);
+                      setHasChanges(false);
+                    }).catch(() => { /* toast via onError */ })}
+                    disabled={importSettingsMutation.isPending}
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    Import Settings
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card className="border-destructive/40">
+                <CardHeader>
+                  <CardTitle>Danger Zone</CardTitle>
+                  <CardDescription>Destructive actions that affect stored state.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex flex-wrap gap-2">
+                    <Button variant="destructive" onClick={() => setShowClearDialog(true)}>
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Clear Data
+                    </Button>
+                    {!showResetConfirm ? (
+                      <Button variant="outline" onClick={() => setShowResetConfirm(true)}>
+                        <RotateCcw className="h-4 w-4 mr-2" />
+                        Reset to Defaults
+                      </Button>
+                    ) : null}
+                  </div>
+
+                  {showResetConfirm && (
+                    <div className="rounded-lg border border-destructive/40 bg-destructive/5 px-4 py-3">
+                      <p className="text-sm font-medium text-destructive">Reset all settings?</p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        This clears current preferences and restores built-in defaults.
+                      </p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => {
+                            void resetSettings.mutateAsync().then((defaults) => {
+                              setFormData(defaults);
+                              setHasChanges(false);
+                              setShowResetConfirm(false);
+                              localStorage.removeItem('vcca-theme');
+                              localStorage.removeItem('vcca-accent');
+                              localStorage.removeItem('vcca-density');
+                              localStorage.removeItem('vcca-font-scale');
+                              localStorage.removeItem('vcca-font-family');
+                            }).catch(() => { /* toast via onError */ });
+                          }}
+                          disabled={resetSettings.isPending}
+                        >
+                          Yes, Reset
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => setShowResetConfirm(false)}>
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         </TabsContent>
 
         {/* ── Advanced ────────────────────────────────────── */}
         <TabsContent value="advanced" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Bug className="h-5 w-5" />
-                Advanced
-              </CardTitle>
-              <CardDescription>Debugging and troubleshooting</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label htmlFor="settings-debug-logging" className="text-sm font-medium">Debug logging</Label>
-                  <p className="text-xs text-muted-foreground">
-                    Enable verbose logging (restart required)
-                  </p>
-                </div>
-                <Switch
-                  id="settings-debug-logging"
-                  checked={formData.debug_logging}
-                  onCheckedChange={(checked) => handleChange("debug_logging", checked)}
+          <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Bug className="h-5 w-5" />
+                  Diagnostics
+                </CardTitle>
+                <CardDescription>Controls useful for debugging and low-level troubleshooting.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <SettingsField
+                  title="Debug logging"
+                  description="Enable verbose logging output. Restart required for full effect."
+                  control={
+                    <Switch
+                      id="settings-debug-logging"
+                      checked={formData.debug_logging}
+                      onCheckedChange={(checked) => handleChange("debug_logging", checked)}
+                    />
+                  }
                 />
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Notes</CardTitle>
+                <CardDescription>Operational reminders for advanced changes.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm text-muted-foreground">
+                <div className="rounded-lg border border-border/50 bg-muted/15 px-4 py-3">
+                  Changes to logging may require an app restart before all subsystems pick them up.
+                </div>
+                <div className="rounded-lg border border-border/50 bg-muted/15 px-4 py-3">
+                  Use the Logs tab for live inspection instead of treating this page as a control dump.
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         {/* ── Logs ────────────────────────────────────────── */}

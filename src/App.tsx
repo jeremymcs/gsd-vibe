@@ -24,11 +24,18 @@ import { FirstLaunchWizard } from "@/components/onboarding";
 import { useOnboardingStatus } from "@/lib/queries";
 import type { OnboardingStatus } from "@/lib/tauri";
 
+const ONBOARDING_DISMISSED_KEY = "vcca-onboarding-dismissed";
+const OPEN_ONBOARDING_EVENT = "vcca:open-onboarding";
+
 // Lazy-loaded page components for route-level code splitting
 const ProjectPage = lazy(() => import("./pages/project").then(m => ({ default: m.ProjectPage })));
 const SettingsPage = lazy(() => import("./pages/settings").then(m => ({ default: m.SettingsPage })));
 const ShellAsTerminalPage = lazy(() => import("./pages/shell").then(m => ({ default: m.ShellPage })));
 const ProjectsPage = lazy(() => import("./pages/projects").then(m => ({ default: m.ProjectsPage })));
+const InboxPage = lazy(() => import("./pages/inbox").then(m => ({ default: m.InboxPage })));
+const PortfolioPage = lazy(() => import("./pages/portfolio").then(m => ({ default: m.PortfolioPage })));
+const SearchPage = lazy(() => import("./pages/search").then(m => ({ default: m.SearchPage })));
+const ReviewPage = lazy(() => import("./pages/review").then(m => ({ default: m.ReviewPage })));
 const LogsPage = lazy(() => import("./pages/logs").then(m => ({ default: m.LogsPage })));
 const NotificationsPage = lazy(() => import("./pages/notifications").then(m => ({ default: m.NotificationsPage })));
 const TodosPage = lazy(() => import("./pages/todos").then(m => ({ default: m.TodosPage })));
@@ -93,23 +100,59 @@ function CloseWarningDialog() {
 function App() {
   const onboardingStatus = useOnboardingStatus();
   const [onboardingCompletedLocally, setOnboardingCompletedLocally] = useState(false);
+  const [onboardingDismissed, setOnboardingDismissed] = useState(
+    () => localStorage.getItem(ONBOARDING_DISMISSED_KEY) === "true"
+  );
+  const [manualOnboardingOpen, setManualOnboardingOpen] = useState(false);
 
   useEffect(() => {
     if (onboardingStatus.data?.completed) {
       setOnboardingCompletedLocally(true);
+      setOnboardingDismissed(false);
+      localStorage.removeItem(ONBOARDING_DISMISSED_KEY);
     }
   }, [onboardingStatus.data?.completed]);
 
-  const shouldBlockForOnboarding =
-    !onboardingCompletedLocally && onboardingStatus.data?.completed === false;
+  useEffect(() => {
+    const handleOpenOnboarding = () => {
+      setManualOnboardingOpen(true);
+    };
+
+    window.addEventListener(OPEN_ONBOARDING_EVENT, handleOpenOnboarding);
+    return () => window.removeEventListener(OPEN_ONBOARDING_EVENT, handleOpenOnboarding);
+  }, []);
+
+  const shouldAutoShowOnboarding =
+    !manualOnboardingOpen &&
+    !onboardingDismissed &&
+    !onboardingCompletedLocally &&
+    onboardingStatus.data?.completed === false;
+
+  const shouldShowOnboarding = manualOnboardingOpen || shouldAutoShowOnboarding;
 
   const shouldShowStartupLoader =
-    !onboardingCompletedLocally && onboardingStatus.isLoading;
+    !manualOnboardingOpen &&
+    !onboardingDismissed &&
+    !onboardingCompletedLocally &&
+    onboardingStatus.isLoading;
 
   const handleOnboardingComplete = (status: OnboardingStatus) => {
     if (status.completed) {
       setOnboardingCompletedLocally(true);
+      setOnboardingDismissed(false);
+      setManualOnboardingOpen(false);
+      localStorage.removeItem(ONBOARDING_DISMISSED_KEY);
     }
+  };
+
+  const handleOnboardingCancel = () => {
+    if (manualOnboardingOpen) {
+      setManualOnboardingOpen(false);
+      return;
+    }
+
+    setOnboardingDismissed(true);
+    localStorage.setItem(ONBOARDING_DISMISSED_KEY, "true");
   };
 
   return (
@@ -122,6 +165,10 @@ function App() {
                 <Routes>
                   <Route path="/" element={<Dashboard />} />
                   <Route path="/projects" element={<ProjectsPage />} />
+                  <Route path="/inbox" element={<InboxPage />} />
+                  <Route path="/portfolio" element={<PortfolioPage />} />
+                  <Route path="/search" element={<SearchPage />} />
+                  <Route path="/review" element={<ReviewPage />} />
                   <Route path="/projects/:id" element={<ProjectPage />} />
                   <Route path="/todos" element={<TodosPage />} />
                   <Route path="/settings" element={<SettingsPage />} />
@@ -136,10 +183,10 @@ function App() {
           </MainLayout>
           <CloseWarningDialog />
           {shouldShowStartupLoader && <StartupGateLoader />}
-          {shouldBlockForOnboarding && (
+          {shouldShowOnboarding && (
             <FirstLaunchWizard
               onComplete={handleOnboardingComplete}
-              onCancel={() => setOnboardingCompletedLocally(true)}
+              onCancel={handleOnboardingCancel}
             />
           )}
           <Toaster
