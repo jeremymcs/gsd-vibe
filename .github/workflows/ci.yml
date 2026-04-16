@@ -28,7 +28,7 @@ jobs:
           node -e "const pkg=require('./package.json'); if (!pkg.packageManager || !pkg.packageManager.startsWith('pnpm@')) { console.error('package.json must declare a pnpm packageManager'); process.exit(1); }"
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
         with:
           version: 9
 
